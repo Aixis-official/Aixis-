@@ -34,6 +34,22 @@ def _get_template_context(request: Request, user=None, **extra) -> dict:
     }
 
 
+# ──────────── Legacy /platform redirect ────────────
+
+
+@page_router.get("/platform")
+async def legacy_platform_landing(request: Request):
+    """Serve landing page at old /platform URL for cached 301 redirects."""
+    ctx = _get_template_context(request, title="感覚ではなく、数値で選ぶ。", active_page="home")
+    return templates.TemplateResponse("public/landing.html", ctx)
+
+
+@page_router.get("/platform/{path:path}")
+async def legacy_platform_redirect(path: str):
+    """Redirect old /platform/... URLs to new /... URLs."""
+    return RedirectResponse(url=f"/{path}", status_code=302)
+
+
 # ──────────── Public Pages ────────────
 
 
