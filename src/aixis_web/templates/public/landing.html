@@ -7,15 +7,23 @@
     #main-nav {
         position: fixed !important;
     }
+    /* Dark overscroll area: prevents white flash when bouncing above hero */
+    body {
+        background-color: #0a0f1a !important;
+    }
 
     /* ===== Dark→White scene transition (quants.co.jp pattern) ===== */
-    /* Black overlay covers the white sections; fades out on scroll trigger */
-    #white-sections-wrapper {
+    /*
+     * About section = dark bg, transitions to white independently.
+     * White sections wrapper = white bg + dark ::after overlay that fades.
+     * The ::after extends 200px UPWARD past the boundary to hide any seam.
+     * Both transitions happen simultaneously so the boundary is invisible.
+     */
+    #scene-wrapper {
         position: relative;
-        margin-top: -1px; /* eliminate subpixel gap at section boundary */
     }
-    #white-sections-wrapper::after {
-        content: "";
+    /* Dark overlay (real DOM element, not pseudo) */
+    #dark-overlay {
         position: absolute;
         top: 0; left: 0; width: 100%; height: 100%;
         background-color: #0a0f1a;
@@ -24,40 +32,53 @@
         pointer-events: none;
         z-index: 2;
     }
-    #white-sections-wrapper.--reveal::after {
+    #dark-overlay.--fade {
         opacity: 0;
     }
-    /* About section text color transitions when scene changes */
+    /* Bridge overlay: extends behind About section to eliminate seam */
+    #dark-overlay-bridge {
+        position: absolute;
+        top: -200px; left: 0; width: 100%; height: 200px;
+        background-color: #0a0f1a;
+        opacity: 1;
+        transition: opacity 0.5s ease-in-out;
+        pointer-events: none;
+        z-index: -1;
+    }
+    #dark-overlay-bridge.--fade {
+        opacity: 0;
+    }
+    /* About section transitions */
     #about-section {
         transition: background-color 0.5s ease-in-out;
     }
-    #about-section .about-text {
-        transition: color 0.5s ease-in-out;
-    }
-    #about-section .about-heading {
-        transition: color 0.5s ease-in-out;
-    }
-    #about-section .about-label {
-        transition: color 0.5s ease-in-out;
-    }
+    #about-section .about-text,
+    #about-section .about-heading,
+    #about-section .about-label,
     #about-section .about-link {
         transition: color 0.5s ease-in-out;
     }
-    /* State after reveal: About becomes white-themed */
-    #about-section.--light {
+    #about-section .about-dot-pattern {
+        transition: opacity 0.5s ease-in-out;
+    }
+    /* State after reveal */
+    #scene-wrapper.--reveal #about-section {
         background-color: #f9fafb;
     }
-    #about-section.--light .about-heading {
+    #scene-wrapper.--reveal .about-heading {
         color: #111827;
     }
-    #about-section.--light .about-text {
+    #scene-wrapper.--reveal .about-text {
         color: #4b5563;
     }
-    #about-section.--light .about-label {
+    #scene-wrapper.--reveal .about-label {
         color: #9ca3af;
     }
-    #about-section.--light .about-link {
+    #scene-wrapper.--reveal .about-link {
         color: #6b7280;
+    }
+    #scene-wrapper.--reveal .about-dot-pattern {
+        opacity: 0 !important;
     }
 
     /* ===== Transparent header on hero (landing page only) ===== */
@@ -261,9 +282,12 @@
 </section>
 
 
-<!-- ===== ABOUT / PHILOSOPHY (Dark → transitions to white on scroll) ===== -->
+<!-- ===== SCENE WRAPPER: single overlay covers About + white sections ===== -->
+<div id="scene-wrapper">
+
+<!-- ===== ABOUT / PHILOSOPHY ===== -->
 <section id="about-section" class="relative bg-[#0a0f1a] overflow-hidden">
-    <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
+    <div class="about-dot-pattern absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
     <div class="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
         <span class="report-label font-sans about-label" style="color: #475569;">About Aixis</span>
         <h2 class="about-heading mt-8 text-2xl sm:text-3xl lg:text-[2.5rem] font-bold font-serif text-white tracking-tight leading-[1.5] lg:leading-[1.55]">
@@ -282,8 +306,11 @@
     </div>
 </section>
 
-<!-- White sections wrapper: black ::after overlay fades out on scroll trigger -->
-<div id="white-sections-wrapper">
+<!-- ===== WHITE SECTIONS ===== -->
+<div style="position: relative;">
+<!-- Dark overlay (real DOM element) + bridge extending behind About -->
+<div id="dark-overlay-bridge"></div>
+<div id="dark-overlay"></div>
 
 <!-- ===== 5-AXIS AUDIT MODEL ===== -->
 <section id="white-content-start" class="bg-gray-50">
@@ -610,7 +637,8 @@
     </div>
 </div>
 
-</div><!-- /#white-sections-wrapper -->
+</div><!-- /white-sections relative wrapper -->
+</div><!-- /#scene-wrapper -->
 
 <!-- ===== CTA SECTION ===== -->
 <section class="bg-[#0a0f1a]">
@@ -905,12 +933,13 @@
 })();
 
 // ===== Dark→White scene transition (quants.co.jp pattern) =====
-// Black ::after overlay on white sections fades out via CSS transition (0.4s).
-// Scroll is fully natural — no hijacking.
+// Real DOM overlay divs fade out; About section transitions colors.
 (function() {
     var aboutSection = document.getElementById('about-section');
-    var wrapper = document.getElementById('white-sections-wrapper');
-    if (!aboutSection || !wrapper) return;
+    var sceneWrapper = document.getElementById('scene-wrapper');
+    var darkOverlay = document.getElementById('dark-overlay');
+    var darkBridge = document.getElementById('dark-overlay-bridge');
+    if (!aboutSection || !sceneWrapper || !darkOverlay) return;
 
     var revealed = false;
 
@@ -920,12 +949,14 @@
         var trigger = window.innerHeight * 0.4;
 
         if (rect.bottom < trigger && !revealed) {
-            wrapper.classList.add('--reveal');
-            aboutSection.classList.add('--light');
+            sceneWrapper.classList.add('--reveal');
+            darkOverlay.classList.add('--fade');
+            if (darkBridge) darkBridge.classList.add('--fade');
             revealed = true;
         } else if (rect.bottom >= trigger && revealed) {
-            wrapper.classList.remove('--reveal');
-            aboutSection.classList.remove('--light');
+            sceneWrapper.classList.remove('--reveal');
+            darkOverlay.classList.remove('--fade');
+            if (darkBridge) darkBridge.classList.remove('--fade');
             revealed = false;
         }
     }
