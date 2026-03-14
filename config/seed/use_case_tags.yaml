@@ -1,0 +1,114 @@
+# Use case tags for cross-tool comparison and SEO.
+
+# --- Productivity ---
+- slug: document-creation
+  name_jp: 文書作成
+  name_en: Document Creation
+  category: productivity
+  sort_order: 1
+
+- slug: email-writing
+  name_jp: メール作成
+  name_en: Email Writing
+  category: productivity
+  sort_order: 2
+
+- slug: meeting-notes
+  name_jp: 議事録作成
+  name_en: Meeting Notes
+  category: productivity
+  sort_order: 3
+
+- slug: slide-creation
+  name_jp: スライド作成
+  name_en: Slide / Presentation
+  category: productivity
+  sort_order: 4
+
+- slug: workflow-automation
+  name_jp: ワークフロー自動化
+  name_en: Workflow Automation
+  category: productivity
+  sort_order: 5
+
+- slug: translation
+  name_jp: 翻訳
+  name_en: Translation
+  category: productivity
+  sort_order: 6
+
+- slug: ocr
+  name_jp: OCR・文字認識
+  name_en: OCR
+  category: productivity
+  sort_order: 7
+
+# --- Analysis ---
+- slug: data-analysis
+  name_jp: データ分析
+  name_en: Data Analysis
+  category: analysis
+  sort_order: 10
+
+- slug: search-rag
+  name_jp: 検索・RAG
+  name_en: Search / RAG
+  category: analysis
+  sort_order: 11
+
+# --- Communication ---
+- slug: chatbot
+  name_jp: チャットボット
+  name_en: Chatbot
+  category: communication
+  sort_order: 20
+
+- slug: customer-support-bot
+  name_jp: カスタマーサポート自動化
+  name_en: Customer Support Bot
+  category: communication
+  sort_order: 21
+
+- slug: voice-recognition
+  name_jp: 音声認識
+  name_en: Voice Recognition
+  category: communication
+  sort_order: 22
+
+# --- Creation ---
+- slug: code-generation
+  name_jp: コード生成
+  name_en: Code Generation
+  category: creation
+  sort_order: 30
+
+- slug: image-generation
+  name_jp: 画像生成
+  name_en: Image Generation
+  category: creation
+  sort_order: 31
+
+- slug: video-creation
+  name_jp: 動画作成
+  name_en: Video Creation
+  category: creation
+  sort_order: 32
+
+# --- Compliance / Risk ---
+- slug: risk-assessment
+  name_jp: リスク評価
+  name_en: Risk Assessment
+  category: compliance
+  sort_order: 40
+
+- slug: compliance-monitoring
+  name_jp: コンプライアンス監視
+  name_en: Compliance Monitoring
+  category: compliance
+  sort_order: 41
+
+- slug: fraud-detection
+  name_jp: 不正検知
+  name_en: Fraud Detection
+  category: compliance
+  sort_order: 42

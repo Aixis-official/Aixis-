@@ -16,6 +16,11 @@ BASE_DIR = Path(__file__).parent
 async def lifespan(app: FastAPI):
     # Startup
     await init_db()
+    # Seed master data (industry tags, use case tags, regulatory frameworks)
+    from .db.base import async_session
+    from .services.seed_service import seed_all
+    async with async_session() as session:
+        await seed_all(session)
     # Start background audit scheduler
     from .services.scheduler_service import start_scheduler, stop_scheduler
     start_scheduler()

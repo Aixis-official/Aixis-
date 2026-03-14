@@ -55,6 +55,44 @@ class Tool(Base):
     features = Column(JSON, default=list)
     supported_languages = Column(JSON, default=lambda: ["ja"])
 
+    # === SEO Article Content Fields ===
+
+    # ユースケース (Use Cases)
+    use_cases_jp = Column(JSON)  # [{title, description, industry}]
+    use_cases_en = Column(JSON)
+
+    # 料金詳細 (Pricing Detail) - extends pricing_model/price_min/max
+    pricing_detail_jp = Column(Text)  # Markdown pricing breakdown
+    pricing_detail_en = Column(Text)
+    pricing_tiers = Column(JSON)  # [{"name":"Free","price_jpy":0,"features":[...]}]
+    free_trial_available = Column(Boolean)
+    free_trial_days = Column(Integer)
+
+    # リスク・注意点 (Risks)
+    risks_jp = Column(Text)  # Markdown
+    risks_en = Column(Text)
+
+    # 導入企業像 (Target Company Profile)
+    target_company_profile_jp = Column(Text)  # Markdown
+    target_company_profile_en = Column(Text)
+    target_company_sizes = Column(JSON)  # ["startup","smb","mid","enterprise"]
+    target_departments = Column(JSON)  # ["sales","legal","hr","engineering"]
+
+    # メリット・デメリット (Pros/Cons)
+    pros_jp = Column(JSON)  # list of strings
+    pros_en = Column(JSON)
+    cons_jp = Column(JSON)
+    cons_en = Column(JSON)
+
+    # 競合ツール (Alternatives)
+    alternatives_slugs = Column(JSON)  # list of tool slugs
+
+    # SEO metadata
+    seo_title_jp = Column(String(200))
+    seo_description_jp = Column(String(500))
+    seo_keywords_jp = Column(JSON)  # list of strings
+    content_updated_at = Column(DateTime)
+
     # status
     is_public = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
@@ -68,6 +106,9 @@ class Tool(Base):
     target_configs = relationship("ToolTargetConfig", back_populates="tool")
     audit_sessions = relationship("AuditSession", back_populates="tool")
     scores = relationship("ToolPublishedScore", back_populates="tool")
+    industry_mappings = relationship("ToolIndustryMapping", back_populates="tool")
+    use_case_mappings = relationship("ToolUseCaseMapping", back_populates="tool")
+    risk_governance = relationship("ToolRiskGovernance", back_populates="tool")
 
 
 class ToolTargetConfig(Base):

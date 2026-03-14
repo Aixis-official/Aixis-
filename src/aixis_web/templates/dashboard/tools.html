@@ -127,6 +127,49 @@
                             </label>
                         </div>
 
+                        <!-- SEO Content Fields (collapsible) -->
+                        <details class="border border-gray-100 dark:border-gray-700/50 rounded-lg">
+                            <summary class="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 font-jp cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg">SEO・記事コンテンツ項目</summary>
+                            <div class="p-3 space-y-3">
+                                <div>
+                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">メリット（1行1つ）</label>
+                                    <textarea id="f-pros-jp" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="高精度な日本語処理&#10;豊富なAPI連携"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">デメリット（1行1つ）</label>
+                                    <textarea id="f-cons-jp" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="料金が高め&#10;学習コストが高い"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">リスク・注意点</label>
+                                    <textarea id="f-risks-jp" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="データの第三者提供リスク..."></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">導入企業像</label>
+                                    <textarea id="f-target-company-jp" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="従業員100名以上の法務部門を持つ企業..."></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">企業規模（カンマ区切り）</label>
+                                    <input type="text" id="f-target-sizes" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 font-jp" placeholder="startup,smb,mid,enterprise">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">料金詳細</label>
+                                    <textarea id="f-pricing-detail-jp" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="月額プラン/年額プラン/エンタープライズ..."></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">SEOタイトル</label>
+                                    <input type="text" id="f-seo-title" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 font-jp" placeholder="【2026年】ツール名の評判・料金・リスク">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">SEOディスクリプション</label>
+                                    <textarea id="f-seo-desc" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="ツール名の料金・機能・リスクを第三者視点で..."></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">SEOキーワード（カンマ区切り）</label>
+                                    <input type="text" id="f-seo-keywords" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 font-jp" placeholder="AI,ツール名,評判,料金">
+                                </div>
+                            </div>
+                        </details>
+
                         <div class="pt-3 border-t border-gray-100 dark:border-gray-700/50 flex gap-2">
                             <button type="submit" id="form-submit-btn"
                                     class="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-lg transition-colors duration-200 shadow-sm font-jp">
@@ -258,6 +301,17 @@
             return;
         }
 
+        // Parse SEO fields
+        var prosText = document.getElementById('f-pros-jp').value.trim();
+        var consText = document.getElementById('f-cons-jp').value.trim();
+        var risksJp = document.getElementById('f-risks-jp').value.trim();
+        var targetCompanyJp = document.getElementById('f-target-company-jp').value.trim();
+        var targetSizes = document.getElementById('f-target-sizes').value.trim();
+        var pricingDetailJp = document.getElementById('f-pricing-detail-jp').value.trim();
+        var seoTitle = document.getElementById('f-seo-title').value.trim();
+        var seoDesc = document.getElementById('f-seo-desc').value.trim();
+        var seoKw = document.getElementById('f-seo-keywords').value.trim();
+
         var body = {
             slug: slug, name: name, name_jp: nameJp,
             is_public: isPublic
@@ -265,6 +319,16 @@
         if (vendor) body.vendor = vendor;
         if (url) body.url = url;
         if (descJp) body.description_jp = descJp;
+        // SEO fields
+        if (prosText) body.pros_jp = prosText.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+        if (consText) body.cons_jp = consText.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+        if (risksJp) body.risks_jp = risksJp;
+        if (targetCompanyJp) body.target_company_profile_jp = targetCompanyJp;
+        if (targetSizes) body.target_company_sizes = targetSizes.split(',').map(function(s){return s.trim();}).filter(Boolean);
+        if (pricingDetailJp) body.pricing_detail_jp = pricingDetailJp;
+        if (seoTitle) body.seo_title_jp = seoTitle;
+        if (seoDesc) body.seo_description_jp = seoDesc;
+        if (seoKw) body.seo_keywords_jp = seoKw.split(',').map(function(s){return s.trim();}).filter(Boolean);
 
         try {
             var existingSlug = document.getElementById('edit-slug').value;
@@ -305,6 +369,16 @@
         document.getElementById('f-url').value = tool.url || '';
         document.getElementById('f-desc-jp').value = tool.description_jp || '';
         document.getElementById('f-public').checked = tool.is_public;
+        // SEO fields
+        document.getElementById('f-pros-jp').value = (tool.pros_jp || []).join('\n');
+        document.getElementById('f-cons-jp').value = (tool.cons_jp || []).join('\n');
+        document.getElementById('f-risks-jp').value = tool.risks_jp || '';
+        document.getElementById('f-target-company-jp').value = tool.target_company_profile_jp || '';
+        document.getElementById('f-target-sizes').value = (tool.target_company_sizes || []).join(',');
+        document.getElementById('f-pricing-detail-jp').value = tool.pricing_detail_jp || '';
+        document.getElementById('f-seo-title').value = tool.seo_title_jp || '';
+        document.getElementById('f-seo-desc').value = tool.seo_description_jp || '';
+        document.getElementById('f-seo-keywords').value = (tool.seo_keywords_jp || []).join(',');
         document.getElementById('form-title').textContent = 'ツール編集: ' + (tool.name_jp || tool.name);
         document.getElementById('form-submit-btn').textContent = '更新';
 
@@ -332,6 +406,16 @@
         document.getElementById('f-url').value = '';
         document.getElementById('f-desc-jp').value = '';
         document.getElementById('f-public').checked = false;
+        // Clear SEO fields
+        document.getElementById('f-pros-jp').value = '';
+        document.getElementById('f-cons-jp').value = '';
+        document.getElementById('f-risks-jp').value = '';
+        document.getElementById('f-target-company-jp').value = '';
+        document.getElementById('f-target-sizes').value = '';
+        document.getElementById('f-pricing-detail-jp').value = '';
+        document.getElementById('f-seo-title').value = '';
+        document.getElementById('f-seo-desc').value = '';
+        document.getElementById('f-seo-keywords').value = '';
         document.getElementById('form-title').textContent = 'ツール新規登録';
         document.getElementById('form-submit-btn').textContent = '登録';
         document.getElementById('config-editor-panel').classList.add('hidden');

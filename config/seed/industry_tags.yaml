@@ -1,0 +1,92 @@
+# Industry tags - seeded from config/profiles/ YAML files.
+# profile_id links back to the profile used for test generation.
+
+- slug: finance
+  name_jp: 金融
+  name_en: Finance
+  profile_id: finance
+  sort_order: 1
+
+- slug: legal
+  name_jp: 法務
+  name_en: Legal
+  profile_id: legal
+  sort_order: 2
+
+- slug: medical
+  name_jp: 医療
+  name_en: Medical / Healthcare
+  profile_id: medical
+  sort_order: 3
+
+- slug: government
+  name_jp: 官公庁・行政
+  name_en: Government
+  profile_id: government
+  sort_order: 4
+
+- slug: accounting
+  name_jp: 会計
+  name_en: Accounting
+  profile_id: accounting
+  sort_order: 5
+
+- slug: manufacturing
+  name_jp: 製造
+  name_en: Manufacturing
+  profile_id: manufacturing
+  sort_order: 6
+
+- slug: construction
+  name_jp: 建設
+  name_en: Construction
+  profile_id: construction
+  sort_order: 7
+
+- slug: logistics
+  name_jp: 物流
+  name_en: Logistics
+  profile_id: logistics
+  sort_order: 8
+
+- slug: real-estate
+  name_jp: 不動産
+  name_en: Real Estate
+  profile_id: real_estate
+  sort_order: 9
+
+- slug: retail
+  name_jp: 小売
+  name_en: Retail
+  profile_id: retail
+  sort_order: 10
+
+- slug: education
+  name_jp: 教育
+  name_en: Education
+  profile_id: education
+  sort_order: 11
+
+- slug: agriculture
+  name_jp: 農業
+  name_en: Agriculture
+  profile_id: agriculture
+  sort_order: 12
+
+- slug: hr-recruitment
+  name_jp: 人事・採用
+  name_en: HR / Recruitment
+  profile_id: hr_recruitment
+  sort_order: 13
+
+- slug: marketing
+  name_jp: マーケティング
+  name_en: Marketing
+  profile_id: marketing
+  sort_order: 14
+
+- slug: customer-support
+  name_jp: カスタマーサポート
+  name_en: Customer Support
+  profile_id: customer_support
+  sort_order: 15

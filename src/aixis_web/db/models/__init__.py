@@ -41,6 +41,15 @@ from .vendor import VendorProfile, ToolSubmission, ScoreDispute
 # Benchmark
 from .benchmark import BenchmarkSuite, BenchmarkTestCase, BenchmarkRun, LeaderboardEntry
 
+# Industry & Use Case Tags
+from .tool_industry import IndustryTag, ToolIndustryMapping, UseCaseTag, ToolUseCaseMapping
+
+# Risk & Governance
+from .risk_governance import ToolRiskGovernance, RegulatoryFramework
+
+# Adoption / Benchmark
+from .adoption import IndustryAdoptionPattern, AdoptionSurveyResponse
+
 __all__ = [
     # user
     "Organization",
@@ -84,4 +93,15 @@ __all__ = [
     "BenchmarkTestCase",
     "BenchmarkRun",
     "LeaderboardEntry",
+    # industry & use case
+    "IndustryTag",
+    "ToolIndustryMapping",
+    "UseCaseTag",
+    "ToolUseCaseMapping",
+    # risk & governance
+    "ToolRiskGovernance",
+    "RegulatoryFramework",
+    # adoption
+    "IndustryAdoptionPattern",
+    "AdoptionSurveyResponse",
 ]

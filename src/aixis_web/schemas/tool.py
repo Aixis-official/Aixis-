@@ -23,6 +23,28 @@ class ToolCreate(BaseModel):
     features: list[str] = []
     supported_languages: list[str] = ["ja"]
     is_public: bool = False
+    # SEO article content fields
+    use_cases_jp: list[dict] | None = None
+    use_cases_en: list[dict] | None = None
+    pricing_detail_jp: str | None = None
+    pricing_detail_en: str | None = None
+    pricing_tiers: list[dict] | None = None
+    free_trial_available: bool | None = None
+    free_trial_days: int | None = None
+    risks_jp: str | None = None
+    risks_en: str | None = None
+    target_company_profile_jp: str | None = None
+    target_company_profile_en: str | None = None
+    target_company_sizes: list[str] | None = None
+    target_departments: list[str] | None = None
+    pros_jp: list[str] | None = None
+    pros_en: list[str] | None = None
+    cons_jp: list[str] | None = None
+    cons_en: list[str] | None = None
+    alternatives_slugs: list[str] | None = None
+    seo_title_jp: str | None = None
+    seo_description_jp: str | None = None
+    seo_keywords_jp: list[str] | None = None
 
 
 class ToolUpdate(BaseModel):
@@ -44,6 +66,28 @@ class ToolUpdate(BaseModel):
     supported_languages: list[str] | None = None
     is_public: bool | None = None
     is_active: bool | None = None
+    # SEO article content fields
+    use_cases_jp: list[dict] | None = None
+    use_cases_en: list[dict] | None = None
+    pricing_detail_jp: str | None = None
+    pricing_detail_en: str | None = None
+    pricing_tiers: list[dict] | None = None
+    free_trial_available: bool | None = None
+    free_trial_days: int | None = None
+    risks_jp: str | None = None
+    risks_en: str | None = None
+    target_company_profile_jp: str | None = None
+    target_company_profile_en: str | None = None
+    target_company_sizes: list[str] | None = None
+    target_departments: list[str] | None = None
+    pros_jp: list[str] | None = None
+    pros_en: list[str] | None = None
+    cons_jp: list[str] | None = None
+    cons_en: list[str] | None = None
+    alternatives_slugs: list[str] | None = None
+    seo_title_jp: str | None = None
+    seo_description_jp: str | None = None
+    seo_keywords_jp: list[str] | None = None
 
 
 class CategoryResponse(BaseModel):
@@ -79,6 +123,23 @@ class ToolResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    # SEO article content fields
+    use_cases_jp: list[dict] | None = None
+    pricing_detail_jp: str | None = None
+    pricing_tiers: list[dict] | None = None
+    free_trial_available: bool | None = None
+    free_trial_days: int | None = None
+    risks_jp: str | None = None
+    target_company_profile_jp: str | None = None
+    target_company_sizes: list[str] | None = None
+    target_departments: list[str] | None = None
+    pros_jp: list[str] | None = None
+    cons_jp: list[str] | None = None
+    alternatives_slugs: list[str] | None = None
+    seo_title_jp: str | None = None
+    seo_description_jp: str | None = None
+    seo_keywords_jp: list[str] | None = None
+    content_updated_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 

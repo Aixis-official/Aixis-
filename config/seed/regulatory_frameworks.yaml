@@ -1,0 +1,94 @@
+# Master list of regulatory frameworks for governance assessment.
+
+# --- Japanese General ---
+- slug: ai-business-guideline
+  name_jp: AI事業者ガイドライン
+  name_en: AI Business Operator Guidelines
+  category: general
+  country: JP
+  description_jp: 経済産業省が策定したAI事業者向けガイドライン。AIの開発・提供・利用における原則を定める。
+  reference_url: https://www.meti.go.jp/policy/it_policy/ai-guideline/
+
+- slug: appi
+  name_jp: 個人情報保護法 (APPI)
+  name_en: Act on the Protection of Personal Information
+  category: general
+  country: JP
+  description_jp: 日本の個人情報保護に関する法律。個人データの取得・利用・第三者提供のルールを規定。
+
+- slug: telecommunications-business-act
+  name_jp: 電気通信事業法
+  name_en: Telecommunications Business Act
+  category: general
+  country: JP
+  description_jp: 電気通信事業者に対する規制。Cookie規制等を含む。
+
+# --- Japanese Industry-Specific ---
+- slug: fsa-ai-guideline
+  name_jp: 金融庁AI指針
+  name_en: FSA AI Guidelines
+  category: industry_specific
+  country: JP
+  applicable_industries: ["finance"]
+  description_jp: 金融庁が金融機関におけるAI活用に関して示すガイドライン。
+
+- slug: medical-ai-regulation
+  name_jp: 医療AI規制 (薬機法関連)
+  name_en: Medical AI Regulation (PMD Act)
+  category: industry_specific
+  country: JP
+  applicable_industries: ["medical"]
+  description_jp: AIを搭載した医療機器・ソフトウェアに対する薬機法上の規制。
+
+- slug: education-ai-guideline
+  name_jp: 文部科学省AIガイドライン
+  name_en: MEXT AI Guidelines for Education
+  category: industry_specific
+  country: JP
+  applicable_industries: ["education"]
+  description_jp: 教育分野におけるAI利活用に関するガイドライン。
+
+# --- International ---
+- slug: gdpr
+  name_jp: GDPR (EU一般データ保護規則)
+  name_en: General Data Protection Regulation
+  category: international
+  country: EU
+  description_jp: EU域内の個人データ保護に関する包括的規則。域外適用あり。
+
+- slug: eu-ai-act
+  name_jp: EU AI規制法
+  name_en: EU AI Act
+  category: international
+  country: EU
+  description_jp: EUにおけるAIシステムのリスクベース規制フレームワーク。
+
+# --- Certifications / Standards ---
+- slug: soc2
+  name_jp: SOC 2
+  name_en: SOC 2 Type II
+  category: international
+  country: global
+  description_jp: サービス組織のセキュリティ・可用性・処理の完全性・機密性・プライバシーに関する監査基準。
+
+- slug: iso27001
+  name_jp: ISO 27001
+  name_en: ISO/IEC 27001
+  category: international
+  country: global
+  description_jp: 情報セキュリティマネジメントシステム(ISMS)の国際規格。
+
+- slug: iso27017
+  name_jp: ISO 27017
+  name_en: ISO/IEC 27017
+  category: international
+  country: global
+  description_jp: クラウドサービスの情報セキュリティに関する国際規格。
+
+- slug: ismap
+  name_jp: ISMAP (政府情報システムのためのセキュリティ評価制度)
+  name_en: ISMAP
+  category: general
+  country: JP
+  applicable_industries: ["government"]
+  description_jp: 政府が求めるセキュリティ要求を満たすクラウドサービスを評価・登録する制度。
