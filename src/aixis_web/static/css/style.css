@@ -1463,6 +1463,9 @@ html.dark .section-divide {
     }
 
     main {
+        padding: 16px 0;
+    }
+    main.main-constrained {
         padding: 16px 12px;
     }
 
