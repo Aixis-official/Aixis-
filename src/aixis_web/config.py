@@ -59,7 +59,7 @@ class Settings(BaseSettings):
     public_api_default_rate_limit_per_minute: int = 60
     public_api_default_rate_limit_per_day: int = 10000
 
-    model_config = {"env_prefix": "AIXIS_", "env_file": ".env"}
+    model_config = {"env_file": ".env"}
 
 
 settings = Settings()
