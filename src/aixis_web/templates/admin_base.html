@@ -110,7 +110,7 @@
                     <span class="hidden md:inline text-gray-300 dark:text-gray-600">|</span>
                     {% endif %}
 
-                    <a href="/platform/dashboard/settings"
+                    <a href="/dashboard/settings"
                        class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150 font-jp"
                        title="設定">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -119,7 +119,7 @@
                         </svg>
                     </a>
 
-                    <a href="/platform"
+                    <a href="/"
                        class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150 font-jp">
                         利用者画面へ
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -151,7 +151,7 @@
             localStorage.removeItem('aixis-user');
             document.cookie = 'access_token=; Max-Age=0; path=/;';
             document.cookie = 'aixis_session=; Max-Age=0; path=/;';
-            window.location.href = '/platform';
+            window.location.href = '/';
         }
     </script>
 

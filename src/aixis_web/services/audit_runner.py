@@ -404,7 +404,7 @@ async def _emit_audit_events_async(
                     event_type=event_type,
                     title=title_en,
                     title_jp=title_jp,
-                    link=f"/platform/dashboard/audits/{db_session_id}",
+                    link=f"/dashboard/audits/{db_session_id}",
                 )
                 await db.commit()
         except Exception:

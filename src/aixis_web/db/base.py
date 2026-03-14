@@ -1,16 +1,11 @@
 """Database engine and base configuration."""
 
-import os
-
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./aixis.db")
+from ..config import settings
 
-# For PostgreSQL: postgresql+asyncpg://user:pass@localhost/aixis
-# For SQLite dev: sqlite+aiosqlite:///./aixis.db
-
-engine = create_async_engine(DATABASE_URL, echo=False)
+engine = create_async_engine(settings.database_url, echo=False)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -27,6 +22,9 @@ async def get_db():
 
 
 async def init_db():
+    # Ensure all models are registered with Base.metadata before creating tables
+    from .models import __all__ as _models  # noqa: F401
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         # Auto-migrate: add missing columns for existing tables

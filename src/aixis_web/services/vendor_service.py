@@ -137,7 +137,7 @@ async def approve_submission(
                 title_jp=f"ツール承認: {submission.tool_name}",
                 body=f"Your tool '{submission.tool_name}' has been approved.",
                 body_jp=f"ツール「{submission.tool_name}」が承認されました。",
-                link="/platform/vendor",
+                link="/vendor",
             )
             await db.commit()
     except Exception:
@@ -184,7 +184,7 @@ async def reject_submission(
                 title_jp=f"ツール申請却下: {submission.tool_name}",
                 body=notes or "Your submission was not approved.",
                 body_jp=notes or "申請は承認されませんでした。",
-                link="/platform/vendor",
+                link="/vendor",
             )
             await db.commit()
     except Exception:

@@ -90,12 +90,12 @@
                 </p>
 
                 <div class="mt-12 flex flex-col sm:flex-row items-start gap-4">
-                    <a href="/platform/tools"
+                    <a href="/tools"
                        class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-none text-base font-bold bg-white text-[#0a0f1a] hover:bg-gray-100 transition-all duration-200">
                         監査データベースを見る
                         <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                     </a>
-                    <a href="/platform/contact?type=demo"
+                    <a href="/contact?type=demo"
                        class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-none text-base font-bold text-white border-2 border-blue-400/60 hover:border-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-all duration-200">
                         無料デモを予約する
                     </a>
@@ -412,7 +412,7 @@
     </div>
 
     <div class="mt-10 text-center">
-        <a href="/platform/tools"
+        <a href="/tools"
            class="inline-flex items-center gap-2 text-sm font-semibold text-aixis-500 dark:text-aixis-300 hover:text-aixis-400 dark:hover:text-white transition-colors duration-200">
             全てのツールを見る
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
@@ -467,7 +467,7 @@
                     </li>
                 </ul>
 
-                <a href="/platform/contact"
+                <a href="/contact"
                    class="btn-blue-hover mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-none text-sm font-bold bg-aixis-500 dark:bg-aixis-400 text-white dark:text-aixis-900 hover:bg-aixis-600 dark:hover:bg-aixis-300 transition-all duration-200">
                     無料トライアルを始める
                 </a>
@@ -514,7 +514,7 @@
                     </div>
                 </div>
 
-                <a href="/platform/contact"
+                <a href="/contact"
                    class="btn-blue-hover mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-none text-sm font-bold border border-gray-200 dark:border-aixis-600 text-gray-700 dark:text-gray-200 hover:border-aixis-500 dark:hover:border-aixis-400 hover:text-aixis-500 dark:hover:text-white transition-all duration-200">
                     見積もりを依頼する
                 </a>
@@ -544,7 +544,7 @@
             </h2>
 
             <div class="mt-10">
-                <a href="/platform/contact?type=demo"
+                <a href="/contact?type=demo"
                    class="btn-white-hover inline-flex items-center justify-center px-8 py-3.5 rounded-none text-base font-bold bg-white text-[#0a0f1a] hover:bg-gray-100 transition-all duration-200">
                     無料デモを予約する
                     <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
@@ -583,7 +583,7 @@
             ? '<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 dark:bg-aixis-700 text-gray-600 dark:text-gray-300 font-jp">' + tool.category_name_jp + '</span>'
             : '';
 
-        return '<a href="/platform/tools/' + (tool.slug || '') + '"' +
+        return '<a href="/tools/' + (tool.slug || '') + '"' +
             ' class="block bg-white dark:bg-aixis-800 rounded-sm p-6 shadow-sm dark:shadow-aixis-900/40 border border-gray-100 dark:border-aixis-700 hover:border-gray-300 dark:hover:border-aixis-400/30 transition-all duration-200">' +
             '<div class="flex items-center gap-3 mb-3">' +
                 '<div class="w-11 h-11 rounded-lg bg-gray-100 dark:bg-aixis-700 flex items-center justify-center text-lg font-bold text-aixis-500 dark:text-aixis-200 shrink-0">' + initial + '</div>' +

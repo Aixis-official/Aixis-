@@ -7,7 +7,7 @@
 
     <!-- Breadcrumb -->
     <nav class="mb-6 text-sm text-gray-500 dark:text-gray-400 font-jp">
-        <a href="/platform/dashboard" class="hover:text-gray-700 dark:hover:text-gray-200 transition-colors">ダッシュボード</a>
+        <a href="/dashboard" class="hover:text-gray-700 dark:hover:text-gray-200 transition-colors">ダッシュボード</a>
         <span class="mx-2">/</span>
         <span class="text-gray-900 dark:text-white">新規監査を開始</span>
     </nav>
@@ -60,7 +60,7 @@
 
                 <p class="mt-1.5 text-xs text-gray-400 dark:text-gray-500 font-jp">
                     登録済みのツールから選択します。
-                    <a href="/platform/dashboard/tools" class="text-indigo-600 dark:text-indigo-400 hover:underline">未登録の場合はツール管理から登録</a>
+                    <a href="/dashboard/tools" class="text-indigo-600 dark:text-indigo-400 hover:underline">未登録の場合はツール管理から登録</a>
                 </p>
             </div>
 
@@ -187,7 +187,7 @@
             toolListContainer.innerHTML =
                 '<div class="p-6 text-center">' +
                     '<p class="text-sm text-gray-400 dark:text-gray-500 font-jp mb-2">登録済みツールがありません</p>' +
-                    '<a href="/platform/dashboard/tools" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline font-jp">ツールを登録する</a>' +
+                    '<a href="/dashboard/tools" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline font-jp">ツールを登録する</a>' +
                 '</div>';
             return;
         }
@@ -311,7 +311,7 @@
 
             // Redirect to the audit detail page to see progress / login prompt
             setTimeout(function() {
-                window.location.href = '/platform/dashboard/audits/' + encodeURIComponent(result.db_session_id);
+                window.location.href = '/dashboard/audits/' + encodeURIComponent(result.db_session_id);
             }, 1500);
 
         } catch (err) {

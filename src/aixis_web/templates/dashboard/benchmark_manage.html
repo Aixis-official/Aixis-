@@ -146,7 +146,7 @@ async function loadSuites() {
                         <button onclick="showTestCases('${s.slug}','${s.name_jp||s.name}')" class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 font-jp">テストケース</button>
                         ${!s.is_published ? `<button onclick="publishSuite('${s.slug}')" class="px-2 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded hover:bg-emerald-200 font-jp">公開</button>` : ''}
                         <button onclick="showRun('${s.slug}','${s.name_jp||s.name}')" class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-200 font-jp">実行</button>
-                        <a href="/platform/benchmarks/${s.slug}/leaderboard" class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded hover:bg-purple-200 font-jp">LB</a>
+                        <a href="/benchmarks/${s.slug}/leaderboard" class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded hover:bg-purple-200 font-jp">LB</a>
                     </div>
                 </div>
             </div>

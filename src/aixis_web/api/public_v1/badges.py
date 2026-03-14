@@ -335,7 +335,7 @@ def _render_embed_html(
 {grid_lines}{axis_lines}    <polygon points="{" ".join(data_points)}" fill="{grade_color}" fill-opacity="0.25" stroke="{grade_color}" stroke-width="2"/>
 {labels_svg}  </svg>
   <div class="footer">
-    Powered by <a href="/platform/tools/{tool_slug}" target="_blank">Aixis</a>
+    Powered by <a href="/tools/{tool_slug}" target="_blank">Aixis</a>
   </div>
 </div>
 </body>

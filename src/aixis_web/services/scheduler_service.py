@@ -3,7 +3,7 @@
 import logging
 import threading
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ def _check_due_schedules():
     ).replace("postgresql+asyncpg", "postgresql+psycopg2")
     engine = create_engine(sync_url, pool_pre_ping=True)
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     with engine.begin() as conn:
         rows = conn.execute(
             text(
@@ -169,7 +169,9 @@ def _calculate_next_run(
 
         # Weekly pattern: "M H * * D" (D = 0-6, 0=Sun)
         if dom == "*" and month == "*" and dow != "*":
-            target_dow = int(dow.split("-")[0].split(",")[0])  # take first value
+            cron_dow = int(dow.split("-")[0].split(",")[0])  # take first value
+            # Convert cron dow (0=Sun) to Python weekday (0=Mon)
+            target_dow = (cron_dow - 1) % 7
             target_hour = int(hour) if hour != "*" else 0
             target_minute = int(minute) if minute != "*" else 0
             days_ahead = target_dow - from_time.weekday()

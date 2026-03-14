@@ -7,7 +7,7 @@
 
     <!-- Header with back button -->
     <div class="flex items-center gap-4 mb-6">
-        <a href="/platform/dashboard"
+        <a href="/dashboard"
            class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-[#1e2235] border border-gray-200 dark:border-gray-700/50 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
             ダッシュボード
@@ -409,7 +409,7 @@ document.getElementById('submit-scores').addEventListener('click', async () => {
             body: JSON.stringify({ entries }),
         });
         alert('手動スコアが送信されました。自動スコアとの統合処理を開始します。');
-        window.location.href = '/platform/dashboard';
+        window.location.href = '/dashboard';
     } catch (e) {
         alert('エラー: ' + e.message);
         btn.disabled = false;

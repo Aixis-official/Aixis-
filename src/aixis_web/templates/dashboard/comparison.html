@@ -165,7 +165,7 @@ function renderComparisonTable(sessions) {
             ? (s.scores.reduce((sum, sc) => sum + sc.score, 0) / s.scores.length)
             : 0;
         return '<tr class="border-b border-gray-50 dark:border-gray-700/30">' +
-            '<td class="px-4 py-3 text-xs font-mono"><a href="/platform/dashboard/audits/' + encodeURIComponent(s.audit.id) + '" class="text-indigo-600 dark:text-indigo-400 hover:underline">' + (s.audit.session_code || s.audit.id.substring(0, 12)) + '</a></td>' +
+            '<td class="px-4 py-3 text-xs font-mono"><a href="/dashboard/audits/' + encodeURIComponent(s.audit.id) + '" class="text-indigo-600 dark:text-indigo-400 hover:underline">' + (s.audit.session_code || s.audit.id.substring(0, 12)) + '</a></td>' +
             '<td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">' + formatDateTime(s.audit.started_at) + '</td>' +
             AIXIS.AXIS_KEYS.map(k => '<td class="px-4 py-3 text-center text-xs tabular-nums font-medium" style="color:' + scoreLevelColor(scoreMap[k] || 0) + '">' + (scoreMap[k] != null ? scoreMap[k].toFixed(1) : '---') + '</td>').join('') +
             '<td class="px-4 py-3 text-center text-xs font-bold tabular-nums" style="color:' + scoreLevelColor(overall) + '">' + overall.toFixed(1) + '</td>' +

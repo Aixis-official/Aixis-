@@ -206,8 +206,8 @@ async function aixisAPI(path, options = {}) {
 
   if (response.status === 401) {
     localStorage.removeItem('aixis_token');
-    if (!window.location.pathname.startsWith('/platform/login')) {
-      window.location.href = '/platform/login';
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login';
     }
     throw new Error('Unauthorized');
   }

@@ -107,7 +107,7 @@ async function loadLeaderboard() {
             <tr class="border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                 <td class="px-4 py-4 text-center">${rankBadge(e.rank)}</td>
                 <td class="px-4 py-4">
-                    <a href="/platform/tools/${e.tool_slug}" class="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 font-jp">${e.tool_name_jp || e.tool_name}</a>
+                    <a href="/tools/${e.tool_slug}" class="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 font-jp">${e.tool_name_jp || e.tool_name}</a>
                 </td>
                 <td class="px-4 py-4">
                     <div class="flex items-center gap-3">

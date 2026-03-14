@@ -34,33 +34,24 @@ def _get_template_context(request: Request, user=None, **extra) -> dict:
     }
 
 
-# ──────────── Root Redirect ────────────
-
-
-@page_router.get("/")
-async def root_redirect():
-    """Redirect root to platform landing page."""
-    return RedirectResponse(url="/platform", status_code=301)
-
-
 # ──────────── Public Pages ────────────
 
 
-@page_router.get("/platform")
+@page_router.get("/")
 async def landing(request: Request):
     """Landing page."""
     ctx = _get_template_context(request, title="感覚ではなく、数値で選ぶ。", active_page="home")
     return templates.TemplateResponse("public/landing.html", ctx)
 
 
-@page_router.get("/platform/tools")
+@page_router.get("/tools")
 async def tools_page(request: Request):
     """Tool catalog page."""
     ctx = _get_template_context(request, title="AIツール監査データベース", active_page="tools")
     return templates.TemplateResponse("public/tools.html", ctx)
 
 
-@page_router.get("/platform/categories")
+@page_router.get("/categories")
 async def categories_index(request: Request):
     """Categories index page."""
     return templates.TemplateResponse(
@@ -69,7 +60,7 @@ async def categories_index(request: Request):
     )
 
 
-@page_router.get("/platform/tools/{slug}")
+@page_router.get("/tools/{slug}")
 async def tool_detail_page(request: Request, slug: str):
     """Tool detail page."""
     return templates.TemplateResponse(
@@ -78,7 +69,7 @@ async def tool_detail_page(request: Request, slug: str):
     )
 
 
-@page_router.get("/platform/compare")
+@page_router.get("/compare")
 async def compare_page(request: Request):
     """Comparison view page."""
     return templates.TemplateResponse(
@@ -87,7 +78,7 @@ async def compare_page(request: Request):
     )
 
 
-@page_router.get("/platform/categories/{slug}")
+@page_router.get("/categories/{slug}")
 async def category_page(request: Request, slug: str):
     """Category page."""
     return templates.TemplateResponse(
@@ -96,35 +87,35 @@ async def category_page(request: Request, slug: str):
     )
 
 
-@page_router.get("/platform/pricing")
+@page_router.get("/pricing")
 async def pricing_page(request: Request):
     """Pricing plans page."""
     ctx = _get_template_context(request, title="料金プラン", active_page="pricing")
     return templates.TemplateResponse("public/pricing.html", ctx)
 
 
-@page_router.get("/platform/audit-process")
+@page_router.get("/audit-process")
 async def audit_process_page(request: Request):
     """Audit process explanation page."""
     ctx = _get_template_context(request, title="監査プロセス", active_page="services")
     return templates.TemplateResponse("public/audit_process.html", ctx)
 
 
-@page_router.get("/platform/independence")
+@page_router.get("/independence")
 async def independence_page(request: Request):
     """Independence declaration page."""
     ctx = _get_template_context(request, title="独立性宣言", active_page="about")
     return templates.TemplateResponse("public/independence.html", ctx)
 
 
-@page_router.get("/platform/contact")
+@page_router.get("/contact")
 async def contact_page(request: Request):
     """Contact form page."""
     ctx = _get_template_context(request, title="お問い合わせ", active_page="contact")
     return templates.TemplateResponse("public/contact.html", ctx)
 
 
-@page_router.get("/platform/login")
+@page_router.get("/login")
 async def login_page(request: Request):
     """Login page."""
     return templates.TemplateResponse(
@@ -136,75 +127,75 @@ async def login_page(request: Request):
 # ──────────── Auth-Protected Pages ────────────
 
 
-@page_router.get("/platform/dashboard")
+@page_router.get("/dashboard")
 async def dashboard_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Admin dashboard (requires auth)."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     ctx = _get_template_context(request, user=user, title="管理ダッシュボード", active_page="dashboard")
     return templates.TemplateResponse("dashboard/index.html", ctx)
 
 
-@page_router.get("/platform/dashboard/tools")
+@page_router.get("/dashboard/tools")
 async def tools_management_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Tool management page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/tools.html",
         {"request": request, "title": "ツール管理", "user": user, "active_page": "dashboard"},
     )
 
 
-@page_router.get("/platform/dashboard/manual")
+@page_router.get("/dashboard/manual")
 async def manual_list_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Manual evaluation list page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/manual_list.html",
         {"request": request, "title": "手動評価一覧", "user": user, "active_page": "dashboard"},
     )
 
 
-@page_router.get("/platform/dashboard/settings")
+@page_router.get("/dashboard/settings")
 async def settings_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Platform settings page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/settings.html",
         {"request": request, "title": "設定", "user": user, "active_page": "dashboard"},
     )
 
 
-@page_router.get("/platform/dashboard/audits/new")
+@page_router.get("/dashboard/audits/new")
 async def new_audit_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """New audit creation page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/audit_new.html",
         {"request": request, "title": "新規監査を開始", "user": user, "active_page": "dashboard"},
     )
 
 
-@page_router.get("/platform/dashboard/audits/{session_id}")
+@page_router.get("/dashboard/audits/{session_id}")
 async def audit_detail_page(
     request: Request,
     session_id: str,
@@ -212,7 +203,7 @@ async def audit_detail_page(
 ):
     """Audit session detail page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/audit_detail.html",
         {
@@ -225,7 +216,7 @@ async def audit_detail_page(
     )
 
 
-@page_router.get("/platform/dashboard/audits/{session_id}/manual")
+@page_router.get("/dashboard/audits/{session_id}/manual")
 async def manual_checklist_page(
     request: Request,
     session_id: str,
@@ -233,7 +224,7 @@ async def manual_checklist_page(
 ):
     """Manual checklist evaluation page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/manual_checklist.html",
         {
@@ -246,49 +237,49 @@ async def manual_checklist_page(
     )
 
 
-@page_router.get("/platform/dashboard/comparison")
+@page_router.get("/dashboard/comparison")
 async def comparison_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Tool score comparison page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/comparison.html",
         {"request": request, "title": "スコア比較", "user": user, "active_page": "dashboard"},
     )
 
 
-@page_router.get("/platform/dashboard/custom-tests")
+@page_router.get("/dashboard/custom-tests")
 async def custom_tests_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Custom test case management page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/custom_tests.html",
         {"request": request, "title": "カスタムテスト管理", "user": user, "active_page": "dashboard"},
     )
 
 
-@page_router.get("/platform/dashboard/api-keys")
+@page_router.get("/dashboard/api-keys")
 async def api_keys_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """API key management page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/api_keys.html",
         {"request": request, "title": "APIキー管理", "user": user, "active_page": "dashboard"},
     )
 
 
-@page_router.get("/platform/dashboard/audits/{session_id}/log")
+@page_router.get("/dashboard/audits/{session_id}/log")
 async def audit_log_page(
     request: Request,
     session_id: str,
@@ -296,7 +287,7 @@ async def audit_log_page(
 ):
     """Audit log detail page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/audit_log.html",
         {
@@ -309,42 +300,42 @@ async def audit_log_page(
     )
 
 
-@page_router.get("/platform/dashboard/webhooks")
+@page_router.get("/dashboard/webhooks")
 async def webhooks_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Webhook management page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/webhooks.html",
         {"request": request, "title": "Webhook管理", "user": user, "active_page": "dashboard"},
     )
 
 
-@page_router.get("/platform/dashboard/notifications")
+@page_router.get("/dashboard/notifications")
 async def notifications_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Notification center page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/notifications.html",
         {"request": request, "title": "通知センター", "user": user, "active_page": "dashboard"},
     )
 
 
-@page_router.get("/platform/portal")
+@page_router.get("/portal")
 async def portal_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Client portal (requires auth)."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "portal/index.html",
         {"request": request, "title": "クライアントポータル", "user": user, "active_page": "portal"},
@@ -354,14 +345,14 @@ async def portal_page(
 # ──────────── Scheduled Re-audits ────────────
 
 
-@page_router.get("/platform/dashboard/schedules")
+@page_router.get("/dashboard/schedules")
 async def schedules_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Audit schedule management page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/schedules.html",
         {"request": request, "title": "スケジュール管理", "user": user, "active_page": "dashboard"},
@@ -371,7 +362,7 @@ async def schedules_page(
 # ──────────── Vendor Portal ────────────
 
 
-@page_router.get("/platform/vendor/guide")
+@page_router.get("/vendor/guide")
 async def vendor_guide_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
@@ -381,40 +372,40 @@ async def vendor_guide_page(
     return templates.TemplateResponse("vendor/landing.html", ctx)
 
 
-@page_router.get("/platform/vendor")
+@page_router.get("/vendor")
 async def vendor_dashboard_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Vendor self-service dashboard (requires auth)."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     ctx = _get_template_context(request, user=user, title="ベンダーポータル", active_page="vendor")
     return templates.TemplateResponse("vendor/dashboard.html", ctx)
 
 
-@page_router.get("/platform/vendor/submit")
+@page_router.get("/vendor/submit")
 async def vendor_submit_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Vendor tool submission form."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "vendor/submit_tool.html",
         {"request": request, "title": "ツール申請", "user": user, "active_page": "vendor"},
     )
 
 
-@page_router.get("/platform/dashboard/submissions")
+@page_router.get("/dashboard/submissions")
 async def admin_submissions_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Admin submission review queue."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/submissions.html",
         {"request": request, "title": "申請審査", "user": user, "active_page": "dashboard"},
@@ -424,7 +415,7 @@ async def admin_submissions_page(
 # ──────────── Benchmarks & Leaderboard ────────────
 
 
-@page_router.get("/platform/benchmarks/{slug}/leaderboard")
+@page_router.get("/benchmarks/{slug}/leaderboard")
 async def leaderboard_page(
     request: Request,
     slug: str,
@@ -437,14 +428,14 @@ async def leaderboard_page(
     )
 
 
-@page_router.get("/platform/dashboard/benchmarks")
+@page_router.get("/dashboard/benchmarks")
 async def benchmark_manage_page(
     request: Request,
     user: Annotated[User | None, Depends(get_current_user)] = None,
 ):
     """Admin benchmark management page."""
     if not user:
-        return RedirectResponse(url="/platform/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         "dashboard/benchmark_manage.html",
         {"request": request, "title": "ベンチマーク管理", "user": user, "active_page": "dashboard"},

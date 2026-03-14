@@ -95,12 +95,12 @@
 
             <!-- Contact link for non-registered users -->
             <div class="mt-5 text-center text-sm text-gray-600 dark:text-gray-400 font-jp">
-                アカウントをお持ちでない方は<a href='/platform/contact' class='text-aixis-600 dark:text-aixis-400 hover:underline font-medium'>お問い合わせ</a>ください。
+                アカウントをお持ちでない方は<a href='/contact' class='text-aixis-600 dark:text-aixis-400 hover:underline font-medium'>お問い合わせ</a>ください。
             </div>
 
             <!-- Home Link -->
             <div class="mt-4 text-center">
-                <a href="/platform"
+                <a href="/"
                    class="text-sm text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-200 font-jp">
                     ホームに戻る
                 </a>
@@ -176,15 +176,15 @@
                     var meData = await meResp.json();
                     var role = (meData.role || '').toLowerCase();
                     if (role === 'admin' || role === 'auditor') {
-                        window.location.href = '/platform/dashboard';
+                        window.location.href = '/dashboard';
                     } else {
-                        window.location.href = '/platform/portal';
+                        window.location.href = '/portal';
                     }
                 } else {
-                    window.location.href = '/platform/portal';
+                    window.location.href = '/portal';
                 }
             } catch (meErr) {
-                window.location.href = '/platform/portal';
+                window.location.href = '/portal';
             }
         } catch (err) {
             showError(err.message);

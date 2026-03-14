@@ -56,7 +56,7 @@
 
         <div class="mt-6 flex gap-3">
             <button onclick="submitTool()" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors font-jp">申請する</button>
-            <a href="/platform/vendor" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors font-jp">戻る</a>
+            <a href="/vendor" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors font-jp">戻る</a>
         </div>
     </div>
 </div>
@@ -100,7 +100,7 @@ async function submitTool() {
         const res = await fetch(API + '/vendor/submissions', {method:'POST', headers:headers(), body:JSON.stringify(body)});
         if (res.ok) {
             alert('ツール申請が完了しました。審査をお待ちください。');
-            window.location.href = '/platform/vendor';
+            window.location.href = '/vendor';
         } else {
             const e = await res.json();
             alert(e.detail || 'エラーが発生しました');

@@ -7,7 +7,7 @@
 
     <!-- Breadcrumb -->
     <nav class="mb-6 text-sm text-gray-500 dark:text-gray-400 font-jp">
-        <a href="/platform/dashboard" class="hover:text-gray-700 dark:hover:text-gray-200 transition-colors">ダッシュボード</a>
+        <a href="/dashboard" class="hover:text-gray-700 dark:hover:text-gray-200 transition-colors">ダッシュボード</a>
         <span class="mx-2">/</span>
         <span class="text-gray-900 dark:text-white">監査セッション詳細</span>
     </nav>
@@ -25,7 +25,7 @@
     <div id="error-state" class="hidden">
         <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
             <p class="text-red-700 dark:text-red-300 font-jp" id="error-message">エラーが発生しました</p>
-            <a href="/platform/dashboard" class="mt-3 inline-block text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-jp">ダッシュボードに戻る</a>
+            <a href="/dashboard" class="mt-3 inline-block text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-jp">ダッシュボードに戻る</a>
         </div>
     </div>
 
@@ -425,7 +425,7 @@
                 method: 'POST'
             });
             // Redirect to the new session's detail page
-            window.location.href = '/platform/dashboard/audits/' + encodeURIComponent(result.db_session_id);
+            window.location.href = '/dashboard/audits/' + encodeURIComponent(result.db_session_id);
         } catch (e) {
             alert('再試行に失敗しました: ' + (e.message || '不明なエラー'));
             retrying = false;
@@ -447,7 +447,7 @@
         var actions = document.getElementById('action-buttons');
         var btns = '';
         if (data.status === 'awaiting_manual') {
-            btns += '<a href="/platform/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors font-jp">手動評価を入力</a>';
+            btns += '<a href="/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors font-jp">手動評価を入力</a>';
         }
         if (data.status === 'running' || data.status === 'pending') {
             btns += '<span class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 font-jp"><svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>実行中</span>';
@@ -799,7 +799,7 @@
         if (!confirm('このセッションを削除しますか？この操作は元に戻せません。')) return;
         try {
             await aixisAPI('/audits/' + encodeURIComponent(sessionId), { method: 'DELETE' });
-            window.location.href = '/platform/dashboard';
+            window.location.href = '/dashboard';
         } catch (e) {
             alert('削除に失敗しました: ' + (e.message || '不明なエラー'));
         }
