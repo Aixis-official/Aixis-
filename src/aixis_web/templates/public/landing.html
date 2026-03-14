@@ -3,15 +3,21 @@
 
 {% block head %}
 <style>
+    /* ===== Landing page: nav overlays hero ===== */
+    #main-nav {
+        position: fixed !important;
+    }
+
     /* ===== Dark→White scene transition (quants.co.jp pattern) ===== */
     /* Black overlay covers the white sections; fades out on scroll trigger */
     #white-sections-wrapper {
         position: relative;
+        margin-top: -1px; /* eliminate subpixel gap at section boundary */
     }
     #white-sections-wrapper::after {
         content: "";
         position: absolute;
-        top: -4px; left: 0; width: 100%; height: calc(100% + 4px);
+        top: 0; left: 0; width: 100%; height: 100%;
         background-color: #0a0f1a;
         opacity: 1;
         transition: opacity 0.5s ease-in-out;
@@ -61,32 +67,30 @@
         border-bottom-color: transparent !important;
     }
     #main-nav.nav-transparent .nav-link,
-    #main-nav.nav-transparent .nav-link button {
-        color: rgba(255, 255, 255, 0.75) !important;
+    #main-nav.nav-transparent .nav-dropdown button {
+        color: #ffffff !important;
     }
     #main-nav.nav-transparent .nav-link:hover,
-    #main-nav.nav-transparent .nav-link button:hover {
-        color: #fff !important;
+    #main-nav.nav-transparent .nav-dropdown button:hover {
+        color: #ffffff !important;
+        opacity: 0.8;
     }
     #main-nav.nav-transparent .nav-auth-link {
-        color: rgba(255, 255, 255, 0.7) !important;
+        color: #ffffff !important;
     }
     #main-nav.nav-transparent .nav-auth-link:hover {
-        color: #fff !important;
+        opacity: 0.8;
     }
     #main-nav.nav-transparent .nav-auth-cta {
-        color: #fff !important;
-        border-color: rgba(255, 255, 255, 0.4) !important;
+        color: #ffffff !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
     }
     #main-nav.nav-transparent .nav-auth-cta:hover {
-        border-color: rgba(255, 255, 255, 0.8) !important;
-    }
-    #main-nav.nav-transparent .nav-logo {
-        /* Logo is already bright on dark bg */
+        border-color: #ffffff !important;
     }
     /* Mobile hamburger white on transparent nav */
     #main-nav.nav-transparent #mobile-menu-btn {
-        color: rgba(255, 255, 255, 0.8) !important;
+        color: #ffffff !important;
     }
 
     @keyframes fadeIn {

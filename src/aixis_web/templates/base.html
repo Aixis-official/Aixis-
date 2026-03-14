@@ -150,7 +150,7 @@
                 <!-- Center: Navigation links (desktop) -->
                 <div class="hidden md:flex items-center gap-1">
                     <a href="/tools"
-                       class="nav-link relative px-3.5 py-2 text-[13px] font-normal tracking-[0.03em] transition-colors duration-200
+                       class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200
                               {% if active_page == 'tools' %}
                               text-gray-900 dark:text-white
                               {% else %}
@@ -160,7 +160,7 @@
                         {% if active_page == 'tools' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900 dark:bg-white"></span>{% endif %}
                     </a>
                     <a href="/compare"
-                       class="nav-link relative px-3.5 py-2 text-[13px] font-normal tracking-[0.03em] transition-colors duration-200
+                       class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200
                               {% if active_page == 'compare' %}
                               text-gray-900 dark:text-white
                               {% else %}
@@ -172,7 +172,7 @@
                     <!-- Aixisについて dropdown -->
                     <div class="nav-dropdown" id="nav-service-dropdown">
                         <button type="button"
-                                class="nav-link relative px-3.5 py-2 text-[13px] font-normal tracking-[0.03em] transition-colors duration-200 inline-flex items-center gap-1
+                                class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200 inline-flex items-center gap-1
                                        {% if active_page in ['audit-process', 'about'] %}
                                        text-gray-900 dark:text-white
                                        {% else %}
@@ -201,7 +201,7 @@
                     </div>
 
                     <a href="/pricing"
-                       class="nav-link relative px-3.5 py-2 text-[13px] font-normal tracking-[0.03em] transition-colors duration-200
+                       class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200
                               {% if active_page == 'pricing' %}
                               text-gray-900 dark:text-white
                               {% else %}
@@ -227,11 +227,11 @@
                         </button>
                         {% else %}
                         <a href="/login"
-                           class="nav-auth-link px-4 py-1.5 text-[13px] font-normal tracking-wide text-gray-500 hover:text-gray-900 transition-colors duration-200">
+                           class="nav-auth-link px-4 py-1.5 text-sm font-medium tracking-wide text-gray-500 hover:text-gray-900 transition-colors duration-200">
                             ログイン
                         </a>
                         <a href="/contact?type=demo"
-                           class="nav-auth-cta px-4 py-1.5 text-[13px] font-normal tracking-wide text-gray-700 border border-gray-300 hover:border-gray-500 rounded-none transition-all duration-200">
+                           class="nav-auth-cta px-5 py-1.5 text-sm font-medium tracking-wide text-gray-700 border border-gray-300 hover:border-gray-500 rounded-none transition-all duration-200">
                             無料デモを予約する
                         </a>
                         {% endif %}
