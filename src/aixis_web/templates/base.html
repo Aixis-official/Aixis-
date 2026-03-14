@@ -7,6 +7,38 @@
     {% block meta_description %}{% endblock %}
     <title>{{ title | default("Aixis") }} - Aixis AI監査プラットフォーム</title>
 
+    <!-- Google Analytics 4 (excluded for admin role and ?notrack=1 opt-out) -->
+    <script>
+        (function() {
+            var skip = false;
+            // ?notrack=1 sets a persistent opt-out flag
+            if (new URLSearchParams(window.location.search).get('notrack') === '1') {
+                localStorage.setItem('aixis_notrack', '1');
+                skip = true;
+            }
+            // Persistent opt-out check
+            if (localStorage.getItem('aixis_notrack') === '1') skip = true;
+            // Admin JWT check
+            try {
+                var t = localStorage.getItem('aixis_token');
+                if (t) {
+                    var payload = JSON.parse(atob(t.split('.')[1]));
+                    if (payload.role === 'admin') skip = true;
+                }
+            } catch(e) {}
+            if (!skip) {
+                var s = document.createElement('script');
+                s.async = true;
+                s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CV6MJV3NBF';
+                document.head.appendChild(s);
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-CV6MJV3NBF');
+            }
+        })();
+    </script>
+
     <!-- Dark mode init (must run before paint to prevent flash) -->
     <script>
         (function() {

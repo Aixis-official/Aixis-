@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "aixis",
-      "runtimeExecutable": ".venv/bin/python",
-      "runtimeArgs": ["-m", "uvicorn", "aixis_web.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["PYTHONPATH=src", ".venv/bin/python", "-m", "uvicorn", "aixis_web.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
       "port": 8000
     }
   ]
