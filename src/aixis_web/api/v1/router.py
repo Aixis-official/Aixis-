@@ -19,6 +19,13 @@ from .vendor import router as vendor_router
 from .benchmarks import router as benchmarks_router
 
 api_router = APIRouter()
+
+
+@api_router.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+
 api_router.include_router(auth_router, prefix="/auth", tags=["認証"])
 api_router.include_router(contact_router, prefix="/contact", tags=["お問い合わせ"])
 api_router.include_router(tools_router, prefix="/tools", tags=["ツール"])
