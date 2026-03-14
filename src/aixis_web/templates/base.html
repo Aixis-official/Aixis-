@@ -160,39 +160,39 @@
                 <!-- Center: Navigation links (desktop) -->
                 <div class="hidden md:flex items-center gap-1">
                     <a href="/tools"
-                       class="nav-link relative px-3 py-2 text-sm font-medium transition-colors duration-150
+                       class="nav-link relative px-3.5 py-2 text-[13px] font-normal tracking-[0.03em] transition-colors duration-200
                               {% if active_page == 'tools' %}
-                              text-aixis-500 dark:text-white
+                              text-gray-900 dark:text-white
                               {% else %}
-                              text-gray-600 dark:text-gray-300 hover:text-aixis-500 dark:hover:text-white
+                              text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white
                               {% endif %}">
                         監査データベース
-                        {% if active_page == 'tools' %}<span class="absolute bottom-0 left-3 right-3 h-[2px] bg-aixis-500 dark:bg-white rounded-full"></span>{% endif %}
+                        {% if active_page == 'tools' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900 dark:bg-white"></span>{% endif %}
                     </a>
                     <a href="/compare"
-                       class="nav-link relative px-3 py-2 text-sm font-medium transition-colors duration-150
+                       class="nav-link relative px-3.5 py-2 text-[13px] font-normal tracking-[0.03em] transition-colors duration-200
                               {% if active_page == 'compare' %}
-                              text-aixis-500 dark:text-white
+                              text-gray-900 dark:text-white
                               {% else %}
-                              text-gray-600 dark:text-gray-300 hover:text-aixis-500 dark:hover:text-white
+                              text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white
                               {% endif %}">
                         ツール比較
-                        {% if active_page == 'compare' %}<span class="absolute bottom-0 left-3 right-3 h-[2px] bg-aixis-500 dark:bg-white rounded-full"></span>{% endif %}
+                        {% if active_page == 'compare' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900 dark:bg-white"></span>{% endif %}
                     </a>
                     <!-- Aixisについて dropdown -->
                     <div class="nav-dropdown" id="nav-service-dropdown">
                         <button type="button"
-                                class="nav-link relative px-3 py-2 text-sm font-medium transition-colors duration-150 inline-flex items-center gap-1
+                                class="nav-link relative px-3.5 py-2 text-[13px] font-normal tracking-[0.03em] transition-colors duration-200 inline-flex items-center gap-1
                                        {% if active_page in ['audit-process', 'about'] %}
-                                       text-aixis-500 dark:text-white
+                                       text-gray-900 dark:text-white
                                        {% else %}
-                                       text-gray-600 dark:text-gray-300 hover:text-aixis-500 dark:hover:text-white
+                                       text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white
                                        {% endif %}">
                             Aixisについて
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                             </svg>
-                            {% if active_page in ['audit-process', 'about'] %}<span class="absolute bottom-0 left-3 right-3 h-[2px] bg-aixis-500 dark:bg-white rounded-full"></span>{% endif %}
+                            {% if active_page in ['audit-process', 'about'] %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900 dark:bg-white"></span>{% endif %}
                         </button>
                         <div class="nav-dropdown-menu pt-2">
                             <div class="bg-white dark:bg-aixis-700 rounded-lg shadow-lg ring-1 ring-black/5 dark:ring-white/10 py-1.5">
@@ -211,14 +211,14 @@
                     </div>
 
                     <a href="/pricing"
-                       class="nav-link relative px-3 py-2 text-sm font-medium transition-colors duration-150
+                       class="nav-link relative px-3.5 py-2 text-[13px] font-normal tracking-[0.03em] transition-colors duration-200
                               {% if active_page == 'pricing' %}
-                              text-aixis-500 dark:text-white
+                              text-gray-900 dark:text-white
                               {% else %}
-                              text-gray-600 dark:text-gray-300 hover:text-aixis-500 dark:hover:text-white
+                              text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white
                               {% endif %}">
                         料金
-                        {% if active_page == 'pricing' %}<span class="absolute bottom-0 left-3 right-3 h-[2px] bg-aixis-500 dark:bg-white rounded-full"></span>{% endif %}
+                        {% if active_page == 'pricing' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900 dark:bg-white"></span>{% endif %}
                     </a>
                 </div>
 
@@ -253,11 +253,11 @@
                         </button>
                         {% else %}
                         <a href="/login"
-                           class="px-4 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-lg transition-colors duration-150">
+                           class="px-4 py-1.5 text-[13px] font-normal tracking-wide text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
                             ログイン
                         </a>
                         <a href="/contact?type=demo"
-                           class="px-4 py-1.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 rounded-lg shadow-sm transition-all duration-150">
+                           class="px-4 py-1.5 text-[13px] font-normal tracking-wide text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-500 hover:border-gray-500 dark:hover:border-gray-300 rounded-none transition-all duration-200">
                             無料デモを予約する
                         </a>
                         {% endif %}
