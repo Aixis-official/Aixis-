@@ -1,0 +1,431 @@
+{% extends "admin_base.html" %}
+
+{% block header_title %}手動チェックリスト評価{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header with back button -->
+    <div class="flex items-center gap-4 mb-6">
+        <a href="/platform/dashboard"
+           class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-[#1e2235] border border-gray-200 dark:border-gray-700/50 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+            ダッシュボード
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">手動チェックリスト評価</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 font-mono">セッション: {{ session_id }}</p>
+        </div>
+    </div>
+
+    <!-- Layout: Main + Sidebar -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        <!-- Main Column (3/4) -->
+        <div class="lg:col-span-3 space-y-6">
+
+            <!-- Progress Bar -->
+            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 font-jp">評価進捗</h2>
+                    <span class="text-sm font-medium tabular-nums" id="progress-text">0 / 0 項目入力済み (0%)</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                    <div class="h-3 rounded-full transition-all duration-500 ease-out" id="progress-bar" style="width:0%;background-color:#e53e3e"></div>
+                </div>
+            </div>
+
+            <!-- Axis Accordion Sections -->
+            <div id="checklist-container" class="space-y-4">
+                <div class="flex flex-col items-center py-12 text-gray-400 dark:text-gray-500">
+                    <svg class="animate-spin h-6 w-6 mb-3 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span class="text-sm font-jp">チェックリスト読み込み中...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar (1/4) - Radar Chart -->
+        <div class="lg:col-span-1">
+            <div class="lg:sticky lg:top-24">
+                <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-4">
+                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 font-jp text-center">スコアプレビュー</h3>
+                    <div id="radar-chart" style="width:100%;height:260px;"></div>
+                    <div class="mt-2 space-y-1" id="axis-score-summary"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Button (sticky on mobile) -->
+    <div class="fixed bottom-0 left-0 right-0 lg:static lg:mt-8 bg-white/90 dark:bg-[#1e2235]/90 backdrop-blur-sm lg:backdrop-blur-none border-t border-gray-200 dark:border-gray-700/50 lg:border-0 p-4 lg:p-0 z-40">
+        <div class="max-w-7xl mx-auto lg:px-0">
+            <div class="bg-white dark:bg-[#1e2235] lg:rounded-xl lg:shadow-sm lg:dark:shadow-none lg:border lg:border-gray-100 lg:dark:border-gray-700/50 lg:p-6 text-center">
+                <button class="w-full lg:w-auto px-8 py-3 text-sm font-semibold text-white bg-aixis-500 dark:bg-indigo-600 rounded-lg hover:bg-aixis-600 dark:hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-sm font-jp"
+                        id="submit-scores" disabled>
+                    手動スコアを送信して確定
+                </button>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 font-jp">送信後、自動スコアと統合されて最終スコアが算出されます。</p>
+            </div>
+        </div>
+    </div>
+    <!-- Spacer for fixed bottom bar on mobile -->
+    <div class="h-24 lg:hidden"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const sessionId = '{{ session_id }}';
+
+const AXIS_CONFIG = [
+    { key: 'practicality',     name: '実務適性',       color: '#2b6cb0', autoRatio: 0.4,  manualRatio: 0.6  },
+    { key: 'cost_performance', name: '費用対効果',     color: '#38a169', autoRatio: 0.3,  manualRatio: 0.7  },
+    { key: 'localization',     name: '日本語能力',     color: '#ed8936', autoRatio: 0.7,  manualRatio: 0.3  },
+    { key: 'safety',           name: '信頼性・安全性', color: '#e53e3e', autoRatio: 0.35, manualRatio: 0.65 },
+    { key: 'uniqueness',       name: '革新性',         color: '#805ad5', autoRatio: 0.5,  manualRatio: 0.5  },
+];
+
+const CHECKLISTS = {
+    practicality: [
+        { id: 'PR-001', name_jp: 'チーム導入容易性', scoring_guide: '0=導入不可, 1=専門知識必須, 2=IT部門支援必要, 3=マニュアルで可能, 4=直感的, 5=即座に全員利用可能' },
+        { id: 'PR-002', name_jp: 'オンボーディング品質', scoring_guide: '0=なし, 1=英語のみ, 2=基本的, 3=充実, 4=インタラクティブ, 5=カスタマイズ可能な日本語ガイド' },
+        { id: 'PR-003', name_jp: '既存ワークフロー統合', scoring_guide: '0=統合不可, 2=API/Webhookあり, 3=主要サービス連携, 5=日本の業務ツール完全対応' },
+        { id: 'PR-004', name_jp: 'カスタマーサポート品質', scoring_guide: '0=なし, 1=英語メールのみ, 2=チャットボット, 3=日本語サポート, 5=専任日本語担当+SLA保証' },
+        { id: 'PR-005', name_jp: '出力品質の一貫性', scoring_guide: '0=ランダム, 2=基本的に安定, 3=プロンプト次第, 5=常に高品質' },
+    ],
+    cost_performance: [
+        { id: 'CP-001', name_jp: '月額コスト（1人あたり）', scoring_guide: '0=5万円超, 1=3-5万円, 2=1-3万円, 3=5千-1万円, 4=千-5千円, 5=無料/千円未満' },
+        { id: 'CP-002', name_jp: 'TCO（総保有コスト）', scoring_guide: '0=隠れコスト大, 2=追加コストあり, 3=明確, 5=全コスト透明' },
+        { id: 'CP-003', name_jp: '無料プランの実用性', scoring_guide: '0=なし, 1=デモのみ, 2=制限大, 3=個人利用可, 5=チーム利用可' },
+        { id: 'CP-004', name_jp: '料金体系の透明性', scoring_guide: '0=不明瞭, 2=基本料金のみ公開, 3=詳細公開, 5=全コスト+シミュレータ' },
+        { id: 'CP-005', name_jp: '乗り換えコスト', scoring_guide: '0=ロックイン, 2=データ移行困難, 3=エクスポート可, 5=完全ポータブル' },
+    ],
+    localization: [
+        { id: 'LO-001', name_jp: 'UI日本語化品質', scoring_guide: '0=英語のみ, 1=機械翻訳, 2=部分的, 3=ほぼ完全, 5=ネイティブ品質' },
+        { id: 'LO-002', name_jp: 'ドキュメント日本語化', scoring_guide: '0=なし, 1=一部翻訳, 2=基本文書, 3=充実, 5=全文書+動画も日本語' },
+        { id: 'LO-003', name_jp: '日本固有機能対応', scoring_guide: '0=なし, 2=基本, 3=和暦/インボイス, 5=日本の商慣習完全対応' },
+    ],
+    safety: [
+        { id: 'SF-001', name_jp: 'データ保護ポリシー', scoring_guide: '0=不明, 1=基本的, 2=GDPR準拠, 3=ISMS, 4=SOC2, 5=ISO27001+国内法完全準拠' },
+        { id: 'SF-002', name_jp: 'データ保存場所', scoring_guide: '0=不明, 1=海外のみ, 2=選択不可, 3=リージョン選択, 5=国内DC+選択可' },
+        { id: 'SF-003', name_jp: 'アクセス制御', scoring_guide: '0=なし, 2=基本認証, 3=RBAC, 4=SSO+MFA, 5=SAML+カスタムポリシー' },
+        { id: 'SF-004', name_jp: '監査ログ', scoring_guide: '0=なし, 2=基本ログ, 3=詳細ログ, 5=全操作記録+エクスポート+保持期間設定' },
+        { id: 'SF-005', name_jp: 'インシデント対応', scoring_guide: '0=不明, 2=メール通知, 3=SLA定義, 5=24h対応+日本語エスカレーション' },
+    ],
+    uniqueness: [
+        { id: 'UQ-001', name_jp: '独自技術・モデル', scoring_guide: '0=完全ラッパー, 2=軽微カスタム, 3=独自ファインチューン, 5=独自基盤モデル' },
+        { id: 'UQ-002', name_jp: '差別化機能', scoring_guide: '0=なし, 2=UI差異のみ, 3=独自機能あり, 5=市場唯一の機能' },
+        { id: 'UQ-003', name_jp: 'エコシステム・拡張性', scoring_guide: '0=閉鎖的, 2=基本API, 3=プラグイン, 5=オープンエコシステム' },
+        { id: 'UQ-004', name_jp: '将来性・ロードマップ', scoring_guide: '0=不明, 2=基本更新, 3=明確なロードマップ, 5=透明+コミュニティ主導' },
+        { id: 'UQ-005', name_jp: 'ラッパー製品リスク', scoring_guide: '5=独自技術, 3=一部依存, 1=完全依存, 0=APIラッパーのみ（元サービス停止で利用不可）' },
+    ],
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderChecklists();
+    renderRadarChart();
+});
+
+/* ===== Render Accordion ===== */
+function renderChecklists() {
+    const container = document.getElementById('checklist-container');
+    container.innerHTML = AXIS_CONFIG.map((axis, idx) => {
+        const items = CHECKLISTS[axis.key] || [];
+        const isOpen = idx === 0;
+        return `
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 overflow-hidden transition-colors duration-200" data-axis-section="${axis.key}">
+            <!-- Accordion Header -->
+            <button type="button"
+                    class="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors duration-150 group"
+                    onclick="toggleAccordion('${axis.key}')">
+                <div class="flex items-center gap-3">
+                    <span class="w-3 h-3 rounded-full shrink-0" style="background-color:${axis.color}"></span>
+                    <span class="text-base font-semibold text-gray-900 dark:text-white font-jp">${axis.name}</span>
+                    <span class="px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                        自動${(axis.autoRatio * 100).toFixed(0)}% / 手動${(axis.manualRatio * 100).toFixed(0)}%
+                    </span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500 tabular-nums" id="axis-count-${axis.key}">0 / ${items.length}</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}" id="chevron-${axis.key}" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+                </svg>
+            </button>
+            <!-- Accordion Body -->
+            <div class="border-t border-gray-100 dark:border-gray-700/50 ${isOpen ? '' : 'hidden'}" id="body-${axis.key}">
+                <div class="p-4 space-y-3">
+                    ${items.map(item => renderChecklistItem(axis, item)).join('')}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    updateProgress();
+}
+
+function renderChecklistItem(axis, item) {
+    return `
+    <div class="rounded-lg border border-gray-100 dark:border-gray-700/40 p-4 hover:border-gray-200 dark:hover:border-gray-600/50 transition-colors duration-150" id="item-${item.id}">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <!-- Left: Item info -->
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 shrink-0" id="dot-${item.id}"></span>
+                    <span class="text-xs font-mono text-gray-400 dark:text-gray-500">${item.id}</span>
+                    <span class="text-sm font-semibold text-gray-900 dark:text-white font-jp">${item.name_jp}</span>
+                </div>
+                <p class="text-xs text-gray-400 dark:text-gray-500 ml-4 leading-relaxed font-jp">${item.scoring_guide || ''}</p>
+            </div>
+            <!-- Right: Score input -->
+            <div class="flex items-center gap-2 shrink-0 mt-2 sm:mt-0 sm:ml-4">
+                <input type="range" min="0" max="5" step="0.5" value="0"
+                       class="w-20 sm:w-28 h-2 rounded-full appearance-none cursor-pointer accent-indigo-500
+                              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-500 [&::-webkit-slider-thumb]:shadow-sm
+                              bg-gray-200 dark:bg-gray-700"
+                       data-axis="${axis.key}" data-item="${item.id}"
+                       oninput="onRangeInput(this)">
+                <input type="number" min="0" max="5" step="0.1" value="0.0"
+                       class="w-14 sm:w-16 text-center text-sm font-bold tabular-nums rounded-md border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-colors duration-150"
+                       data-axis="${axis.key}" data-item="${item.id}"
+                       onchange="onNumberChange(this)">
+                <span class="text-xs text-gray-400 dark:text-gray-500">/ 5</span>
+            </div>
+        </div>
+        <!-- Evidence textarea -->
+        <div class="mt-3 ml-4">
+            <textarea rows="2"
+                      class="w-full text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 resize-y transition-colors duration-150 font-jp"
+                      data-axis="${axis.key}" data-item="${item.id}"
+                      placeholder="エビデンス・根拠を入力..."></textarea>
+        </div>
+    </div>`;
+}
+
+/* ===== Accordion Toggle ===== */
+function toggleAccordion(key) {
+    const body = document.getElementById('body-' + key);
+    const chevron = document.getElementById('chevron-' + key);
+    body.classList.toggle('hidden');
+    chevron.classList.toggle('rotate-180');
+}
+
+/* ===== Score Syncing ===== */
+function onRangeInput(rangeEl) {
+    const val = parseFloat(rangeEl.value);
+    const container = rangeEl.closest('.flex');
+    const numInput = container.querySelector('input[type="number"]');
+    numInput.value = val.toFixed(1);
+    applyScoreStyle(numInput, val);
+    updateItemDot(rangeEl.dataset.item, val);
+    updateProgress();
+    renderRadarChart();
+}
+
+function onNumberChange(numEl) {
+    let val = parseFloat(numEl.value) || 0;
+    val = Math.round(Math.min(5, Math.max(0, val)) * 10) / 10;
+    numEl.value = val.toFixed(1);
+    const container = numEl.closest('.flex');
+    const rangeInput = container.querySelector('input[type="range"]');
+    rangeInput.value = val;
+    applyScoreStyle(numEl, val);
+    updateItemDot(numEl.dataset.item, val);
+    updateProgress();
+    renderRadarChart();
+}
+
+function applyScoreStyle(numEl, val) {
+    numEl.classList.remove('text-gray-400', 'dark:text-gray-500', 'text-red-500', 'dark:text-red-400', 'text-amber-500', 'dark:text-amber-400', 'text-emerald-600', 'dark:text-emerald-400', 'text-blue-600', 'dark:text-blue-400');
+    if (val === 0) {
+        numEl.classList.add('text-gray-400', 'dark:text-gray-500');
+    } else if (val < 2) {
+        numEl.classList.add('text-red-500', 'dark:text-red-400');
+    } else if (val < 3.5) {
+        numEl.classList.add('text-amber-500', 'dark:text-amber-400');
+    } else if (val < 4.5) {
+        numEl.classList.add('text-blue-600', 'dark:text-blue-400');
+    } else {
+        numEl.classList.add('text-emerald-600', 'dark:text-emerald-400');
+    }
+}
+
+function updateItemDot(itemId, val) {
+    const dot = document.getElementById('dot-' + itemId);
+    if (!dot) return;
+    dot.classList.remove('bg-gray-300', 'dark:bg-gray-600', 'bg-amber-400', 'dark:bg-amber-500', 'bg-emerald-500', 'dark:bg-emerald-400');
+    if (val === 0) {
+        dot.classList.add('bg-gray-300', 'dark:bg-gray-600');
+    } else {
+        // Check if evidence is provided
+        const textarea = document.querySelector(`textarea[data-item="${itemId}"]`);
+        const hasEvidence = textarea && textarea.value.trim().length > 0;
+        if (hasEvidence) {
+            dot.classList.add('bg-emerald-500', 'dark:bg-emerald-400');
+        } else {
+            dot.classList.add('bg-amber-400', 'dark:bg-amber-500');
+        }
+    }
+}
+
+/* ===== Progress ===== */
+function updateProgress() {
+    const allInputs = document.querySelectorAll('input[type="number"][data-axis]');
+    const total = allInputs.length;
+    let filled = 0;
+
+    allInputs.forEach(el => {
+        if (parseFloat(el.value) > 0) filled++;
+    });
+
+    const pct = total > 0 ? Math.round(filled / total * 100) : 0;
+
+    // Update text
+    const textEl = document.getElementById('progress-text');
+    textEl.textContent = `${filled} / ${total} 項目入力済み (${pct}%)`;
+    textEl.classList.remove('text-red-500', 'text-amber-500', 'text-emerald-600', 'dark:text-red-400', 'dark:text-amber-400', 'dark:text-emerald-400');
+    if (pct < 30) {
+        textEl.classList.add('text-red-500', 'dark:text-red-400');
+    } else if (pct < 70) {
+        textEl.classList.add('text-amber-500', 'dark:text-amber-400');
+    } else {
+        textEl.classList.add('text-emerald-600', 'dark:text-emerald-400');
+    }
+
+    // Update bar
+    const bar = document.getElementById('progress-bar');
+    bar.style.width = pct + '%';
+    if (pct < 30) {
+        bar.style.backgroundColor = '#e53e3e';
+    } else if (pct < 70) {
+        bar.style.backgroundColor = '#d69e2e';
+    } else {
+        bar.style.backgroundColor = '#38a169';
+    }
+
+    // Update per-axis counts
+    AXIS_CONFIG.forEach(axis => {
+        const axisInputs = document.querySelectorAll(`input[type="number"][data-axis="${axis.key}"]`);
+        const axisTotal = axisInputs.length;
+        let axisFilled = 0;
+        axisInputs.forEach(el => { if (parseFloat(el.value) > 0) axisFilled++; });
+        const countEl = document.getElementById('axis-count-' + axis.key);
+        if (countEl) countEl.textContent = `${axisFilled} / ${axisTotal}`;
+    });
+
+    // Enable/disable submit
+    document.getElementById('submit-scores').disabled = filled === 0;
+}
+
+/* ===== Radar Chart ===== */
+function getAxisAverages() {
+    const avgs = {};
+    AXIS_CONFIG.forEach(axis => {
+        const inputs = document.querySelectorAll(`input[type="number"][data-axis="${axis.key}"]`);
+        let sum = 0, count = 0;
+        inputs.forEach(el => {
+            const v = parseFloat(el.value);
+            if (v > 0) { sum += v; count++; }
+        });
+        avgs[axis.key] = count > 0 ? sum / count : 0;
+    });
+    return avgs;
+}
+
+function renderRadarChart() {
+    const avgs = getAxisAverages();
+    const labels = AXIS_CONFIG.map(a => a.name);
+    const values = AXIS_CONFIG.map(a => avgs[a.key]);
+    // Close the polygon
+    const r = [...values, values[0]];
+    const theta = [...labels, labels[0]];
+
+    const trace = {
+        type: 'scatterpolar',
+        r: r,
+        theta: theta,
+        fill: 'toself',
+        fillcolor: 'rgba(99, 102, 241, 0.15)',
+        line: { color: '#6366f1', width: 2 },
+        marker: { size: 5, color: '#6366f1' },
+        name: '手動スコア'
+    };
+
+    const layout = getRadarLayout({
+        margin: { t: 20, r: 40, b: 20, l: 40 },
+        showlegend: false,
+        width: undefined,
+        height: 260,
+    });
+
+    const config = { displayModeBar: false, responsive: true };
+    const el = document.getElementById('radar-chart');
+    Plotly.react(el, [trace], layout, config);
+
+    // Register for theme changes
+    el._renderChart = renderRadarChart;
+
+    // Update axis score summary
+    const summary = document.getElementById('axis-score-summary');
+    summary.innerHTML = AXIS_CONFIG.map(a => {
+        const v = avgs[a.key];
+        const colorClass = v === 0 ? 'text-gray-400 dark:text-gray-500' : v >= 3.5 ? 'text-emerald-600 dark:text-emerald-400' : v >= 2 ? 'text-amber-500 dark:text-amber-400' : 'text-red-500 dark:text-red-400';
+        return `<div class="flex items-center justify-between text-xs px-1">
+            <span class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full" style="background:${a.color}"></span>
+                <span class="text-gray-600 dark:text-gray-400 font-jp">${a.name}</span>
+            </span>
+            <span class="font-bold tabular-nums ${colorClass}">${v > 0 ? v.toFixed(1) : '--'}</span>
+        </div>`;
+    }).join('');
+}
+
+/* ===== Submit ===== */
+document.getElementById('submit-scores').addEventListener('click', async () => {
+    const btn = document.getElementById('submit-scores');
+    btn.disabled = true;
+    btn.textContent = '送信中...';
+
+    const entries = [];
+    document.querySelectorAll('input[type="number"][data-axis]').forEach(el => {
+        const score = parseFloat(el.value);
+        if (score > 0) {
+            const axis = el.dataset.axis;
+            const itemId = el.dataset.item;
+            const textarea = document.querySelector(`textarea[data-axis="${axis}"][data-item="${itemId}"]`);
+            entries.push({
+                axis: axis,
+                item_id: itemId,
+                score: score,
+                evidence: textarea ? textarea.value : '',
+            });
+        }
+    });
+
+    try {
+        await aixisAPI(`/audits/${sessionId}/manual-scores`, {
+            method: 'POST',
+            body: JSON.stringify({ entries }),
+        });
+        alert('手動スコアが送信されました。自動スコアとの統合処理を開始します。');
+        window.location.href = '/platform/dashboard';
+    } catch (e) {
+        alert('エラー: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = '手動スコアを送信して確定';
+    }
+});
+
+// Also update dots when evidence is typed
+document.addEventListener('input', (e) => {
+    if (e.target.tagName === 'TEXTAREA' && e.target.dataset.item) {
+        const itemId = e.target.dataset.item;
+        const numInput = document.querySelector(`input[type="number"][data-item="${itemId}"]`);
+        if (numInput) {
+            updateItemDot(itemId, parseFloat(numInput.value) || 0);
+        }
+    }
+});
+</script>
+{% endblock %}

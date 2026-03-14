@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aixis Score - {{ tool_name }}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+    background: #ffffff;
+    color: #1f2937;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #111827; color: #f3f4f6; }
+    .card { background: #1f2937; border-color: #374151; }
+    .tool-name { color: #f9fafb; }
+    .subtitle { color: #9ca3af; }
+  }
+  .card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+  }
+  .tool-name {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #111827;
+  }
+  .subtitle {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 16px;
+  }
+  .grade-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .overall-score {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 16px;
+  }
+  .radar-chart { margin: 0 auto; }
+  .footer {
+    margin-top: 12px;
+    font-size: 10px;
+    color: #9ca3af;
+  }
+  .footer a { color: #6366f1; text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="tool-name">{{ tool_name }}</div>
+  <div class="subtitle">{{ tool_name_jp }}</div>
+  <div class="grade-badge" style="background:{{ grade_color }}">{{ overall_grade }}</div>
+  <div class="overall-score">Overall: {{ "%.2f"|format(overall_score) }} / 5.00</div>
+  {{ radar_svg | safe }}
+  <div class="footer">
+    Powered by <a href="/platform/tools/{{ tool_slug }}" target="_blank">Aixis</a>
+  </div>
+</div>
+</body>
+</html>

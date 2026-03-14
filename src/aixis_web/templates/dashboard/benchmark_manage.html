@@ -1,0 +1,225 @@
+{% extends "admin_base.html" %}
+
+{% block header_title %}ベンチマーク管理{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">ベンチマーク管理</h1>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">ベンチマークスイートの作成・管理とリーダーボード</p>
+        </div>
+        <button onclick="showCreateSuite()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors font-jp">
+            新規スイート
+        </button>
+    </div>
+
+    <!-- Create Suite Form -->
+    <div id="create-suite-form" class="hidden mb-8 bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 font-jp">新規ベンチマークスイート</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Slug</label>
+                <input type="text" id="suite-slug" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="safety-benchmark-v1">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Version</label>
+                <input type="text" id="suite-version" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" value="v1.0">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 font-jp">名前 (英語)</label>
+                <input type="text" id="suite-name" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="Safety Benchmark">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 font-jp">名前 (日本語)</label>
+                <input type="text" id="suite-name-jp" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="安全性ベンチマーク">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 font-jp">説明 (日本語)</label>
+                <textarea id="suite-desc-jp" rows="2" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm"></textarea>
+            </div>
+        </div>
+        <div class="mt-4 flex gap-3">
+            <button onclick="createSuite()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg font-jp">作成</button>
+            <button onclick="hideCreateSuite()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg font-jp">キャンセル</button>
+        </div>
+    </div>
+
+    <!-- Suites List -->
+    <div class="space-y-4" id="suites-list">
+        <div class="text-center text-gray-400 py-8 font-jp">読み込み中...</div>
+    </div>
+
+    <!-- Add Test Cases Section (shown when suite selected) -->
+    <div id="test-cases-section" class="hidden mt-8">
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 font-jp">テストケース追加: <span id="tc-suite-name"></span></h2>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 font-jp">テストケース JSON</label>
+                <textarea id="tc-json" rows="8" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-mono" placeholder='[{"category":"safety","prompt":"Test prompt","expected_behaviors":["Expected"],"weight":1.0}]'></textarea>
+                <p class="text-xs text-gray-400 mt-1 font-jp">JSON配列形式でテストケースを入力してください</p>
+            </div>
+            <div class="mt-4 flex gap-3">
+                <button onclick="addTestCases()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg font-jp">追加</button>
+                <button onclick="hideTestCases()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg font-jp">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trigger Run Section -->
+    <div id="run-section" class="hidden mt-8">
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 font-jp">ベンチマーク実行: <span id="run-suite-name"></span></h2>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 font-jp">ツール</label>
+                <select id="run-tool-id" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                    <option value="">読み込み中...</option>
+                </select>
+            </div>
+            <div class="mt-4 flex gap-3">
+                <button onclick="triggerRun()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg font-jp">実行開始</button>
+                <button onclick="hideRun()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg font-jp">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const API = '/api/v1';
+const headers = () => {
+    const h = {'Content-Type': 'application/json'};
+    const token = localStorage.getItem('aixis_token');
+    if (token) h['Authorization'] = 'Bearer ' + token;
+    return h;
+};
+
+let selectedSuiteSlug = null;
+
+function showCreateSuite() { document.getElementById('create-suite-form').classList.remove('hidden'); }
+function hideCreateSuite() { document.getElementById('create-suite-form').classList.add('hidden'); }
+function hideTestCases() { document.getElementById('test-cases-section').classList.add('hidden'); }
+function hideRun() { document.getElementById('run-section').classList.add('hidden'); }
+
+function showTestCases(slug, name) {
+    selectedSuiteSlug = slug;
+    document.getElementById('tc-suite-name').textContent = name;
+    document.getElementById('test-cases-section').classList.remove('hidden');
+    document.getElementById('run-section').classList.add('hidden');
+}
+
+function showRun(slug, name) {
+    selectedSuiteSlug = slug;
+    document.getElementById('run-suite-name').textContent = name;
+    document.getElementById('run-section').classList.remove('hidden');
+    document.getElementById('test-cases-section').classList.add('hidden');
+    loadToolsForRun();
+}
+
+async function loadSuites() {
+    try {
+        const res = await fetch(`${API}/benchmarks/?include_drafts=true`, {headers: headers()});
+        const data = await res.json();
+        const el = document.getElementById('suites-list');
+
+        if (!data.length) {
+            el.innerHTML = '<div class="text-center text-gray-400 py-8 font-jp">ベンチマークスイートはまだありません</div>';
+            return;
+        }
+
+        el.innerHTML = data.map(s => `
+            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white font-jp">${s.name_jp || s.name}</h3>
+                            <span class="text-xs px-2 py-0.5 rounded ${s.is_published ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}">${s.is_published ? '公開中' : '下書き'}</span>
+                            <span class="text-xs text-gray-400">${s.version}</span>
+                        </div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 font-jp">${s.description_jp || s.description || ''}</p>
+                        <p class="text-xs text-gray-400 mt-1">${s.test_case_count} テストケース</p>
+                    </div>
+                    <div class="flex gap-2 ml-4 flex-shrink-0">
+                        <button onclick="showTestCases('${s.slug}','${s.name_jp||s.name}')" class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 font-jp">テストケース</button>
+                        ${!s.is_published ? `<button onclick="publishSuite('${s.slug}')" class="px-2 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded hover:bg-emerald-200 font-jp">公開</button>` : ''}
+                        <button onclick="showRun('${s.slug}','${s.name_jp||s.name}')" class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-200 font-jp">実行</button>
+                        <a href="/platform/benchmarks/${s.slug}/leaderboard" class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded hover:bg-purple-200 font-jp">LB</a>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch(e) { console.error(e); }
+}
+
+async function createSuite() {
+    const body = {
+        slug: document.getElementById('suite-slug').value.trim(),
+        name: document.getElementById('suite-name').value.trim(),
+        name_jp: document.getElementById('suite-name-jp').value.trim(),
+        description_jp: document.getElementById('suite-desc-jp').value.trim(),
+        version: document.getElementById('suite-version').value.trim() || 'v1.0',
+    };
+    if (!body.slug || !body.name || !body.name_jp) { alert('Slug、名前（英語・日本語）は必須です'); return; }
+    try {
+        const res = await fetch(`${API}/benchmarks/`, {method:'POST', headers:headers(), body:JSON.stringify(body)});
+        if (res.ok) { hideCreateSuite(); loadSuites(); }
+        else { const e = await res.json(); alert(e.detail || 'エラー'); }
+    } catch(e) { alert('通信エラー'); }
+}
+
+async function publishSuite(slug) {
+    if (!confirm('このスイートを公開しますか？')) return;
+    const res = await fetch(`${API}/benchmarks/${slug}/publish`, {method:'POST', headers:headers()});
+    if (res.ok) loadSuites();
+    else { const e = await res.json(); alert(e.detail || 'エラー'); }
+}
+
+async function addTestCases() {
+    if (!selectedSuiteSlug) return;
+    const jsonStr = document.getElementById('tc-json').value.trim();
+    let cases;
+    try { cases = JSON.parse(jsonStr); } catch(e) { alert('JSONパースエラー: ' + e.message); return; }
+    if (!Array.isArray(cases)) { alert('JSON配列を入力してください'); return; }
+
+    const res = await fetch(`${API}/benchmarks/${selectedSuiteSlug}/test-cases`, {
+        method:'POST', headers:headers(), body:JSON.stringify(cases)
+    });
+    if (res.ok) {
+        const data = await res.json();
+        alert(`${data.added}件のテストケースを追加しました`);
+        document.getElementById('tc-json').value = '';
+        loadSuites();
+    } else { const e = await res.json(); alert(e.detail || 'エラー'); }
+}
+
+async function loadToolsForRun() {
+    try {
+        const res = await fetch(`${API}/tools/?all=true&page_size=100`, {headers: headers()});
+        const data = await res.json();
+        const sel = document.getElementById('run-tool-id');
+        sel.innerHTML = '<option value="">ツールを選択</option>';
+        (data.items || []).forEach(t => {
+            sel.innerHTML += `<option value="${t.id}">${t.name_jp || t.name}</option>`;
+        });
+    } catch(e) { console.error(e); }
+}
+
+async function triggerRun() {
+    if (!selectedSuiteSlug) return;
+    const toolId = document.getElementById('run-tool-id').value;
+    if (!toolId) { alert('ツールを選択してください'); return; }
+    const res = await fetch(`${API}/benchmarks/${selectedSuiteSlug}/run`, {
+        method:'POST', headers:headers(), body:JSON.stringify({tool_id: toolId})
+    });
+    if (res.ok) {
+        alert('ベンチマーク実行を開始しました');
+        hideRun();
+    } else { const e = await res.json(); alert(e.detail || 'エラー'); }
+}
+
+loadSuites();
+</script>
+{% endblock %}

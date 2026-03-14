@@ -1,0 +1,48 @@
+id: "email_writing"
+name_jp: "メール作成AI"
+name_en: "Email Writing AI"
+category_jp: "用途特化"
+description_jp: "ビジネスメールや定型文の自動生成・推敲を行うAIツール。宛先に応じた敬語調整やトーン変換に対応する。"
+examples:
+  - "Gemini for Gmail"
+  - "Microsoft Copilot (Outlook)"
+  - "Typetalk AI"
+  - "Rasa.io"
+  - "メール自動生成ツール"
+aliases:
+  - "メールAI"
+  - "メール文面AI"
+  - "ビジネスメールAI"
+  - "メール自動作成"
+  - "メール返信AI"
+traits:
+  - "text_input"
+  - "text_output"
+  - "tone_adjustment"
+  - "keigo_generation"
+  - "template_based"
+  - "context_aware"
+
+primary_categories:
+  - keigo_mixing
+  - business_jp
+  - ambiguous
+secondary_categories:
+  - long_input
+  - multi_step
+excluded_categories:
+  - dialect
+  - broken_grammar
+  - unicode_edge
+
+scoring_weights:
+  japanese_ability: 2.0
+  reliability: 1.0
+  practical: 1.5
+
+evaluation_focus:
+  - "社内・社外メールにおける敬語レベルの適切な使い分け"
+  - "曖昧な指示からの適切なメール文面生成"
+  - "日本のビジネスメール慣習（時候の挨拶等）の反映"
+  - "返信メールにおける文脈の正確な把握"
+  - "CC・BCC先を考慮したトーン調整"

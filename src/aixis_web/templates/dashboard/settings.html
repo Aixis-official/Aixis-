@@ -1,0 +1,155 @@
+{% extends "admin_base.html" %}
+
+{% block header_title %}設定{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">設定</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">AI監査エージェントの設定</p>
+    </div>
+
+    <!-- API Key Section -->
+    <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp mb-1">Anthropic APIキー</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 font-jp mb-4">
+            AI監査エージェント（Haiku Vision）が使用するAPIキーです。
+            <a href="https://console.anthropic.com/" target="_blank" class="text-blue-600 dark:text-blue-400 underline">Anthropicコンソール</a>で取得できます。
+        </p>
+
+        <div id="alert-area" class="hidden mb-4 p-3 rounded-lg text-sm font-jp"></div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 font-jp mb-1">
+                    APIキー
+                </label>
+                <div class="flex gap-2">
+                    <input id="api-key-input"
+                           type="password"
+                           placeholder="sk-ant-api03-..."
+                           class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button onclick="toggleKeyVisibility()"
+                            class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            title="表示/非表示">
+                        <svg id="eye-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="saveApiKey()"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors font-jp">
+                    保存
+                </button>
+                <span id="status-text" class="text-sm text-gray-500 dark:text-gray-400 font-jp"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Section -->
+    <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp mb-1">コスト管理</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 font-jp mb-4">
+            1回の監査あたりのAPI使用上限（Haiku Vision使用、ハイブリッド方式）
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                <div class="text-sm text-gray-500 dark:text-gray-400 font-jp">コスト上限</div>
+                <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1" id="cost-limit">--</div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                <div class="text-sm text-gray-500 dark:text-gray-400 font-jp">API呼び出し上限</div>
+                <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1" id="call-limit">--</div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                <div class="text-sm text-gray-500 dark:text-gray-400 font-jp">使用モデル</div>
+                <div class="text-lg font-bold text-gray-900 dark:text-white mt-1" id="model-name">--</div>
+            </div>
+        </div>
+
+        <p class="text-xs text-gray-400 dark:text-gray-500 mt-3 font-jp">
+            ハイブリッド方式: 1回目のテストでUIを学習し、2回目以降はAPIを使わずに再生します。通常1監査あたり5〜10回のAPI呼び出しで済みます。
+        </p>
+    </div>
+
+    <!-- Back link -->
+    <div class="mt-6">
+        <a href="/platform/dashboard" class="text-sm text-blue-600 dark:text-blue-400 hover:underline font-jp">
+            &larr; ダッシュボードに戻る
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Load current settings
+    async function loadSettings() {
+        try {
+            const data = await aixisAPI('/settings');
+
+            document.getElementById('api-key-input').value = data.anthropic_api_key_masked || '';
+            document.getElementById('cost-limit').textContent = data.cost_limit_jpy + '円';
+            document.getElementById('call-limit').textContent = data.call_limit + '回';
+            document.getElementById('model-name').textContent = data.model;
+
+            if (data.has_api_key) {
+                document.getElementById('status-text').textContent = 'APIキー設定済み';
+                document.getElementById('status-text').classList.add('text-emerald-600', 'dark:text-emerald-400');
+            } else {
+                document.getElementById('status-text').textContent = '未設定';
+                document.getElementById('status-text').classList.add('text-amber-600', 'dark:text-amber-400');
+            }
+        } catch (e) {
+            console.error('Failed to load settings:', e);
+        }
+    }
+
+    async function saveApiKey() {
+        const key = document.getElementById('api-key-input').value.trim();
+        if (!key || key.includes('*')) {
+            showAlert('新しいAPIキーを入力してください（マスクされた値は保存できません）', 'warn');
+            return;
+        }
+
+        try {
+            const data = await aixisAPI('/settings', {
+                method: 'PUT',
+                body: JSON.stringify({ anthropic_api_key: key }),
+            });
+            showAlert('APIキーを保存しました。次回の監査から有効になります。', 'ok');
+            loadSettings();
+        } catch (e) {
+            showAlert(e.detail || '保存に失敗しました: ' + e.message, 'err');
+        }
+    }
+
+    function toggleKeyVisibility() {
+        const input = document.getElementById('api-key-input');
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    function showAlert(msg, type) {
+        const el = document.getElementById('alert-area');
+        el.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'dark:bg-emerald-900/30', 'dark:text-emerald-300',
+                           'bg-red-50', 'text-red-800', 'dark:bg-red-900/30', 'dark:text-red-300',
+                           'bg-amber-50', 'text-amber-800', 'dark:bg-amber-900/30', 'dark:text-amber-300');
+        if (type === 'ok') {
+            el.classList.add('bg-emerald-50', 'text-emerald-800', 'dark:bg-emerald-900/30', 'dark:text-emerald-300');
+        } else if (type === 'err') {
+            el.classList.add('bg-red-50', 'text-red-800', 'dark:bg-red-900/30', 'dark:text-red-300');
+        } else {
+            el.classList.add('bg-amber-50', 'text-amber-800', 'dark:bg-amber-900/30', 'dark:text-amber-300');
+        }
+        el.textContent = msg;
+    }
+
+    loadSettings();
+</script>
+{% endblock %}

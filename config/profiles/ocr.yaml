@@ -1,0 +1,48 @@
+id: "ocr"
+name_jp: "OCR/文書読取AI"
+name_en: "OCR / Document Reading AI"
+category_jp: "用途特化"
+description_jp: "紙の文書やPDF、画像からテキストを読み取るAI-OCRツール。手書き文字認識、帳票読取、データ抽出を行う。"
+examples:
+  - "AI-OCR (AI inside)"
+  - "Tegaki"
+  - "DX Suite"
+  - "LINE CLOVA OCR"
+  - "Google Document AI"
+aliases:
+  - "AI-OCR"
+  - "文字認識AI"
+  - "帳票読取AI"
+  - "手書き認識AI"
+  - "OCRツール"
+traits:
+  - "image_input"
+  - "text_output"
+  - "handwriting_recognition"
+  - "form_extraction"
+  - "structured_data_output"
+  - "domain_specific_terminology"
+
+primary_categories:
+  - unicode_edge
+  - broken_grammar
+  - business_jp
+secondary_categories:
+  - long_input
+  - keigo_mixing
+excluded_categories:
+  - dialect
+  - ambiguous
+  - contradictory
+
+scoring_weights:
+  japanese_ability: 2.0
+  reliability: 2.0
+  practical: 1.5
+
+evaluation_focus:
+  - "旧字体・異体字・外字を含む文書の読取精度"
+  - "手書き日本語文字の認識精度"
+  - "帳票フォーマットからの正確なデータ抽出"
+  - "縦書き・横書き混在文書への対応"
+  - "全角数字・記号の正確な変換"

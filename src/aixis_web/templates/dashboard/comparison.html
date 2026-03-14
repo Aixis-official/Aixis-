@@ -1,0 +1,176 @@
+{% extends "admin_base.html" %}
+
+{% block header_title %}スコア比較{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">スコア比較・推移分析</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">同一ツールの複数監査セッション間でスコア推移を確認</p>
+    </div>
+
+    <!-- Tool Selector -->
+    <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 mb-6">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 font-jp">ツールを選択</label>
+        <select id="tool-selector" class="w-full max-w-md px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500" onchange="loadComparison()">
+            <option value="">-- ツールを選択 --</option>
+        </select>
+    </div>
+
+    <!-- Comparison Chart -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6" id="comparison-content" style="display:none;">
+        <!-- Radar overlay chart -->
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 font-jp">レーダーチャート比較</h2>
+            <div id="radar-chart" style="height:400px;"></div>
+        </div>
+
+        <!-- Score trend chart -->
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 font-jp">スコア推移</h2>
+            <div id="trend-chart" style="height:400px;"></div>
+        </div>
+    </div>
+
+    <!-- Session comparison table -->
+    <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50" id="comparison-table-wrapper" style="display:none;">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">セッション別スコア</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-100 dark:border-gray-700/50">
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">セッション</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">日時</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">実務適性</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">費用対効果</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">日本語能力</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">信頼性</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">革新性</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">総合</th>
+                    </tr>
+                </thead>
+                <tbody id="comparison-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const data = await aixisAPI('/tools/');
+        const tools = data.items || data || [];
+        const select = document.getElementById('tool-selector');
+        tools.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name_jp || t.name;
+            select.appendChild(opt);
+        });
+    } catch (e) { console.error(e); }
+});
+
+async function loadComparison() {
+    const toolId = document.getElementById('tool-selector').value;
+    if (!toolId) return;
+
+    try {
+        const data = await aixisAPI('/audits?page_size=50');
+        const audits = (data.items || data || []).filter(
+            a => a.tool_id === toolId && (a.status === 'completed' || a.status === 'awaiting_manual')
+        );
+
+        if (audits.length === 0) {
+            alert('このツールの完了済み監査セッションがありません。');
+            return;
+        }
+
+        // Load scores for each session
+        const sessions = [];
+        for (const audit of audits.slice(0, 10)) {
+            try {
+                const detail = await aixisAPI('/audits/' + encodeURIComponent(audit.id));
+                if (detail.axis_scores && detail.axis_scores.length > 0) {
+                    sessions.push({ audit, scores: detail.axis_scores });
+                }
+            } catch (e) { /* skip */ }
+        }
+
+        if (sessions.length === 0) {
+            alert('スコアデータのある監査セッションがありません。');
+            return;
+        }
+
+        document.getElementById('comparison-content').style.display = '';
+        document.getElementById('comparison-table-wrapper').style.display = '';
+
+        renderRadarChart(sessions);
+        renderTrendChart(sessions);
+        renderComparisonTable(sessions);
+    } catch (e) { console.error(e); alert('データ取得エラー: ' + e.message); }
+}
+
+function renderRadarChart(sessions) {
+    const axisKeys = AIXIS.AXIS_KEYS;
+    const axisLabels = axisKeys.map(k => AIXIS.AXIS_LABELS[k]);
+    const traces = sessions.map((s, i) => {
+        const values = axisKeys.map(k => {
+            const sc = s.scores.find(x => x.axis === k);
+            return sc ? sc.score : 0;
+        });
+        values.push(values[0]); // close the radar
+        return {
+            type: 'scatterpolar',
+            r: values,
+            theta: [...axisLabels, axisLabels[0]],
+            fill: 'toself',
+            name: s.audit.session_code || s.audit.id.substring(0, 8),
+            line: { color: AIXIS.TOOL_COLORS[i % AIXIS.TOOL_COLORS.length] },
+            opacity: 0.7,
+        };
+    });
+    Plotly.newPlot('radar-chart', traces, getRadarLayout({ showlegend: true }), { responsive: true });
+}
+
+function renderTrendChart(sessions) {
+    const sorted = [...sessions].sort((a, b) =>
+        new Date(a.audit.started_at || a.audit.created_at) - new Date(b.audit.started_at || b.audit.created_at)
+    );
+    const dates = sorted.map(s => s.audit.started_at || s.audit.created_at);
+    const axisKeys = AIXIS.AXIS_KEYS;
+    const traces = axisKeys.map((k, i) => ({
+        x: dates,
+        y: sorted.map(s => { const sc = s.scores.find(x => x.axis === k); return sc ? sc.score : null; }),
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: AIXIS.AXIS_LABELS[k],
+        line: { color: AIXIS.TOOL_COLORS[i] },
+    }));
+    Plotly.newPlot('trend-chart', traces, getPlotlyLayout({
+        xaxis: { title: '監査日時', type: 'date' },
+        yaxis: { title: 'スコア', range: [0, 5.2] },
+    }), { responsive: true });
+}
+
+function renderComparisonTable(sessions) {
+    const body = document.getElementById('comparison-table-body');
+    body.innerHTML = sessions.map(s => {
+        const scoreMap = {};
+        s.scores.forEach(sc => { scoreMap[sc.axis] = sc.score; });
+        const overall = s.scores.length > 0
+            ? (s.scores.reduce((sum, sc) => sum + sc.score, 0) / s.scores.length)
+            : 0;
+        return '<tr class="border-b border-gray-50 dark:border-gray-700/30">' +
+            '<td class="px-4 py-3 text-xs font-mono"><a href="/platform/dashboard/audits/' + encodeURIComponent(s.audit.id) + '" class="text-indigo-600 dark:text-indigo-400 hover:underline">' + (s.audit.session_code || s.audit.id.substring(0, 12)) + '</a></td>' +
+            '<td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">' + formatDateTime(s.audit.started_at) + '</td>' +
+            AIXIS.AXIS_KEYS.map(k => '<td class="px-4 py-3 text-center text-xs tabular-nums font-medium" style="color:' + scoreLevelColor(scoreMap[k] || 0) + '">' + (scoreMap[k] != null ? scoreMap[k].toFixed(1) : '---') + '</td>').join('') +
+            '<td class="px-4 py-3 text-center text-xs font-bold tabular-nums" style="color:' + scoreLevelColor(overall) + '">' + overall.toFixed(1) + '</td>' +
+            '</tr>';
+    }).join('');
+}
+</script>
+{% endblock %}

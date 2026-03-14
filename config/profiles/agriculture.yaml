@@ -1,0 +1,49 @@
+id: "agriculture"
+name_jp: "農業AI"
+name_en: "Agriculture AI"
+category_jp: "業界特化"
+description_jp: "農業分野に特化したAIツール。生育管理、収量予測、病害虫検出、農作業計画の最適化を行う。"
+examples:
+  - "CropScope (クロップスコープ)"
+  - "ザルビオ"
+  - "アグリノート AI"
+  - "生育診断AI"
+  - "収量予測AI"
+aliases:
+  - "農業用AI"
+  - "スマート農業AI"
+  - "アグリテックAI"
+  - "農作業AI"
+  - "栽培AI"
+traits:
+  - "image_input"
+  - "data_input"
+  - "structured_data_output"
+  - "predictive_analytics"
+  - "anomaly_detection"
+  - "domain_specific_terminology"
+  - "weather_dependent"
+
+primary_categories:
+  - dialect
+  - ambiguous
+  - multi_step
+secondary_categories:
+  - business_jp
+  - unicode_edge
+excluded_categories:
+  - keigo_mixing
+  - contradictory
+  - long_input
+
+scoring_weights:
+  japanese_ability: 1.0
+  reliability: 1.5
+  practical: 2.0
+
+evaluation_focus:
+  - "農業専門用語・品種名の正確な理解"
+  - "地域方言を含む農家からの入力への対応"
+  - "気象データと連動した日本語レポート生成"
+  - "複数工程にわたる栽培計画の管理"
+  - "病害虫の日本語名称との正確なマッチング"

@@ -1,0 +1,566 @@
+{% extends "base.html" %}
+{% set page_bg = 'page-bg-pure-white' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- ================================================================
+         1. Page Header (compact)
+         ================================================================ -->
+    <div class="mb-6">
+        <div class="section-line"></div>
+        <h1 class="text-2xl sm:text-3xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
+            監査データベース
+        </h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Aixisが独自基準で監査した全AIツールの評価結果
+        </p>
+        <a href="/platform/categories" class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-150">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+            カテゴリ別ランキングを見る
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+        </a>
+    </div>
+
+    <!-- ================================================================
+         2. Search & Filter Bar
+         ================================================================ -->
+    <div class="mb-5">
+        <!-- Search input -->
+        <div class="relative mb-3">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+            </div>
+            <input id="search-input"
+                   type="search"
+                   placeholder="ツール名・キーワードで検索..."
+                   class="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/50 rounded-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-aixis-400 dark:focus:border-aixis-400 focus:ring-1 focus:ring-aixis-400/30 dark:focus:ring-aixis-400/20 outline-none transition-all duration-150">
+        </div>
+
+        <!-- Category pills + Sort + Result count -->
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2.5">
+            <!-- Category pills (horizontal scroll) -->
+            <div id="category-pills" class="flex-1 flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+                <button data-category=""
+                        class="category-pill shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 bg-aixis-500 dark:bg-aixis-400 text-white dark:text-aixis-900">
+                    すべて
+                </button>
+                <!-- Categories loaded dynamically -->
+            </div>
+
+            <!-- Sort dropdown -->
+            <div class="flex items-center gap-2.5 shrink-0">
+                <select id="sort-select"
+                        class="px-2.5 py-1 text-xs bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/50 rounded-md text-gray-600 dark:text-gray-300 outline-none focus:border-aixis-400 dark:focus:border-aixis-400 transition-colors duration-150 cursor-pointer">
+                    <option value="score">スコア順</option>
+                    <option value="name">名前順</option>
+                    <option value="newest">新着順</option>
+                </select>
+                <span id="result-count" class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                    --件のツール
+                </span>
+            </div>
+        </div>
+        <span class="updated-date font-sans">最終更新: 2026年3月</span>
+    </div>
+
+    <hr class="divider-thin">
+
+    <!-- ================================================================
+         3. Stats Row (4 cards) – Bloomberg-style compact KPIs
+         ================================================================ -->
+    <div id="stats-row" class="hidden grid grid-cols-4 gap-2 sm:gap-3 mb-6">
+        <!-- 評価済みツール -->
+        <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm px-3 py-2.5 text-center">
+            <div id="stat-tools" class="stat-number text-lg sm:text-xl font-bold text-gray-900 dark:text-white tabular-nums" style="font-size:36px" data-countup>--</div>
+            <div class="stat-unit text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5 uppercase tracking-wide">評価済み</div>
+        </div>
+        <!-- カテゴリ数 -->
+        <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm px-3 py-2.5 text-center">
+            <div id="stat-categories" class="stat-number text-lg sm:text-xl font-bold text-gray-900 dark:text-white tabular-nums" style="font-size:36px" data-countup>--</div>
+            <div class="stat-unit text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5 uppercase tracking-wide">カテゴリ</div>
+        </div>
+        <!-- 平均スコア -->
+        <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm px-3 py-2.5 text-center">
+            <div id="stat-avg-score" class="stat-number text-lg sm:text-xl font-bold text-gray-900 dark:text-white tabular-nums" style="font-size:36px" data-countup>--</div>
+            <div class="stat-unit text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5 uppercase tracking-wide">平均スコア</div>
+        </div>
+        <!-- 総監査回数 -->
+        <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm px-3 py-2.5 text-center">
+            <div id="stat-audits" class="stat-number text-lg sm:text-xl font-bold text-gray-900 dark:text-white tabular-nums" style="font-size:36px" data-countup>--</div>
+            <div class="stat-unit text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5 uppercase tracking-wide">総監査回数</div>
+        </div>
+    </div>
+
+    <!-- ================================================================
+         3.5 Free/Paid Info Banner – thin top-border style
+         ================================================================ -->
+    <div class="mb-6 border-t-2 border-aixis-400/60 dark:border-aixis-500/40 bg-white dark:bg-aixis-800/50 rounded-b-sm px-4 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+            総合グレードは無料で閲覧可能です。5軸詳細スコア・分析レポートは有料プランで提供しています。
+        </p>
+        <a href="/platform/contact"
+           class="shrink-0 text-xs font-medium text-aixis-500 dark:text-aixis-400 hover:text-aixis-600 dark:hover:text-aixis-300 transition-colors duration-150">
+            詳細 &rarr;
+        </a>
+    </div>
+
+    <!-- ================================================================
+         4. Tool Grid
+         ================================================================ -->
+    <div id="tool-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+        <!-- Loading state -->
+        <div id="loading-state" class="col-span-full flex flex-col items-center justify-center py-16">
+            <div class="spinner mb-4"></div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">ツールデータを読み込み中...</p>
+        </div>
+    </div>
+
+    <!-- ================================================================
+         5. Pagination
+         ================================================================ -->
+    <div id="pagination" class="hidden mt-8 flex items-center justify-center gap-2">
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    'use strict';
+
+    // ── State ──
+    let currentPage = 1;
+    const pageSize = 12;
+    let currentCategory = '';
+    let currentQuery = '';
+    let currentSort = 'score';
+    let totalItems = 0;
+    let allCategories = [];
+    let debounceTimer = null;
+
+    // ── DOM refs ──
+    const searchInput   = document.getElementById('search-input');
+    const categoryPills = document.getElementById('category-pills');
+    const sortSelect    = document.getElementById('sort-select');
+    const resultCount   = document.getElementById('result-count');
+    const toolGrid      = document.getElementById('tool-grid');
+    const pagination    = document.getElementById('pagination');
+
+    // Muted brand color palettes for logo squares
+    const LOGO_COLORS = [
+        'bg-slate-600 dark:bg-slate-700',
+        'bg-zinc-600 dark:bg-zinc-700',
+        'bg-gray-600 dark:bg-gray-700',
+        'bg-stone-600 dark:bg-stone-700',
+        'bg-neutral-600 dark:bg-neutral-700',
+        'bg-slate-700 dark:bg-slate-800',
+        'bg-gray-700 dark:bg-gray-800',
+        'bg-zinc-700 dark:bg-zinc-800',
+    ];
+
+    function logoColor(name) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        return LOGO_COLORS[Math.abs(hash) % LOGO_COLORS.length];
+    }
+
+    // ── Grade helpers (using AIXIS from aixis-common.js) ──
+    function gradeForScore(score) {
+        if (score == null) return null;
+        return getGrade(score);
+    }
+
+    function gradeBgClass(grade) {
+        const map = { S: 'bg-grade-s', A: 'bg-grade-a', B: 'bg-grade-b', C: 'bg-grade-c', D: 'bg-grade-d' };
+        return map[grade] || 'bg-gray-400';
+    }
+
+    function gradeBorderClass(grade) {
+        const map = {
+            S: 'hover:border-grade-s hover:shadow-[0_0_12px_rgba(212,175,55,0.2)]',
+            A: 'hover:border-grade-a hover:shadow-[0_0_12px_rgba(56,161,105,0.2)]',
+            B: 'hover:border-grade-b hover:shadow-[0_0_12px_rgba(43,108,176,0.2)]',
+            C: 'hover:border-grade-c hover:shadow-[0_0_12px_rgba(237,137,54,0.2)]',
+            D: 'hover:border-grade-d hover:shadow-[0_0_12px_rgba(229,62,62,0.2)]',
+        };
+        return map[grade] || 'hover:border-aixis-400';
+    }
+
+    // ── Fetch categories ──
+    async function fetchCategories() {
+        try {
+            const cats = await aixisAPI('/tools/categories');
+            allCategories = cats;
+            renderCategoryPills(cats);
+            document.getElementById('stat-categories').textContent = cats.length;
+        } catch (e) {
+            console.warn('カテゴリ取得失敗:', e);
+        }
+    }
+
+    function renderCategoryPills(cats) {
+        // Keep the "すべて" pill, add category pills
+        const allPill = categoryPills.querySelector('[data-category=""]');
+        categoryPills.innerHTML = '';
+        if (allPill) categoryPills.appendChild(allPill);
+        else {
+            const btn = document.createElement('button');
+            btn.dataset.category = '';
+            btn.className = 'category-pill shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 bg-aixis-500 dark:bg-aixis-400 text-white dark:text-aixis-900';
+            btn.textContent = 'すべて';
+            categoryPills.appendChild(btn);
+        }
+
+        cats.forEach(cat => {
+            const btn = document.createElement('button');
+            btn.dataset.category = cat.id;
+            btn.className = 'category-pill shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 bg-transparent border border-gray-200 dark:border-aixis-600/50 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-aixis-700/50';
+            btn.textContent = cat.name_jp;
+            categoryPills.appendChild(btn);
+        });
+    }
+
+    function setActiveCategory(categoryId) {
+        categoryPills.querySelectorAll('.category-pill').forEach(btn => {
+            const isActive = btn.dataset.category === categoryId;
+            if (isActive) {
+                btn.className = 'category-pill shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 bg-aixis-500 dark:bg-aixis-400 text-white dark:text-aixis-900';
+            } else {
+                btn.className = 'category-pill shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 bg-transparent border border-gray-200 dark:border-aixis-600/50 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-aixis-700/50';
+            }
+        });
+    }
+
+    // ── Fetch tools ──
+    async function fetchTools() {
+        showLoading();
+
+        try {
+            let url = `/tools?page=${currentPage}&page_size=${pageSize}`;
+            if (currentCategory) url += `&category_id=${encodeURIComponent(currentCategory)}`;
+            if (currentQuery) url += `&q=${encodeURIComponent(currentQuery)}`;
+
+            const data = await aixisAPI(url);
+            totalItems = data.total;
+            const tools = data.items || [];
+
+            resultCount.textContent = `${totalItems}件のツール`;
+            document.getElementById('stat-tools').textContent = totalItems;
+
+            var statsRow = document.getElementById('stats-row');
+            if (statsRow && tools.length > 0) {
+                statsRow.classList.remove('hidden');
+            }
+
+            // Sort client-side (API returns name-sorted)
+            const sorted = sortTools(tools);
+            renderTools(sorted);
+            renderPagination();
+            updateStats(tools);
+        } catch (e) {
+            showError();
+            console.error('ツール取得失敗:', e);
+        }
+    }
+
+    function sortTools(tools) {
+        const arr = [...tools];
+        switch (currentSort) {
+            case 'score':
+                arr.sort((a, b) => {
+                    const sa = a.scores && a.scores.length ? a.scores[0].overall_score : 0;
+                    const sb = b.scores && b.scores.length ? b.scores[0].overall_score : 0;
+                    return sb - sa;
+                });
+                break;
+            case 'name':
+                arr.sort((a, b) => (a.name_jp || a.name).localeCompare(b.name_jp || b.name, 'ja'));
+                break;
+            case 'newest':
+                arr.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                break;
+        }
+        return arr;
+    }
+
+    function getToolScore(tool) {
+        if (tool.scores && tool.scores.length > 0) return tool.scores[0];
+        if (tool.latest_score) return tool.latest_score;
+        return null;
+    }
+
+    // ── Render tools ──
+    function renderTools(tools) {
+        if (!tools || tools.length === 0) {
+            showEmpty();
+            return;
+        }
+
+        toolGrid.innerHTML = tools.map((tool, idx) => {
+            const score = getToolScore(tool);
+            const initial = (tool.name_jp || tool.name || '?')[0];
+            const color = logoColor(tool.name || tool.slug);
+            const overallScore = score ? score.overall_score : null;
+            const overallGrade = score ? (score.overall_grade || (overallScore != null ? getGrade(overallScore).grade : null)) : null;
+            const gradeObj = overallGrade ? { grade: overallGrade } : null;
+
+            // Category name
+            let categoryName = '';
+            if (tool.category_id && allCategories.length) {
+                const cat = allCategories.find(c => c.id === tool.category_id);
+                if (cat) categoryName = cat.name_jp;
+            }
+
+            // Mini score bars
+            const scoreBars = AIXIS.AXIS_KEYS.map(key => {
+                const val = score ? score[key] : null;
+                const pct = val != null ? (val / 5 * 100).toFixed(1) : 0;
+                const level = val != null ? scoreLevel(val) : '';
+                const displayVal = val != null ? val.toFixed(1) : '--';
+                return `
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-gray-500 dark:text-gray-400 w-10 shrink-0">${AIXIS.AXIS_SHORT[key]}</span>
+                        <div class="flex-1 score-bar score-bar-data"><div class="score-bar-fill ${level}" style="width:${pct}%"></div></div>
+                        <span class="text-[10px] font-medium w-7 text-right ${val != null ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}">${displayVal}</span>
+                    </div>`;
+            }).join('');
+
+            return `
+                <a href="/platform/tools/${tool.slug}"
+                   class="group relative block bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:border-gray-300 dark:hover:border-aixis-500/50 fade-in hover-lift card-hover-primary"
+                   style="animation-delay:${idx * 30}ms">
+
+                    <!-- Grade badge (top-right, compact) -->
+                    ${gradeObj ? `
+                    <div class="absolute top-3 right-3">
+                        <span class="inline-flex items-center justify-center w-7 h-7 rounded text-xs font-bold ${gradeBgClass(gradeObj.grade)} text-white">${gradeObj.grade}</span>
+                    </div>` : ''}
+
+                    <!-- Header: logo square + name + vendor -->
+                    <div class="flex items-center gap-2.5 mb-3 pr-10">
+                        <div class="w-9 h-9 rounded-md ${color} flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                            ${initial}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-aixis-500 dark:group-hover:text-aixis-300 transition-colors duration-150">
+                                ${tool.name_jp || tool.name}
+                            </div>
+                            ${tool.vendor ? `<div class="text-[11px] text-gray-400 dark:text-gray-500 truncate">${tool.vendor}</div>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Category pill -->
+                    ${categoryName ? `
+                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-aixis-700/50 text-gray-500 dark:text-gray-400 mb-2.5">
+                        ${categoryName}
+                    </span>` : ''}
+
+                    <!-- 5 axis score bars (blurred for free users) -->
+                    <div class="relative">
+                        <div class="space-y-1 mt-1" style="filter: blur(6px); pointer-events: none;">
+                            ${scoreBars}
+                        </div>
+                        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;" class="bg-white/80 dark:bg-gray-900/80 rounded">
+                            <div class="flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                </svg>
+                                <span class="text-[10px] text-gray-400 dark:text-gray-500">詳細スコアは有料プラン</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Overall score -->
+                    <div class="mt-2.5 pt-2.5 border-t border-gray-100 dark:border-aixis-600/30 flex items-center justify-between">
+                        <span class="text-[10px] text-gray-400 dark:text-gray-500">総合スコア</span>
+                        <span class="text-xs font-bold tabular-nums ${overallScore != null ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}">
+                            ${overallScore != null ? overallScore.toFixed(2) : '---'} <span class="text-[10px] font-normal text-gray-400 dark:text-gray-500">/ 5.00</span>
+                        </span>
+                    </div>
+                </a>`;
+        }).join('');
+    }
+
+    // ── States ──
+    function showLoading() {
+        toolGrid.innerHTML = `
+            <div class="col-span-full flex flex-col items-center justify-center py-16">
+                <div class="spinner mb-4"></div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">ツールデータを読み込み中...</p>
+            </div>`;
+    }
+
+    function showEmpty() {
+        toolGrid.innerHTML = `
+            <div class="col-span-full flex flex-col items-center justify-center py-16">
+                <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                </svg>
+                <p class="text-sm text-gray-500 dark:text-gray-400">現在、最初の監査対象ツールを精査中です。厳格な評価プロセスのため、数件ずつ順次公開します。</p>
+                <a href="/platform/contact" class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500">先行通知を受け取る <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg></a>
+            </div>`;
+    }
+
+    function showError() {
+        toolGrid.innerHTML = `
+            <div class="col-span-full flex flex-col items-center justify-center py-16">
+                <svg class="w-12 h-12 text-red-300 dark:text-red-500/50 mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+                <p class="text-sm text-gray-500 dark:text-gray-400">データの取得に失敗しました</p>
+                <button onclick="fetchTools()" class="mt-3 text-sm text-aixis-500 dark:text-aixis-300 hover:underline">再試行</button>
+            </div>`;
+    }
+
+    // ── Pagination ──
+    function renderPagination() {
+        const totalPages = Math.ceil(totalItems / pageSize);
+        if (totalPages <= 1) {
+            pagination.classList.add('hidden');
+            return;
+        }
+        pagination.classList.remove('hidden');
+
+        let html = '';
+
+        // 前へ
+        html += `<button onclick="goToPage(${currentPage - 1})"
+                         class="px-4 py-2 text-sm font-medium rounded-sm transition-colors duration-200                                ${currentPage <= 1
+                                    ? 'bg-gray-100 dark:bg-aixis-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                                    : 'bg-white dark:bg-aixis-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-aixis-600 hover:bg-gray-50 dark:hover:bg-aixis-700'}"
+                         ${currentPage <= 1 ? 'disabled' : ''}>
+                    前へ
+                 </button>`;
+
+        // Page numbers
+        const maxVisible = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+        if (endPage - startPage < maxVisible - 1) startPage = Math.max(1, endPage - maxVisible + 1);
+
+        if (startPage > 1) {
+            html += pageBtn(1);
+            if (startPage > 2) html += '<span class="px-2 text-gray-400 dark:text-gray-500">...</span>';
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += pageBtn(i);
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) html += '<span class="px-2 text-gray-400 dark:text-gray-500">...</span>';
+            html += pageBtn(totalPages);
+        }
+
+        // 次へ
+        html += `<button onclick="goToPage(${currentPage + 1})"
+                         class="px-4 py-2 text-sm font-medium rounded-sm transition-colors duration-200                                ${currentPage >= totalPages
+                                    ? 'bg-gray-100 dark:bg-aixis-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                                    : 'bg-white dark:bg-aixis-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-aixis-600 hover:bg-gray-50 dark:hover:bg-aixis-700'}"
+                         ${currentPage >= totalPages ? 'disabled' : ''}>
+                    次へ
+                 </button>`;
+
+        pagination.innerHTML = html;
+    }
+
+    function pageBtn(num) {
+        const isActive = num === currentPage;
+        return `<button onclick="goToPage(${num})"
+                        class="w-10 h-10 text-sm font-medium rounded-sm transition-colors duration-200
+                               ${isActive
+                                   ? 'bg-aixis-500 dark:bg-aixis-400 text-white dark:text-aixis-900'
+                                   : 'bg-white dark:bg-aixis-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-aixis-600 hover:bg-gray-50 dark:hover:bg-aixis-700'}">
+                    ${num}
+                </button>`;
+    }
+
+    // Expose goToPage globally for onclick
+    window.goToPage = function(page) {
+        const totalPages = Math.ceil(totalItems / pageSize);
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        fetchTools();
+        // Scroll to top of grid
+        toolGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    // Expose fetchTools for retry button
+    window.fetchTools = fetchTools;
+
+    // ── Stats ──
+    function updateStats(tools) {
+        // Average score
+        let sumScore = 0;
+        let countScore = 0;
+        let totalAudits = 0;
+
+        tools.forEach(tool => {
+            const score = getToolScore(tool);
+            if (score && score.overall_score != null) {
+                sumScore += score.overall_score;
+                countScore++;
+            }
+            // Estimate audit count from version or sessions
+            if (score && score.version) totalAudits += score.version;
+            else if (tool.audit_sessions) totalAudits += (Array.isArray(tool.audit_sessions) ? tool.audit_sessions.length : 0);
+        });
+
+        const avg = countScore > 0 ? (sumScore / countScore).toFixed(2) : '--';
+        document.getElementById('stat-avg-score').textContent = avg;
+        document.getElementById('stat-audits').textContent = totalAudits || '--';
+    }
+
+    // ── Event listeners ──
+
+    // Search (debounced)
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            currentQuery = searchInput.value.trim();
+            currentPage = 1;
+            fetchTools();
+        }, 300);
+    });
+
+    // Category pill click
+    categoryPills.addEventListener('click', function(e) {
+        const pill = e.target.closest('.category-pill');
+        if (!pill) return;
+        currentCategory = pill.dataset.category;
+        currentPage = 1;
+        setActiveCategory(currentCategory);
+        fetchTools();
+    });
+
+    // Sort change
+    sortSelect.addEventListener('change', function() {
+        currentSort = sortSelect.value;
+        currentPage = 1;
+        fetchTools();
+    });
+
+    // ── Init ──
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchCategories();
+        fetchTools();
+    });
+
+})();
+</script>
+
+<style>
+    /* Hide scrollbar for category pills horizontal scroll */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+</style>
+{% endblock %}

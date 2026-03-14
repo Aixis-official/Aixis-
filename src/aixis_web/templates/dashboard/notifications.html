@@ -1,0 +1,283 @@
+{% extends "admin_base.html" %}
+
+{% block header_title %}通知センター{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">通知センター</h1>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">監査結果やスコア公開などの通知を確認できます</p>
+        </div>
+        <button onclick="markAllRead()"
+                class="px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors font-jp">
+            すべて既読にする
+        </button>
+    </div>
+
+    <!-- Alert Area -->
+    <div id="alert-area" class="hidden mb-4 p-3 rounded-lg text-sm font-jp"></div>
+
+    <!-- Filter Tabs -->
+    <div class="flex gap-1 mb-6 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
+        <button onclick="setFilter(null)" id="filter-all"
+                class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors font-jp filter-tab active">
+            すべて
+        </button>
+        <button onclick="setFilter(false)" id="filter-unread"
+                class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors font-jp filter-tab">
+            未読
+        </button>
+    </div>
+
+    <!-- Notification List -->
+    <div id="notification-list" class="space-y-2 mb-8">
+        <p class="text-sm text-gray-500 dark:text-gray-400 font-jp">読み込み中...</p>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="flex justify-center gap-2 mb-8"></div>
+
+    <!-- Preferences Section -->
+    <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp mb-4">通知設定</h2>
+
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300 font-jp">メール通知</span>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp">SMTPが設定されている場合にメールで通知を受け取ります</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="pref-email" class="sr-only peer" onchange="savePreferences()">
+                    <div class="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300 font-jp">アプリ内通知</span>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp">ダッシュボード内で通知を表示します</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="pref-inapp" class="sr-only peer" onchange="savePreferences()">
+                    <div class="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 font-jp mb-1">
+                    Slack Webhook URL
+                </label>
+                <div class="flex gap-2">
+                    <input id="pref-slack"
+                           type="url"
+                           placeholder="https://hooks.slack.com/services/..."
+                           class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button onclick="savePreferences()"
+                            class="px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-jp">
+                        保存
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 font-jp mb-1">
+                    Discord Webhook URL
+                </label>
+                <div class="flex gap-2">
+                    <input id="pref-discord"
+                           type="url"
+                           placeholder="https://discord.com/api/webhooks/..."
+                           class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button onclick="savePreferences()"
+                            class="px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-jp">
+                        保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back link -->
+    <div class="mt-6">
+        <a href="/platform/dashboard" class="text-sm text-blue-600 dark:text-blue-400 hover:underline font-jp">
+            &larr; ダッシュボードに戻る
+        </a>
+    </div>
+</div>
+
+<style>
+    .filter-tab { color: #6b7280; }
+    .filter-tab.active { background: white; color: #111827; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .dark .filter-tab.active { background: #374151; color: #f3f4f6; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentFilter = null;
+    let currentPage = 1;
+
+    async function loadNotifications() {
+        try {
+            let url = '/notifications?page=' + currentPage + '&page_size=20';
+            if (currentFilter !== null) {
+                url += '&is_read=' + currentFilter;
+            }
+            const data = await aixisAPI(url);
+            const container = document.getElementById('notification-list');
+
+            if (!data.items || data.items.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 font-jp py-8 text-center">通知はありません。</p>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = data.items.map(n => {
+                const readClass = n.is_read
+                    ? 'bg-gray-50 dark:bg-gray-800/30 border-gray-100 dark:border-gray-700/30'
+                    : 'bg-white dark:bg-[#1e2235] border-blue-200 dark:border-blue-700/50 border-l-4 border-l-blue-500';
+                const dotHtml = n.is_read ? '' : '<span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>';
+
+                return `
+                    <div class="${readClass} rounded-lg border p-4 cursor-pointer hover:shadow-sm transition-shadow"
+                         onclick="markRead('${n.id}', '${n.link || ''}')">
+                        <div class="flex items-start gap-3">
+                            ${dotHtml}
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white font-jp">${escapeHtml(n.title_jp)}</h3>
+                                    <span class="text-xs text-gray-400 dark:text-gray-500 shrink-0 ml-2">${formatDate(n.created_at)}</span>
+                                </div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 font-jp">${escapeHtml(n.body_jp || '')}</p>
+                                ${n.link ? '<span class="text-xs text-blue-600 dark:text-blue-400 mt-1 inline-block font-jp">詳細を見る &rarr;</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Pagination
+            const totalPages = Math.ceil(data.total / 20);
+            if (totalPages > 1) {
+                let paginationHtml = '';
+                for (let i = 1; i <= totalPages; i++) {
+                    const active = i === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700';
+                    paginationHtml += `<button onclick="goToPage(${i})" class="px-3 py-1 text-sm rounded-md ${active} transition-colors">${i}</button>`;
+                }
+                document.getElementById('pagination').innerHTML = paginationHtml;
+            } else {
+                document.getElementById('pagination').innerHTML = '';
+            }
+        } catch (e) {
+            console.error('Failed to load notifications:', e);
+        }
+    }
+
+    async function markRead(id, link) {
+        try {
+            await aixisAPI('/notifications/' + id + '/read', { method: 'PUT' });
+            if (link) {
+                window.location.href = link;
+            } else {
+                loadNotifications();
+            }
+        } catch (e) {
+            console.error('Failed to mark as read:', e);
+        }
+    }
+
+    async function markAllRead() {
+        try {
+            await aixisAPI('/notifications/read-all', { method: 'PUT' });
+            showAlert('すべての通知を既読にしました', 'ok');
+            loadNotifications();
+        } catch (e) {
+            showAlert('既読処理に失敗しました', 'err');
+        }
+    }
+
+    function setFilter(value) {
+        currentFilter = value;
+        currentPage = 1;
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        if (value === null) {
+            document.getElementById('filter-all').classList.add('active');
+        } else {
+            document.getElementById('filter-unread').classList.add('active');
+        }
+        loadNotifications();
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        loadNotifications();
+    }
+
+    async function loadPreferences() {
+        try {
+            const data = await aixisAPI('/notifications/preferences');
+            document.getElementById('pref-email').checked = data.email_enabled;
+            document.getElementById('pref-inapp').checked = data.in_app_enabled;
+            document.getElementById('pref-slack').value = data.slack_webhook_url || '';
+            document.getElementById('pref-discord').value = data.discord_webhook_url || '';
+        } catch (e) {
+            console.error('Failed to load preferences:', e);
+        }
+    }
+
+    async function savePreferences() {
+        try {
+            await aixisAPI('/notifications/preferences', {
+                method: 'PUT',
+                body: JSON.stringify({
+                    email_enabled: document.getElementById('pref-email').checked,
+                    in_app_enabled: document.getElementById('pref-inapp').checked,
+                    slack_webhook_url: document.getElementById('pref-slack').value.trim() || null,
+                    discord_webhook_url: document.getElementById('pref-discord').value.trim() || null,
+                }),
+            });
+            showAlert('通知設定を保存しました', 'ok');
+        } catch (e) {
+            showAlert('設定の保存に失敗しました', 'err');
+        }
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        const now = new Date();
+        const diff = now - d;
+        if (diff < 60000) return 'たった今';
+        if (diff < 3600000) return Math.floor(diff / 60000) + '分前';
+        if (diff < 86400000) return Math.floor(diff / 3600000) + '時間前';
+        return d.toLocaleDateString('ja-JP');
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function showAlert(msg, type) {
+        const el = document.getElementById('alert-area');
+        el.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'dark:bg-emerald-900/30', 'dark:text-emerald-300',
+                           'bg-red-50', 'text-red-800', 'dark:bg-red-900/30', 'dark:text-red-300',
+                           'bg-amber-50', 'text-amber-800', 'dark:bg-amber-900/30', 'dark:text-amber-300');
+        if (type === 'ok') {
+            el.classList.add('bg-emerald-50', 'text-emerald-800', 'dark:bg-emerald-900/30', 'dark:text-emerald-300');
+        } else if (type === 'err') {
+            el.classList.add('bg-red-50', 'text-red-800', 'dark:bg-red-900/30', 'dark:text-red-300');
+        } else {
+            el.classList.add('bg-amber-50', 'text-amber-800', 'dark:bg-amber-900/30', 'dark:text-amber-300');
+        }
+        el.textContent = msg;
+        setTimeout(() => el.classList.add('hidden'), 5000);
+    }
+
+    loadNotifications();
+    loadPreferences();
+</script>
+{% endblock %}

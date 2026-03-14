@@ -1,0 +1,203 @@
+{% extends "admin_base.html" %}
+
+{% block header_title %}ベンダーポータル{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">ベンダーポータル</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">ツールの申請、スコア確認、異議申し立てを管理します</p>
+    </div>
+
+    <!-- Registration Banner (shown if not registered) -->
+    <div id="register-banner" class="hidden mb-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-2 font-jp">ベンダー登録</h2>
+        <p class="text-sm text-blue-700 dark:text-blue-300 mb-4 font-jp">ツールを申請するには、まずベンダー登録を行ってください。</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-blue-800 dark:text-blue-300 mb-1 font-jp">会社名 (英語)</label>
+                <input type="text" id="reg-company-name" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 rounded-lg text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-blue-800 dark:text-blue-300 mb-1 font-jp">会社名 (日本語)</label>
+                <input type="text" id="reg-company-name-jp" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 rounded-lg text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-blue-800 dark:text-blue-300 mb-1 font-jp">会社URL</label>
+                <input type="text" id="reg-company-url" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 rounded-lg text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-blue-800 dark:text-blue-300 mb-1 font-jp">連絡先メール</label>
+                <input type="text" id="reg-contact-email" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 rounded-lg text-sm">
+            </div>
+        </div>
+        <button onclick="registerVendor()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors font-jp">登録する</button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div id="vendor-stats" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
+            <div class="text-3xl font-bold text-gray-900 dark:text-white tabular-nums" id="stat-submitted">0</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-jp">申請済みツール</div>
+        </div>
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
+            <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums" id="stat-approved">0</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-jp">承認済み</div>
+        </div>
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
+            <div class="text-3xl font-bold text-amber-600 dark:text-amber-400 tabular-nums" id="stat-pending">0</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-jp">審査中</div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div id="vendor-links" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <a href="/platform/vendor/submit" class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white font-jp">ツール申請</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-jp">新しいツールを監査に申請</p>
+        </a>
+        <a href="/platform/tools" class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white font-jp">スコア確認</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-jp">承認済みツールのスコアを確認</p>
+        </a>
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 transition-colors" onclick="document.getElementById('disputes-section').scrollIntoView({behavior:'smooth'})">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white font-jp">異議申し立て</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-jp">スコアへの異議を提出</p>
+        </div>
+    </div>
+
+    <!-- Recent Submissions -->
+    <div id="submissions-section" class="mb-8">
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">最近の申請</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-100 dark:border-gray-700/50">
+                            <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase font-jp">ツール名</th>
+                            <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase font-jp">ステータス</th>
+                            <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase font-jp">申請日</th>
+                            <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase font-jp">備考</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissions-body">
+                        <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 font-jp">読み込み中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disputes Section -->
+    <div id="disputes-section">
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">異議申し立て</h2>
+            </div>
+            <div id="disputes-body" class="p-6">
+                <p class="text-sm text-gray-400 font-jp">読み込み中...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const API = '/api/v1';
+const headers = () => {
+    const h = {'Content-Type': 'application/json'};
+    const token = localStorage.getItem('aixis_token');
+    if (token) h['Authorization'] = 'Bearer ' + token;
+    return h;
+};
+
+const statusBadge = (s) => {
+    const colors = {pending:'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400', approved:'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400', rejected:'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400', reviewing:'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'};
+    const labels = {pending:'審査待ち', approved:'承認済み', rejected:'却下', reviewing:'審査中'};
+    return `<span class="px-2 py-0.5 text-xs rounded ${colors[s]||''}">${labels[s]||s}</span>`;
+};
+
+async function checkProfile() {
+    try {
+        const res = await fetch(API + '/vendor/profile', {headers: headers()});
+        if (res.ok) {
+            document.getElementById('vendor-stats').classList.remove('hidden');
+            document.getElementById('vendor-links').classList.remove('hidden');
+            loadSubmissions();
+            loadDisputes();
+        } else {
+            document.getElementById('register-banner').classList.remove('hidden');
+        }
+    } catch(e) { document.getElementById('register-banner').classList.remove('hidden'); }
+}
+
+async function registerVendor() {
+    const body = {
+        company_name: document.getElementById('reg-company-name').value.trim(),
+        company_name_jp: document.getElementById('reg-company-name-jp').value.trim(),
+        company_url: document.getElementById('reg-company-url').value.trim(),
+        contact_email: document.getElementById('reg-contact-email').value.trim(),
+    };
+    if (!body.company_name) { alert('会社名を入力してください'); return; }
+    try {
+        const res = await fetch(API + '/vendor/register', {method:'POST', headers:headers(), body:JSON.stringify(body)});
+        if (res.ok) { location.reload(); }
+        else { const e = await res.json(); alert(e.detail || 'エラー'); }
+    } catch(e) { alert('通信エラー'); }
+}
+
+async function loadSubmissions() {
+    try {
+        const res = await fetch(API + '/vendor/submissions', {headers: headers()});
+        const data = await res.json();
+        const tbody = document.getElementById('submissions-body');
+
+        document.getElementById('stat-submitted').textContent = data.length;
+        document.getElementById('stat-approved').textContent = data.filter(s => s.status === 'approved').length;
+        document.getElementById('stat-pending').textContent = data.filter(s => s.status === 'pending').length;
+
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 font-jp">まだ申請はありません</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map(s => `
+            <tr class="border-b border-gray-50 dark:border-gray-700/30">
+                <td class="px-6 py-3 text-gray-900 dark:text-gray-100 font-jp">${s.tool_name_jp || s.tool_name}</td>
+                <td class="px-6 py-3">${statusBadge(s.status)}</td>
+                <td class="px-6 py-3 text-gray-500 dark:text-gray-400">${new Date(s.created_at).toLocaleDateString('ja-JP')}</td>
+                <td class="px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">${s.reviewer_notes || '-'}</td>
+            </tr>
+        `).join('');
+    } catch(e) { console.error(e); }
+}
+
+async function loadDisputes() {
+    try {
+        const res = await fetch(API + '/vendor/disputes', {headers: headers()});
+        const data = await res.json();
+        const el = document.getElementById('disputes-body');
+        if (!data.length) {
+            el.innerHTML = '<p class="text-sm text-gray-400 font-jp">異議申し立てはありません</p>';
+            return;
+        }
+        el.innerHTML = data.map(d => `
+            <div class="mb-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div class="flex items-center gap-2 mb-1">
+                    ${statusBadge(d.status)}
+                    <span class="text-xs text-gray-500">${d.axis || 'overall'}</span>
+                    <span class="text-xs text-gray-400">${new Date(d.created_at).toLocaleDateString('ja-JP')}</span>
+                </div>
+                <p class="text-sm text-gray-700 dark:text-gray-300">${d.reason}</p>
+            </div>
+        `).join('');
+    } catch(e) { console.error(e); }
+}
+
+checkProfile();
+</script>
+{% endblock %}

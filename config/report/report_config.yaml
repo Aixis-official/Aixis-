@@ -1,0 +1,17 @@
+# レポート設定
+
+branding:
+  company_name: "Aixis"
+  company_name_jp: "アイクシス"
+  tagline: "AI実装の投資判断を科学する、独立系AI調査・検証機関"
+  website: "https://aixis.jp"
+  primary_color: "#1a365d"
+  secondary_color: "#2b6cb0"
+  accent_color: "#ed8936"
+
+report:
+  language: "ja"
+  include_english_summary: true
+  include_raw_data: true
+  max_example_count: 10
+  date_format: "%Y年%m月%d日"

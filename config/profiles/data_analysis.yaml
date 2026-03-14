@@ -1,0 +1,48 @@
+id: "data_analysis"
+name_jp: "データ分析AI"
+name_en: "Data Analysis AI"
+category_jp: "用途特化"
+description_jp: "データの可視化、統計分析、予測モデリングを自動化するAIツール。自然言語での分析指示に対応する。"
+examples:
+  - "Julius AI"
+  - "DataRobot"
+  - "Exploratory"
+  - "Microsoft Copilot (Excel)"
+  - "Google Sheets AI"
+aliases:
+  - "分析AI"
+  - "データAI"
+  - "統計AI"
+  - "BIツールAI"
+  - "データ可視化AI"
+traits:
+  - "text_input"
+  - "data_input"
+  - "chart_output"
+  - "statistical_analysis"
+  - "natural_language_query"
+  - "structured_data_output"
+
+primary_categories:
+  - ambiguous
+  - multi_step
+  - business_jp
+secondary_categories:
+  - long_input
+  - unicode_edge
+excluded_categories:
+  - dialect
+  - keigo_mixing
+  - broken_grammar
+
+scoring_weights:
+  japanese_ability: 1.0
+  reliability: 2.0
+  practical: 2.0
+
+evaluation_focus:
+  - "日本語の曖昧な分析指示の正確な解釈"
+  - "複数ステップにわたる分析フローの実行"
+  - "日本語カラム名・データラベルの正確な処理"
+  - "分析結果の日本語での適切な説明・要約"
+  - "全角数字や日本式日付フォーマットへの対応"

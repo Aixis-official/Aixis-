@@ -1,0 +1,104 @@
+category: keigo_mixing
+display_name_jp: "敬語混在テスト"
+display_name_en: "Keigo Register Mixing Test"
+description_jp: "敬語・丁寧語・タメ口・方言が無秩序に混在するプロンプトへの対応能力を検証する"
+
+parameters:
+  register_mix:
+    - id: formal_to_casual
+      label: "敬語→タメ口"
+    - id: casual_to_formal
+      label: "タメ口→敬語"
+    - id: random_mix
+      label: "ランダム混在"
+    - id: dialectal_formal
+      label: "方言＋敬語"
+    - id: sonkeigo_kenjougo_mix
+      label: "尊敬語と謙譲語の誤用混在"
+  context:
+    - id: customer_service
+      label: "顧客対応"
+    - id: internal
+      label: "社内コミュニケーション"
+    - id: interview
+      label: "面接・面談"
+
+parameter_data:
+  register_mix:
+    formal_to_casual:
+      desc: "敬語で始まり途中からタメ口に崩れる"
+    casual_to_formal:
+      desc: "タメ口で始まり途中から敬語になる"
+    random_mix:
+      desc: "文ごとに敬語レベルがバラバラ"
+    dialectal_formal:
+      desc: "方言と敬語が混在"
+    sonkeigo_kenjougo_mix:
+      desc: "尊敬語と謙譲語が入れ替わっている"
+  context:
+    customer_service:
+      desc: "お客様対応の場面"
+    internal:
+      desc: "社内の場面"
+    interview:
+      desc: "面接や面談の場面"
+
+templates:
+  - id: "keigo-{{ register_mix_id }}-{{ context_id }}-formal-collapse"
+    prompt: "お世話になっております。弊社のサービスについてご質問がございます。あのさ、先月契約したプランなんだけど、なんか料金おかしくね？ 請求書を拝見いたしましたところ、合計金額が想定と異なっているように見受けられるんだが、まじでどうなってんの？ ご確認いただけますと幸甚に存じます。てかさ、早く直してよ。"
+    expected_behaviors:
+      - "混在した敬語レベルを理解して回答する"
+      - "回答は一貫した敬語レベルで返す"
+      - "内容の本質（料金の不一致）に対応する"
+    failure_indicators:
+      - "敬語レベルの混在に引きずられて不安定な文体で回答する"
+      - "タメ口部分を無視する"
+      - "言語処理に失敗する"
+
+  - id: "keigo-{{ register_mix_id }}-{{ context_id }}-casual-elevate"
+    prompt: "ねえねえ、ちょっと聞きたいんだけどさ。御社のAIサービスの導入をご検討いただきたく存じます。うちのチームでめっちゃ使えそうなんよ。つきましては、お見積りを頂戴できればと存じ上げます。まあ、とりあえず資料ちょうだい。"
+    expected_behaviors:
+      - "カジュアルから敬語への急激な変化を正しく処理する"
+      - "ビジネスの文脈を理解する"
+      - "適切な敬語レベルで返答する"
+    failure_indicators:
+      - "カジュアル部分をノイズとして無視する"
+      - "全体をカジュアルな会話と誤認する"
+      - "回答の敬語レベルが不安定になる"
+
+  - id: "keigo-{{ register_mix_id }}-{{ context_id }}-sonkei-kenjo-swap"
+    prompt: "先日、部長が申されたように、私が御覧になった資料をお持ちいたします。お客様がおっしゃっていただいた内容について、弊社が拝見なさった結果をご報告申し上げさせていただきたく存じ上げます。先方が参られた際に、私からご説明させていただきます。"
+    expected_behaviors:
+      - "尊敬語と謙譲語の誤用を検出する"
+      - "正しい敬語表現を提案する"
+      - "誤用にかかわらず意図を理解する"
+    failure_indicators:
+      - "敬語の誤用を検出できない"
+      - "誤用をそのまま正しいものとして扱う"
+      - "意味の理解に失敗する"
+
+  - id: "keigo-{{ register_mix_id }}-{{ context_id }}-dialect-keigo"
+    prompt: "いつもお世話になっとります。ほんで、先日ご相談させてもろた件なんやけども、見積もりを拝見いたしましたところ、なんぼなんでも高すぎるんとちゃいますか。つきましては、値引きしてくれへんかなと思いまして、ご検討いただけますようお願い申し上げますわ。おおきに。"
+    expected_behaviors:
+      - "関西弁と敬語の混在を正しく理解する"
+      - "要望（値引き交渉）を正確に把握する"
+      - "適切な敬語レベルで対応する"
+    failure_indicators:
+      - "方言部分で言語判定に失敗する"
+      - "関西弁を誤った言語として処理する"
+      - "ビジネスの文脈を見失う"
+
+  - id: "keigo-{{ register_mix_id }}-{{ context_id }}-random-sentence"
+    prompt: "拝啓、時下ますますご清祥のこととお慶び申し上げます。ところでさぁ、新しいプロジェクトの件だけど、マジで人手足りないんだわ。つきましては、追加の人員配置についてご高配賜りますようお願い申し上げます。ぶっちゃけ、あと3人いないと無理ゲーだよね。何卒よろしくお願いいたします。じゃ、そういうことで。敬具。"
+    expected_behaviors:
+      - "書簡形式の敬語とカジュアル表現の混在を処理する"
+      - "実質的な要望（3人の追加人員）を把握する"
+      - "文体の乱れに引きずられない回答をする"
+    failure_indicators:
+      - "書簡形式の部分のみに反応する"
+      - "カジュアル部分の具体的な数字を見落とす"
+      - "文書全体の意図を誤解する"
+
+generation:
+  mode: cartesian
+  max_variants: 150

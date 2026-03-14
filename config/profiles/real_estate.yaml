@@ -1,0 +1,49 @@
+id: "real_estate"
+name_jp: "不動産AI"
+name_en: "Real Estate AI"
+category_jp: "業界特化"
+description_jp: "不動産業務に特化したAIツール。物件査定、物件紹介文の自動生成、重要事項説明書の作成支援を行う。"
+examples:
+  - "LIFULL HOME'S AI査定"
+  - "SRE AI Partners"
+  - "物件紹介文生成AI"
+  - "不動産査定AI"
+  - "Gate."
+aliases:
+  - "不動産査定AI"
+  - "物件AI"
+  - "住宅AI"
+  - "物件紹介AI"
+  - "賃貸AI"
+traits:
+  - "text_input"
+  - "data_input"
+  - "text_output"
+  - "domain_specific_terminology"
+  - "structured_data_output"
+  - "location_aware"
+  - "numerical_processing"
+
+primary_categories:
+  - business_jp
+  - keigo_mixing
+  - ambiguous
+secondary_categories:
+  - long_input
+  - unicode_edge
+excluded_categories:
+  - dialect
+  - broken_grammar
+  - contradictory
+
+scoring_weights:
+  japanese_ability: 1.5
+  reliability: 1.5
+  practical: 1.5
+
+evaluation_focus:
+  - "不動産専門用語の正確な使用"
+  - "物件紹介文の魅力的な日本語表現"
+  - "重要事項説明における法的表現の正確性"
+  - "日本の住所表記・地番の正確な処理"
+  - "曖昧な顧客要望からの物件条件抽出"

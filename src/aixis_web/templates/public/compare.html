@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+{% set active_page = 'compare' %}
+{% set title = 'AIツール比較' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <a href="/platform" class="hover:text-aixis-500 dark:hover:text-white transition-colors font-jp">ホーム</a>
+        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+        <span class="text-gray-700 dark:text-gray-200 font-medium font-jp">ツール比較</span>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl sm:text-3xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
+            AIツール比較
+        </h1>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 font-jp">
+            同カテゴリのAIツールをAixis 5軸スコアで横並び比較
+        </p>
+    </div>
+
+    <!-- Tool Selection Card -->
+    <div class="bg-white dark:bg-aixis-800 rounded-sm shadow-sm border border-gray-200 dark:border-aixis-700 p-6 mb-8">
+        <h2 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider font-jp mb-4">比較ツール選択</h2>
+
+        <!-- Search input wrapper -->
+        <div class="relative max-w-md mb-4">
+            <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                </svg>
+                <input type="search"
+                       id="tool-search"
+                       class="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-aixis-600 bg-white dark:bg-aixis-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-aixis-400 dark:focus:ring-aixis-300 focus:border-transparent outline-none transition-colors duration-200"
+                       placeholder="ツール名を入力して追加..."
+                       autocomplete="off">
+            </div>
+
+            <!-- Autocomplete dropdown -->
+            <div id="search-dropdown"
+                 class="hidden absolute left-0 right-0 top-full mt-1 bg-white dark:bg-aixis-700 border border-gray-200 dark:border-aixis-600 rounded-lg shadow-sm overflow-hidden"
+                 style="z-index: 60;">
+            </div>
+        </div>
+
+        <!-- Selected tool pills -->
+        <div id="selected-pills" class="flex flex-wrap gap-2 mb-4 min-h-[36px]"></div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-4">
+            <button id="compare-btn"
+                    disabled
+                    class="px-5 py-2.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-lg shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-200 font-jp">
+                比較を実行
+            </button>
+            <span class="text-xs text-gray-400 dark:text-gray-500 font-jp">最大6ツールまで選択可能</span>
+        </div>
+    </div>
+
+    <!-- Comparison Results (hidden until executed) -->
+    <div id="comparison-results" class="hidden space-y-8">
+
+        <!-- Overlapping Radar Chart -->
+        <div class="bg-white dark:bg-aixis-800 rounded-sm shadow-sm border border-gray-200 dark:border-aixis-700 p-6">
+            <h2 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider font-jp mb-4">5軸レーダー比較</h2>
+            <div id="compare-radar" class="w-full" style="min-height: 320px;"></div>
+        </div>
+
+        <!-- Per-Axis Bar Chart -->
+        <div class="bg-white dark:bg-aixis-800 rounded-sm shadow-sm border border-gray-200 dark:border-aixis-700 p-6">
+            <h2 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider font-jp mb-4">軸別スコア比較</h2>
+            <div id="compare-bars" class="w-full" style="min-height: 300px;"></div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="bg-white dark:bg-aixis-800 rounded-sm shadow-sm border border-gray-200 dark:border-aixis-700 p-6">
+            <h2 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider font-jp mb-4">詳細比較表</h2>
+            <div class="overflow-x-auto -mx-6 px-6">
+                <table id="compare-table" class="w-full text-sm"></table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    'use strict';
+
+    // ---- State ----
+    let selectedTools = [];  // [{slug, name, vendor}]
+    let toolScores = {};     // slug -> score object
+
+    // ---- DOM refs ----
+    const searchInput  = document.getElementById('tool-search');
+    const dropdown     = document.getElementById('search-dropdown');
+    const pillsBox     = document.getElementById('selected-pills');
+    const compareBtn   = document.getElementById('compare-btn');
+    const resultsWrap  = document.getElementById('comparison-results');
+
+    // ---- Debounced search ----
+    let searchTimer = null;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        const q = this.value.trim();
+        if (q.length < 1) { hideDropdown(); return; }
+        searchTimer = setTimeout(function() { doSearch(q); }, 300);
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            hideDropdown();
+        }
+    });
+
+    async function doSearch(q) {
+        try {
+            const resp = await fetch('/api/v1/tools?q=' + encodeURIComponent(q) + '&limit=5');
+            if (!resp.ok) return;
+            const data = await resp.json();
+            const items = data.items || data;
+            if (!items.length) { hideDropdown(); return; }
+
+            dropdown.innerHTML = items.map(function(t) {
+                const alreadySelected = selectedTools.some(function(s) { return s.slug === t.slug; });
+                return '<button type="button" data-slug="' + escAttr(t.slug) + '" data-name="' + escAttr(t.name || t.slug) + '" data-vendor="' + escAttr(t.vendor || '') + '"'
+                    + ' class="w-full text-left px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-gray-100 dark:hover:bg-aixis-600 transition-colors duration-150'
+                    + (alreadySelected ? ' opacity-40 cursor-default' : ' cursor-pointer') + '"'
+                    + (alreadySelected ? ' disabled' : '') + '>'
+                    + '<span>'
+                    + '<span class="font-medium text-gray-900 dark:text-gray-100 text-sm">' + escHtml(t.name || t.slug) + '</span>'
+                    + (t.vendor ? ' <span class="text-xs text-gray-400 dark:text-gray-500 ml-1">' + escHtml(t.vendor) + '</span>' : '')
+                    + '</span>'
+                    + (alreadySelected ? '<span class="text-xs text-gray-400 dark:text-gray-500">選択済</span>' : '')
+                    + '</button>';
+            }).join('');
+
+            dropdown.classList.remove('hidden');
+
+            // Bind clicks
+            dropdown.querySelectorAll('button:not([disabled])').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    addTool(btn.dataset.slug, btn.dataset.name, btn.dataset.vendor);
+                });
+            });
+        } catch (e) { /* swallow */ }
+    }
+
+    function hideDropdown() {
+        dropdown.classList.add('hidden');
+        dropdown.innerHTML = '';
+    }
+
+    // ---- Tool selection ----
+    function addTool(slug, name, vendor) {
+        if (selectedTools.some(function(t) { return t.slug === slug; })) return;
+        if (selectedTools.length >= 6) return;
+        selectedTools.push({ slug: slug, name: name, vendor: vendor || '' });
+        renderPills();
+        searchInput.value = '';
+        hideDropdown();
+        searchInput.focus();
+    }
+
+    function removeTool(slug) {
+        selectedTools = selectedTools.filter(function(t) { return t.slug !== slug; });
+        renderPills();
+    }
+    // expose globally for onclick
+    window._compareRemoveTool = removeTool;
+
+    function renderPills() {
+        pillsBox.innerHTML = selectedTools.map(function(t, i) {
+            var color = AIXIS.TOOL_COLORS[i] || '#6b7280';
+            return '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border bg-white dark:bg-aixis-700/50" style="border-color:' + color + '; color:' + color + ';">'
+                + '<span class="w-2 h-2 rounded-full shrink-0" style="background:' + color + ';"></span>'
+                + escHtml(t.name)
+                + '<button type="button" onclick="window._compareRemoveTool(\'' + escAttr(t.slug) + '\')" class="ml-0.5 opacity-60 hover:opacity-100 transition-opacity" aria-label="削除">'
+                + '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>'
+                + '</button>'
+                + '</span>';
+        }).join('');
+
+        compareBtn.disabled = selectedTools.length < 2;
+    }
+
+    // ---- Compare execution ----
+    compareBtn.addEventListener('click', async function() {
+        compareBtn.disabled = true;
+        compareBtn.textContent = '読み込み中...';
+        toolScores = {};
+
+        for (var i = 0; i < selectedTools.length; i++) {
+            var t = selectedTools[i];
+            try {
+                var resp = await fetch('/api/v1/scores/' + encodeURIComponent(t.slug));
+                if (resp.ok) toolScores[t.slug] = await resp.json();
+            } catch (e) { /* skip */ }
+        }
+
+        compareBtn.textContent = '比較を実行';
+        compareBtn.disabled = selectedTools.length < 2;
+
+        if (Object.keys(toolScores).length < 2) {
+            alert('スコアデータが2ツール以上必要です。');
+            return;
+        }
+
+        // Update URL params
+        var slugs = selectedTools.map(function(t) { return t.slug; }).join(',');
+        var url = new URL(window.location);
+        url.searchParams.set('tools', slugs);
+        history.replaceState(null, '', url);
+
+        renderComparison();
+    });
+
+    // ---- Render comparison results ----
+    function renderComparison() {
+        resultsWrap.classList.remove('hidden');
+
+        renderRadarChart();
+        renderBarChart();
+        renderTable();
+
+        // Scroll to results
+        resultsWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ---- Radar chart ----
+    function renderRadarChart() {
+        var axisLabelsOrdered = AIXIS.AXIS_KEYS.map(function(k) { return AIXIS.AXIS_LABELS[k]; });
+
+        var traces = selectedTools.map(function(t, i) {
+            var scores = toolScores[t.slug];
+            if (!scores) return null;
+            var values = AIXIS.AXIS_KEYS.map(function(k) { return scores[k] || 0; });
+            return {
+                type: 'scatterpolar',
+                r: values.concat([values[0]]),
+                theta: axisLabelsOrdered.concat([axisLabelsOrdered[0]]),
+                fill: 'toself',
+                fillcolor: AIXIS.TOOL_COLORS[i] + '18',
+                line: { color: AIXIS.TOOL_COLORS[i], width: 2.5 },
+                marker: { size: 5, color: AIXIS.TOOL_COLORS[i] },
+                name: t.name
+            };
+        }).filter(Boolean);
+
+        var layout = getRadarLayout({
+            height: 440,
+            margin: { t: 40, b: 60, l: 80, r: 80 },
+            legend: { orientation: 'h', y: -0.12, font: { size: 12 } }
+        });
+
+        Plotly.newPlot('compare-radar', traces, layout, { responsive: true });
+
+        // Register for theme change
+        var el = document.getElementById('compare-radar');
+        el._renderChart = renderRadarChart;
+    }
+
+    // ---- Bar chart ----
+    function renderBarChart() {
+        var axisLabelsOrdered = AIXIS.AXIS_KEYS.map(function(k) { return AIXIS.AXIS_LABELS[k]; });
+
+        var traces = selectedTools.map(function(t, i) {
+            var scores = toolScores[t.slug];
+            if (!scores) return null;
+            return {
+                type: 'bar',
+                x: axisLabelsOrdered,
+                y: AIXIS.AXIS_KEYS.map(function(k) { return scores[k] || 0; }),
+                name: t.name,
+                marker: { color: AIXIS.TOOL_COLORS[i], opacity: 0.88 },
+                text: AIXIS.AXIS_KEYS.map(function(k) { return (scores[k] || 0).toFixed(1); }),
+                textposition: 'outside',
+                textfont: { size: 11 }
+            };
+        }).filter(Boolean);
+
+        var layout = getPlotlyLayout({
+            barmode: 'group',
+            yaxis: { range: [0, 5.5], title: { text: 'スコア (5.0満点)', font: { size: 12 } }, gridcolor: isDarkMode() ? '#374151' : '#e2e8f0' },
+            xaxis: { tickfont: { size: 12 } },
+            margin: { t: 20, b: 90, l: 55, r: 20 },
+            height: 370,
+            legend: { orientation: 'h', y: -0.28, font: { size: 12 } }
+        });
+
+        Plotly.newPlot('compare-bars', traces, layout, { responsive: true });
+
+        // Register for theme change
+        var el = document.getElementById('compare-bars');
+        el._renderChart = renderBarChart;
+    }
+
+    // ---- Comparison table ----
+    function renderTable() {
+        var table = document.getElementById('compare-table');
+        var dark = isDarkMode();
+
+        // Header
+        var headerCells = '<th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider font-jp whitespace-nowrap">評価軸</th>';
+        selectedTools.forEach(function(t, i) {
+            var color = AIXIS.TOOL_COLORS[i] || '#6b7280';
+            headerCells += '<th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider whitespace-nowrap" style="color:' + color + ';">' + escHtml(t.name) + '</th>';
+        });
+
+        var html = '<thead class="border-b-2 border-gray-200 dark:border-aixis-600"><tr>' + headerCells + '</tr></thead>';
+
+        // Body rows per axis
+        html += '<tbody class="divide-y divide-gray-100 dark:divide-aixis-700">';
+
+        AIXIS.AXIS_KEYS.forEach(function(key, axisIdx) {
+            // Find max score for this axis
+            var maxScore = 0;
+            selectedTools.forEach(function(t) {
+                var s = (toolScores[t.slug] && toolScores[t.slug][key]) || 0;
+                if (s > maxScore) maxScore = s;
+            });
+
+            html += '<tr class="hover:bg-gray-50 dark:hover:bg-aixis-700/40 transition-colors">';
+            html += '<td class="px-4 py-3 font-semibold text-gray-800 dark:text-gray-200 text-sm font-jp whitespace-nowrap">' + AIXIS.AXIS_LABELS[key] + '</td>';
+
+            selectedTools.forEach(function(t) {
+                var s = (toolScores[t.slug] && toolScores[t.slug][key]) || 0;
+                var isBest = s === maxScore && s > 0;
+                var scoreColor = s >= 4.0 ? 'text-green-600 dark:text-green-400' : s >= 2.5 ? 'text-blue-600 dark:text-blue-400' : 'text-red-500 dark:text-red-400';
+
+                html += '<td class="px-4 py-3 text-center">';
+                if (isBest) {
+                    html += '<span class="inline-flex items-center gap-1">';
+                    html += '<span class="font-bold text-sm ' + scoreColor + '">' + s.toFixed(1) + '</span>';
+                    html += '<svg class="w-3.5 h-3.5 text-aixis-500 dark:text-aixis-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>';
+                    html += '</span>';
+                } else {
+                    html += '<span class="font-medium text-sm ' + scoreColor + '">' + s.toFixed(1) + '</span>';
+                }
+                html += '</td>';
+            });
+            html += '</tr>';
+        });
+
+        // Total score row
+        html += '<tr class="border-t-2 border-gray-200 dark:border-aixis-600 bg-gray-50/50 dark:bg-aixis-700/30">';
+        html += '<td class="px-4 py-4 font-bold text-gray-900 dark:text-white text-sm font-jp whitespace-nowrap">総合スコア</td>';
+
+        selectedTools.forEach(function(t) {
+            var scores = toolScores[t.slug];
+            var overall = (scores && scores.overall_score) || 0;
+            var grade = (scores && scores.overall_grade) || '--';
+
+            html += '<td class="px-4 py-4 text-center">';
+            html += '<span class="font-bold text-base text-gray-900 dark:text-white">' + overall.toFixed(1) + '</span>';
+            html += '<span class="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-gray-100 dark:bg-aixis-600 text-gray-700 dark:text-gray-200 align-middle">' + escHtml(grade) + '</span>';
+            html += '</td>';
+        });
+        html += '</tr>';
+
+        html += '</tbody>';
+        table.innerHTML = html;
+    }
+
+    // ---- URL param pre-selection ----
+    (function initFromURL() {
+        var params = new URLSearchParams(window.location.search);
+        var toolsParam = params.get('tools');
+        if (!toolsParam) return;
+        var slugs = toolsParam.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+        if (!slugs.length) return;
+
+        // Fetch tool info for each slug then auto-compare
+        Promise.all(slugs.map(function(slug) {
+            return fetch('/api/v1/tools/' + encodeURIComponent(slug))
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .catch(function() { return null; });
+        })).then(function(results) {
+            results.forEach(function(tool) {
+                if (tool) {
+                    addTool(tool.slug, tool.name || tool.slug, tool.vendor || '');
+                }
+            });
+            // Auto-trigger comparison if enough tools
+            if (selectedTools.length >= 2) {
+                compareBtn.click();
+            }
+        });
+    })();
+
+    // ---- HTML escape helpers ----
+    function escHtml(str) {
+        var d = document.createElement('div');
+        d.textContent = str || '';
+        return d.innerHTML;
+    }
+
+    function escAttr(str) {
+        return (str || '').replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+})();
+</script>
+{% endblock %}

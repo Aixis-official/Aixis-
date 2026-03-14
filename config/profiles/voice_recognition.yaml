@@ -1,0 +1,47 @@
+id: "voice_recognition"
+name_jp: "音声認識AI"
+name_en: "Voice Recognition AI"
+category_jp: "用途特化"
+description_jp: "音声をテキストに変換する音声認識AIツール。リアルタイム文字起こし、話者分離、多言語対応などの機能を持つ。"
+examples:
+  - "AmiVoice"
+  - "Google Speech-to-Text"
+  - "Amazon Transcribe"
+  - "Azure Speech Services"
+  - "Whisper"
+aliases:
+  - "音声AI"
+  - "文字起こしAI"
+  - "STT"
+  - "書き起こしAI"
+  - "音声テキスト変換"
+traits:
+  - "speech_input"
+  - "text_output"
+  - "real_time_processing"
+  - "speaker_diarization"
+  - "noise_robust"
+
+primary_categories:
+  - dialect
+  - broken_grammar
+  - keigo_mixing
+secondary_categories:
+  - ambiguous
+  - long_input
+excluded_categories:
+  - unicode_edge
+  - contradictory
+  - multi_step
+
+scoring_weights:
+  japanese_ability: 2.0
+  reliability: 2.0
+  practical: 1.0
+
+evaluation_focus:
+  - "方言・アクセントを含む音声の認識精度"
+  - "敬語と口語が混在する発話の正確な変換"
+  - "不完全な発話・言い直しの適切な処理"
+  - "専門用語・固有名詞の認識精度"
+  - "ノイズ環境下での認識安定性"

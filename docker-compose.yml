@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - AIXIS_DATABASE_URL=postgresql+asyncpg://aixis:aixis@postgres:5432/aixis
+      - AIXIS_REDIS_URL=redis://redis:6379
+      - AIXIS_DEBUG=true
+      - AIXIS_SECRET_KEY=change-this-in-production
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./config:/app/config
+      - ./output:/app/output
+    command: uvicorn aixis_web.app:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build: .
+    environment:
+      - AIXIS_DATABASE_URL=postgresql+asyncpg://aixis:aixis@postgres:5432/aixis
+      - AIXIS_REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./config:/app/config
+      - ./output:/app/output
+    command: arq aixis_web.tasks.worker.WorkerSettings
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: aixis
+      POSTGRES_PASSWORD: aixis
+      POSTGRES_DB: aixis
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

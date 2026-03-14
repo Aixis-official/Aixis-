@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .login-bg {
+        background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 50%, #c7d2fe 100%);
+    }
+    .dark .login-bg {
+        background: linear-gradient(135deg, #060d19 0%, #0f1f36 50%, #162d4d 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-bg min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+
+        <!-- Login Card -->
+        <div class="bg-white dark:bg-aixis-800 rounded-sm shadow-sm dark:shadow-2xl border border-gray-200/60 dark:border-aixis-700/60 p-8 sm:p-10">
+
+            <!-- Logo / Wordmark -->
+            <div class="text-center mb-8">
+                <div class="text-3xl font-extrabold tracking-tight text-aixis-500 dark:text-aixis-100">
+                    Aixis
+                </div>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">
+                    AI監査プラットフォーム
+                </p>
+            </div>
+
+            <!-- Title -->
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white text-center mb-6 font-jp">
+                ログイン
+            </h1>
+
+            <!-- Error Message -->
+            <div id="login-error"
+                 class="hidden mb-5 px-4 py-3 rounded-sm bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm font-jp">
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="space-y-5">
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 font-jp">
+                        メールアドレス
+                    </label>
+                    <input type="email"
+                           id="email"
+                           name="email"
+                           required
+                           autocomplete="email"
+                           placeholder="your@email.com"
+                           class="w-full px-4 py-2.5 rounded-sm border border-gray-300 dark:border-aixis-600
+                                  bg-white dark:bg-aixis-700 text-gray-900 dark:text-gray-100
+                                  placeholder-gray-400 dark:placeholder-gray-500
+                                  focus:outline-none focus:ring-2 focus:ring-aixis-400 dark:focus:ring-aixis-400 focus:border-transparent
+                                  transition-colors duration-200 text-sm">
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 font-jp">
+                        パスワード
+                    </label>
+                    <input type="password"
+                           id="password"
+                           name="password"
+                           required
+                           autocomplete="current-password"
+                           placeholder="パスワードを入力"
+                           class="w-full px-4 py-2.5 rounded-sm border border-gray-300 dark:border-aixis-600
+                                  bg-white dark:bg-aixis-700 text-gray-900 dark:text-gray-100
+                                  placeholder-gray-400 dark:placeholder-gray-500
+                                  focus:outline-none focus:ring-2 focus:ring-aixis-400 dark:focus:ring-aixis-400 focus:border-transparent
+                                  transition-colors duration-200 text-sm">
+                </div>
+
+                <!-- Submit -->
+                <button type="submit"
+                        id="login-btn"
+                        class="w-full flex items-center justify-center gap-2 px-4 py-2.5
+                               bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300
+                               text-white dark:text-aixis-900 font-semibold text-sm rounded-sm
+                               transition-colors duration-200 shadow-sm
+                               disabled:opacity-60 disabled:cursor-not-allowed">
+                    <span id="login-text" class="font-jp">ログイン</span>
+                    <!-- Spinner (hidden by default) -->
+                    <svg id="login-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Contact link for non-registered users -->
+            <div class="mt-5 text-center text-sm text-gray-600 dark:text-gray-400 font-jp">
+                アカウントをお持ちでない方は<a href='/platform/contact' class='text-aixis-600 dark:text-aixis-400 hover:underline font-medium'>お問い合わせ</a>ください。
+            </div>
+
+            <!-- Home Link -->
+            <div class="mt-4 text-center">
+                <a href="/platform"
+                   class="text-sm text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-200 font-jp">
+                    ホームに戻る
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var form = document.getElementById('login-form');
+    var errorDiv = document.getElementById('login-error');
+    var loginBtn = document.getElementById('login-btn');
+    var loginText = document.getElementById('login-text');
+    var loginSpinner = document.getElementById('login-spinner');
+
+    function setLoading(loading) {
+        loginBtn.disabled = loading;
+        loginText.textContent = loading ? 'ログイン中...' : 'ログイン';
+        if (loading) {
+            loginSpinner.classList.remove('hidden');
+        } else {
+            loginSpinner.classList.add('hidden');
+        }
+    }
+
+    function showError(msg) {
+        errorDiv.textContent = msg;
+        errorDiv.classList.remove('hidden');
+    }
+
+    function hideError() {
+        errorDiv.classList.add('hidden');
+    }
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        hideError();
+        setLoading(true);
+
+        try {
+            var formData = new FormData(form);
+            var resp = await fetch('/api/v1/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: formData.get('email') || formData.get('username'),
+                    password: formData.get('password')
+                })
+            });
+
+            if (!resp.ok) {
+                var data = await resp.json().catch(function() { return {}; });
+                throw new Error(data.detail || 'メールアドレスまたはパスワードが正しくありません。');
+            }
+
+            var data = await resp.json();
+            if (data.access_token) {
+                localStorage.setItem('aixis_token', data.access_token);
+                // Set cookie for SSR page auth (expires_in is in seconds)
+                var maxAge = data.expires_in || 86400;
+                document.cookie = 'aixis_token=' + data.access_token + '; path=/; max-age=' + maxAge + '; SameSite=Lax';
+            }
+
+            // Fetch user role to determine redirect destination
+            try {
+                var meResp = await fetch('/api/v1/auth/me', {
+                    headers: { 'Authorization': 'Bearer ' + (data.access_token || '') }
+                });
+                if (meResp.ok) {
+                    var meData = await meResp.json();
+                    var role = (meData.role || '').toLowerCase();
+                    if (role === 'admin' || role === 'auditor') {
+                        window.location.href = '/platform/dashboard';
+                    } else {
+                        window.location.href = '/platform/portal';
+                    }
+                } else {
+                    window.location.href = '/platform/portal';
+                }
+            } catch (meErr) {
+                window.location.href = '/platform/portal';
+            }
+        } catch (err) {
+            showError(err.message);
+            setLoading(false);
+        }
+    });
+})();
+</script>
+{% endblock %}

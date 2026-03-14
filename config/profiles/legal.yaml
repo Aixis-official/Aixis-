@@ -1,0 +1,48 @@
+id: "legal"
+name_jp: "法務AI"
+name_en: "Legal AI"
+category_jp: "業界特化"
+description_jp: "法務分野に特化したAIツール。契約書レビュー、リーガルリサーチ、法的文書作成、コンプライアンスチェックを行う。"
+examples:
+  - "LegalForce"
+  - "LAWGUE"
+  - "AI-CON Pro"
+  - "GVA assist"
+  - "リーガルリサーチAI"
+aliases:
+  - "法務AI"
+  - "契約書AI"
+  - "リーガルAI"
+  - "法律AI"
+  - "契約レビューAI"
+traits:
+  - "text_input"
+  - "text_output"
+  - "domain_specific_terminology"
+  - "high_accuracy_required"
+  - "structured_analysis"
+  - "clause_detection"
+
+primary_categories:
+  - long_input
+  - business_jp
+  - keigo_mixing
+  - contradictory
+secondary_categories:
+  - ambiguous
+  - unicode_edge
+excluded_categories:
+  - dialect
+  - broken_grammar
+
+scoring_weights:
+  japanese_ability: 2.0
+  reliability: 2.0
+  practical: 1.5
+
+evaluation_focus:
+  - "法律用語・条文表現の正確な理解と生成"
+  - "長文契約書における矛盾条項の検出"
+  - "日本の法体系に基づく適切な解釈"
+  - "敬語を含む法的文書の正確な処理"
+  - "旧字体・法令特有の表記への対応"

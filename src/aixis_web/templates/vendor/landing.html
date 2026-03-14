@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+
+    <!-- Header -->
+    <div class="section-line"></div>
+    <h1 class="text-2xl md:text-3xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">AIツールの掲載について</h1>
+    <p class="mt-4 text-base text-gray-600 dark:text-gray-400 font-jp leading-relaxed">
+        Aixisでは、AIツールベンダーからの掲載依頼を受け付けています。<br>
+        掲載されたツールはAixisの独立監査を経て、5軸スコアで評価・公開されます。
+    </p>
+    <hr class="divider-thin">
+
+    <!-- 掲載の流れ -->
+    <div class="mt-12">
+        <h2 class="text-lg font-bold font-serif text-gray-900 dark:text-white tracking-tight">掲載の流れ</h2>
+        <div class="mt-6 space-y-0 border border-gray-200 dark:border-gray-800 divide-y divide-gray-200 dark:divide-gray-800">
+            <div class="flex items-start gap-5 p-5">
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">01</span>
+                <p class="text-sm text-gray-700 dark:text-gray-300 font-jp">下記のお問い合わせフォームより、ツール名・URL・概要をお送りください</p>
+            </div>
+            <div class="flex items-start gap-5 p-5">
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">02</span>
+                <p class="text-sm text-gray-700 dark:text-gray-300 font-jp">Aixis運営にて掲載可否を確認し、ご連絡いたします</p>
+            </div>
+            <div class="flex items-start gap-5 p-5">
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">03</span>
+                <p class="text-sm text-gray-700 dark:text-gray-300 font-jp">掲載後、Aixisの監査基準に基づきスコアリングを実施します</p>
+            </div>
+            <div class="flex items-start gap-5 p-5">
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">04</span>
+                <p class="text-sm text-gray-700 dark:text-gray-300 font-jp">結果はAixis上で公開され、利用者の比較検討に活用されます</p>
+            </div>
+        </div>
+    </div>
+
+    <hr class="divider-thin mt-12">
+
+    <!-- よくある質問 -->
+    <div class="mt-12">
+        <h2 class="text-lg font-bold font-serif text-gray-900 dark:text-white tracking-tight">よくある質問</h2>
+        <div class="mt-6 space-y-0 divide-y divide-gray-200 dark:divide-gray-800">
+            <div class="py-5">
+                <dt class="text-sm font-bold text-gray-900 dark:text-white font-jp">掲載に費用はかかりますか？</dt>
+                <dd class="mt-1.5 text-sm text-gray-600 dark:text-gray-400 font-jp">いいえ、掲載は無料です。</dd>
+            </div>
+            <div class="py-5">
+                <dt class="text-sm font-bold text-gray-900 dark:text-white font-jp">スコアに不服がある場合は？</dt>
+                <dd class="mt-1.5 text-sm text-gray-600 dark:text-gray-400 font-jp">掲載後にアカウントを作成いただければ、ベンダーポータルから異議申し立てが可能です。</dd>
+            </div>
+            <div class="py-5">
+                <dt class="text-sm font-bold text-gray-900 dark:text-white font-jp">監査の評価軸は何ですか？</dt>
+                <dd class="mt-1.5 text-sm text-gray-600 dark:text-gray-400 font-jp">実務適性（Practicality）・費用対効果（Cost Performance）・日本語能力（Japanese Readiness）・信頼性・安全性（Safety）・革新性（Uniqueness）の5軸で評価します。</dd>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="mt-14">
+        <a href="/platform/contact"
+           class="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0f1a] dark:bg-white text-white dark:text-[#0a0f1a] text-sm font-bold rounded-none hover:opacity-90 transition-opacity duration-150 font-jp">
+            掲載を申し込む
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+        </a>
+        <p class="mt-4 text-xs text-gray-400 dark:text-gray-500 font-sans">掲載は無料です / 審査期間: 約5営業日</p>
+    </div>
+
+</div>
+{% endblock %}

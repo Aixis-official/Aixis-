@@ -1,0 +1,799 @@
+{% extends "base.html" %}
+{% set active_page = 'home' %}
+
+{% block head %}
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-out both;
+    }
+
+    .axis-polygon-fill {
+        opacity: 0.3;
+    }
+    .axis-polygon-stroke {
+        filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.3));
+    }
+    .axis-dot {
+        transition: r 0.2s ease;
+    }
+    .axis-dot:hover {
+        r: 7;
+    }
+
+    /* Axis detail overlay */
+    .axis-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.35s;
+    }
+    .axis-overlay.is-visible {
+        opacity: 1;
+        visibility: visible;
+    }
+    .axis-overlay-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(8px);
+    }
+    .axis-overlay-content {
+        position: relative;
+        max-width: 680px;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        background: #fff;
+        border-radius: 0;
+        padding: 0;
+        transform: translateY(20px) scale(0.97);
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    .dark .axis-overlay-content {
+        background: #0d1117;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    .axis-overlay.is-visible .axis-overlay-content {
+        transform: translateY(0) scale(1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== HERO SECTION ===== -->
+<section class="relative overflow-hidden bg-[#0a0f1a]">
+    <div class="absolute inset-0">
+        <img src="/static/img/Aixis-platform-hero.jpeg" alt="" class="w-full h-full object-cover object-center opacity-40">
+        <div class="absolute inset-0 bg-gradient-to-r from-[#0a0f1a]/90 via-[#0a0f1a]/70 to-[#0a0f1a]/50"></div>
+    </div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28 sm:py-36 lg:py-44">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-12 lg:gap-20">
+            <!-- Left: Text -->
+            <div class="max-w-3xl lg:max-w-none lg:flex-1 lg:min-w-0">
+                <span class="report-label font-sans">Aixis Research · AI Tool Evaluation</span>
+                <h1 class="mt-6 text-3xl sm:text-4xl lg:text-[3.2rem] xl:text-[3.6rem] font-bold font-serif text-white tracking-tight leading-tight lg:whitespace-nowrap">
+                    感覚ではなく、数値で選ぶ。
+                </h1>
+                <p class="mt-8 text-lg sm:text-xl lg:text-2xl text-slate-300 max-w-3xl leading-relaxed font-jp">
+                    第三者5軸定量監査で、AIツール選定に科学的根拠を。
+                </p>
+
+                <div class="mt-12 flex flex-col sm:flex-row items-start gap-4">
+                    <a href="/platform/tools"
+                       class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-none text-base font-bold bg-white text-[#0a0f1a] hover:bg-gray-100 transition-all duration-200">
+                        監査データベースを見る
+                        <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                    </a>
+                    <a href="/platform/contact?type=demo"
+                       class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-none text-base font-bold text-white border-2 border-blue-400/60 hover:border-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-all duration-200">
+                        無料デモを予約する
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right: Mock Audit Cards -->
+            <div class="hidden lg:block relative flex-shrink-0" style="width: 420px; height: 320px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.3));">
+                <!-- Card 2 (Back) -->
+                <div style="position: absolute; top: -8px; left: 16px; width: 360px; height: 240px; transform: perspective(800px) rotateY(-12deg) rotateX(3deg); opacity: 0.6; filter: blur(1.5px);"
+                     class="bg-white/95 border border-[#E2E8F0] rounded-sm overflow-hidden">
+                    <div class="p-5">
+                        <span class="text-[10px] font-mono tracking-wider text-gray-400">AI-TOOL-002</span>
+                        <div class="mt-4 flex items-center justify-center" style="height: 130px;">
+                            <svg viewBox="0 0 200 200" width="140" height="140">
+                                <polygon points="100,25 175,72 155,155 45,155 25,72" fill="none" stroke="#E2E8F0" stroke-width="1"/>
+                                <polygon points="100,50 155,82 142,140 58,140 45,82" fill="none" stroke="#E2E8F0" stroke-width="0.5"/>
+                                <polygon points="100,75 135,92 128,125 72,125 65,92" fill="none" stroke="#E2E8F0" stroke-width="0.5"/>
+                                <polygon points="100,40 160,75 145,148 55,148 40,75" fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.3)" stroke-width="1.5"/>
+                            </svg>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between">
+                            <span class="text-[10px] text-gray-400 font-sans">総合グレード</span>
+                            <span class="text-[11px] font-bold text-gray-400 font-sans px-2 py-0.5 bg-gray-100 rounded-sm">B+</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 1 (Front) -->
+                <div style="position: absolute; top: 0; left: 0; width: 360px; height: 240px; transform: perspective(800px) rotateY(-12deg) rotateX(3deg);"
+                     class="bg-white border border-[#E2E8F0] rounded-sm overflow-hidden">
+                    <div class="p-5">
+                        <span class="text-[10px] font-mono tracking-wider text-gray-400">AI-TOOL-001</span>
+                        <div class="mt-4 flex items-center justify-center" style="height: 130px;">
+                            <svg viewBox="0 0 200 200" width="140" height="140">
+                                <!-- Grid lines -->
+                                <polygon points="100,25 175,72 155,155 45,155 25,72" fill="none" stroke="#E2E8F0" stroke-width="1"/>
+                                <polygon points="100,50 155,82 142,140 58,140 45,82" fill="none" stroke="#E2E8F0" stroke-width="0.5"/>
+                                <polygon points="100,75 135,92 128,125 72,125 65,92" fill="none" stroke="#E2E8F0" stroke-width="0.5"/>
+                                <!-- Axes -->
+                                <line x1="100" y1="100" x2="100" y2="25" stroke="#E2E8F0" stroke-width="0.5"/>
+                                <line x1="100" y1="100" x2="175" y2="72" stroke="#E2E8F0" stroke-width="0.5"/>
+                                <line x1="100" y1="100" x2="155" y2="155" stroke="#E2E8F0" stroke-width="0.5"/>
+                                <line x1="100" y1="100" x2="45" y2="155" stroke="#E2E8F0" stroke-width="0.5"/>
+                                <line x1="100" y1="100" x2="25" y2="72" stroke="#E2E8F0" stroke-width="0.5"/>
+                                <!-- Data polygon -->
+                                <polygon points="100,35 165,68 148,148 52,148 35,68" fill="rgba(59,130,246,0.1)" stroke="rgba(59,130,246,0.6)" stroke-width="1.5"/>
+                                <!-- Data points -->
+                                <circle cx="100" cy="35" r="3" fill="#3B82F6"/>
+                                <circle cx="165" cy="68" r="3" fill="#3B82F6"/>
+                                <circle cx="148" cy="148" r="3" fill="#3B82F6"/>
+                                <circle cx="52" cy="148" r="3" fill="#3B82F6"/>
+                                <circle cx="35" cy="68" r="3" fill="#3B82F6"/>
+                                <!-- Labels -->
+                                <text x="100" y="18" text-anchor="middle" fill="#64748B" font-size="8" font-family="Inter, sans-serif">実務適性</text>
+                                <text x="185" y="72" text-anchor="start" fill="#64748B" font-size="8" font-family="Inter, sans-serif">信頼性・安全性</text>
+                                <text x="162" y="165" text-anchor="start" fill="#64748B" font-size="8" font-family="Inter, sans-serif">革新性</text>
+                                <text x="38" y="165" text-anchor="end" fill="#64748B" font-size="8" font-family="Inter, sans-serif">日本語能力</text>
+                                <text x="15" y="72" text-anchor="end" fill="#64748B" font-size="8" font-family="Inter, sans-serif">費用対効果</text>
+                            </svg>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between">
+                            <span class="text-[10px] text-gray-500 font-sans">総合グレード</span>
+                            <span class="text-[11px] font-bold text-blue-600 font-sans px-2 py-0.5 bg-blue-50 rounded-sm">A</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ===== STATS BAR ===== -->
+<section class="relative mt-0 pt-16 pb-8 z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card 1: 独自評価基準 -->
+        <div class="bg-white dark:bg-aixis-800 rounded-none border border-gray-200 dark:border-gray-800 p-6 text-left">
+            <hr class="divider-thin-sm">
+            <div class="flex items-baseline">
+                <span class="stat-number countup-target" data-countup="5">0</span>
+                <span class="stat-unit">軸</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">独自評価基準</div>
+        </div>
+        <!-- Card 2: 公開予定 -->
+        <div class="bg-white dark:bg-aixis-800 rounded-none border border-gray-200 dark:border-gray-800 p-6 text-left">
+            <hr class="divider-thin-sm">
+            <div class="flex items-baseline">
+                <span class="stat-number text-2xl sm:text-3xl font-sans" style="font-size: 36px;">Q2</span>
+                <span class="stat-unit font-sans">2026</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">公開予定</div>
+        </div>
+        <!-- Card 3: 自動テスト -->
+        <div class="bg-white dark:bg-aixis-800 rounded-none border border-gray-200 dark:border-gray-800 p-6 text-left">
+            <hr class="divider-thin-sm">
+            <div class="flex items-baseline">
+                <span class="stat-number countup-target" data-countup="40" style="font-size: 42px;">0</span>
+                <span class="stat-unit">%</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">自動テスト</div>
+            <div class="mt-1 text-sm text-gray-600 dark:text-gray-400">+ 60% 専門家評価</div>
+            <p class="data-annotation mt-3">ハイブリッド監査方式</p>
+        </div>
+        <!-- Card 4: ベンダー収益 -->
+        <div class="bg-white dark:bg-aixis-800 rounded-none border border-gray-200 dark:border-gray-800 p-6 text-left">
+            <hr class="divider-thin-sm">
+            <div class="flex items-baseline">
+                <span class="stat-number countup-target" data-countup="0">0</span>
+                <span class="stat-unit">円</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">ベンダー収益</div>
+            <p class="data-annotation mt-3">完全独立・第三者評価</p>
+        </div>
+    </div>
+</section>
+
+
+<!-- ===== 5-AXIS AUDIT MODEL ===== -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+    <div class="text-left mb-12 sm:mb-16">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
+            5つの評価軸
+        </h2>
+        <p class="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl">
+            5つの独立した評価軸で、AIツールの実力を定量的に監査します
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <!-- Left: SVG Radar / Pentagon Diagram -->
+        <div class="flex items-center justify-center">
+            <svg viewBox="0 0 540 520" class="w-full max-w-[480px] h-auto" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="aixisGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.35"/>
+                        <stop offset="100%" stop-color="#6366f1" stop-opacity="0.15"/>
+                    </linearGradient>
+                    <linearGradient id="aixisStrokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#3b82f6"/>
+                        <stop offset="100%" stop-color="#6366f1"/>
+                    </linearGradient>
+                    <radialGradient id="dotGlow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.6"/>
+                        <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+                    </radialGradient>
+                    <filter id="glowFilter">
+                        <feGaussianBlur stdDeviation="3" result="blur"/>
+                        <feMerge>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+
+                <!-- Center point: 270, 260 -->
+                <!-- Outer pentagon vertices (radius ~145):
+                     Top:        270, 115
+                     Top-right:  408, 167
+                     Bot-right:  355, 330
+                     Bot-left:   185, 330
+                     Top-left:   132, 167
+                -->
+
+                <!-- Concentric grid pentagons -->
+                <polygon points="270,115 408,167 355,330 185,330 132,167" fill="none" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+                <polygon points="270,163 362,202 330,310 210,310 178,202" fill="none" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1" stroke-dasharray="4,4"/>
+                <polygon points="270,212 316,236 305,290 235,290 224,236" fill="none" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1" stroke-dasharray="4,4"/>
+
+                <!-- Axis lines from center to outer vertices -->
+                <line x1="270" y1="260" x2="270" y2="115" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+                <line x1="270" y1="260" x2="408" y2="167" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+                <line x1="270" y1="260" x2="355" y2="330" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+                <line x1="270" y1="260" x2="185" y2="330" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+                <line x1="270" y1="260" x2="132" y2="167" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+
+                <!-- Filled data polygon with gradient -->
+                <polygon points="270,130 392,175 345,318 195,318 148,175"
+                         fill="url(#aixisGradient)"
+                         stroke="url(#aixisStrokeGrad)"
+                         stroke-width="2.5"
+                         class="axis-polygon-fill"
+                         filter="url(#glowFilter)"/>
+
+                <!-- Glow halos behind data points -->
+                <circle cx="270" cy="130" r="14" fill="url(#dotGlow)"/>
+                <circle cx="392" cy="175" r="14" fill="url(#dotGlow)"/>
+                <circle cx="345" cy="318" r="14" fill="url(#dotGlow)"/>
+                <circle cx="195" cy="318" r="14" fill="url(#dotGlow)"/>
+                <circle cx="148" cy="175" r="14" fill="url(#dotGlow)"/>
+
+                <!-- Data point dots -->
+                <circle cx="270" cy="130" r="5" class="fill-blue-500 dark:fill-blue-400 axis-dot" stroke="white" stroke-width="2"/>
+                <circle cx="392" cy="175" r="5" class="fill-blue-500 dark:fill-blue-400 axis-dot" stroke="white" stroke-width="2"/>
+                <circle cx="345" cy="318" r="5" class="fill-blue-500 dark:fill-blue-400 axis-dot" stroke="white" stroke-width="2"/>
+                <circle cx="195" cy="318" r="5" class="fill-blue-500 dark:fill-blue-400 axis-dot" stroke="white" stroke-width="2"/>
+                <circle cx="148" cy="175" r="5" class="fill-blue-500 dark:fill-blue-400 axis-dot" stroke="white" stroke-width="2"/>
+
+                <!-- Labels: JP name + EN subtitle -->
+                <!-- Top: 実務適性 / Practicality -->
+                <text x="270" y="82" text-anchor="middle" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="sans-serif">実務適性</text>
+                <text x="270" y="98" text-anchor="middle" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="sans-serif">Practicality</text>
+
+                <!-- Top-right: 費用対効果 / Cost Performance -->
+                <text x="432" y="163" text-anchor="start" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="sans-serif">費用対効果</text>
+                <text x="432" y="179" text-anchor="start" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="sans-serif">Cost Performance</text>
+
+                <!-- Bottom-right: 日本語能力 / Japanese Readiness -->
+                <text x="372" y="355" text-anchor="start" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="sans-serif">日本語能力</text>
+                <text x="372" y="371" text-anchor="start" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="sans-serif">Japanese Readiness</text>
+
+                <!-- Bottom-left: 信頼性・安全性 / Safety -->
+                <text x="168" y="355" text-anchor="end" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="sans-serif">信頼性・安全性</text>
+                <text x="168" y="371" text-anchor="end" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="sans-serif">Safety</text>
+
+                <!-- Top-left: 革新性 / Uniqueness -->
+                <text x="108" y="163" text-anchor="end" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="sans-serif">革新性</text>
+                <text x="108" y="179" text-anchor="end" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="sans-serif">Uniqueness</text>
+            </svg>
+        </div>
+
+        <!-- Right: Axis Descriptions Grid -->
+        <div>
+            <!-- 実務適性 -->
+            <div class="flex items-start gap-6 py-5 border-b border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors" data-axis="practicality">
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">01</span>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">実務適性<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-sans">Practicality</span></h3>
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">業務での即戦力度合いを、タスク完遂率・操作性・ワークフロー統合性から監査</p>
+                </div>
+                <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+            </div>
+            <!-- 費用対効果 -->
+            <div class="flex items-start gap-6 py-5 border-b border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors" data-axis="cost">
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">02</span>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">費用対効果<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-sans">Cost Performance</span></h3>
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">価格に見合う価値を、応答速度・成功率・API効率・出力品質から自動分析し、料金体系・ROIは手動で補完</p>
+                </div>
+                <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+            </div>
+            <!-- 日本語能力 -->
+            <div class="flex items-start gap-6 py-5 border-b border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors" data-axis="japanese">
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">03</span>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">日本語能力<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-sans">Japanese Readiness</span></h3>
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">日本語UI・ドキュメント・サポート品質を体系的に監査</p>
+                </div>
+                <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+            </div>
+            <!-- 信頼性・安全性 -->
+            <div class="flex items-start gap-6 py-5 border-b border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors" data-axis="safety">
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">04</span>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">信頼性・安全性<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-sans">Safety</span></h3>
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">セキュリティ対策・稼働安定性・データ保護体制を監査</p>
+                </div>
+                <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+            </div>
+            <!-- 革新性 -->
+            <div class="flex items-start gap-6 py-5 border-b border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors" data-axis="uniqueness">
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">05</span>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">革新性<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-sans">Uniqueness</span></h3>
+                    <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">出力多様性・創造的対応力・出力リッチさ・エラー時の柔軟性を自動分析し、独自技術・差別化は手動で補完</p>
+                </div>
+                <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade scale bar -->
+    <div class="mt-14">
+        <div class="max-w-2xl mx-auto">
+            <div class="flex items-center gap-1 text-center text-xs font-bold mb-2">
+                <span class="text-gray-400 dark:text-gray-500 text-[10px] mr-1">0.0</span>
+                <div class="flex-1 grid grid-cols-5 gap-px">
+                    <div class="h-2 rounded-l bg-grade-d"></div>
+                    <div class="h-2 bg-grade-c"></div>
+                    <div class="h-2 bg-grade-b"></div>
+                    <div class="h-2 bg-grade-a"></div>
+                    <div class="h-2 rounded-r bg-grade-s"></div>
+                </div>
+                <span class="text-gray-400 dark:text-gray-500 text-[10px] ml-1">5.0</span>
+            </div>
+            <div class="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 px-6">
+                <span>D</span>
+                <span>C</span>
+                <span>B</span>
+                <span>A</span>
+                <span>S</span>
+            </div>
+            <p class="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">0.0 -- 5.0 の精密スコアで評価 / S (4.5+) A (3.5+) B (2.5+) C (1.5+) D (1.5未満)</p>
+        </div>
+    </div>
+</section>
+
+
+
+<!-- ===== FEATURED TOOLS ===== -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="text-left mb-12 sm:mb-16">
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
+            最新の監査レポート
+        </h2>
+        <span class="updated-date">最終更新: 2026年3月</span>
+    </div>
+
+    <div id="featured-tools-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+            <span class="spinner"></span>
+            <p class="mt-4 text-sm">監査データを読み込み中...</p>
+        </div>
+    </div>
+
+    <div class="mt-10 text-center">
+        <a href="/platform/tools"
+           class="inline-flex items-center gap-2 text-sm font-semibold text-aixis-500 dark:text-aixis-300 hover:text-aixis-400 dark:hover:text-white transition-colors duration-200">
+            全てのツールを見る
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+        </a>
+    </div>
+</section>
+
+
+<!-- ===== PRICING SECTION ===== -->
+<section class="bg-white dark:bg-gray-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div class="text-left mb-12 sm:mb-16">
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
+                料金プラン
+            </h2>
+            <p class="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl">
+                継続的な監査情報へのアクセスから、個別レポートの購入まで
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <!-- Left Card: プラットフォーム月額プラン -->
+            <div class="relative bg-white dark:bg-aixis-800 rounded-none p-8 border-2 border-blue-500 dark:border-blue-400 flex flex-col shadow-sm card-hover-primary">
+                <!-- 人気 badge -->
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white shadow-sm">人気</span>
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">プラットフォーム月額プラン</h3>
+                <div class="mt-4 flex items-baseline gap-1">
+                    <span class="text-3xl font-bold text-gray-900 dark:text-white">&yen;29,800</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">/月（税別）</span>
+                </div>
+                <p class="mt-1 text-xs text-blue-500 dark:text-blue-400 font-bold">14日間無料トライアル</p>
+
+                <ul class="mt-6 space-y-3 flex-1">
+                    <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                        <svg class="w-4 h-4 text-aixis-500 dark:text-aixis-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        全監査データベースアクセス
+                    </li>
+                    <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                        <svg class="w-4 h-4 text-aixis-500 dark:text-aixis-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        5軸詳細スコア閲覧
+                    </li>
+                    <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                        <svg class="w-4 h-4 text-aixis-500 dark:text-aixis-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        ツール比較機能
+                    </li>
+                    <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                        <svg class="w-4 h-4 text-aixis-500 dark:text-aixis-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        月次レポート配信
+                    </li>
+                </ul>
+
+                <a href="/platform/contact"
+                   class="btn-blue-hover mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-none text-sm font-bold bg-aixis-500 dark:bg-aixis-400 text-white dark:text-aixis-900 hover:bg-aixis-600 dark:hover:bg-aixis-300 transition-all duration-200">
+                    無料トライアルを始める
+                </a>
+
+                <div class="mt-5 pt-4 border-t border-gray-100 dark:border-aixis-700/50">
+                    <p class="text-xs text-gray-400 dark:text-gray-500 text-center">
+                        年額プラン &yen;297,600/年（実質2ヶ月分無料）
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Card: 個別監査レポート -->
+            <div class="bg-white dark:bg-aixis-800 rounded-none p-8 border border-gray-200 dark:border-aixis-700 flex flex-col card-hover-primary">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">個別監査レポート</h3>
+                <div class="mt-4 flex items-baseline gap-1">
+                    <span class="text-3xl font-bold text-gray-900 dark:text-white">&yen;29,800〜</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">/件</span>
+                </div>
+
+                <div class="mt-6 flex-1 space-y-0 divide-y divide-gray-100 dark:divide-aixis-700/50">
+                    <!-- スポット監査 -->
+                    <div class="flex items-center justify-between py-3">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-900 dark:text-white">スポット監査</span>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">1ツールの完全5軸評価レポート</p>
+                        </div>
+                        <span class="text-sm font-bold text-gray-700 dark:text-gray-300">&yen;29,800</span>
+                    </div>
+                    <!-- ベンチマーク監査 -->
+                    <div class="flex items-center justify-between py-3">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-900 dark:text-white">ベンチマーク監査</span>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">競合3〜5ツールのスコア比較・選定支援</p>
+                        </div>
+                        <span class="text-sm font-bold text-gray-700 dark:text-gray-300">&yen;98,000</span>
+                    </div>
+                    <!-- ガバナンス監査 -->
+                    <div class="flex items-center justify-between py-3">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-900 dark:text-white">ガバナンス監査</span>
+                            <p class="text-xs text-gray-400 dark:text-gray-500">全社AI活用のリスク・適正評価</p>
+                        </div>
+                        <span class="text-sm font-bold text-gray-700 dark:text-gray-300">&yen;198,000〜</span>
+                    </div>
+                </div>
+
+                <a href="/platform/contact"
+                   class="btn-blue-hover mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-none text-sm font-bold border border-gray-200 dark:border-aixis-600 text-gray-700 dark:text-gray-200 hover:border-aixis-500 dark:hover:border-aixis-400 hover:text-aixis-500 dark:hover:text-white transition-all duration-200">
+                    見積もりを依頼する
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Axis Detail Overlay -->
+<div id="axis-overlay" class="axis-overlay">
+    <div class="axis-overlay-backdrop" id="axis-overlay-backdrop"></div>
+    <div class="axis-overlay-content">
+        <button id="axis-overlay-close" type="button" class="absolute top-5 right-5 w-8 h-8 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors z-10">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <div id="axis-overlay-body"></div>
+    </div>
+</div>
+
+<!-- ===== CTA SECTION ===== -->
+<section class="bg-[#0a0f1a]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div class="max-w-3xl mx-auto text-center">
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-white tracking-tight">
+                AI導入の意思決定に、科学的根拠を。
+            </h2>
+
+            <div class="mt-10">
+                <a href="/platform/contact?type=demo"
+                   class="btn-white-hover inline-flex items-center justify-center px-8 py-3.5 rounded-none text-base font-bold bg-white text-[#0a0f1a] hover:bg-gray-100 transition-all duration-200">
+                    無料デモを予約する
+                    <svg class="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                </a>
+            </div>
+            <p class="mt-6 text-sm text-slate-400">30分のオンラインデモで、Aixisの監査プロセスをご体験いただけます。</p>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    function getGradeBg(grade) {
+        var map = {
+            S: 'bg-grade-s',
+            A: 'bg-grade-a',
+            B: 'bg-grade-b',
+            C: 'bg-grade-c',
+            D: 'bg-grade-d'
+        };
+        return map[grade] || 'bg-gray-400';
+    }
+
+    function renderToolCard(tool) {
+        var initial = (tool.name || tool.slug || '?')[0].toUpperCase();
+        var scores = tool.scores || {};
+        var overallScore = scores.overall != null ? scores.overall.toFixed(1) : '--';
+        var grade = scores.overall_grade || '';
+        var gradeBadge = grade
+            ? '<span class="inline-flex items-center justify-center w-9 h-9 rounded-full text-white text-sm font-bold ' + getGradeBg(grade) + '">' + grade + '</span>'
+            : '';
+        var category = tool.category_name_jp
+            ? '<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 dark:bg-aixis-700 text-gray-600 dark:text-gray-300 font-jp">' + tool.category_name_jp + '</span>'
+            : '';
+
+        return '<a href="/platform/tools/' + (tool.slug || '') + '"' +
+            ' class="block bg-white dark:bg-aixis-800 rounded-sm p-6 shadow-sm dark:shadow-aixis-900/40 border border-gray-100 dark:border-aixis-700 hover:border-gray-300 dark:hover:border-aixis-400/30 transition-all duration-200">' +
+            '<div class="flex items-center gap-3 mb-3">' +
+                '<div class="w-11 h-11 rounded-lg bg-gray-100 dark:bg-aixis-700 flex items-center justify-center text-lg font-bold text-aixis-500 dark:text-aixis-200 shrink-0">' + initial + '</div>' +
+                '<div class="min-w-0 flex-1">' +
+                    '<div class="text-sm font-bold text-gray-900 dark:text-white truncate font-jp">' + (tool.name || tool.slug) + '</div>' +
+                    '<div class="text-xs text-gray-500 dark:text-gray-400 truncate">' + (tool.vendor || '') + '</div>' +
+                '</div>' +
+                gradeBadge +
+            '</div>' +
+            '<div class="flex items-center justify-between">' +
+                category +
+                '<span class="text-sm font-bold text-gray-700 dark:text-gray-300 font-jp">' + overallScore + ' <span class="text-xs font-normal text-gray-400">/ 5.0</span></span>' +
+            '</div>' +
+        '</a>';
+    }
+
+    function renderFeaturedTools(tools) {
+        var grid = document.getElementById('featured-tools-grid');
+        if (!tools || tools.length === 0) {
+            grid.innerHTML =
+                '<div class="block bg-white dark:bg-aixis-800 rounded-lg p-6 shadow-sm dark:shadow-aixis-900/40 border border-gray-100 dark:border-aixis-700 relative overflow-hidden">' +
+                    '<div class="filter blur-[6px] pointer-events-none">' +
+                        '<div class="flex items-center gap-3 mb-3"><div class="w-11 h-11 rounded-lg bg-gray-200 dark:bg-aixis-700"></div><div><div class="h-4 w-32 bg-gray-200 dark:bg-aixis-700 rounded"></div><div class="h-3 w-20 bg-gray-100 dark:bg-aixis-600 rounded mt-1"></div></div></div>' +
+                        '<div class="flex items-center justify-between"><span class="h-5 w-20 bg-gray-100 dark:bg-aixis-700 rounded-full inline-block"></span><span class="h-4 w-16 bg-gray-200 dark:bg-aixis-700 rounded inline-block"></span></div>' +
+                    '</div>' +
+                    '<div class="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-aixis-800/60">' +
+                        '<div class="text-center"><svg class="w-6 h-6 text-aixis-500 dark:text-aixis-300 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg><span class="text-xs font-semibold text-gray-500 dark:text-gray-400 font-jp">監査完了後に公開</span></div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="block bg-white dark:bg-aixis-800 rounded-lg p-6 shadow-sm dark:shadow-aixis-900/40 border border-gray-100 dark:border-aixis-700 relative overflow-hidden">' +
+                    '<div class="filter blur-[6px] pointer-events-none">' +
+                        '<div class="flex items-center gap-3 mb-3"><div class="w-11 h-11 rounded-lg bg-blue-100 dark:bg-aixis-700"></div><div><div class="h-4 w-28 bg-gray-200 dark:bg-aixis-700 rounded"></div><div class="h-3 w-24 bg-gray-100 dark:bg-aixis-600 rounded mt-1"></div></div></div>' +
+                        '<div class="flex items-center justify-between"><span class="h-5 w-24 bg-gray-100 dark:bg-aixis-700 rounded-full inline-block"></span><span class="h-4 w-14 bg-gray-200 dark:bg-aixis-700 rounded inline-block"></span></div>' +
+                    '</div>' +
+                    '<div class="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-aixis-800/60">' +
+                        '<div class="text-center"><svg class="w-6 h-6 text-aixis-500 dark:text-aixis-300 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg><span class="text-xs font-semibold text-gray-500 dark:text-gray-400 font-jp">監査完了後に公開</span></div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="block bg-white dark:bg-aixis-800 rounded-lg p-6 shadow-sm dark:shadow-aixis-900/40 border border-gray-100 dark:border-aixis-700 relative overflow-hidden">' +
+                    '<div class="filter blur-[6px] pointer-events-none">' +
+                        '<div class="flex items-center gap-3 mb-3"><div class="w-11 h-11 rounded-lg bg-green-100 dark:bg-aixis-700"></div><div><div class="h-4 w-36 bg-gray-200 dark:bg-aixis-700 rounded"></div><div class="h-3 w-16 bg-gray-100 dark:bg-aixis-600 rounded mt-1"></div></div></div>' +
+                        '<div class="flex items-center justify-between"><span class="h-5 w-16 bg-gray-100 dark:bg-aixis-700 rounded-full inline-block"></span><span class="h-4 w-12 bg-gray-200 dark:bg-aixis-700 rounded inline-block"></span></div>' +
+                    '</div>' +
+                    '<div class="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-aixis-800/60">' +
+                        '<div class="text-center"><svg class="w-6 h-6 text-aixis-500 dark:text-aixis-300 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg><span class="text-xs font-semibold text-gray-500 dark:text-gray-400 font-jp">監査完了後に公開</span></div>' +
+                    '</div>' +
+                '</div>';
+            return;
+        }
+        grid.innerHTML = tools.map(renderToolCard).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/api/v1/tools?limit=6')
+            .then(function(resp) {
+                if (!resp.ok) throw new Error('API error');
+                return resp.json();
+            })
+            .then(function(data) {
+                var tools = data.items || data || [];
+                renderFeaturedTools(tools);
+            })
+            .catch(function() {
+                var grid = document.getElementById('featured-tools-grid');
+                if (grid) {
+                    grid.innerHTML = '<div class="col-span-full text-center py-16">' +
+                        '<p class="text-gray-400 dark:text-gray-500 text-sm font-jp">監査データは現在準備中です。</p>' +
+                    '</div>';
+                }
+            });
+    });
+})();
+
+// ── Axis Detail Overlay ──
+(function() {
+    var AXIS_DATA = {
+        practicality: {
+            title: '実務適性',
+            subtitle: 'Practicality',
+            color: '#3b82f6',
+            icon: 'P',
+            ratio: '自動テスト 40% / 専門家評価 60%',
+            ratioWidth: '40%',
+            description: '業務での即戦力度合いを、タスク完遂率・操作性・ワークフロー統合性から監査します。',
+            purpose: '導入後の業務効率化・ROI向上の判断材料として活用できます。',
+            autoItems: ['タスク完遂率の自動計測', 'レスポンスタイム・処理速度', 'ワークフロー統合テスト（API連携・エクスポート）', 'バッチ処理・一括操作の成功率'],
+            manualItems: ['UI/UXの直感性・学習コスト', 'ドキュメント・チュートリアルの充実度', '実業務シナリオでの活用可能性', 'オンボーディング体験の品質']
+        },
+        cost: {
+            title: '費用対効果',
+            subtitle: 'Cost Performance',
+            color: '#10b981',
+            icon: 'C',
+            ratio: '自動テスト 30% / 専門家評価 70%',
+            ratioWidth: '30%',
+            description: '価格に見合う価値を、応答速度・成功率・API効率・出力品質から自動分析し、料金体系・ROIは手動で補完します。',
+            purpose: '投資対効果の客観的な判断材料として活用できます。',
+            autoItems: ['API呼び出しあたりのコスト効率', '応答速度と成功率の比率', 'トークン消費量の最適性', '出力品質の一貫性'],
+            manualItems: ['料金体系の透明性・柔軟性', '無料枠・トライアルの実用性', 'スケール時のコスト予測可能性', '競合との価格比較・ポジショニング']
+        },
+        japanese: {
+            title: '日本語能力',
+            subtitle: 'Japanese Readiness',
+            color: '#f59e0b',
+            icon: 'L',
+            ratio: '自動テスト 70% / 専門家評価 30%',
+            ratioWidth: '70%',
+            description: '日本語UI・ドキュメント・サポート品質を体系的に監査します。',
+            purpose: '日本市場での即時展開可能性の指標として活用できます。',
+            autoItems: ['日本語入力の認識精度', '日本語出力の文法・自然さ', 'UIの日本語ローカライズ完成度', '日本語固有表現の処理精度'],
+            manualItems: ['日本語ドキュメントの充実度', 'カスタマーサポートの日本語対応', '日本の商習慣への適合性', 'マルチバイト文字処理の安定性']
+        },
+        safety: {
+            title: '信頼性・安全性',
+            subtitle: 'Safety',
+            color: '#ef4444',
+            icon: 'S',
+            ratio: '自動テスト 35% / 専門家評価 65%',
+            ratioWidth: '35%',
+            description: 'セキュリティ対策・稼働安定性・データ保護体制を監査します。',
+            purpose: '組織のコンプライアンス要件への適合度を確認できます。',
+            autoItems: ['HTTPS/TLS対応・証明書検証', 'エラーハンドリングの堅牢性', '稼働率・レスポンス安定性', 'データ送信時の暗号化確認'],
+            manualItems: ['プライバシーポリシーの明確性', 'データ保持・削除ポリシー', 'SOC2/ISO27001等の認証取得状況', 'インシデント対応体制の整備度']
+        },
+        uniqueness: {
+            title: '革新性',
+            subtitle: 'Uniqueness',
+            color: '#8b5cf6',
+            icon: 'U',
+            ratio: '自動テスト 50% / 専門家評価 50%',
+            ratioWidth: '50%',
+            description: '出力多様性・創造的対応力・出力リッチさ・エラー時の柔軟性を自動分析し、独自技術・差別化は手動で補完します。',
+            purpose: '競合優位性と将来性の定量評価として活用できます。',
+            autoItems: ['出力の多様性・バリエーション', '創造的タスクへの対応力', '出力フォーマットのリッチさ', 'エラー時の回復・代替提案能力'],
+            manualItems: ['独自技術・特許の有無', '競合との差別化ポイント', 'ロードマップ・開発体制の将来性', 'エコシステム・プラグイン拡張性']
+        }
+    };
+
+    var overlay = document.getElementById('axis-overlay');
+    var overlayBody = document.getElementById('axis-overlay-body');
+    var closeBtn = document.getElementById('axis-overlay-close');
+    var backdrop = document.getElementById('axis-overlay-backdrop');
+
+    if (!overlay) return;
+
+    function showOverlay(axisKey) {
+        var d = AXIS_DATA[axisKey];
+        if (!d) return;
+
+        var autoList = d.autoItems.map(function(item) {
+            return '<li class="flex items-start gap-3 text-[13px] text-gray-600 dark:text-gray-400 font-jp leading-relaxed py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">' +
+                '<span class="text-[10px] text-gray-300 dark:text-gray-600 font-sans font-bold shrink-0 mt-0.5">—</span>' + item + '</li>';
+        }).join('');
+
+        var manualList = d.manualItems.map(function(item) {
+            return '<li class="flex items-start gap-3 text-[13px] text-gray-600 dark:text-gray-400 font-jp leading-relaxed py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">' +
+                '<span class="text-[10px] text-gray-300 dark:text-gray-600 font-sans font-bold shrink-0 mt-0.5">—</span>' + item + '</li>';
+        }).join('');
+
+        overlayBody.innerHTML =
+            /* Header band */
+            '<div class="px-8 pt-8 pb-6 border-b border-gray-100 dark:border-gray-800">' +
+                '<div class="flex items-center gap-2 mb-1">' +
+                    '<span class="text-[11px] font-bold font-sans uppercase tracking-widest text-gray-400 dark:text-gray-500">' + d.subtitle + '</span>' +
+                '</div>' +
+                '<h3 class="text-2xl font-bold font-serif text-gray-900 dark:text-white">' + d.title + '</h3>' +
+            '</div>' +
+            /* Body */
+            '<div class="px-8 py-6">' +
+                '<p class="text-sm text-gray-700 dark:text-gray-300 font-jp leading-relaxed">' + d.description + '</p>' +
+                '<p class="mt-2 text-xs text-gray-400 dark:text-gray-500 font-jp">' + d.purpose + '</p>' +
+                /* Ratio bar */
+                '<div class="mt-6 flex items-center gap-3">' +
+                    '<div class="flex-1 h-[3px] bg-gray-100 dark:bg-gray-800 overflow-hidden"><div class="h-full" style="width:' + d.ratioWidth + '; background:' + d.color + '"></div></div>' +
+                    '<span class="text-[11px] text-gray-400 dark:text-gray-500 whitespace-nowrap font-sans">' + d.ratio + '</span>' +
+                '</div>' +
+            '</div>' +
+            /* Two columns */
+            '<div class="grid grid-cols-1 sm:grid-cols-2 border-t border-gray-100 dark:border-gray-800">' +
+                '<div class="px-8 py-6 sm:border-r border-gray-100 dark:border-gray-800">' +
+                    '<h4 class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 font-sans">Automated Testing</h4>' +
+                    '<ul>' + autoList + '</ul>' +
+                '</div>' +
+                '<div class="px-8 py-6 border-t sm:border-t-0 border-gray-100 dark:border-gray-800">' +
+                    '<h4 class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 font-sans">Expert Evaluation</h4>' +
+                    '<ul>' + manualList + '</ul>' +
+                '</div>' +
+            '</div>';
+
+        overlay.classList.add('is-visible');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function hideOverlay() {
+        overlay.classList.remove('is-visible');
+        document.body.style.overflow = '';
+    }
+
+    // Click on axis cards to show overlay
+    document.querySelectorAll('[data-axis]').forEach(function(card) {
+        card.addEventListener('click', function() {
+            showOverlay(card.dataset.axis);
+        });
+    });
+
+    closeBtn.addEventListener('click', hideOverlay);
+    backdrop.addEventListener('click', hideOverlay);
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') hideOverlay();
+    });
+})();
+</script>
+{% endblock %}

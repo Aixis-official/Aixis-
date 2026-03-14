@@ -1,0 +1,45 @@
+id: "slide_creation"
+name_jp: "スライド作成AI"
+name_en: "Slide Creation AI"
+category_jp: "用途特化"
+description_jp: "プレゼンテーション資料やスライドを自動生成するAIツール。テキスト入力からビジュアルなスライドを作成し、レイアウトやデザインを自動調整する。"
+examples:
+  - "Gamma"
+  - "Tome"
+  - "Beautiful.ai"
+  - "イルシル"
+  - "Canva AI"
+aliases:
+  - "スライドAI"
+  - "プレゼンAI"
+  - "資料作成AI"
+  - "パワポ自動生成"
+  - "プレゼン資料AI"
+traits:
+  - "text_input"
+  - "visual_output"
+  - "structured_layout"
+  - "design_automation"
+  - "business_presentation"
+
+primary_categories:
+  - business_jp
+  - long_input
+  - keigo_mixing
+secondary_categories:
+  - ambiguous
+  - multi_step
+excluded_categories:
+  - dialect
+  - broken_grammar
+
+scoring_weights:
+  japanese_ability: 1.5
+  reliability: 1.0
+  practical: 1.5
+
+evaluation_focus:
+  - "ビジネス敬語を含む長文からの要約・構造化能力"
+  - "箇条書き・見出し生成の自然さ"
+  - "日本語レイアウトにおける文字切れ・改行の適切さ"
+  - "専門用語とカジュアル表現が混在する入力への対応"

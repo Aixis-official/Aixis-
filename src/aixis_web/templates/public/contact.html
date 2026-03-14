@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% set active_page = 'contact' %}
+
+{% block head %}
+<style>
+    .contact-field label {
+        display: block;
+        margin-bottom: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    .contact-field input,
+    .contact-field select,
+    .contact-field textarea {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border-radius: 0.125rem;
+        border: 1px solid;
+        font-size: 0.875rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        outline: none;
+    }
+    .contact-field input:focus,
+    .contact-field select:focus,
+    .contact-field textarea:focus {
+        border-color: #1a365d;
+        box-shadow: 0 0 0 3px rgba(26, 54, 93, 0.1);
+    }
+    .contact-field .field-error {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+    }
+    .contact-field .field-error-msg {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+        color: #ef4444;
+    }
+    .contact-field .required-dot {
+        color: #ef4444;
+        font-weight: 700;
+        font-size: 0.75rem;
+        margin-left: 0.125rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<section class="bg-white dark:bg-aixis-800 border-b border-gray-200 dark:border-aixis-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-left">
+        <div class="section-line"></div>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
+            お問い合わせ
+        </h1>
+        <p class="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            監査のご依頼・料金のご相談・デモのお申し込みなど、お気軽にお問い合わせください。1営業日以内に担当者よりご連絡いたします。
+        </p>
+    </div>
+</section>
+
+<hr class="divider-thin">
+
+<!-- Contact Form -->
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+
+    <!-- Success Message (hidden by default) -->
+    <div id="contact-success" class="hidden mb-8">
+        <div class="rounded-sm border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-6 text-center">
+            <svg class="mx-auto w-10 h-10 text-green-600 dark:text-green-400 mb-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p id="contact-success-text" class="text-base font-semibold text-green-800 dark:text-green-300"></p>
+            <p class="mt-2 text-sm text-green-600 dark:text-green-400">担当者より1営業日以内にご連絡いたします。</p>
+            <p class="mt-1 text-xs text-green-500 dark:text-green-400">確認メールを送信しました。届かない場合は迷惑メールフォルダをご確認ください。</p>
+        </div>
+    </div>
+
+    <!-- Error Message (hidden by default) -->
+    <div id="contact-error" class="hidden mb-8">
+        <div class="rounded-sm border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-6 text-center">
+            <svg class="mx-auto w-10 h-10 text-red-600 dark:text-red-400 mb-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <p id="contact-error-text" class="text-base font-semibold text-red-800 dark:text-red-300"></p>
+            <button onclick="document.getElementById('contact-error').classList.add('hidden'); document.getElementById('contact-form').classList.remove('hidden');"
+                    class="mt-4 px-5 py-2 text-sm font-semibold text-red-700 dark:text-red-300 border border-red-300 dark:border-red-500 rounded-none hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors duration-200">
+                もう一度試す
+            </button>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div id="contact-form" class="bg-white dark:bg-aixis-800 rounded-none shadow-sm border border-gray-200 dark:border-aixis-700 p-6 sm:p-8">
+        <form id="contactForm" novalidate>
+            <!-- Inquiry type quick-select chips -->
+            <div class="mb-6 flex flex-wrap gap-2">
+                <button type="button" onclick="selectInquiryType(event, 'デモ依頼')" class="inquiry-chip px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 dark:border-aixis-600 text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-colors hover-lift">デモ依頼</button>
+                <button type="button" onclick="selectInquiryType(event, '料金プラン')" class="inquiry-chip px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 dark:border-aixis-600 text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-colors hover-lift">料金プラン</button>
+                <button type="button" onclick="selectInquiryType(event, '個別監査レポート')" class="inquiry-chip px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 dark:border-aixis-600 text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-colors hover-lift">個別監査レポート</button>
+                <button type="button" onclick="selectInquiryType(event, 'ツール掲載依頼')" class="inquiry-chip px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 dark:border-aixis-600 text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-colors hover-lift">ツール掲載依頼</button>
+            </div>
+            <!-- Contextual hint per inquiry type -->
+            <div id="inquiry-hint" class="hidden mb-4 px-4 py-2.5 rounded-sm bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50">
+                <p id="inquiry-hint-text" class="text-xs text-blue-700 dark:text-blue-400"></p>
+            </div>
+            <div class="space-y-5">
+
+                <!-- Row: 貴社名 + 部署名 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="contact-field">
+                        <label for="company_name" class="text-gray-700 dark:text-gray-300">
+                            貴社名 <span class="required-dot">*</span>
+                        </label>
+                        <input type="text" id="company_name" name="company_name" required
+                               placeholder="株式会社サンプル"
+                               class="bg-white dark:bg-aixis-900 border-gray-300 dark:border-aixis-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-aixis-500 dark:focus:border-aixis-400">
+                    </div>
+                    <div class="contact-field">
+                        <label for="department" class="text-gray-700 dark:text-gray-300">
+                            部署名 <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">任意</span>
+                        </label>
+                        <input type="text" id="department" name="department"
+                               placeholder="情報システム部"
+                               class="bg-white dark:bg-aixis-900 border-gray-300 dark:border-aixis-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-aixis-500 dark:focus:border-aixis-400">
+                    </div>
+                </div>
+
+                <!-- Row: ご担当者名 + メールアドレス -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="contact-field">
+                        <label for="name" class="text-gray-700 dark:text-gray-300">
+                            ご担当者名 <span class="required-dot">*</span>
+                        </label>
+                        <input type="text" id="name" name="name" required
+                               placeholder="山田 太郎"
+                               class="bg-white dark:bg-aixis-900 border-gray-300 dark:border-aixis-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-aixis-500 dark:focus:border-aixis-400">
+                    </div>
+                    <div class="contact-field">
+                        <label for="email" class="text-gray-700 dark:text-gray-300">
+                            メールアドレス <span class="required-dot">*</span>
+                        </label>
+                        <input type="email" id="email" name="email" required
+                               placeholder="yamada@example.co.jp"
+                               class="bg-white dark:bg-aixis-900 border-gray-300 dark:border-aixis-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-aixis-500 dark:focus:border-aixis-400">
+                    </div>
+                </div>
+
+                <!-- Row: 電話番号 + お問い合わせ種別 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="contact-field">
+                        <label for="phone" class="text-gray-700 dark:text-gray-300">
+                            電話番号 <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">任意</span>
+                        </label>
+                        <input type="tel" id="phone" name="phone"
+                               placeholder="03-1234-5678"
+                               class="bg-white dark:bg-aixis-900 border-gray-300 dark:border-aixis-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-aixis-500 dark:focus:border-aixis-400">
+                    </div>
+                    <div class="contact-field">
+                        <label for="inquiry_type" class="text-gray-700 dark:text-gray-300">
+                            お問い合わせ種別 <span class="required-dot">*</span>
+                        </label>
+                        <select id="inquiry_type" name="inquiry_type" required
+                                class="bg-white dark:bg-aixis-900 border-gray-300 dark:border-aixis-600 text-gray-900 dark:text-gray-100 focus:border-aixis-500 dark:focus:border-aixis-400">
+                            <option value="" disabled selected class="text-gray-400">選択してください</option>
+                            <option value="料金プラン">料金プラン</option>
+                            <option value="個別監査レポート">個別監査レポート</option>
+                            <option value="プラットフォーム利用">プラットフォーム利用</option>
+                            <option value="デモ依頼">デモ依頼</option>
+                            <option value="ツール掲載依頼">ツール掲載依頼</option>
+                            <option value="その他">その他</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- お問い合わせ内容 -->
+                <div class="contact-field">
+                    <label for="message" class="text-gray-700 dark:text-gray-300">
+                        お問い合わせ内容 <span class="required-dot">*</span>
+                    </label>
+                    <textarea id="message" name="message" required rows="5"
+                              placeholder="AIツール監査に関するご質問、デモのご依頼など、具体的にご記入ください。"
+                              class="bg-white dark:bg-aixis-900 border-gray-300 dark:border-aixis-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-aixis-500 dark:focus:border-aixis-400 resize-y"></textarea>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" id="contact-submit-btn"
+                        class="w-full py-3 px-6 rounded-md text-base font-bold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed btn-primary-hover">
+                    送信する
+                </button>
+
+                <!-- Privacy note -->
+                <p class="text-center text-xs text-gray-400 dark:text-gray-500">
+                    送信いただいた情報は<a href="https://aixis.jp/privacy-policy/" target="_blank" rel="noopener" class="underline hover:text-gray-600 dark:hover:text-gray-300 transition-colors">プライバシーポリシー</a>に基づき管理されます。
+                </p>
+            </div>
+        </form>
+    </div>
+
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var form = document.getElementById('contactForm');
+    var submitBtn = document.getElementById('contact-submit-btn');
+    var successEl = document.getElementById('contact-success');
+    var successText = document.getElementById('contact-success-text');
+    var errorEl = document.getElementById('contact-error');
+    var errorText = document.getElementById('contact-error-text');
+    var formCard = document.getElementById('contact-form');
+
+    if (!form) return;
+
+    // --- Real-time field validation ---
+    var requiredFields = form.querySelectorAll('[required]');
+
+    function showFieldError(field) {
+        if (field.value.trim() === '' || (field.tagName === 'SELECT' && field.value === '')) {
+            field.classList.add('field-error');
+            // Add error message if not already present
+            var existing = field.parentNode.querySelector('.field-error-msg');
+            if (!existing) {
+                var msg = document.createElement('span');
+                msg.className = 'field-error-msg';
+                msg.textContent = 'この項目は必須です。';
+                field.parentNode.appendChild(msg);
+            }
+        }
+    }
+
+    function clearFieldError(field) {
+        field.classList.remove('field-error');
+        var existing = field.parentNode.querySelector('.field-error-msg');
+        if (existing) {
+            existing.remove();
+        }
+    }
+
+    requiredFields.forEach(function(field) {
+        field.addEventListener('blur', function() {
+            showFieldError(field);
+        });
+        field.addEventListener('input', function() {
+            clearFieldError(field);
+        });
+        // Also handle change for select elements
+        if (field.tagName === 'SELECT') {
+            field.addEventListener('change', function() {
+                clearFieldError(field);
+            });
+        }
+    });
+
+    // --- Auto-select demo inquiry type from URL param ---
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('type') === 'demo') {
+        var inquirySelect = document.getElementById('inquiry_type');
+        if (inquirySelect) {
+            inquirySelect.value = 'デモ依頼';
+        }
+    }
+
+    // --- Existing form submission logic ---
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Basic validation
+        var companyName = document.getElementById('company_name').value.trim();
+        var name = document.getElementById('name').value.trim();
+        var email = document.getElementById('email').value.trim();
+        var inquiryType = document.getElementById('inquiry_type').value;
+        var message = document.getElementById('message').value.trim();
+
+        if (!companyName || !name || !email || !inquiryType || !message) {
+            // Trigger blur validation on all required fields to show errors
+            requiredFields.forEach(function(field) {
+                showFieldError(field);
+            });
+            showError('必須項目をすべてご入力ください。');
+            return;
+        }
+
+        // Disable button
+        submitBtn.disabled = true;
+        submitBtn.textContent = '送信中...';
+
+        var payload = {
+            company_name: companyName,
+            department: document.getElementById('department').value.trim() || null,
+            name: name,
+            email: email,
+            phone: document.getElementById('phone').value.trim() || null,
+            inquiry_type: inquiryType,
+            message: message
+        };
+
+        fetch('/api/v1/contact/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(function(resp) {
+            if (!resp.ok) {
+                return resp.json().then(function(data) {
+                    throw new Error(data.detail || '送信に失敗しました。');
+                });
+            }
+            return resp.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                formCard.classList.add('hidden');
+                errorEl.classList.add('hidden');
+                successText.textContent = data.message;
+                successEl.classList.remove('hidden');
+            } else {
+                showError(data.message || '送信に失敗しました。');
+            }
+        })
+        .catch(function(err) {
+            showError(err.message || '送信中にエラーが発生しました。しばらく経ってから再度お試しください。');
+        })
+        .finally(function() {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '送信する';
+        });
+    });
+
+    function showError(msg) {
+        formCard.classList.add('hidden');
+        successEl.classList.add('hidden');
+        errorText.textContent = msg;
+        errorEl.classList.remove('hidden');
+    }
+    // Expose selectInquiryType globally for chip buttons
+    window.selectInquiryType = function(event, value) {
+        var sel = document.getElementById('inquiry_type');
+        if (sel) {
+            sel.value = value;
+            sel.classList.remove('field-error');
+            var errMsg = sel.parentNode.querySelector('.field-error-msg');
+            if (errMsg) errMsg.remove();
+        }
+        // Highlight selected chip
+        document.querySelectorAll('.inquiry-chip').forEach(function(chip) {
+            chip.classList.remove('border-blue-500', 'text-blue-600', 'dark:border-blue-400', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
+        });
+        event.target.classList.add('border-blue-500', 'text-blue-600', 'dark:border-blue-400', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
+
+        // Show contextual hint and update placeholder
+        var hintEl = document.getElementById('inquiry-hint');
+        var hintText = document.getElementById('inquiry-hint-text');
+        var msgField = document.getElementById('message');
+        var hints = {
+            'デモ依頼': { hint: '所要30分・Zoomで実施。デモ環境でDBを実際にお試しいただけます。ご希望の日時があればご記入ください。', placeholder: 'ご希望の日時（例: 来週火曜午後）や、特に確認したい機能があればご記入ください。' },
+            '料金プラン': { hint: '14日間無料トライアル実施中。ご利用人数や用途に応じて最適なプランをご提案します。', placeholder: '利用予定人数、用途（ツール選定・社内レポート等）をご記入ください。' },
+            '個別監査レポート': { hint: 'スポット¥29,800〜。特定ツールの5軸評価レポートを作成します。', placeholder: '監査対象のツール名・URL、比較対象がある場合はあわせてご記入ください。' },
+            'ツール掲載依頼': { hint: '掲載は無料です。Aixisの独立監査を経て5軸スコアで評価・公開されます。', placeholder: 'ツール名・URL・簡単な概要をご記入ください。' }
+        };
+        if (hints[value]) {
+            hintText.textContent = hints[value].hint;
+            hintEl.classList.remove('hidden');
+            if (msgField) msgField.placeholder = hints[value].placeholder;
+        } else {
+            hintEl.classList.add('hidden');
+        }
+    };
+})();
+</script>
+{% endblock %}

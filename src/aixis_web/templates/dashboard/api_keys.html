@@ -1,0 +1,220 @@
+{% extends "admin_base.html" %}
+
+{% block header_title %}APIキー管理{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">APIキー管理</h1>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">Public APIへのアクセスキーを管理します</p>
+        </div>
+        <button onclick="showCreateForm()" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            新しいキーを作成
+        </button>
+    </div>
+
+    <!-- Create Key Modal -->
+    <div id="create-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 font-jp">新しいAPIキーを作成</h2>
+            <form id="create-form" onsubmit="createKey(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 font-jp">名前</label>
+                    <input type="text" id="key-name" required
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#151929] text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        placeholder="例: 本番サーバー用">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 font-jp">スコープ</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" value="read:tools" checked class="scope-cb rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">read:tools</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" value="read:scores" checked class="scope-cb rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">read:scores</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" value="read:rankings" checked class="scope-cb rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">read:rankings</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="hideCreateForm()" class="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-jp">キャンセル</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors font-jp">作成</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Raw Key Display Modal -->
+    <div id="raw-key-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-xl max-w-lg w-full p-6">
+            <div class="flex items-center mb-4">
+                <svg class="w-6 h-6 text-yellow-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white font-jp">APIキーが作成されました</h2>
+            </div>
+            <p class="text-sm text-yellow-600 dark:text-yellow-400 mb-4 font-jp">このキーは一度だけ表示されます。安全な場所に保存してください。</p>
+            <div class="flex items-center gap-2 mb-4">
+                <code id="raw-key-display" class="flex-1 bg-gray-100 dark:bg-[#151929] px-3 py-2 rounded-lg text-sm font-mono text-gray-900 dark:text-gray-100 break-all"></code>
+                <button onclick="copyKey()" class="px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors" title="コピー">
+                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                    </svg>
+                </button>
+            </div>
+            <div class="flex justify-end">
+                <button onclick="hideRawKeyModal()" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors font-jp">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Keys List -->
+    <div id="keys-list" class="space-y-4">
+        <div class="text-center py-12 text-gray-500 dark:text-gray-400 font-jp" id="loading-msg">読み込み中...</div>
+    </div>
+
+</div>
+
+<script>
+const API_BASE = '/api/v1/api-keys';
+
+function getAuthHeaders() {
+    const token = document.cookie.split(';').find(c => c.trim().startsWith('aixis_token='));
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) {
+        headers['Authorization'] = 'Bearer ' + token.split('=')[1];
+    }
+    return headers;
+}
+
+async function loadKeys() {
+    try {
+        const res = await fetch(API_BASE, { headers: getAuthHeaders() });
+        if (!res.ok) throw new Error('Failed to load');
+        const keys = await res.json();
+        renderKeys(keys);
+    } catch (e) {
+        document.getElementById('keys-list').innerHTML =
+            '<div class="text-center py-12 text-red-500 font-jp">APIキーの読み込みに失敗しました</div>';
+    }
+}
+
+function renderKeys(keys) {
+    const container = document.getElementById('keys-list');
+    if (keys.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-12">
+                <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                </svg>
+                <p class="text-gray-500 dark:text-gray-400 font-jp">APIキーがまだありません</p>
+                <p class="text-sm text-gray-400 dark:text-gray-500 mt-1 font-jp">「新しいキーを作成」ボタンから作成してください</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = keys.map(key => `
+        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-5 transition-colors duration-200">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-2">
+                        <h3 class="font-semibold text-gray-900 dark:text-white">${key.name}</h3>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${key.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}">
+                            ${key.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                        <span class="font-mono bg-gray-100 dark:bg-[#151929] px-2 py-0.5 rounded">${key.key_prefix}...</span>
+                        <span class="font-jp">スコープ: ${(key.scopes || []).join(', ')}</span>
+                        <span class="font-jp">作成: ${new Date(key.created_at).toLocaleDateString('ja-JP')}</span>
+                        <span class="font-jp">最終使用: ${key.last_used_at ? new Date(key.last_used_at).toLocaleDateString('ja-JP') : '未使用'}</span>
+                    </div>
+                </div>
+                ${key.is_active ? `
+                <button onclick="deactivateKey('${key.id}')" class="ml-4 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="無効化">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                </button>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function showCreateForm() {
+    document.getElementById('create-modal').classList.remove('hidden');
+}
+
+function hideCreateForm() {
+    document.getElementById('create-modal').classList.add('hidden');
+    document.getElementById('create-form').reset();
+}
+
+function hideRawKeyModal() {
+    document.getElementById('raw-key-modal').classList.add('hidden');
+}
+
+async function createKey(e) {
+    e.preventDefault();
+    const name = document.getElementById('key-name').value;
+    const scopes = Array.from(document.querySelectorAll('.scope-cb:checked')).map(cb => cb.value);
+
+    try {
+        const res = await fetch(API_BASE, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ name, scopes }),
+        });
+        if (!res.ok) throw new Error('Failed to create');
+        const data = await res.json();
+
+        hideCreateForm();
+        document.getElementById('raw-key-display').textContent = data.raw_key;
+        document.getElementById('raw-key-modal').classList.remove('hidden');
+        loadKeys();
+    } catch (e) {
+        alert('APIキーの作成に失敗しました');
+    }
+}
+
+function copyKey() {
+    const key = document.getElementById('raw-key-display').textContent;
+    navigator.clipboard.writeText(key).then(() => {
+        const btn = event.currentTarget;
+        btn.innerHTML = '<svg class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>';
+        setTimeout(() => {
+            btn.innerHTML = '<svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" /></svg>';
+        }, 2000);
+    });
+}
+
+async function deactivateKey(keyId) {
+    if (!confirm('このAPIキーを無効化しますか？この操作は取り消せません。')) return;
+    try {
+        const res = await fetch(`${API_BASE}/${keyId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+        });
+        if (!res.ok) throw new Error('Failed to delete');
+        loadKeys();
+    } catch (e) {
+        alert('APIキーの無効化に失敗しました');
+    }
+}
+
+// Load on page ready
+document.addEventListener('DOMContentLoaded', loadKeys);
+</script>
+{% endblock %}

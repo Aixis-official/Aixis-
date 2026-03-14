@@ -1,0 +1,49 @@
+id: "meeting_notes"
+name_jp: "議事録AI"
+name_en: "Meeting Notes AI"
+category_jp: "用途特化"
+description_jp: "会議の音声やテキストから議事録を自動生成するAIツール。発言者の識別、要約、アクションアイテムの抽出を行う。"
+examples:
+  - "tl;dv"
+  - "Otter.ai"
+  - "CLOVA Note"
+  - "AI議事録くん"
+  - "スマート書記"
+  - "Notta"
+aliases:
+  - "議事録自動作成"
+  - "会議録AI"
+  - "会議要約AI"
+  - "ミーティングAI"
+  - "議事録くん"
+traits:
+  - "speech_input"
+  - "text_output"
+  - "speaker_identification"
+  - "summarization"
+  - "action_item_extraction"
+  - "real_time_processing"
+
+primary_categories:
+  - dialect
+  - keigo_mixing
+  - broken_grammar
+  - business_jp
+secondary_categories:
+  - long_input
+  - ambiguous
+excluded_categories:
+  - unicode_edge
+  - contradictory
+
+scoring_weights:
+  japanese_ability: 2.0
+  reliability: 1.5
+  practical: 1.5
+
+evaluation_focus:
+  - "敬語・タメ口が混在する会話の正確な書き起こし"
+  - "方言や訛りを含む発話の認識精度"
+  - "複数話者の発言分離と話者識別"
+  - "口語的な言い回しや不完全な文の要約能力"
+  - "アクションアイテムの正確な抽出"

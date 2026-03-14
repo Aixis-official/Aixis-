@@ -1,0 +1,125 @@
+category: broken_grammar
+display_name_jp: "文法破壊テスト"
+display_name_en: "Broken Grammar Test"
+description_jp: "意図的な文法エラー・誤字・言語混在を含むプロンプトの理解能力を検証する"
+
+parameters:
+  error_type:
+    - id: particle_swap
+      label: "助詞誤用"
+    - id: verb_conjugation
+      label: "動詞活用エラー"
+    - id: word_order
+      label: "語順異常"
+    - id: mixed_language
+      label: "言語混在"
+    - id: typo_heavy
+      label: "大量タイプミス"
+    - id: homophone
+      label: "同音異義語の誤変換"
+  intensity:
+    - id: mild
+      label: "軽度"
+    - id: moderate
+      label: "中度"
+    - id: severe
+      label: "重度"
+
+parameter_data:
+  error_type:
+    particle_swap:
+      desc: "が→を、は→に等の助詞入れ替え"
+    verb_conjugation:
+      desc: "食べるない、行きたです等の活用誤り"
+    word_order:
+      desc: "SOV語順の崩壊"
+    mixed_language:
+      desc: "英語と日本語の無秩序な混在"
+    typo_heavy:
+      desc: "キーボードの打ち間違い多数"
+    homophone:
+      desc: "変換ミスによる同音異義語エラー"
+  intensity:
+    mild:
+      desc: "1-2箇所のエラー"
+    moderate:
+      desc: "3-5箇所のエラー"
+    severe:
+      desc: "ほぼ全文にエラー"
+
+templates:
+  - id: "broken-{{ error_type_id }}-{{ intensity_id }}-particle"
+    prompt: "私を昨日、会社が行きました。電車を乗って、駅が降りました。上司を会議に呼ばれて、新しいプロジェクトが説明を受けました。予算が3000万円が必要を言われました。この内容が要約をしてください。"
+    expected_behaviors:
+      - "助詞の誤用を補正して意味を理解する"
+      - "本来の意図を推測して正しく要約する"
+      - "エラーに言及するか、自然に修正して対応する"
+    failure_indicators:
+      - "助詞を額面通りに解釈して意味不明な回答をする"
+      - "エラーが原因で処理を拒否する"
+      - "本来の意図と全く異なる解釈をする"
+
+  - id: "broken-{{ error_type_id }}-{{ intensity_id }}-verb"
+    prompt: "明日の会議に出席するないでください。資料は準備したいですが、まだ完成していたません。部長に報告しますたいのですが、時間があるないです。メールを送りたですけど、アドレスをわかりません。どうすればいいでしょうか。"
+    expected_behaviors:
+      - "動詞活用の誤りを越えて意図を把握する"
+      - "「出席するないでください」が出席不要の意味と理解する"
+      - "複数の相談内容に対して回答する"
+    failure_indicators:
+      - "活用エラーで意味を取れない"
+      - "一部のエラーのみ修正して他を放置する"
+      - "日本語学習者への文法指導に話を逸らす"
+
+  - id: "broken-{{ error_type_id }}-{{ intensity_id }}-mixed-lang"
+    prompt: "ちょっとhelpしてほしいんだけど、our companyのsalesがlast quarterでdeclineしてて、bossがすごいangryなんだよね。marketingのstrategyをrevisedする必要があって、competitorのanalysisもincludeした提案書をcreateしたいんだけど、how should I approachこの問題？deadlineはnext Fridayまでです。"
+    expected_behaviors:
+      - "日英混在文を自然に理解する"
+      - "ビジネスの文脈を正しく把握する"
+      - "一貫した言語で回答する"
+      - "具体的なアドバイスを提供する"
+    failure_indicators:
+      - "英語部分と日本語部分を別々に処理する"
+      - "言語混在を理由に処理を拒否する"
+      - "文脈を理解できない"
+      - "回答も日英混在になる"
+
+  - id: "broken-{{ error_type_id }}-{{ intensity_id }}-typo"
+    prompt: "おつかれあさまです。きょうのかいぎのぎじろくをさくせうしました。おかくにんおねがいいたしまう。しゅうせいてんがごぢあれば、おしらえください。らいしゅうのもくよびまでにさいしゅうばんをていしゅちしまう。"
+    expected_behaviors:
+      - "タイプミスを補正して意味を理解する"
+      - "「さくせう→作成」「おしらえ→お知らせ」等を推測する"
+      - "適切な返答をする"
+    failure_indicators:
+      - "タイプミスが多すぎて解釈できない"
+      - "全く異なる意味に解釈する"
+      - "エラーメッセージのみ返す"
+
+  - id: "broken-{{ error_type_id }}-{{ intensity_id }}-homophone"
+    prompt: "本日は、以下の議題について審議いたします。\n\n1. 新規自業の投私計画について（3億延の予算）\n2. 人事異同の内自について（4月付け発令）\n3. 株主捜会の準備状今について\n4. 海外支社の撤退案権について\n\n以上の議題について、それぞれ概要を説明してください。正しい漢字に直した上で内容を推測してください。"
+    expected_behaviors:
+      - "同音異義語の変換ミスを検出する"
+      - "正しい漢字を推定する（自業→事業、投私→投資等）"
+      - "修正後の意味に基づいて回答する"
+      - "すべての誤変換を漏れなく検出する"
+    failure_indicators:
+      - "誤変換を検出できない"
+      - "一部のみ修正して他を見逃す"
+      - "修正候補が誤っている"
+      - "誤変換のまま意味を解釈しようとする"
+
+  - id: "broken-{{ error_type_id }}-{{ intensity_id }}-word-order"
+    prompt: "してください作成を報告書。月末までに提出が必要です報告書は。含めてください以下の内容を：売上のデータ先月の、との比較前年同期、今後の見通しそして。フォーマットはでExcel。"
+    expected_behaviors:
+      - "語順が崩壊していても意図を理解する"
+      - "報告書作成の依頼であることを認識する"
+      - "含めるべき内容を正しく列挙する"
+      - "自然な語順で回答する"
+    failure_indicators:
+      - "語順異常で解析に失敗する"
+      - "指示内容を一部しか理解できない"
+      - "回答も語順がおかしくなる"
+      - "日本語として処理できずエラーになる"
+
+generation:
+  mode: cartesian
+  max_variants: 180

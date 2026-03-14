@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block page_title %}{{ title | default("Aixis") }}{% endblock %} - Aixis 管理</title>
+
+    <!-- Dark mode init (must run before paint to prevent flash) -->
+    <script>
+        (function() {
+            var theme = localStorage.getItem('aixis-theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        aixis: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#1a365d',
+                            600: '#162d4d',
+                            700: '#0f1f36',
+                            800: '#0a1628',
+                            900: '#060d19'
+                        },
+                        grade: {
+                            s: '#d4af37',
+                            a: '#38a169',
+                            b: '#2b6cb0',
+                            c: '#ed8936',
+                            d: '#e53e3e'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
+                        jp: ['Noto Sans JP', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Libraries -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col bg-gray-50 dark:bg-aixis-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300">
+
+    <!-- Admin Top Bar -->
+    <header class="sticky top-0 z-50 w-full bg-white dark:bg-aixis-800 border-b border-gray-200 dark:border-aixis-700/60 shadow-sm dark:shadow-none transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+
+                <!-- Left: Logo -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <span class="text-lg font-[800] tracking-[0.04em] bg-gradient-to-r from-aixis-500 to-blue-600 dark:from-blue-300 dark:to-blue-500 bg-clip-text text-transparent">
+                        Aixis
+                    </span>
+                    <span class="hidden sm:inline-block text-[10px] font-medium text-gray-400 dark:text-gray-500 border-l border-gray-200 dark:border-gray-600 pl-3 leading-tight font-jp uppercase tracking-wider">
+                        Admin
+                    </span>
+                </div>
+
+                <!-- Center: Page title -->
+                <div class="hidden sm:block absolute left-1/2 -translate-x-1/2">
+                    <h1 class="text-sm font-semibold text-gray-700 dark:text-gray-300 font-jp whitespace-nowrap">
+                        {% block header_title %}{% endblock %}
+                    </h1>
+                </div>
+
+                <!-- Right: User actions -->
+                <div class="flex items-center gap-3">
+                    <!-- Theme toggle -->
+                    <button id="theme-toggle"
+                            type="button"
+                            class="p-1.5 rounded-md text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-aixis-700 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-150"
+                            aria-label="テーマ切替">
+                        <svg class="hidden dark:block w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                        </svg>
+                        <svg class="block dark:hidden w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                        </svg>
+                    </button>
+
+                    {% if user %}
+                    <span class="hidden md:inline text-xs text-gray-500 dark:text-gray-400 font-jp">{{ user.name }}</span>
+                    <span class="hidden md:inline text-gray-300 dark:text-gray-600">|</span>
+                    {% endif %}
+
+                    <a href="/platform/dashboard/settings"
+                       class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150 font-jp"
+                       title="設定">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </a>
+
+                    <a href="/platform"
+                       class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150 font-jp">
+                        利用者画面へ
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                        </svg>
+                    </a>
+
+                    <button onclick="aixisLogout()"
+                            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors duration-150 font-jp">
+                        ログアウト
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="flex-1 main-constrained">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Shared utilities -->
+    <script src="/static/js/aixis-common.js"></script>
+
+    <!-- Logout helper -->
+    <script>
+        function aixisLogout() {
+            localStorage.removeItem('aixis_token');
+            localStorage.removeItem('aixis-user');
+            document.cookie = 'access_token=; Max-Age=0; path=/;';
+            document.cookie = 'aixis_session=; Max-Age=0; path=/;';
+            window.location.href = '/platform';
+        }
+    </script>
+
+    <!-- Theme toggle logic -->
+    <script>
+        (function() {
+            var toggle = document.getElementById('theme-toggle');
+            if (toggle) {
+                toggle.addEventListener('click', function() {
+                    if (window.AIXIS && AIXIS.toggleTheme) {
+                        AIXIS.toggleTheme();
+                    }
+                });
+            }
+        })();
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

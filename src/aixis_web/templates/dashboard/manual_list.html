@@ -1,0 +1,172 @@
+{% extends "admin_base.html" %}
+
+{% block header_title %}手動評価一覧{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Breadcrumb -->
+    <nav class="mb-6 text-sm text-gray-500 dark:text-gray-400 font-jp">
+        <a href="/platform/dashboard" class="hover:text-gray-700 dark:hover:text-gray-200 transition-colors">ダッシュボード</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900 dark:text-white">手動評価一覧</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">手動評価一覧</h1>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">手動チェックリスト評価が必要なセッションの一覧です。</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- Filter tabs -->
+            <div class="inline-flex rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] p-0.5">
+                <button type="button" onclick="setFilter('awaiting')"
+                        class="filter-tab active px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-150 font-jp" data-filter="awaiting">
+                    評価待ち
+                </button>
+                <button type="button" onclick="setFilter('completed')"
+                        class="filter-tab px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-150 font-jp" data-filter="completed">
+                    完了済み
+                </button>
+                <button type="button" onclick="setFilter('all')"
+                        class="filter-tab px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-150 font-jp" data-filter="all">
+                    すべて
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Cards -->
+    <div id="sessions-container">
+        <div class="flex flex-col items-center py-16 text-gray-400 dark:text-gray-500">
+            <svg class="animate-spin h-6 w-6 mb-3 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span class="text-sm font-jp">読み込み中...</span>
+        </div>
+    </div>
+</div>
+
+<style>
+    .filter-tab {
+        color: #6b7280;
+    }
+    .filter-tab.active {
+        background-color: white;
+        color: #111827;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .dark .filter-tab.active {
+        background-color: #374151;
+        color: #f3f4f6;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var allAudits = [];
+    var currentFilter = 'awaiting';
+
+    async function loadAudits() {
+        try {
+            var data = await aixisAPI('/audits');
+            allAudits = data.items || data || [];
+            applyFilter();
+        } catch (e) {
+            document.getElementById('sessions-container').innerHTML =
+                '<div class="flex flex-col items-center py-16 text-red-400 dark:text-red-500"><svg class="w-8 h-8 mb-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg><span class="text-sm font-jp">読み込みに失敗しました。</span></div>';
+        }
+    }
+
+    function applyFilter() {
+        var filtered;
+        if (currentFilter === 'awaiting') {
+            filtered = allAudits.filter(function(a) { return a.status === 'awaiting_manual'; });
+        } else if (currentFilter === 'completed') {
+            filtered = allAudits.filter(function(a) { return a.status === 'completed'; });
+        } else {
+            filtered = allAudits;
+        }
+        renderSessions(filtered);
+    }
+
+    window.setFilter = function(filter) {
+        currentFilter = filter;
+        // Update tab styles
+        document.querySelectorAll('.filter-tab').forEach(function(tab) {
+            if (tab.dataset.filter === filter) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+        applyFilter();
+    };
+
+    function renderSessions(sessions) {
+        var container = document.getElementById('sessions-container');
+
+        if (!sessions || sessions.length === 0) {
+            var emptyMsg = currentFilter === 'awaiting'
+                ? '手動評価待ちのセッションはありません。'
+                : currentFilter === 'completed'
+                    ? '完了済みのセッションはありません。'
+                    : 'セッションはありません。';
+
+            container.innerHTML =
+                '<div class="flex flex-col items-center py-16 text-center">' +
+                    '<span class="text-emerald-500 dark:text-emerald-400 mb-3">' +
+                        '<svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+                    '</span>' +
+                    '<p class="text-sm font-medium text-gray-500 dark:text-gray-400 font-jp">' + emptyMsg + '</p>' +
+                '</div>';
+            return;
+        }
+
+        container.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">' +
+            sessions.map(function(a) {
+                var isAwaiting = a.status === 'awaiting_manual';
+                var borderClass = isAwaiting
+                    ? 'border-amber-200 dark:border-amber-700/50 ring-1 ring-amber-200/50 dark:ring-amber-700/30'
+                    : 'border-gray-100 dark:border-gray-700/50';
+
+                return '<div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border ' + borderClass + ' p-5 transition-all duration-200 hover:shadow-md dark:hover:shadow-none">' +
+                    '<div class="flex items-start justify-between mb-3">' +
+                        '<div class="min-w-0">' +
+                            '<h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate font-jp">' + escapeHtml(a.tool_name || a.tool_id || '不明') + '</h3>' +
+                            '<p class="text-xs font-mono text-gray-400 dark:text-gray-500 mt-0.5">' + escapeHtml(a.session_code || a.id) + '</p>' +
+                        '</div>' +
+                        createStatusBadge(a.status) +
+                    '</div>' +
+
+                    '<div class="space-y-1.5 text-xs text-gray-500 dark:text-gray-400 mb-4 font-jp">' +
+                        '<div class="flex justify-between"><span>開始日時</span><span class="text-gray-700 dark:text-gray-300">' + formatDateTime(a.started_at) + '</span></div>' +
+                        '<div class="flex justify-between"><span>テスト数</span><span class="text-gray-700 dark:text-gray-300 tabular-nums">' + (a.total_executed || 0) + ' / ' + (a.total_planned || 0) + '</span></div>' +
+                    '</div>' +
+
+                    '<div class="flex gap-2">' +
+                        (isAwaiting
+                            ? '<a href="/platform/dashboard/audits/' + encodeURIComponent(a.id) + '/manual" class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors duration-150 font-jp"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>手動評価を入力</a>'
+                            : '') +
+                        '<a href="/platform/dashboard/audits/' + encodeURIComponent(a.id) + '" class="' + (isAwaiting ? '' : 'flex-1 ') + 'inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 font-jp"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>詳細</a>' +
+                    '</div>' +
+                '</div>';
+            }).join('') +
+        '</div>';
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    loadAudits();
+})();
+</script>
+{% endblock %}

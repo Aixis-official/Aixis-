@@ -1,0 +1,27 @@
+# Aixis 破壊的テスト スコアリング設定
+# 各軸の重み、閾値、グレード定義を設定
+
+# 軸ごとの重み（相対値）
+axis_weights:
+  japanese_ability: 1.0
+  reliability: 1.2
+  practical: 1.0
+
+# グレード定義
+grade_thresholds:
+  S: 90
+  A: 80
+  B: 65
+  C: 50
+  D: 0
+
+# 応答時間の閾値（ミリ秒）
+response_time:
+  fast_threshold_ms: 5000
+  acceptable_threshold_ms: 30000
+  slow_threshold_ms: 60000
+
+# 信頼性スコアの最低要件
+reliability_minimums:
+  no_crash_rate: 0.95    # 95%以上の応答成功率を要求
+  max_avg_response_ms: 30000

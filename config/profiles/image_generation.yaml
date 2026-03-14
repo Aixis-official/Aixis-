@@ -1,0 +1,46 @@
+id: "image_generation"
+name_jp: "画像生成AI"
+name_en: "Image Generation AI"
+category_jp: "用途特化"
+description_jp: "テキストプロンプトから画像を自動生成するAIツール。イラスト、写真風画像、デザイン素材などを生成する。"
+examples:
+  - "Midjourney"
+  - "DALL-E"
+  - "Stable Diffusion"
+  - "Adobe Firefly"
+  - "にじジャーニー"
+aliases:
+  - "画像AI"
+  - "イラスト生成AI"
+  - "画像生成ツール"
+  - "AI画像"
+  - "生成AI（画像）"
+traits:
+  - "text_input"
+  - "image_output"
+  - "prompt_engineering"
+  - "style_control"
+  - "creative_generation"
+
+primary_categories:
+  - ambiguous
+  - unicode_edge
+secondary_categories:
+  - long_input
+  - multi_step
+excluded_categories:
+  - dialect
+  - keigo_mixing
+  - business_jp
+  - broken_grammar
+
+scoring_weights:
+  japanese_ability: 1.0
+  reliability: 0.5
+  practical: 2.0
+
+evaluation_focus:
+  - "日本語プロンプトの意図解釈精度"
+  - "曖昧な描写指示からの適切な画像生成"
+  - "日本語テキストを含む画像の文字レンダリング品質"
+  - "日本文化特有のモチーフや概念の理解度"

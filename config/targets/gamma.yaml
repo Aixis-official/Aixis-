@@ -1,0 +1,34 @@
+# Gamma (https://gamma.app) - スライド作成AI
+#
+# ハイブリッドAIブラウザエージェント:
+#   1回目のテストケースでHaiku Visionが画面を分析し、UIワークフローを自動学習
+#   2回目以降は学習したワークフローをAPIなしで再生（コスト: ~5-10 Haiku呼出 ≈ 7円/監査）
+#
+# 前提条件:
+#   1. 初回はGammaにGoogleログインが必要（手動ログインモード使用）
+#   2. ログイン後、ブラウザプロファイルにセッションが保存される
+#   3. AIXIS_ANTHROPIC_API_KEY 環境変数が必要
+
+name: "gamma"
+url: "https://gamma.app/create/generate"
+executor_type: "ai_browser"
+
+# ツール情報（AIエージェントのコンテキストに使用）
+tool_description: >
+  Gammaはテキストプロンプトからスライドデッキを自動生成するAIツールです。
+  画面にはテキスト入力欄と「概要を作成」ボタンがあり、
+  概要生成後に「続けて作成する」ボタンでスライドが生成されます。
+
+# AIバジェット（ハイブリッド方式: Discovery + 条件付きVerify + Recovery）
+# Haiku 4.5: ~0.375円/呼出 → 20円 ≈ 53呼出
+# Discovery: ~12呼出, 条件付き検証: ~30-35テスト, Recovery: ~5呼出
+ai_budget_max_calls: 50
+ai_budget_max_calls_per_case: 5
+ai_budget_max_cost_jpy: 20  # 20円を超えたらAPI使用を強制停止
+
+# ブラウザ設定
+headless: false
+locale: "ja-JP"
+wait_for_manual_login: true
+wait_for_response_timeout_ms: 120000
+inter_prompt_delay_ms: 5000

@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% set active_page = 'pricing' %}
+{% set page_bg = 'page-bg-pure-white' %}
+
+{% block meta_description %}
+<meta name="description" content="Aixis AI監査プラットフォームの料金プラン。14日間無料トライアル、月額・年額プラン、個別監査レポートをご用意。">
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<section class="bg-white dark:bg-aixis-800 border-b border-gray-200 dark:border-aixis-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-left">
+        <span class="report-label font-sans">Aixis Pricing Structure</span>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
+            料金プラン
+        </h1>
+        <p class="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            14日間の無料トライアルですべての機能をお試しいただけます
+        </p>
+        <hr class="divider-thin">
+
+        <!-- Toggle: Monthly / Yearly -->
+        <div class="mt-8 inline-flex items-center bg-gray-100 dark:bg-aixis-700 rounded-sm p-1">
+            <button id="tab-monthly" onclick="setPricingTab('monthly')"
+                    class="px-5 py-2 text-sm font-semibold rounded-md transition-all duration-200 bg-white dark:bg-aixis-600 text-gray-900 dark:text-white shadow-sm">
+                月額
+            </button>
+            <button id="tab-yearly" onclick="setPricingTab('yearly')"
+                    class="px-5 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-gray-500 dark:text-gray-400">
+                年額<span class="ml-1 text-xs text-blue-600 dark:text-blue-400">¥297,600/年（2ヶ月分お得）</span>
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Cards -->
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+
+        <!-- Free Plan -->
+        <div class="bg-white dark:bg-aixis-800 rounded-none border border-gray-200 dark:border-aixis-700 p-8 flex flex-col hover-lift card-hover-primary">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">フリー</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">基本的な監査情報の閲覧</p>
+            <div class="mt-6 flex items-baseline gap-1">
+                <span class="text-4xl font-bold text-gray-900 dark:text-white">&yen;0</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400">/月</span>
+            </div>
+            <ul class="mt-8 space-y-3.5 flex-1">
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    監査データベース閲覧（概要のみ）
+                </li>
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    カテゴリ別ランキング閲覧
+                </li>
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    ツール比較（最大2件）
+                </li>
+            </ul>
+            <a href="/platform/login"
+               class="mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-md text-sm font-bold border border-gray-300 dark:border-aixis-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-aixis-700/50 transition-all duration-200">
+                無料で始める
+            </a>
+        </div>
+
+        <!-- Standard Plan (Popular) -->
+        <div class="relative bg-white dark:bg-aixis-800 rounded-none border-2 border-blue-500 dark:border-blue-400 p-8 flex flex-col hover-lift card-hover-primary">
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-500 dark:bg-blue-400 text-white dark:text-aixis-900">
+                    推奨
+                </span>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">スタンダード</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">本格的なAI選定に</p>
+            <div class="mt-6 flex items-baseline gap-1">
+                <span id="price-standard" class="text-4xl font-bold text-gray-900 dark:text-white">&yen;29,800</span>
+                <span id="price-standard-period" class="text-sm text-gray-500 dark:text-gray-400">/月（税別）</span>
+            </div>
+            <p class="mt-2 text-xs text-blue-600 dark:text-blue-400 font-medium">14日間無料トライアル</p>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">同等の調査をコンサルに依頼すると月数十万〜。常時アクセス可能。</p>
+            <ul class="mt-8 space-y-3.5 flex-1">
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-blue-500 dark:text-blue-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    全監査データベースアクセス
+                </li>
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-blue-500 dark:text-blue-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    5軸詳細スコア・分析レポート
+                </li>
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-blue-500 dark:text-blue-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    ツール比較機能（無制限）
+                </li>
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-blue-500 dark:text-blue-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    月次トレンドレポート配信
+                </li>
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-blue-500 dark:text-blue-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    APIアクセス
+                </li>
+            </ul>
+            <a href="/platform/contact?type=demo"
+               class="mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-md text-sm font-bold bg-blue-500 dark:bg-blue-400 text-white dark:text-aixis-900 hover:bg-blue-600 dark:hover:bg-blue-300 transition-all duration-200 shadow-sm btn-blue-hover">
+                無料トライアルを始める
+            </a>
+        </div>
+
+        <!-- Enterprise Plan -->
+        <div class="bg-white dark:bg-aixis-800 rounded-none border border-gray-200 dark:border-aixis-700 p-8 flex flex-col hover-lift card-hover-primary">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">エンタープライズ</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">複数部門・グループ会社でのAIガバナンス統合管理</p>
+            <div class="mt-6 flex items-baseline gap-1">
+                <span class="text-4xl font-bold text-gray-900 dark:text-white">要相談</span>
+            </div>
+            <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">組織の規模・要件に応じたカスタムプラン</p>
+            <ul class="mt-8 space-y-3.5 flex-1">
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-aixis-500 dark:text-aixis-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    スタンダードの全機能
+                </li>
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-aixis-500 dark:text-aixis-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    カスタム監査基準の設定
+                </li>
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-aixis-500 dark:text-aixis-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    専任コンサルタント
+                </li>
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-aixis-500 dark:text-aixis-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    SLA・優先サポート
+                </li>
+                <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                    <svg class="w-4 h-4 text-aixis-500 dark:text-aixis-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    SSO・監査ログ連携
+                </li>
+            </ul>
+            <a href="/platform/contact"
+               class="mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-md text-sm font-bold border border-gray-300 dark:border-aixis-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-aixis-700/50 transition-all duration-200">
+                お問い合わせ
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Demo Details -->
+<section class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-sm border border-blue-100 dark:border-blue-800/50 p-5 text-center">
+        <p class="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">無料デモの内容</p>
+        <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-blue-700 dark:text-blue-400">
+            <span>✓ 所要時間：30分</span>
+            <span>✓ オンライン（Zoom）</span>
+            <span>✓ デモ環境でDBを実際に操作</span>
+            <span>✓ 申し込み後1営業日以内にご連絡</span>
+        </div>
+    </div>
+</section>
+
+<!-- Feature Comparison Table -->
+<section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+    <hr class="divider-thin">
+    <div class="text-center mb-10">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">機能比較表</h2>
+        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">プランごとの機能をひと目で比較</p>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-gray-200 dark:border-aixis-700">
+                    <th class="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white">機能</th>
+                    <th class="text-center py-3 px-4 font-semibold text-gray-900 dark:text-white">フリー</th>
+                    <th class="text-center py-3 px-4 font-semibold text-blue-600 dark:text-blue-400">スタンダード</th>
+                    <th class="text-center py-3 px-4 font-semibold text-gray-900 dark:text-white">エンタープライズ</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-aixis-700/50">
+                <tr class="hover:bg-gray-50 dark:hover:bg-aixis-700/30">
+                    <td class="py-3 px-4 text-gray-700 dark:text-gray-300">全監査データ閲覧</td>
+                    <td class="py-3 px-4 text-center text-gray-400">✗</td>
+                    <td class="py-3 px-4 text-center text-blue-600 dark:text-blue-400 font-semibold">✓</td>
+                    <td class="py-3 px-4 text-center text-aixis-500 dark:text-aixis-300 font-semibold">✓</td>
+                </tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-aixis-700/30">
+                    <td class="py-3 px-4 text-gray-700 dark:text-gray-300">5軸詳細スコア</td>
+                    <td class="py-3 px-4 text-center text-gray-400">✗</td>
+                    <td class="py-3 px-4 text-center text-blue-600 dark:text-blue-400 font-semibold">✓</td>
+                    <td class="py-3 px-4 text-center text-aixis-500 dark:text-aixis-300 font-semibold">✓</td>
+                </tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-aixis-700/30">
+                    <td class="py-3 px-4 text-gray-700 dark:text-gray-300">ツール比較（無制限）</td>
+                    <td class="py-3 px-4 text-center text-gray-400">✗</td>
+                    <td class="py-3 px-4 text-center text-blue-600 dark:text-blue-400 font-semibold">✓</td>
+                    <td class="py-3 px-4 text-center text-aixis-500 dark:text-aixis-300 font-semibold">✓</td>
+                </tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-aixis-700/30">
+                    <td class="py-3 px-4 text-gray-700 dark:text-gray-300">月次トレンドレポート</td>
+                    <td class="py-3 px-4 text-center text-gray-400">✗</td>
+                    <td class="py-3 px-4 text-center text-blue-600 dark:text-blue-400 font-semibold">✓</td>
+                    <td class="py-3 px-4 text-center text-aixis-500 dark:text-aixis-300 font-semibold">✓</td>
+                </tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-aixis-700/30">
+                    <td class="py-3 px-4 text-gray-700 dark:text-gray-300">APIアクセス</td>
+                    <td class="py-3 px-4 text-center text-gray-400">✗</td>
+                    <td class="py-3 px-4 text-center text-blue-600 dark:text-blue-400 font-semibold">✓</td>
+                    <td class="py-3 px-4 text-center text-aixis-500 dark:text-aixis-300 font-semibold">✓</td>
+                </tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-aixis-700/30">
+                    <td class="py-3 px-4 text-gray-700 dark:text-gray-300">カスタム監査基準の設定</td>
+                    <td class="py-3 px-4 text-center text-gray-400">✗</td>
+                    <td class="py-3 px-4 text-center text-gray-400">✗</td>
+                    <td class="py-3 px-4 text-center text-aixis-500 dark:text-aixis-300 font-semibold">✓</td>
+                </tr>
+                <tr class="hover:bg-gray-50 dark:hover:bg-aixis-700/30">
+                    <td class="py-3 px-4 text-gray-700 dark:text-gray-300">専任コンサルタント</td>
+                    <td class="py-3 px-4 text-center text-gray-400">✗</td>
+                    <td class="py-3 px-4 text-center text-gray-400">✗</td>
+                    <td class="py-3 px-4 text-center text-aixis-500 dark:text-aixis-300 font-semibold">✓</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Individual Reports -->
+<section class="bg-gray-50 dark:bg-aixis-900 border-y border-gray-200 dark:border-aixis-700">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        <div class="text-center mb-10">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">個別監査レポート</h2>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">サブスク不要。必要なレポートだけを購入できます</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div class="bg-white dark:bg-aixis-800 rounded-none border border-gray-200 dark:border-aixis-700 p-6 text-center">
+                <div class="section-line"></div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white">スポット監査</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">1ツールの完全5軸評価レポート（PDF・スコアカード付き）</p>
+                <div class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">&yen;29,800<span class="text-sm font-normal text-gray-500">/件</span></div>
+            </div>
+            <div class="bg-white dark:bg-aixis-800 rounded-none border border-gray-200 dark:border-aixis-700 p-6 text-center">
+                <div class="section-line"></div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white">ベンチマーク監査</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">競合3〜5ツールのスコア比較・選定支援レポート</p>
+                <div class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">&yen;98,000<span class="text-sm font-normal text-gray-500">/件</span></div>
+            </div>
+            <div class="bg-white dark:bg-aixis-800 rounded-none border border-gray-200 dark:border-aixis-700 p-6 text-center">
+                <div class="section-line"></div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white">ガバナンス監査</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">全社AI活用のリスク・適正評価（カスタム設計）</p>
+                <div class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">&yen;198,000<span class="text-sm font-normal text-gray-500">〜</span></div>
+            </div>
+        </div>
+        <div class="mt-8 text-center">
+            <a href="/platform/contact"
+               class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+                見積もりを依頼する
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-8 text-left">よくある質問</h2>
+    <div class="space-y-3" id="faq-accordion">
+        <div class="faq-item bg-white dark:bg-aixis-800 rounded-sm border border-gray-200 dark:border-aixis-700 overflow-hidden transition-all duration-300 hover:border-gray-300 dark:hover:border-aixis-600">
+            <button type="button" class="faq-trigger w-full flex items-center justify-between px-6 py-5 cursor-pointer text-left text-sm font-semibold text-gray-900 dark:text-white select-none group">
+                <span class="flex items-center gap-3">
+                    <span class="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-xs font-bold text-blue-600 dark:text-blue-400 transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50">Q</span>
+                    無料トライアル中に費用は発生しますか？
+                </span>
+                <svg class="faq-icon w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            </button>
+            <div class="faq-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;">
+                <div class="px-6 pb-5 pl-[3.75rem] text-sm text-gray-600 dark:text-gray-400 leading-relaxed">いいえ。14日間は完全無料でご利用いただけます。トライアル終了後に自動で課金されることもありません。</div>
+            </div>
+        </div>
+        <div class="faq-item bg-white dark:bg-aixis-800 rounded-sm border border-gray-200 dark:border-aixis-700 overflow-hidden transition-all duration-300 hover:border-gray-300 dark:hover:border-aixis-600">
+            <button type="button" class="faq-trigger w-full flex items-center justify-between px-6 py-5 cursor-pointer text-left text-sm font-semibold text-gray-900 dark:text-white select-none group">
+                <span class="flex items-center gap-3">
+                    <span class="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-xs font-bold text-blue-600 dark:text-blue-400 transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50">Q</span>
+                    年額プランへの切替はいつでもできますか？
+                </span>
+                <svg class="faq-icon w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            </button>
+            <div class="faq-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;">
+                <div class="px-6 pb-5 pl-[3.75rem] text-sm text-gray-600 dark:text-gray-400 leading-relaxed">はい。マイページからいつでも切替可能です。差額は日割りで調整されます。</div>
+            </div>
+        </div>
+        <div class="faq-item bg-white dark:bg-aixis-800 rounded-sm border border-gray-200 dark:border-aixis-700 overflow-hidden transition-all duration-300 hover:border-gray-300 dark:hover:border-aixis-600">
+            <button type="button" class="faq-trigger w-full flex items-center justify-between px-6 py-5 cursor-pointer text-left text-sm font-semibold text-gray-900 dark:text-white select-none group">
+                <span class="flex items-center gap-3">
+                    <span class="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-xs font-bold text-blue-600 dark:text-blue-400 transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50">Q</span>
+                    解約はいつでもできますか？
+                </span>
+                <svg class="faq-icon w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            </button>
+            <div class="faq-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;">
+                <div class="px-6 pb-5 pl-[3.75rem] text-sm text-gray-600 dark:text-gray-400 leading-relaxed">はい。契約期間の縛りはありません。月額プランはいつでも解約でき、当月末までご利用いただけます。</div>
+            </div>
+        </div>
+        <div class="faq-item bg-white dark:bg-aixis-800 rounded-sm border border-gray-200 dark:border-aixis-700 overflow-hidden transition-all duration-300 hover:border-gray-300 dark:hover:border-aixis-600">
+            <button type="button" class="faq-trigger w-full flex items-center justify-between px-6 py-5 cursor-pointer text-left text-sm font-semibold text-gray-900 dark:text-white select-none group">
+                <span class="flex items-center gap-3">
+                    <span class="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-xs font-bold text-blue-600 dark:text-blue-400 transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50">Q</span>
+                    請求書払いは可能ですか？
+                </span>
+                <svg class="faq-icon w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            </button>
+            <div class="faq-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;">
+                <div class="px-6 pb-5 pl-[3.75rem] text-sm text-gray-600 dark:text-gray-400 leading-relaxed">はい。年額プランおよび個別監査レポートは請求書払いに対応しています。お問い合わせフォームよりご連絡ください。</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// FAQ Accordion
+(function() {
+    var accordion = document.getElementById('faq-accordion');
+    if (!accordion) return;
+
+    accordion.addEventListener('click', function(e) {
+        var trigger = e.target.closest('.faq-trigger');
+        if (!trigger) return;
+
+        var item = trigger.closest('.faq-item');
+        var content = item.querySelector('.faq-content');
+        var icon = item.querySelector('.faq-icon');
+        var isOpen = item.classList.contains('is-open');
+
+        // Close all other items (accordion behavior)
+        accordion.querySelectorAll('.faq-item.is-open').forEach(function(openItem) {
+            if (openItem !== item) {
+                var oc = openItem.querySelector('.faq-content');
+                var oi = openItem.querySelector('.faq-icon');
+                openItem.classList.remove('is-open');
+                oc.style.maxHeight = '0';
+                oc.style.opacity = '0';
+                oi.style.transform = 'rotate(0deg)';
+                openItem.style.borderColor = '';
+            }
+        });
+
+        if (isOpen) {
+            item.classList.remove('is-open');
+            content.style.maxHeight = '0';
+            content.style.opacity = '0';
+            icon.style.transform = 'rotate(0deg)';
+            item.style.borderColor = '';
+        } else {
+            item.classList.add('is-open');
+            content.style.maxHeight = content.scrollHeight + 'px';
+            content.style.opacity = '1';
+            icon.style.transform = 'rotate(45deg)';
+            item.style.borderColor = '#3b82f6';
+        }
+    });
+})();
+
+function setPricingTab(tab) {
+    var monthly = document.getElementById('tab-monthly');
+    var yearly = document.getElementById('tab-yearly');
+    var price = document.getElementById('price-standard');
+    var period = document.getElementById('price-standard-period');
+
+    if (tab === 'yearly') {
+        monthly.className = 'px-5 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-gray-500 dark:text-gray-400';
+        yearly.className = 'px-5 py-2 text-sm font-semibold rounded-md transition-all duration-200 bg-white dark:bg-aixis-600 text-gray-900 dark:text-white shadow-sm';
+        price.innerHTML = '&yen;24,800';
+        period.textContent = '/月（税別・年払い）';
+    } else {
+        yearly.className = 'px-5 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-gray-500 dark:text-gray-400';
+        monthly.className = 'px-5 py-2 text-sm font-semibold rounded-md transition-all duration-200 bg-white dark:bg-aixis-600 text-gray-900 dark:text-white shadow-sm';
+        price.innerHTML = '&yen;29,800';
+        period.textContent = '/月（税別）';
+    }
+}
+</script>
+{% endblock %}

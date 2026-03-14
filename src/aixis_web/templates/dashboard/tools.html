@@ -1,0 +1,414 @@
+{% extends "admin_base.html" %}
+
+{% block header_title %}ツール管理{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Breadcrumb -->
+    <nav class="mb-6 text-sm text-gray-500 dark:text-gray-400 font-jp">
+        <a href="/platform/dashboard" class="hover:text-gray-700 dark:hover:text-gray-200 transition-colors">ダッシュボード</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900 dark:text-white">ツール管理</span>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Left 2/3: Tool List -->
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 transition-colors duration-200">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">登録ツール一覧</h2>
+                    <div class="flex items-center gap-3">
+                        <div class="relative">
+                            <input type="text" id="tool-search" placeholder="検索..."
+                                   class="w-48 pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 font-jp">
+                            <svg class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                        </div>
+                        <button type="button" onclick="showAddForm()"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-lg transition-colors duration-200 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                            新規登録
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-100 dark:border-gray-700/50">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ツール名</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">スラッグ</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ベンダー</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ターゲット設定</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">状態</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tools-body">
+                            <tr>
+                                <td colspan="6" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <svg class="animate-spin h-6 w-6 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+                                        <span class="font-jp">読み込み中...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right 1/3: Add/Edit Form -->
+        <div class="lg:col-span-1">
+            <div class="lg:sticky lg:top-20">
+                <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6 transition-colors duration-200">
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4 font-jp" id="form-title">ツール新規登録</h3>
+
+                    <!-- Messages -->
+                    <div id="form-error" class="hidden mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-jp"></div>
+                    <div id="form-success" class="hidden mb-4 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-jp"></div>
+
+                    <form id="tool-form" class="space-y-4">
+                        <input type="hidden" id="edit-slug" value="">
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">スラッグ <span class="text-red-500">*</span></label>
+                            <input type="text" id="f-slug" required pattern="[a-z0-9\-]+"
+                                   class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
+                                   placeholder="my-ai-tool">
+                            <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">英小文字・数字・ハイフンのみ</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">英語名 <span class="text-red-500">*</span></label>
+                                <input type="text" id="f-name" required
+                                       class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
+                                       placeholder="My AI Tool">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">日本語名 <span class="text-red-500">*</span></label>
+                                <input type="text" id="f-name-jp" required
+                                       class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
+                                       placeholder="マイAIツール">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">ベンダー</label>
+                            <input type="text" id="f-vendor"
+                                   class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
+                                   placeholder="株式会社サンプル">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">URL</label>
+                            <input type="url" id="f-url"
+                                   class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
+                                   placeholder="https://example.com">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">説明（日本語）</label>
+                            <textarea id="f-desc-jp" rows="2"
+                                      class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-y transition-colors duration-200 font-jp"
+                                      placeholder="ツールの概要..."></textarea>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 font-jp cursor-pointer">
+                                <input type="checkbox" id="f-public"
+                                       class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                                公開する
+                            </label>
+                        </div>
+
+                        <div class="pt-3 border-t border-gray-100 dark:border-gray-700/50 flex gap-2">
+                            <button type="submit" id="form-submit-btn"
+                                    class="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-lg transition-colors duration-200 shadow-sm font-jp">
+                                登録
+                            </button>
+                            <button type="button" onclick="resetForm()"
+                                    class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200 font-jp">
+                                リセット
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Target Config Editor (shown when editing) -->
+                <div id="config-editor-panel" class="hidden mt-4 bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6 transition-colors duration-200">
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-2 font-jp">ターゲット設定 (YAML)</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-3 font-jp">Playwrightによる自動操作に必要なセレクタ情報を定義します。</p>
+
+                    <div id="config-msg" class="hidden mb-3 px-3 py-2 rounded-lg text-xs font-jp"></div>
+
+                    <textarea id="config-yaml" rows="14"
+                              class="w-full px-3 py-2 text-xs font-mono rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-y transition-colors duration-200"
+                              placeholder="name: My Tool Target&#10;url: https://example.com&#10;executor_type: playwright&#10;steps:&#10;  - action: navigate&#10;    url: https://example.com&#10;  - action: fill&#10;    selector: '#input'&#10;    value: '{{prompt}}'&#10;  - action: click&#10;    selector: '#submit'&#10;  - action: wait_for&#10;    selector: '.response'&#10;    extract: text"></textarea>
+
+                    <div class="flex gap-2 mt-3">
+                        <button type="button" onclick="saveTargetConfig()"
+                                class="flex-1 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 rounded-lg transition-colors duration-200 shadow-sm font-jp">
+                            設定を保存
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var allTools = [];
+    var editingSlug = '';
+
+    // ===== Load Tools =====
+    async function loadTools() {
+        try {
+            var data = await aixisAPI('/tools/?page_size=100&all=true');
+            allTools = data.items || [];
+            renderTools(allTools);
+        } catch (e) {
+            document.getElementById('tools-body').innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-red-400 dark:text-red-500 text-sm font-jp">読み込みに失敗しました</td></tr>';
+        }
+    }
+
+    function renderTools(tools) {
+        var body = document.getElementById('tools-body');
+        if (!tools || tools.length === 0) {
+            body.innerHTML = '<tr><td colspan="6" class="px-4 py-12 text-center"><div class="flex flex-col items-center gap-2 text-gray-400 dark:text-gray-500"><svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg><span class="text-sm font-jp">ツールが登録されていません。右のフォームから登録してください。</span></div></td></tr>';
+            return;
+        }
+        body.innerHTML = tools.map(function(t) {
+            var statusBadge = t.is_active
+                ? (t.is_public
+                    ? '<span class="inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">公開</span>'
+                    : '<span class="inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">非公開</span>')
+                : '<span class="inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">無効</span>';
+
+            var iconHtml = t.logo_url
+                ? '<img src="' + escapeHtml(t.logo_url) + '" class="w-5 h-5 rounded shrink-0" alt="" onerror="this.style.display=\'none\'">'
+                : '<div class="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] text-gray-400 shrink-0">' + escapeHtml((t.name || '?')[0].toUpperCase()) + '</div>';
+
+            return '<tr class="border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors duration-150">' +
+                '<td class="px-4 py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap"><div class="flex items-center gap-2">' + iconHtml + '<span>' + escapeHtml(t.name_jp || t.name) + '</span></div></td>' +
+                '<td class="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">' + escapeHtml(t.slug) + '</td>' +
+                '<td class="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">' + escapeHtml(t.vendor || '--') + '</td>' +
+                '<td class="px-4 py-3 text-center"><span class="config-status" data-slug="' + escapeHtml(t.slug) + '">--</span></td>' +
+                '<td class="px-4 py-3">' + statusBadge + '</td>' +
+                '<td class="px-4 py-3"><button onclick="editTool(\'' + escapeHtml(t.slug) + '\')" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline font-jp">編集</button></td>' +
+                '</tr>';
+        }).join('');
+
+        // Check config status for each tool
+        tools.forEach(function(t) { checkConfigStatus(t.slug); });
+    }
+
+    async function checkConfigStatus(slug) {
+        var el = document.querySelector('.config-status[data-slug="' + slug + '"]');
+        if (!el) return;
+        try {
+            var cfg = await aixisAPI('/tools/' + encodeURIComponent(slug) + '/target-config');
+            if (cfg && cfg.config_yaml) {
+                el.innerHTML = '<span class="inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">v' + cfg.version + '</span>';
+            } else {
+                el.innerHTML = '<span class="text-[10px] text-gray-400 dark:text-gray-500">未設定</span>';
+            }
+        } catch (e) {
+            el.innerHTML = '<span class="text-[10px] text-gray-400 dark:text-gray-500">未設定</span>';
+        }
+    }
+
+    // ===== Search =====
+    document.getElementById('tool-search').addEventListener('input', function() {
+        var q = this.value.toLowerCase();
+        if (!q) { renderTools(allTools); return; }
+        var filtered = allTools.filter(function(t) {
+            return (t.name || '').toLowerCase().includes(q)
+                || (t.name_jp || '').toLowerCase().includes(q)
+                || (t.slug || '').toLowerCase().includes(q)
+                || (t.vendor || '').toLowerCase().includes(q);
+        });
+        renderTools(filtered);
+    });
+
+    // ===== Form Submit =====
+    document.getElementById('tool-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        hideMessages();
+
+        var slug = document.getElementById('f-slug').value.trim();
+        var name = document.getElementById('f-name').value.trim();
+        var nameJp = document.getElementById('f-name-jp').value.trim();
+        var vendor = document.getElementById('f-vendor').value.trim();
+        var url = document.getElementById('f-url').value.trim();
+        var descJp = document.getElementById('f-desc-jp').value.trim();
+        var isPublic = document.getElementById('f-public').checked;
+
+        if (!slug || !name || !nameJp) {
+            showFormError('スラッグ、英語名、日本語名は必須です。');
+            return;
+        }
+
+        var body = {
+            slug: slug, name: name, name_jp: nameJp,
+            is_public: isPublic
+        };
+        if (vendor) body.vendor = vendor;
+        if (url) body.url = url;
+        if (descJp) body.description_jp = descJp;
+
+        try {
+            var existingSlug = document.getElementById('edit-slug').value;
+            if (existingSlug) {
+                // Update
+                await aixisAPI('/tools/' + encodeURIComponent(existingSlug), {
+                    method: 'PUT',
+                    body: JSON.stringify(body)
+                });
+                showFormSuccess('ツールを更新しました。');
+            } else {
+                // Create
+                await aixisAPI('/tools/', {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                });
+                showFormSuccess('ツールを登録しました。');
+            }
+            await loadTools();
+        } catch (err) {
+            showFormError(err.message || '保存に失敗しました。');
+        }
+    });
+
+    // ===== Edit Tool =====
+    window.editTool = function(slug) {
+        var tool = allTools.find(function(t) { return t.slug === slug; });
+        if (!tool) return;
+
+        editingSlug = slug;
+        document.getElementById('edit-slug').value = slug;
+        document.getElementById('f-slug').value = tool.slug;
+        document.getElementById('f-slug').readOnly = true;
+        document.getElementById('f-slug').classList.add('bg-gray-100', 'dark:bg-gray-800', 'cursor-not-allowed');
+        document.getElementById('f-name').value = tool.name || '';
+        document.getElementById('f-name-jp').value = tool.name_jp || '';
+        document.getElementById('f-vendor').value = tool.vendor || '';
+        document.getElementById('f-url').value = tool.url || '';
+        document.getElementById('f-desc-jp').value = tool.description_jp || '';
+        document.getElementById('f-public').checked = tool.is_public;
+        document.getElementById('form-title').textContent = 'ツール編集: ' + (tool.name_jp || tool.name);
+        document.getElementById('form-submit-btn').textContent = '更新';
+
+        // Show config editor
+        var configPanel = document.getElementById('config-editor-panel');
+        configPanel.classList.remove('hidden');
+        loadTargetConfig(slug);
+
+        hideMessages();
+
+        // Scroll to form on mobile
+        document.getElementById('form-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    // ===== Reset Form =====
+    window.resetForm = function() {
+        editingSlug = '';
+        document.getElementById('edit-slug').value = '';
+        document.getElementById('f-slug').value = '';
+        document.getElementById('f-slug').readOnly = false;
+        document.getElementById('f-slug').classList.remove('bg-gray-100', 'dark:bg-gray-800', 'cursor-not-allowed');
+        document.getElementById('f-name').value = '';
+        document.getElementById('f-name-jp').value = '';
+        document.getElementById('f-vendor').value = '';
+        document.getElementById('f-url').value = '';
+        document.getElementById('f-desc-jp').value = '';
+        document.getElementById('f-public').checked = false;
+        document.getElementById('form-title').textContent = 'ツール新規登録';
+        document.getElementById('form-submit-btn').textContent = '登録';
+        document.getElementById('config-editor-panel').classList.add('hidden');
+        hideMessages();
+    };
+
+    window.showAddForm = function() {
+        window.resetForm();
+        document.getElementById('f-slug').focus();
+    };
+
+    // ===== Target Config =====
+    async function loadTargetConfig(slug) {
+        var textarea = document.getElementById('config-yaml');
+        textarea.value = '';
+        try {
+            var cfg = await aixisAPI('/tools/' + encodeURIComponent(slug) + '/target-config');
+            if (cfg && cfg.config_yaml) {
+                textarea.value = cfg.config_yaml;
+            }
+        } catch (e) {
+            // No config yet, that's fine
+        }
+    }
+
+    window.saveTargetConfig = async function() {
+        if (!editingSlug) return;
+        var yaml = document.getElementById('config-yaml').value.trim();
+        var msgEl = document.getElementById('config-msg');
+
+        if (!yaml) {
+            msgEl.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300';
+            msgEl.textContent = 'YAML設定を入力してください。';
+            msgEl.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            await aixisAPI('/tools/' + encodeURIComponent(editingSlug) + '/target-config', {
+                method: 'PUT',
+                body: JSON.stringify({ config_yaml: yaml })
+            });
+            msgEl.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300';
+            msgEl.textContent = 'ターゲット設定を保存しました。';
+            msgEl.classList.remove('hidden');
+            checkConfigStatus(editingSlug);
+        } catch (err) {
+            msgEl.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300';
+            msgEl.textContent = err.message || '保存に失敗しました。';
+            msgEl.classList.remove('hidden');
+        }
+    };
+
+    // ===== Helpers =====
+    function showFormError(msg) {
+        var el = document.getElementById('form-error');
+        el.textContent = msg; el.classList.remove('hidden');
+    }
+    function showFormSuccess(msg) {
+        var el = document.getElementById('form-success');
+        el.textContent = msg; el.classList.remove('hidden');
+    }
+    function hideMessages() {
+        document.getElementById('form-error').classList.add('hidden');
+        document.getElementById('form-success').classList.add('hidden');
+        document.getElementById('config-msg').classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // Init
+    loadTools();
+})();
+</script>
+{% endblock %}

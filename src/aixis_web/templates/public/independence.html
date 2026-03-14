@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% set active_page = 'about' %}
+{% set page_bg = 'page-bg-warm' %}
+
+{% block meta_description %}
+<meta name="description" content="Aixisの独立性宣言。ベンダーから一切の報酬を受け取らず、完全中立の立場でAIツールを評価する理由と仕組み。">
+{% endblock %}
+
+{% block head %}
+<style>
+    @keyframes countLine {
+        from { width: 0; }
+        to { width: 100%; }
+    }
+    .independence-stat {
+        position: relative;
+        overflow: hidden;
+    }
+    .independence-stat::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #3b82f6, #6366f1);
+        animation: countLine 1.5s ease-out forwards;
+    }
+    .pillar-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .pillar-card:hover {
+        transform: translateY(-2px);
+    }
+    .pillar-number {
+        font-size: 120px;
+        font-weight: 900;
+        line-height: 1;
+        opacity: 0.04;
+        position: absolute;
+        top: -20px;
+        right: 12px;
+        font-family: 'Inter', sans-serif;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header — full-width dark -->
+<section class="relative overflow-hidden bg-gradient-to-br from-[#0f172a] to-[#1e3a5f]">
+    <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
+    <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+        <div class="flex flex-col lg:flex-row items-center gap-12">
+            <div class="flex-1">
+                <span class="report-label font-sans" style="color: #64748b;">Aixis Independence Declaration</span>
+                <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold font-serif text-white tracking-tight leading-tight">
+                    ベンダーから<br class="hidden sm:inline">1円も受け取らない。
+                </h1>
+                <p class="mt-6 text-base sm:text-lg text-slate-300 max-w-xl leading-relaxed">
+                    Aixisは独立系AI調査・監査機関です。評価対象のベンダーから一切の報酬を受け取らず、完全中立の立場でAIツールを監査します。
+                </p>
+            </div>
+            <!-- Stats cluster -->
+            <div class="flex-shrink-0 grid grid-cols-2 gap-4">
+                <div class="independence-stat bg-white/5 border border-white/10 rounded-none p-6 text-center">
+                    <div class="stat-number text-white" style="font-size: 48px;" data-countup="0">0</div>
+                    <div class="text-sm text-slate-400 mt-1">円</div>
+                    <div class="text-xs text-slate-500 mt-2">ベンダー収益</div>
+                </div>
+                <div class="independence-stat bg-white/5 border border-white/10 rounded-none p-6 text-center">
+                    <div class="stat-number text-white" style="font-size: 48px;" data-countup="5">0</div>
+                    <div class="text-sm text-slate-400 mt-1">軸</div>
+                    <div class="text-xs text-slate-500 mt-2">独立評価基準</div>
+                </div>
+                <div class="independence-stat bg-white/5 border border-white/10 rounded-none p-6 text-center">
+                    <div class="stat-number text-white" style="font-size: 48px;" data-countup="100">0</div>
+                    <div class="text-sm text-slate-400 mt-1">%</div>
+                    <div class="text-xs text-slate-500 mt-2">ユーザー由来収益</div>
+                </div>
+                <div class="independence-stat bg-white/5 border border-white/10 rounded-none p-6 text-center">
+                    <div class="stat-number text-white" style="font-size: 48px;" data-countup="0">0</div>
+                    <div class="text-sm text-slate-400 mt-1">件</div>
+                    <div class="text-xs text-slate-500 mt-2">広告掲載</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why Independence Matters -->
+<section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+    <div class="section-line"></div>
+    <h2 class="text-2xl sm:text-3xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
+        なぜ独立性が重要なのか
+    </h2>
+    <p class="mt-4 text-base text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
+        AIツール評価市場には構造的な利益相反が存在します。Aixisはこの問題を根本から解決するために設計された組織です。
+    </p>
+    <hr class="divider-thin">
+
+    <!-- Problem → Solution contrast -->
+    <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-0 border border-gray-200 dark:border-gray-800">
+        <!-- Problem side -->
+        <div class="p-8 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-800">
+            <span class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider font-sans">一般的なレビューサイト</span>
+            <ul class="mt-5 space-y-3.5">
+                <li class="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
+                    <span class="text-red-400 shrink-0 mt-0.5">×</span>
+                    ベンダーからの紹介手数料が収益の大半
+                </li>
+                <li class="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
+                    <span class="text-red-400 shrink-0 mt-0.5">×</span>
+                    高額スポンサーほど上位に表示される
+                </li>
+                <li class="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
+                    <span class="text-red-400 shrink-0 mt-0.5">×</span>
+                    評価基準が不透明で再現性がない
+                </li>
+                <li class="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
+                    <span class="text-red-400 shrink-0 mt-0.5">×</span>
+                    「高評価をつけるほど儲かる」構造
+                </li>
+            </ul>
+        </div>
+
+        <!-- Aixis side -->
+        <div class="p-8">
+            <span class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider font-sans">Aixis</span>
+            <ul class="mt-5 space-y-3.5">
+                <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+                    <span class="text-blue-500 shrink-0 mt-0.5">✓</span>
+                    収益はユーザー組織からのサブスクのみ
+                </li>
+                <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+                    <span class="text-blue-500 shrink-0 mt-0.5">✓</span>
+                    掲載順はスコア順のみ。広告枠なし
+                </li>
+                <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+                    <span class="text-blue-500 shrink-0 mt-0.5">✓</span>
+                    5軸定量基準＋自動テストで再現性を担保
+                </li>
+                <li class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+                    <span class="text-blue-500 shrink-0 mt-0.5">✓</span>
+                    利益相反を構造的に排除した設計
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- 3 Pillars — dynamic cards with numbers -->
+<section class="section-dark-surprise border-y border-slate-800">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div class="section-line" style="--line-color: #334155;"></div>
+        <h2 class="text-2xl sm:text-3xl font-bold font-serif text-white tracking-tight">独立性を支える3つの柱</h2>
+        <hr class="divider-thin" style="border-color: #1e293b;">
+
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Pillar 1 -->
+            <div class="pillar-card relative bg-white/5 border border-white/10 rounded-none p-8 overflow-hidden">
+                <span class="pillar-number text-white">01</span>
+                <div class="relative">
+                    <h3 class="text-lg font-bold text-white">¥0 ベンダー収益</h3>
+                    <p class="mt-3 text-sm text-slate-300 leading-relaxed">
+                        評価対象のベンダーから紹介手数料、広告費、掲載料、その他いかなる名目の報酬も受け取りません。
+                    </p>
+                    <p class="mt-4 text-xs text-slate-500">
+                        収益源はサブスクリプション契約と個別監査レポートの販売のみです。
+                    </p>
+                </div>
+            </div>
+
+            <!-- Pillar 2 -->
+            <div class="pillar-card relative bg-white/5 border border-white/10 rounded-none p-8 overflow-hidden">
+                <span class="pillar-number text-white">02</span>
+                <div class="relative">
+                    <h3 class="text-lg font-bold text-white">完全第三者評価</h3>
+                    <p class="mt-3 text-sm text-slate-300 leading-relaxed">
+                        監査基準の策定・テスト設計・スコアリングの全工程において、ベンダーの介入を一切排除しています。
+                    </p>
+                    <p class="mt-4 text-xs text-slate-500">
+                        自動化テストと独立した専門家の手動評価を組み合わせて実施します。
+                    </p>
+                </div>
+            </div>
+
+            <!-- Pillar 3 -->
+            <div class="pillar-card relative bg-white/5 border border-white/10 rounded-none p-8 overflow-hidden">
+                <span class="pillar-number text-white">03</span>
+                <div class="relative">
+                    <h3 class="text-lg font-bold text-white">透明な収益モデル</h3>
+                    <p class="mt-3 text-sm text-slate-300 leading-relaxed">
+                        収益は、監査情報を必要とするユーザー組織からのみ生まれます。利益相反を構造的に排除しています。
+                    </p>
+                    <p class="mt-4 text-xs text-slate-500">
+                        「高評価を付けるほど儲かる」というビジネスモデルとは無縁です。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Revenue Structure -->
+<section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+    <div class="section-line"></div>
+    <h2 class="text-2xl font-bold font-serif text-gray-900 dark:text-white">収益構造</h2>
+    <hr class="divider-thin">
+
+    <div class="mt-10 border border-gray-200 dark:border-gray-800 divide-y divide-gray-200 dark:divide-gray-800">
+        <!-- Accepted sources -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-200 dark:divide-gray-800">
+            <div class="p-6">
+                <div class="text-sm font-bold text-gray-900 dark:text-white">サブスクリプション</div>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">月額・年額プランによる監査データベースへのアクセス提供</p>
+            </div>
+            <div class="p-6">
+                <div class="text-sm font-bold text-gray-900 dark:text-white">個別監査レポート</div>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">スポット・ベンチマーク・ガバナンス監査の受託</p>
+            </div>
+        </div>
+        <!-- Rejected sources -->
+        <div class="p-6">
+            <span class="text-xs text-gray-400 dark:text-gray-500">受け取らない収益: </span>
+            <span class="text-xs text-gray-400 dark:text-gray-500">紹介手数料</span>
+            <span class="text-xs text-gray-300 dark:text-gray-600 mx-1.5">/</span>
+            <span class="text-xs text-gray-400 dark:text-gray-500">広告費</span>
+            <span class="text-xs text-gray-300 dark:text-gray-600 mx-1.5">/</span>
+            <span class="text-xs text-gray-400 dark:text-gray-500">掲載料</span>
+            <span class="text-xs text-gray-300 dark:text-gray-600 mx-1.5">/</span>
+            <span class="text-xs text-gray-400 dark:text-gray-500">スポンサーシップ</span>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="bg-gradient-to-br from-[#0f172a] to-[#1e3a5f]">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <div class="section-line" style="--line-color: #334155;"></div>
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-white">独立した監査データで、AI導入を判断する</h2>
+        <p class="mt-3 text-sm text-slate-400">中立的な第三者機関による定量評価を、あなたの意思決定に。</p>
+        <div class="mt-8 flex flex-wrap justify-center gap-4">
+            <a href="/platform/tools"
+               class="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-bold bg-white text-[#0f172a] hover:bg-gray-100 shadow-sm transition-all duration-200">
+                監査データベースを見る
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+            </a>
+            <a href="/platform/contact?type=demo"
+               class="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-bold text-white border border-white/30 hover:bg-white/10 transition-all duration-200">
+                無料デモを予約する
+            </a>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,48 @@
+id: "education"
+name_jp: "教育AI"
+name_en: "Education AI"
+category_jp: "業界特化"
+description_jp: "教育分野に特化したAIツール。学習支援、自動採点、教材生成、個別最適化学習を行う。"
+examples:
+  - "atama+ (アタマプラス)"
+  - "Qubena (キュビナ)"
+  - "スタディサプリAI"
+  - "AI採点システム"
+  - "教材生成AI"
+aliases:
+  - "教育用AI"
+  - "学習AI"
+  - "EdTech AI"
+  - "採点AI"
+  - "学習支援AI"
+traits:
+  - "text_input"
+  - "text_output"
+  - "adaptive_learning"
+  - "assessment_generation"
+  - "multi_level_difficulty"
+  - "explanation_generation"
+
+primary_categories:
+  - ambiguous
+  - keigo_mixing
+  - long_input
+secondary_categories:
+  - broken_grammar
+  - unicode_edge
+  - multi_step
+excluded_categories:
+  - contradictory
+  - dialect
+
+scoring_weights:
+  japanese_ability: 2.0
+  reliability: 1.5
+  practical: 1.5
+
+evaluation_focus:
+  - "学習者のレベルに応じた日本語表現の調整"
+  - "記述式回答の正確な採点と日本語フィードバック"
+  - "教科書レベルの正確な日本語表現"
+  - "数式・化学式を含む日本語文書の処理"
+  - "児童・生徒の崩れた文章からの意図理解"

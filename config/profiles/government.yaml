@@ -1,0 +1,49 @@
+id: "government"
+name_jp: "行政・自治体AI"
+name_en: "Government AI"
+category_jp: "業界特化"
+description_jp: "行政・自治体業務に特化したAIツール。窓口対応、文書要約、住民問い合わせ対応、政策分析を行う。"
+examples:
+  - "自治体チャットボット (横浜市等)"
+  - "行政文書要約AI"
+  - "窓口案内AI"
+  - "AI-OCR (自治体向け)"
+  - "議会議事録AI"
+aliases:
+  - "行政AI"
+  - "自治体AI"
+  - "公共AI"
+  - "窓口AI"
+  - "官公庁AI"
+traits:
+  - "text_input"
+  - "text_output"
+  - "domain_specific_terminology"
+  - "polite_response"
+  - "accessibility_aware"
+  - "multi_language_support"
+  - "document_generation"
+
+primary_categories:
+  - keigo_mixing
+  - business_jp
+  - long_input
+  - dialect
+secondary_categories:
+  - ambiguous
+  - broken_grammar
+  - unicode_edge
+excluded_categories:
+  - contradictory
+
+scoring_weights:
+  japanese_ability: 2.0
+  reliability: 2.0
+  practical: 1.0
+
+evaluation_focus:
+  - "行政用語・法令用語の正確な使用"
+  - "住民の方言を含む問い合わせへの対応"
+  - "丁寧語・尊敬語を用いた適切な応答"
+  - "行政文書特有の表記ルールへの準拠"
+  - "高齢者にもわかりやすい日本語での説明"

@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+{% set active_page = 'categories' %}
+
+{% block head %}
+<style>
+    .rank-1 { background: rgba(26, 54, 93, 0.04); }
+    .rank-2 { background: rgba(26, 54, 93, 0.02); }
+    .rank-3 { background: rgba(26, 54, 93, 0.01); }
+    .dark .rank-1 { background: rgba(129, 140, 248, 0.08); }
+    .dark .rank-2 { background: rgba(129, 140, 248, 0.05); }
+    .dark .rank-3 { background: rgba(129, 140, 248, 0.03); }
+    .rank-circle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .rank-circle-1 {
+        background: #1a365d;
+        color: #fff;
+    }
+    .rank-circle-2 {
+        background: #e2e8f0;
+        color: #334155;
+    }
+    .rank-circle-3 {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+    .dark .rank-circle-1 {
+        background: #818cf8;
+        color: #0f172a;
+    }
+    .dark .rank-circle-2 {
+        background: rgba(129, 140, 248, 0.25);
+        color: #c7d2fe;
+    }
+    .dark .rank-circle-3 {
+        background: rgba(129, 140, 248, 0.12);
+        color: #a5b4fc;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <a href="/platform" class="hover:text-aixis-500 dark:hover:text-white transition-colors">ホーム</a>
+        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+        <a href="/platform/categories" class="hover:text-aixis-500 dark:hover:text-white transition-colors">カテゴリ</a>
+        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+        <span id="breadcrumb-name" class="text-gray-700 dark:text-gray-200 font-medium">---</span>
+    </nav>
+
+    <!-- Page Title -->
+    <div class="mb-8">
+        <h1 id="category-title" class="text-3xl sm:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
+            カテゴリランキング
+        </h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-400 text-base">
+            同カテゴリ内のAIツールをAixis 5軸スコアで総合ランキング。
+        </p>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="flex flex-col items-center justify-center py-20">
+        <svg class="animate-spin h-8 w-8 text-aixis-500 dark:text-aixis-300 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <p class="text-gray-500 dark:text-gray-400">ランキングデータを読み込み中...</p>
+    </div>
+
+    <!-- Error State (hidden by default) -->
+    <div id="error-state" class="hidden">
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-sm p-6 text-center">
+            <svg class="w-10 h-10 text-red-400 dark:text-red-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+            </svg>
+            <p id="error-message" class="text-red-700 dark:text-red-300 font-medium">ランキングデータが取得できませんでした。</p>
+            <a href="/platform/categories" class="inline-block mt-4 text-sm text-red-600 dark:text-red-400 hover:underline">カテゴリ一覧に戻る</a>
+        </div>
+    </div>
+
+    <!-- Main Content (hidden until loaded) -->
+    <div id="main-content" class="hidden space-y-8">
+
+        <!-- Horizontal Bar Chart -->
+        <div class="bg-white dark:bg-aixis-800 rounded-sm shadow-sm border border-gray-200/60 dark:border-aixis-700/60 p-6">
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4">スコア分布</h2>
+            <div id="ranking-chart"></div>
+        </div>
+
+        <!-- Ranking Table -->
+        <div class="bg-white dark:bg-aixis-800 rounded-sm shadow-sm border border-gray-200/60 dark:border-aixis-700/60 p-6">
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4">詳細ランキング</h2>
+            <div class="overflow-x-auto -mx-6 px-6">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b-2 border-gray-200 dark:border-aixis-600">
+                            <th class="px-3 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">順位</th>
+                            <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">ツール名</th>
+                            <th class="px-3 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">総合</th>
+                            <th class="px-3 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">実務適性</th>
+                            <th class="px-3 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">費用対効果</th>
+                            <th class="px-3 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">日本語能力</th>
+                            <th class="px-3 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">安全性</th>
+                            <th class="px-3 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">革新性</th>
+                            <th class="px-3 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">グレード</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-body" class="divide-y divide-gray-100 dark:divide-aixis-700/50">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center gap-4">
+            <a id="compare-top3-btn" href="#"
+               class="inline-flex items-center gap-2 px-5 py-2.5 bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 text-white dark:text-aixis-900 font-semibold text-sm rounded-sm transition-colors duration-200 shadow-sm">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/>
+                </svg>
+                トップ3を比較
+            </a>
+            <a href="/platform/categories"
+               class="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-aixis-700 hover:bg-gray-50 dark:hover:bg-aixis-600 text-gray-700 dark:text-gray-200 font-semibold text-sm rounded-sm border border-gray-300 dark:border-aixis-600 transition-colors duration-200">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+                </svg>
+                カテゴリ一覧に戻る
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    const slug = '{{ slug }}';
+    // Rank circles use numbered circles instead of text labels
+
+    const GRADE_STYLES = {
+        S: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700',
+        A: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 border-green-300 dark:border-green-700',
+        B: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-300 dark:border-blue-700',
+        C: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 border-orange-300 dark:border-orange-700',
+        D: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border-red-300 dark:border-red-700'
+    };
+
+    function scoreTagClass(v) {
+        if (v >= 4.0) return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+        if (v >= 2.5) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+    }
+
+    function showError(msg) {
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('main-content').classList.add('hidden');
+        const errorEl = document.getElementById('error-state');
+        errorEl.classList.remove('hidden');
+        if (msg) document.getElementById('error-message').textContent = msg;
+    }
+
+    function showContent() {
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('error-state').classList.add('hidden');
+        document.getElementById('main-content').classList.remove('hidden');
+    }
+
+    let _sortedTools = [];
+
+    function renderChart() {
+        if (!_sortedTools.length) return;
+
+        const barColors = _sortedTools.map(function(_, i) {
+            if (i === 0) return isDarkMode() ? '#818cf8' : '#1a365d';
+            if (i === 1) return isDarkMode() ? '#6366f1' : '#2d4a7a';
+            if (i === 2) return isDarkMode() ? '#4f46e5' : '#3d5f96';
+            return isDarkMode() ? '#a5b4fc' : '#6b7fa8';
+        });
+
+        const textColor = isDarkMode() ? '#e2e8f0' : '#2d3748';
+        const gridColor = isDarkMode() ? '#2d3748' : '#e2e8f0';
+
+        var layout = getPlotlyLayout({
+            xaxis: {
+                range: [0, 5.5],
+                title: { text: '総合スコア (5.0満点)', font: { size: 12 } },
+                gridcolor: gridColor,
+                tickfont: { color: textColor }
+            },
+            yaxis: {
+                autorange: 'reversed',
+                tickfont: { color: textColor, size: 12 }
+            },
+            margin: { t: 10, b: 50, l: 150, r: 50 },
+            height: Math.max(260, _sortedTools.length * 44 + 70),
+            showlegend: false
+        });
+
+        Plotly.newPlot('ranking-chart', [{
+            type: 'bar',
+            y: _sortedTools.map(function(t) { return t.tool_name || t.tool_slug; }),
+            x: _sortedTools.map(function(t) { return t.overall_score || 0; }),
+            orientation: 'h',
+            marker: { color: barColors, line: { width: 0 } },
+            text: _sortedTools.map(function(t) { return (t.overall_score || 0).toFixed(1); }),
+            textposition: 'outside',
+            textfont: { color: textColor, size: 13, family: 'Inter, Noto Sans JP, sans-serif' },
+            hovertemplate: '%{y}: %{x:.1f}<extra></extra>'
+        }], layout, { responsive: true, displayModeBar: false });
+
+        // Register for theme change re-rendering
+        var chartEl = document.getElementById('ranking-chart');
+        if (chartEl) chartEl._renderChart = renderChart;
+    }
+
+    function renderRankings(rankings) {
+        if (!rankings || rankings.length === 0) {
+            document.getElementById('ranking-body').innerHTML =
+                '<tr><td colspan="9" class="px-3 py-12 text-center text-gray-500 dark:text-gray-400">まだランキングデータがありません。</td></tr>';
+            return;
+        }
+
+        _sortedTools = rankings.slice().sort(function(a, b) {
+            return (b.overall_score || 0) - (a.overall_score || 0);
+        });
+
+        // Chart
+        renderChart();
+
+        // Table
+        var body = document.getElementById('ranking-body');
+        body.innerHTML = _sortedTools.map(function(t, i) {
+            var rank = i + 1;
+            var rowClass = rank <= 3 ? 'rank-' + rank : '';
+            var rankCircle = rank <= 3
+                ? '<span class="rank-circle rank-circle-' + rank + '">' + rank + '</span>'
+                : '<span class="text-sm font-semibold text-gray-500 dark:text-gray-400">' + rank + '</span>';
+            var g = t.overall_grade || '--';
+            var gradeStyle = GRADE_STYLES[g] || 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-300 dark:border-gray-600';
+
+            var axisCells = AIXIS.AXIS_KEYS.map(function(k) {
+                var v = t[k] || 0;
+                var cls = scoreTagClass(v);
+                return '<td class="px-3 py-3.5 text-center whitespace-nowrap">' +
+                    '<span class="inline-block px-2 py-0.5 rounded text-xs font-semibold ' + cls + '">' + v.toFixed(1) + '</span></td>';
+            }).join('');
+
+            return '<tr class="' + rowClass + ' hover:bg-gray-50/50 dark:hover:bg-aixis-700/30 transition-colors">' +
+                '<td class="px-3 py-3.5 text-center whitespace-nowrap">' + rankCircle + '</td>' +
+                '<td class="px-3 py-3.5 whitespace-nowrap">' +
+                    '<a href="/platform/tools/' + t.tool_slug + '" class="font-semibold text-aixis-500 dark:text-aixis-300 hover:text-aixis-400 dark:hover:text-white transition-colors">' +
+                        (t.tool_name || t.tool_slug) + '</a></td>' +
+                '<td class="px-3 py-3.5 text-center whitespace-nowrap">' +
+                    '<span class="text-base font-bold text-gray-900 dark:text-white">' + (t.overall_score || 0).toFixed(1) + '</span></td>' +
+                axisCells +
+                '<td class="px-3 py-3.5 text-center whitespace-nowrap">' +
+                    '<span class="inline-flex items-center justify-center w-8 h-8 rounded-sm border text-sm font-bold ' + gradeStyle + '">' + g + '</span></td>' +
+            '</tr>';
+        }).join('');
+
+        // Set compare top 3 link
+        var top3Slugs = _sortedTools.slice(0, 3).map(function(t) { return t.tool_slug; });
+        if (top3Slugs.length >= 2) {
+            document.getElementById('compare-top3-btn').href = '/platform/compare?tools=' + top3Slugs.join(',');
+        } else {
+            document.getElementById('compare-top3-btn').classList.add('opacity-50', 'pointer-events-none');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            var resp = await fetch('/api/v1/scores/rankings/' + slug);
+            if (!resp.ok) throw new Error('Rankings not available');
+            var data = await resp.json();
+
+            var categoryName = data.category_name_jp || slug;
+            document.getElementById('category-title').textContent = categoryName + ' ランキング';
+            document.getElementById('breadcrumb-name').textContent = categoryName;
+            document.title = categoryName + ' ランキング - Aixis AI監査プラットフォーム';
+
+            renderRankings(data.rankings || data);
+            showContent();
+        } catch (e) {
+            showError('ランキングデータが取得できませんでした。');
+        }
+    });
+})();
+</script>
+{% endblock %}

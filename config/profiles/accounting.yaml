@@ -1,0 +1,49 @@
+id: "accounting"
+name_jp: "会計・経理AI"
+name_en: "Accounting AI"
+category_jp: "業界特化"
+description_jp: "会計・経理業務に特化したAIツール。請求書処理、仕訳自動化、経費精算、財務レポート生成を行う。"
+examples:
+  - "freee AI"
+  - "マネーフォワード クラウドAI"
+  - "TOKIUM (トキウム)"
+  - "Bill One"
+  - "invox"
+aliases:
+  - "会計AI"
+  - "経理AI"
+  - "請求書AI"
+  - "仕訳AI"
+  - "経費精算AI"
+traits:
+  - "image_input"
+  - "data_input"
+  - "structured_data_output"
+  - "domain_specific_terminology"
+  - "high_accuracy_required"
+  - "form_extraction"
+  - "numerical_processing"
+
+primary_categories:
+  - unicode_edge
+  - business_jp
+  - multi_step
+secondary_categories:
+  - long_input
+  - ambiguous
+excluded_categories:
+  - dialect
+  - keigo_mixing
+  - broken_grammar
+
+scoring_weights:
+  japanese_ability: 1.5
+  reliability: 2.0
+  practical: 2.0
+
+evaluation_focus:
+  - "全角数字・通貨記号の正確な処理"
+  - "日本の会計基準に基づく仕訳の正確性"
+  - "請求書・領収書からのデータ抽出精度"
+  - "消費税計算（軽減税率対応）の正確性"
+  - "複数ステップにわたる経理処理フローの実行"

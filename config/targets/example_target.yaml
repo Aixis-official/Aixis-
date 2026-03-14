@@ -1,0 +1,42 @@
+# 検証対象ツールの設定例
+# 実際の検証対象に合わせてセレクタ等を変更してください
+
+name: "example-ai-chat"
+url: "https://example.com/chat"
+executor_type: "playwright"
+
+# CSS selectors for the chat interface
+input_selector: "textarea[placeholder*='メッセージ'], textarea.chat-input, #prompt-textarea"
+submit_selector: "button[type='submit'], button.send-button, button[aria-label='送信']"
+response_selector: ".response-text, .message-content, .assistant-message:last-child"
+
+# Timing
+wait_for_response_timeout_ms: 60000
+inter_prompt_delay_ms: 2000
+
+# Browser settings
+headless: true
+locale: "ja-JP"
+
+# Login steps (uncomment and customize if the tool requires authentication)
+# login_steps:
+#   - action: "goto"
+#     value: "https://example.com/login"
+#   - action: "fill"
+#     selector: "input[name='email']"
+#     value: "${LOGIN_EMAIL}"
+#   - action: "fill"
+#     selector: "input[name='password']"
+#     value: "${LOGIN_PASSWORD}"
+#   - action: "click"
+#     selector: "button[type='submit']"
+#   - action: "wait"
+#     selector: ".dashboard"
+#     timeout: "10000"
+
+# Pre-prompt actions (e.g., navigate to chat, close modals)
+# pre_prompt_actions:
+#   - action: "click"
+#     selector: ".new-chat-button"
+#   - action: "wait_ms"
+#     value: "1000"

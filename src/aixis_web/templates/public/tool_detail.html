@@ -1,0 +1,479 @@
+{% extends "base.html" %}
+{% set active_page = 'tools' %}
+
+{% block content %}
+<div id="tool-detail" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">
+    <!-- Loading state -->
+    <div id="loading-state" class="flex flex-col items-center justify-center py-20">
+        <span class="spinner"></span>
+        <p class="mt-4 text-sm text-gray-500 dark:text-gray-400 font-jp">ツール情報を読み込み中...</p>
+    </div>
+
+    <!-- Error state (hidden by default) -->
+    <div id="error-state" class="hidden">
+        <div class="card text-center py-16">
+            <svg class="mx-auto w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <h2 class="text-xl font-bold text-gray-700 dark:text-gray-300 font-jp mb-2">ツールが見つかりません</h2>
+            <p class="text-gray-500 dark:text-gray-400 font-jp mb-6" id="error-message"></p>
+            <a href="/platform/tools" class="btn btn-primary font-jp">データベースに戻る</a>
+        </div>
+    </div>
+
+    <!-- Main content (hidden until data loads) -->
+    <div id="main-content" class="hidden">
+
+        <!-- 1. Breadcrumb -->
+        <nav id="breadcrumb" class="mb-5" aria-label="パンくずリスト">
+            <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
+                <li><a href="/platform" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
+                <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
+                <li><a href="/platform/tools" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">監査データベース</a></li>
+                <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
+                <li class="text-gray-600 dark:text-gray-300 font-medium" id="breadcrumb-name"></li>
+            </ol>
+        </nav>
+
+        <!-- 2. Tool Hero Section -->
+        <section id="hero-section" class="relative overflow-hidden rounded-sm mb-8 bg-gradient-to-br from-aixis-600/90 via-aixis-700/90 to-aixis-800/90 dark:from-aixis-800/80 dark:via-aixis-900/90 dark:to-gray-900 shadow-sm">
+            <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.04),transparent_60%)]"></div>
+            <div class="relative flex flex-col md:flex-row items-center gap-6 p-6 md:p-8">
+                <!-- Left: Tool info -->
+                <div class="flex-1 text-white">
+                    <span id="hero-category" class="inline-block px-2.5 py-0.5 rounded text-[10px] font-medium bg-white/10 border border-white/15 mb-2.5 font-jp"></span>
+                    <h1 id="hero-name" class="text-xl md:text-2xl font-bold mb-1 font-jp"></h1>
+                    <p id="hero-vendor" class="text-white/60 text-xs mb-2 font-jp"></p>
+                    <p id="hero-description" class="text-white/75 text-sm leading-relaxed font-jp"></p>
+                </div>
+                <!-- Right: Grade + Score -->
+                <div id="hero-grade-area" class="flex-shrink-0 text-center">
+                    <div id="hero-grade-badge" class="grade-badge grade-badge-lg mx-auto"></div>
+                    <div id="hero-score-value" class="text-3xl font-bold text-white mt-3 tabular-nums"></div>
+                    <div class="text-white/50 text-xs font-jp mt-0.5">総合スコア</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 5-Axis Score Dashboard (GATED) -->
+        <section id="score-dashboard" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-8">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">5軸スコアダッシュボード</h2>
+            <div class="relative">
+                <!-- Blurred content -->
+                <div style="filter: blur(8px); pointer-events: none; user-select: none;">
+                    <div class="flex flex-col lg:flex-row gap-6 items-start">
+                        <!-- Left: Radar chart -->
+                        <div class="w-full lg:w-1/2">
+                            <div id="radar-chart" class="chart-container" style="min-height:360px;"></div>
+                        </div>
+                        <!-- Right: Score table -->
+                        <div class="w-full lg:w-1/2">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th class="font-jp">評価軸</th>
+                                        <th class="font-jp">スコア</th>
+                                        <th class="font-jp" style="width:40%;">レベル</th>
+                                        <th class="font-jp">評価</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="score-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- Paywall overlay -->
+                <div class="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm rounded-lg z-10">
+                    <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
+                        <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                        <div class="text-sm font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">5軸詳細スコア</div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-4 leading-relaxed">各軸のスコア・レーダーチャートは有料プランでご確認いただけます。</p>
+                        <a href="/platform/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-lg transition-colors duration-150 font-jp mb-2">
+                            月額プランで全データにアクセス
+                        </a>
+                        <a href="/platform/contact" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">個別レポートについてお問い合わせ</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Strengths & Weaknesses Summary -->
+        <section id="strengths-weaknesses" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <!-- Strengths -->
+            <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-6 h-6 rounded flex items-center justify-center bg-green-100 dark:bg-green-900/30">
+                        <svg class="w-3.5 h-3.5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">強み</h3>
+                </div>
+                <ul id="strengths-list" class="space-y-2 font-jp"></ul>
+            </div>
+            <!-- Improvements -->
+            <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-6 h-6 rounded flex items-center justify-center bg-amber-100 dark:bg-amber-900/30">
+                        <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+                        </svg>
+                    </div>
+                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">改善ポイント</h3>
+                </div>
+                <ul id="weaknesses-list" class="space-y-2 font-jp"></ul>
+            </div>
+        </section>
+
+        <!-- 5. Tool Information Table -->
+        <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-8">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">ツール情報</h2>
+            <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
+                <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp">ツール名</dt>
+                <dd id="info-name" class="text-xs font-semibold text-gray-800 dark:text-gray-200 font-jp"></dd>
+                <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp">ベンダー</dt>
+                <dd id="info-vendor" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp">カテゴリ</dt>
+                <dd id="info-category" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp">料金モデル</dt>
+                <dd id="info-pricing" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+            </dl>
+            <div id="info-features" class="mt-4 pt-3 border-t border-gray-100 dark:border-aixis-600/30 hidden">
+                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">機能:</span>
+                <span id="info-features-tags"></span>
+            </div>
+            <div id="info-languages" class="mt-2.5 hidden">
+                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">対応言語:</span>
+                <span id="info-languages-tags"></span>
+            </div>
+        </section>
+
+        <!-- 6. GATED Section (Paywall) -->
+        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-8" style="min-height:400px;">
+            <!-- Blurred placeholder content -->
+            <div class="paywall-blur">
+                <!-- Fake: テスト結果詳細 -->
+                <h2 class="font-jp">テスト結果詳細</h2>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="font-jp">テスト項目</th>
+                            <th class="font-jp">結果</th>
+                            <th class="font-jp">詳細</th>
+                            <th class="font-jp">日時</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>API応答速度テスト</td><td><span class="tag tag-success">合格</span></td><td>平均応答時間: 245ms</td><td>2026-03-10</td></tr>
+                        <tr><td>日本語自然言語処理精度</td><td><span class="tag tag-success">合格</span></td><td>正答率: 94.2%</td><td>2026-03-10</td></tr>
+                        <tr><td>セキュリティ脆弱性スキャン</td><td><span class="tag tag-info">標準</span></td><td>検出: 0件 (Critical)</td><td>2026-03-09</td></tr>
+                        <tr><td>負荷テスト (1000同時接続)</td><td><span class="tag tag-success">合格</span></td><td>スループット: 850 req/s</td><td>2026-03-09</td></tr>
+                        <tr><td>データプライバシー準拠確認</td><td><span class="tag tag-warning">条件付き</span></td><td>GDPR準拠、APPI一部対応</td><td>2026-03-08</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- Fake: 改善提案 -->
+                <h2 class="font-jp mt-8">改善提案</h2>
+                <div class="space-y-3 mt-4">
+                    <p class="text-sm leading-relaxed">本ツールの日本語処理能力は高水準ですが、専門用語の認識精度に改善の余地があります。特に医療・法律分野の専門用語辞書の拡充を推奨します。また、APIレスポンスのキャッシュ戦略を最適化することで、費用対効果をさらに向上させることが可能です。</p>
+                    <p class="text-sm leading-relaxed">セキュリティ面では、SOC2 Type II認証の取得を検討されることを推奨します。現時点でのセキュリティ体制は標準的ですが、エンタープライズ導入を見据えた場合、追加のコンプライアンス対応が必要となる可能性があります。</p>
+                </div>
+
+                <!-- Fake: スコア推移 -->
+                <h2 class="font-jp mt-8">スコア推移</h2>
+                <div class="bg-gray-100 dark:bg-gray-800 rounded-lg mt-4" style="height:200px;display:flex;align-items:center;justify-content:center;">
+                    <span class="text-gray-400 dark:text-gray-500 text-sm">スコア推移チャート</span>
+                </div>
+            </div>
+
+            <!-- Paywall overlay -->
+            <div class="paywall-overlay">
+                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-8 max-w-md w-full mx-4 text-center">
+                    <svg class="w-6 h-6 text-gray-400 dark:text-gray-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                    <div class="text-base font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">詳細分析レポート</div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-5 leading-relaxed">テスト結果の詳細、改善提案、競合比較、スコア推移グラフを含む完全なレポートにアクセスできます。</p>
+                    <a href="/platform/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-lg transition-colors duration-150 font-jp mb-3">
+                        月額プランで全データにアクセス
+                    </a>
+                    <a href="/platform/contact" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">
+                        個別レポートについてお問い合わせ
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Action Buttons -->
+        <section class="flex flex-wrap gap-2.5 mt-6 mb-10">
+            <a href="/platform/tools" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-lg hover:bg-gray-50 dark:hover:bg-aixis-700/50 transition-colors duration-150 font-jp">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+                データベースに戻る
+            </a>
+            <a id="compare-link" href="/platform/compare" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-lg transition-colors duration-150 font-jp">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                </svg>
+                他のツールと比較
+            </a>
+        </section>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    'use strict';
+
+    const slug = '{{ slug }}';
+
+    const AXIS_KEYS = AIXIS.AXIS_KEYS;
+    const AXIS_LABELS = AIXIS.AXIS_LABELS;
+    const AXIS_LABELS_ORDERED = AXIS_KEYS.map(k => AXIS_LABELS[k]);
+
+    // DOM references
+    const loadingEl = document.getElementById('loading-state');
+    const errorEl = document.getElementById('error-state');
+    const errorMsg = document.getElementById('error-message');
+    const mainEl = document.getElementById('main-content');
+
+    // --- Helpers ---
+
+    function evaluationTag(score) {
+        if (score >= 4.0) return '<span class="tag tag-success font-jp">優秀</span>';
+        if (score >= 2.5) return '<span class="tag tag-info font-jp">標準</span>';
+        return '<span class="tag tag-danger font-jp">要注意</span>';
+    }
+
+    function showError(msg) {
+        loadingEl.classList.add('hidden');
+        mainEl.classList.add('hidden');
+        errorMsg.textContent = msg;
+        errorEl.classList.remove('hidden');
+    }
+
+    function showMain() {
+        loadingEl.classList.add('hidden');
+        errorEl.classList.add('hidden');
+        mainEl.classList.remove('hidden');
+    }
+
+    // --- Render functions ---
+
+    function renderHero(tool, scores) {
+        document.getElementById('breadcrumb-name').textContent = tool.name_jp || tool.name || slug;
+        document.getElementById('hero-category').textContent = tool.category_name_jp || tool.category || '';
+        document.getElementById('hero-name').textContent = tool.name_jp || tool.name || slug;
+        document.getElementById('hero-vendor').textContent = tool.vendor || '';
+        document.getElementById('hero-description').textContent = tool.description_jp || tool.description || '';
+
+        const gradeArea = document.getElementById('hero-grade-area');
+        if (scores && scores.overall_score != null) {
+            const gradeInfo = getGrade(scores.overall_score);
+            const badge = document.getElementById('hero-grade-badge');
+            badge.textContent = scores.overall_grade || gradeInfo.grade;
+            badge.className = 'grade-badge grade-badge-lg grade-' + (scores.overall_grade || gradeInfo.grade);
+            document.getElementById('hero-score-value').textContent = scores.overall_score.toFixed(2) + ' / 5.0';
+        } else {
+            gradeArea.innerHTML = '<div class="text-white/50 text-lg font-jp">未評価</div>';
+        }
+    }
+
+    function renderScoreDashboard(scores) {
+        const section = document.getElementById('score-dashboard');
+        if (!scores) {
+            section.classList.add('hidden');
+            return;
+        }
+
+        // Score table
+        const tbody = document.getElementById('score-table-body');
+        tbody.innerHTML = AXIS_KEYS.map(key => {
+            const val = scores[key] != null ? scores[key] : 0;
+            const label = AXIS_LABELS[key];
+            return `<tr>
+                <td class="font-semibold font-jp">${label}</td>
+                <td class="font-bold text-lg" style="min-width:60px;">${val.toFixed(2)}</td>
+                <td>${createScoreBar(val)}</td>
+                <td>${evaluationTag(val)}</td>
+            </tr>`;
+        }).join('');
+
+        // Radar chart
+        renderRadarChart(scores);
+    }
+
+    function renderRadarChart(scores) {
+        const el = document.getElementById('radar-chart');
+        const values = AXIS_KEYS.map(k => scores[k] || 0);
+        const closedValues = [...values, values[0]];
+        const closedLabels = [...AXIS_LABELS_ORDERED, AXIS_LABELS_ORDERED[0]];
+
+        const render = () => {
+            const dark = isDarkMode();
+            const lineColor = dark ? '#818cf8' : '#4f46e5';
+            const fillColor = dark ? 'rgba(129,140,248,0.15)' : 'rgba(79,70,229,0.12)';
+            const markerColor = dark ? '#a5b4fc' : '#6366f1';
+
+            const trace = {
+                type: 'scatterpolar',
+                r: closedValues,
+                theta: closedLabels,
+                fill: 'toself',
+                fillcolor: fillColor,
+                line: { color: lineColor, width: 2.5 },
+                marker: { size: 7, color: markerColor },
+                hovertemplate: '%{theta}: %{r:.2f}<extra></extra>'
+            };
+
+            const layout = getRadarLayout({
+                height: 360,
+                margin: { t: 40, b: 40, l: 80, r: 80 },
+                showlegend: false,
+            });
+
+            Plotly.newPlot(el, [trace], layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+        };
+
+        el._renderChart = render;
+        render();
+    }
+
+    function renderStrengthsWeaknesses(scores) {
+        const section = document.getElementById('strengths-weaknesses');
+        if (!scores) {
+            section.classList.add('hidden');
+            return;
+        }
+
+        const strengths = [];
+        const weaknesses = [];
+
+        AXIS_KEYS.forEach(key => {
+            const val = scores[key] != null ? scores[key] : 0;
+            const label = AXIS_LABELS[key];
+            if (val >= 4.0) {
+                strengths.push(label);
+            }
+            if (val < 2.5) {
+                weaknesses.push(label);
+            }
+        });
+
+        const strengthsList = document.getElementById('strengths-list');
+        const weaknessesList = document.getElementById('weaknesses-list');
+
+        // Show brief summary text only (no individual axis scores)
+        if (strengths.length > 0) {
+            const summary = strengths.join('と') + 'に優れています';
+            strengthsList.innerHTML = `<li class="flex items-start gap-2 text-gray-700 dark:text-gray-300 text-xs leading-relaxed">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-green-500 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <span>${summary}</span>
+                </li>`;
+        } else {
+            strengthsList.innerHTML = '<li class="text-xs text-gray-400 dark:text-gray-500">特に突出した強みはありません</li>';
+        }
+
+        if (weaknesses.length > 0) {
+            const summary = weaknesses.join('と') + 'に改善の余地があります';
+            weaknessesList.innerHTML = `<li class="flex items-start gap-2 text-gray-700 dark:text-gray-300 text-xs leading-relaxed">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+                    </svg>
+                    <span>${summary}</span>
+                </li>`;
+        } else if (strengths.length === 0) {
+            weaknessesList.innerHTML = '<li class="text-xs text-gray-400 dark:text-gray-500">バランスの取れた評価です</li>';
+            strengthsList.innerHTML = '<li class="text-xs text-gray-400 dark:text-gray-500">バランスの取れた評価です</li>';
+        } else {
+            weaknessesList.innerHTML = '<li class="text-xs text-gray-400 dark:text-gray-500">特に注意が必要な点はありません</li>';
+        }
+    }
+
+    function renderToolInfo(tool) {
+        document.getElementById('info-name').textContent = tool.name_jp || tool.name || slug;
+        document.getElementById('info-vendor').textContent = tool.vendor || '--';
+        document.getElementById('info-category').textContent = tool.category_name_jp || tool.category || '--';
+        document.getElementById('info-pricing').textContent = tool.pricing_model || '--';
+
+        // Features
+        const features = tool.features || [];
+        if (features.length > 0) {
+            const container = document.getElementById('info-features');
+            container.classList.remove('hidden');
+            document.getElementById('info-features-tags').innerHTML = features.map(f =>
+                `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-aixis-700/50 text-gray-500 dark:text-gray-400 mr-1 mb-1">${f}</span>`
+            ).join('');
+        }
+
+        // Languages
+        const languages = tool.supported_languages || tool.languages || [];
+        if (languages.length > 0) {
+            const container = document.getElementById('info-languages');
+            container.classList.remove('hidden');
+            document.getElementById('info-languages-tags').innerHTML = languages.map(l =>
+                `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-aixis-700/50 text-gray-500 dark:text-gray-400 mr-1 mb-1">${l}</span>`
+            ).join('');
+        }
+
+        // Compare link
+        document.getElementById('compare-link').href = '/platform/compare?tools=' + encodeURIComponent(slug);
+    }
+
+    // --- Initialize ---
+
+    async function init() {
+        try {
+            // Fetch tool data
+            const toolResp = await fetch('/api/v1/tools/' + encodeURIComponent(slug));
+            if (!toolResp.ok) {
+                throw new Error(slug + ' は登録されていないか、データが取得できませんでした。');
+            }
+            const tool = await toolResp.json();
+
+            // Fetch scores (optional, may not exist)
+            let scores = null;
+            try {
+                const scoreResp = await fetch('/api/v1/scores/' + encodeURIComponent(slug));
+                if (scoreResp.ok) {
+                    scores = await scoreResp.json();
+                }
+            } catch (e) {
+                // Scores not available, proceed without
+            }
+
+            // Render all sections
+            renderHero(tool, scores);
+            renderScoreDashboard(scores);
+            renderStrengthsWeaknesses(scores);
+            renderToolInfo(tool);
+
+            // Show page
+            showMain();
+
+        } catch (e) {
+            showError(e.message || 'データの取得に失敗しました。');
+        }
+    }
+
+    // Run on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+})();
+</script>
+{% endblock %}

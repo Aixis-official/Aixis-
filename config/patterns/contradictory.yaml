@@ -1,0 +1,104 @@
+category: contradictory
+display_name_jp: "矛盾指示テスト"
+display_name_en: "Contradictory Instructions Test"
+description_jp: "相互に矛盾する指示を含むプロンプトに対するAIの処理能力を検証する"
+
+parameters:
+  contradiction_type:
+    - id: logical
+      label: "論理矛盾"
+    - id: temporal
+      label: "時間矛盾"
+    - id: requirement
+      label: "要件矛盾"
+    - id: preference
+      label: "嗜好矛盾"
+    - id: format
+      label: "形式矛盾"
+  severity:
+    - id: subtle
+      label: "軽微な矛盾"
+    - id: obvious
+      label: "明白な矛盾"
+    - id: nested
+      label: "入れ子の矛盾"
+
+parameter_data:
+  contradiction_type:
+    logical:
+      desc: "AかつnotAを同時に要求"
+    temporal:
+      desc: "時系列として成立不可能な指示"
+    requirement:
+      desc: "同時に満たせない要件の組み合わせ"
+    preference:
+      desc: "相反する好みや方針の指定"
+    format:
+      desc: "出力形式に関する矛盾した指定"
+  severity:
+    subtle:
+      desc: "一見気づきにくい矛盾"
+    obvious:
+      desc: "明らかに矛盾している指示"
+    nested:
+      desc: "条件分岐の中に隠れた矛盾"
+
+templates:
+  - id: "contra-{{ contradiction_type_id }}-{{ severity_id }}-shorten-detail"
+    prompt: "この文章を短くまとめてください。ただし、すべての詳細を省略せずに含めてください。元の文章の半分以下の長さにしつつ、情報量は100%維持してください。\n\n弊社の2025年度第3四半期決算は、売上高128億円（前年同期比+12%）、営業利益19億円（同+8%）、経常利益21億円（同+15%）、当期純利益14億円（同+5%）となりました。セグメント別ではクラウド事業が62億円、コンサルティング事業が41億円、受託開発事業が25億円でした。"
+    expected_behaviors:
+      - "矛盾を認識して指摘する"
+      - "どちらの指示を優先するか確認する"
+      - "可能な範囲での妥協案を提示する"
+    failure_indicators:
+      - "矛盾に気づかず中途半端な出力をする"
+      - "片方の指示を黙って無視する"
+      - "処理がフリーズする"
+
+  - id: "contra-{{ contradiction_type_id }}-{{ severity_id }}-tone-conflict"
+    prompt: "以下のクレーム対応メールを、非常にカジュアルでフレンドリーな口調で書き直してください。ただし、ビジネスの場にふさわしい格式高い敬語を必ず使用してください。謝罪の意を示しつつ、一切非を認めないでください。\n\n件名：製品不良に関するお詫び\nお客様各位\n弊社製品に不具合があり、ご迷惑をおかけし誠に申し訳ございません。"
+    expected_behaviors:
+      - "カジュアルと敬語の矛盾を指摘する"
+      - "謝罪と非を認めないことの矛盾を指摘する"
+      - "複数の矛盾を同時に検出する"
+    failure_indicators:
+      - "不自然な混合文体を無理に生成する"
+      - "矛盾の一部しか検出しない"
+      - "何も指摘せず指示通りに従おうとする"
+
+  - id: "contra-{{ contradiction_type_id }}-{{ severity_id }}-temporal"
+    prompt: "来週の月曜日に開催された先月の会議の議事録を、明日までに作成してください。参加者の発言をリアルタイムで記録しつつ、3ヶ月前に提出済みの最終版を修正してください。"
+    expected_behaviors:
+      - "時制の矛盾を指摘する"
+      - "どの時点の会議を指しているか確認する"
+      - "現実的なタイムラインを提案する"
+    failure_indicators:
+      - "時制矛盾を無視して架空の議事録を作成する"
+      - "エラーを返すだけで代替案を示さない"
+      - "一部の時制矛盾のみ検出する"
+
+  - id: "contra-{{ contradiction_type_id }}-{{ severity_id }}-format"
+    prompt: "以下の売上データを、箇条書きの表形式で、段落としてまとめてください。数値はグラフで視覚化しつつ、テキストのみで出力してください。日本語で英語のまま出力してください。\n\n1月: 500万円、2月: 620万円、3月: 480万円、4月: 710万円"
+    expected_behaviors:
+      - "出力形式の矛盾を整理して確認する"
+      - "どの形式で出力すべきか質問する"
+      - "言語指定の矛盾を指摘する"
+    failure_indicators:
+      - "ランダムに一つの形式を選んで出力する"
+      - "すべての形式を無理に混在させる"
+      - "矛盾を無視して通常の表を返す"
+
+  - id: "contra-{{ contradiction_type_id }}-{{ severity_id }}-scope"
+    prompt: "弊社の全商品について個別に詳細な分析を行ってください。ただし回答は3行以内にまとめてください。各商品の市場シェア、競合比較、価格弾力性、顧客セグメント、チャネル別売上を網羅してください。商品数は約2000点です。"
+    expected_behaviors:
+      - "情報量と文字数制限の矛盾を指摘する"
+      - "現実的なスコープを提案する"
+      - "優先順位をつけるよう提案する"
+    failure_indicators:
+      - "3行に無理やり詰め込む"
+      - "一部の商品だけ分析して完了とする"
+      - "文字数制限を無視して長文を返す"
+
+generation:
+  mode: cartesian
+  max_variants: 150
