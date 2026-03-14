@@ -93,6 +93,7 @@ html.dark {
 
 html {
     font-size: 16px;
+    overflow-x: hidden;
 }
 
 body {
@@ -1463,7 +1464,7 @@ html.dark .section-divide {
     }
 
     main {
-        padding: 16px 0;
+        padding: 0;
     }
     main.main-constrained {
         padding: 16px 12px;
