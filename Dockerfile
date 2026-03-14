@@ -8,13 +8,16 @@ RUN apt-get update && apt-get install -y \
     libffi-dev shared-mime-info \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml ./
+# Copy all source first (needed for hatch build)
+COPY . .
+
 RUN pip install --no-cache-dir .
 
 # Install Playwright browsers (for audit engine)
 RUN playwright install chromium --with-deps || true
 
-COPY . .
+# Create data directory for SQLite
+RUN mkdir -p /data
 
 ENV PYTHONPATH=/app/src
 
