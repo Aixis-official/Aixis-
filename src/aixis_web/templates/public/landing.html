@@ -169,28 +169,32 @@
 </section>
 
 
-<!-- ===== ABOUT / PHILOSOPHY (Dark, continues from hero) ===== -->
-<section class="relative bg-[#0a0f1a] overflow-hidden">
-    <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
-    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-32">
-        <span class="report-label font-sans" style="color: #475569;">About Aixis</span>
-        <h2 class="mt-6 text-2xl sm:text-3xl lg:text-[2.5rem] font-bold font-serif text-white tracking-tight leading-[1.4]">
-            AI実装の投資判断を科学する、<br>独立系AI調査・監査機関。
-        </h2>
-        <p class="mt-8 text-sm sm:text-base text-slate-400 max-w-3xl leading-[2] font-jp">
-            AIツール市場には、ベンダーの利益に左右される評価が溢れています。Aixisはこの構造的問題に対し、ベンダーから一切の報酬を受け取らない完全独立の立場で、5軸定量監査を実施。自動テストと専門家評価を組み合わせたハイブリッド方式により、再現性と客観性を担保した監査データを提供します。
-        </p>
-        <div class="mt-10">
-            <a href="/independence" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors duration-200">
-                独立性宣言を読む
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
-            </a>
+<!-- ===== ABOUT / PHILOSOPHY (Dark, sticky — white section scrolls over) ===== -->
+<div class="relative" style="margin-bottom: -100vh;">
+    <section class="sticky top-0 bg-[#0a0f1a] overflow-hidden" style="min-height: 100vh; display: flex; align-items: center;">
+        <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
+        <div class="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
+            <span class="report-label font-sans" style="color: #475569;">About Aixis</span>
+            <h2 class="mt-8 text-2xl sm:text-3xl lg:text-[2.5rem] font-bold font-serif text-white tracking-tight leading-[1.5] lg:leading-[1.55]">
+                AI実装の投資判断を科学する、<br>独立系AI調査・監査機関。
+            </h2>
+            <p class="mt-10 text-sm sm:text-base lg:text-[17px] text-slate-400 max-w-2xl leading-[2.2] lg:leading-[2.4] font-jp tracking-wide">
+                AIツール市場には、ベンダーの利益に左右される評価が溢れています。<br class="hidden lg:inline"><br class="hidden lg:inline">
+                Aixisはこの構造的問題に対し、ベンダーから一切の報酬を受け取らない完全独立の立場で、5軸定量監査を実施。自動テストと専門家評価を組み合わせたハイブリッド方式により、再現性と客観性を担保した監査データを提供します。
+            </p>
+            <div class="mt-14">
+                <a href="/independence" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors duration-200">
+                    独立性宣言を読む
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                </a>
+            </div>
         </div>
-    </div>
-    <!-- Dark-to-light gradient transition -->
-    <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-gray-50 dark:to-aixis-900"></div>
-</section>
+    </section>
+    <div style="height: 100vh;"></div>
+</div>
 
+<!-- ===== WHITE CONTENT (scrolls over dark About) ===== -->
+<div class="relative z-10 bg-gray-50 dark:bg-aixis-900 rounded-t-[2rem] sm:rounded-t-[3rem]">
 
 <!-- ===== 5-AXIS AUDIT MODEL ===== -->
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
@@ -532,6 +536,8 @@
         </div>
     </div>
 </section>
+
+</div><!-- /WHITE CONTENT wrapper -->
 
 {% endblock %}
 
