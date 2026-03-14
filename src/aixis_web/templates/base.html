@@ -50,16 +50,6 @@
         })();
     </script>
 
-    <!-- Dark mode init (must run before paint to prevent flash) -->
-    <script>
-        (function() {
-            var theme = localStorage.getItem('aixis-theme');
-            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            }
-        })();
-    </script>
-
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -145,10 +135,10 @@
 
     {% block head %}{% endblock %}
 </head>
-<body class="min-h-screen flex flex-col bg-gray-50 dark:bg-aixis-900 text-gray-900 dark:text-gray-100 font-mixed leading-[1.85] transition-colors duration-300 text-base {{ page_bg | default('') }}">
+<body class="min-h-screen flex flex-col bg-gray-50 text-gray-900 font-mixed leading-[1.85] transition-colors duration-300 text-base {{ page_bg | default('') }}">
 
     <!-- Navigation -->
-    <nav class="sticky top-0 z-50 w-full bg-white/80 dark:bg-aixis-800/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-aixis-600/50 transition-all duration-300">
+    <nav id="main-nav" class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-lg border-b border-gray-200/50 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
 
@@ -222,24 +212,8 @@
                     </a>
                 </div>
 
-                <!-- Right: Theme toggle + Auth -->
+                <!-- Right: Auth -->
                 <div class="flex items-center gap-2">
-                    <!-- Theme toggle -->
-                    <button id="theme-toggle"
-                            type="button"
-                            class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-aixis-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150"
-                            aria-label="テーマ切替">
-                        <!-- Sun icon (shown in dark mode) -->
-                        <svg class="hidden dark:block w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-                        </svg>
-                        <!-- Moon icon (shown in light mode) -->
-                        <svg class="block dark:hidden w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-                        </svg>
-                        <span class="hidden sm:inline text-xs ml-1">テーマ</span>
-                    </button>
-
                     <!-- Auth links (desktop) -->
                     <div class="hidden md:flex items-center gap-2">
                         {% if user %}
@@ -253,11 +227,11 @@
                         </button>
                         {% else %}
                         <a href="/login"
-                           class="px-4 py-1.5 text-[13px] font-normal tracking-wide text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                           class="nav-auth-link px-4 py-1.5 text-[13px] font-normal tracking-wide text-gray-500 hover:text-gray-900 transition-colors duration-200">
                             ログイン
                         </a>
                         <a href="/contact?type=demo"
-                           class="px-4 py-1.5 text-[13px] font-normal tracking-wide text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-500 hover:border-gray-500 dark:hover:border-gray-300 rounded-none transition-all duration-200">
+                           class="nav-auth-cta px-4 py-1.5 text-[13px] font-normal tracking-wide text-gray-700 border border-gray-300 hover:border-gray-500 rounded-none transition-all duration-200">
                             無料デモを予約する
                         </a>
                         {% endif %}
@@ -462,19 +436,9 @@
         }
     </script>
 
-    <!-- Theme toggle & mobile drawer logic -->
+    <!-- Mobile drawer & dropdown logic -->
     <script>
         (function() {
-            // Theme toggle
-            var toggle = document.getElementById('theme-toggle');
-            if (toggle) {
-                toggle.addEventListener('click', function() {
-                    if (window.AIXIS && AIXIS.toggleTheme) {
-                        AIXIS.toggleTheme();
-                    }
-                });
-            }
-
             // Mobile drawer (slide-from-right)
             var menuBtn = document.getElementById('mobile-menu-btn');
             var drawer = document.getElementById('mobile-drawer');

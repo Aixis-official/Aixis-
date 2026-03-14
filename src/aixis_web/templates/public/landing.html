@@ -11,10 +11,10 @@
     #white-sections-wrapper::after {
         content: "";
         position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
+        top: -4px; left: 0; width: 100%; height: calc(100% + 4px);
         background-color: #0a0f1a;
         opacity: 1;
-        transition: opacity 0.4s linear;
+        transition: opacity 0.5s ease-in-out;
         pointer-events: none;
         z-index: 2;
     }
@@ -23,19 +23,19 @@
     }
     /* About section text color transitions when scene changes */
     #about-section {
-        transition: background-color 0.4s linear;
+        transition: background-color 0.5s ease-in-out;
     }
     #about-section .about-text {
-        transition: color 0.4s linear;
+        transition: color 0.5s ease-in-out;
     }
     #about-section .about-heading {
-        transition: color 0.4s linear;
+        transition: color 0.5s ease-in-out;
     }
     #about-section .about-label {
-        transition: color 0.4s linear;
+        transition: color 0.5s ease-in-out;
     }
     #about-section .about-link {
-        transition: color 0.4s linear;
+        transition: color 0.5s ease-in-out;
     }
     /* State after reveal: About becomes white-themed */
     #about-section.--light {
@@ -52,6 +52,41 @@
     }
     #about-section.--light .about-link {
         color: #6b7280;
+    }
+
+    /* ===== Transparent header on hero (landing page only) ===== */
+    #main-nav.nav-transparent {
+        background-color: transparent !important;
+        backdrop-filter: none !important;
+        border-bottom-color: transparent !important;
+    }
+    #main-nav.nav-transparent .nav-link,
+    #main-nav.nav-transparent .nav-link button {
+        color: rgba(255, 255, 255, 0.75) !important;
+    }
+    #main-nav.nav-transparent .nav-link:hover,
+    #main-nav.nav-transparent .nav-link button:hover {
+        color: #fff !important;
+    }
+    #main-nav.nav-transparent .nav-auth-link {
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+    #main-nav.nav-transparent .nav-auth-link:hover {
+        color: #fff !important;
+    }
+    #main-nav.nav-transparent .nav-auth-cta {
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.4) !important;
+    }
+    #main-nav.nav-transparent .nav-auth-cta:hover {
+        border-color: rgba(255, 255, 255, 0.8) !important;
+    }
+    #main-nav.nav-transparent .nav-logo {
+        /* Logo is already bright on dark bg */
+    }
+    /* Mobile hamburger white on transparent nav */
+    #main-nav.nav-transparent #mobile-menu-btn {
+        color: rgba(255, 255, 255, 0.8) !important;
     }
 
     @keyframes fadeIn {
@@ -123,7 +158,7 @@
 {% block content %}
 
 <!-- ===== HERO SECTION ===== -->
-<section class="relative overflow-hidden bg-[#0a0f1a]">
+<section class="relative overflow-hidden bg-[#0a0f1a] min-h-screen flex flex-col justify-center">
     <div class="absolute inset-0">
         <img src="/static/img/Aixis-platform-hero.jpeg" alt="" class="w-full h-full object-cover object-center opacity-[0.65]">
         <div class="absolute inset-0 bg-gradient-to-r from-[#0a0f1a]/90 via-[#0a0f1a]/70 to-[#0a0f1a]/50"></div>
@@ -247,7 +282,7 @@
 <div id="white-sections-wrapper">
 
 <!-- ===== 5-AXIS AUDIT MODEL ===== -->
-<section id="white-content-start" class="bg-gray-50 dark:bg-gray-950">
+<section id="white-content-start" class="bg-gray-50">
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
     <div class="text-left mb-12 sm:mb-16">
         <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
@@ -832,6 +867,37 @@
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') hideOverlay();
     });
+})();
+
+// ===== Transparent header on hero (landing page only) =====
+(function() {
+    var nav = document.getElementById('main-nav');
+    if (!nav) return;
+
+    // Start transparent
+    nav.classList.add('nav-transparent');
+
+    function checkNav() {
+        // Switch to solid when scrolled past ~80px
+        if (window.scrollY > 80) {
+            nav.classList.remove('nav-transparent');
+        } else {
+            nav.classList.add('nav-transparent');
+        }
+    }
+
+    var navTicking = false;
+    window.addEventListener('scroll', function() {
+        if (!navTicking) {
+            requestAnimationFrame(function() {
+                checkNav();
+                navTicking = false;
+            });
+            navTicking = true;
+        }
+    }, { passive: true });
+
+    checkNav();
 })();
 
 // ===== Dark→White scene transition (quants.co.jp pattern) =====
