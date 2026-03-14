@@ -107,11 +107,13 @@ async def submit_contact(req: ContactRequest):
 
     if settings.smtp_host:
         loop = asyncio.get_running_loop()
+        notification_sent = False
         # Send notification to Aixis team
         try:
             notification = _build_notification_email(req)
             await loop.run_in_executor(None, _send_email, notification)
             logger.info("Notification email sent for %s (%s)", req.company_name, req.email)
+            notification_sent = True
         except Exception:
             logger.exception(
                 "Failed to send notification email for %s (%s)",
@@ -125,6 +127,15 @@ async def submit_contact(req: ContactRequest):
             logger.info("Auto-reply sent to %s", req.email)
         except Exception:
             logger.exception("Failed to send auto-reply to %s", req.email)
+
+        if not notification_sent:
+            logger.error(
+                "CRITICAL: Contact form from %s (%s) was NOT delivered to team. "
+                "Message: %s",
+                req.company_name,
+                req.email,
+                req.message[:200],
+            )
     else:
         logger.warning("SMTP not configured; contact form submission logged only.")
 

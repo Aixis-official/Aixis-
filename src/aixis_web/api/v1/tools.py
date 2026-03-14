@@ -1,5 +1,8 @@
 """Tool CRUD endpoints."""
+import logging
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 from typing import Annotated
 from urllib.parse import urlparse
 
@@ -155,7 +158,7 @@ async def create_tool(
         }, db)
         await db.commit()
     except Exception:
-        pass
+        logger.warning("Failed to emit tool.created webhook for %s", tool.slug, exc_info=True)
 
     return tool
 

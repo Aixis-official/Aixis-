@@ -1,13 +1,18 @@
 """Aixis AI Audit Platform - FastAPI Application."""
+import logging
 import uvicorn
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import HTTPException
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from .config import settings
 from .db.base import init_db
 from .api.v1.router import api_router
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).parent
 
@@ -54,6 +59,44 @@ def create_app() -> FastAPI:
     from .pages import page_router
 
     app.include_router(page_router)
+
+    # Custom error handlers for HTML pages (API paths still return JSON)
+    @app.exception_handler(404)
+    async def not_found_handler(request: Request, exc: HTTPException):
+        if request.url.path.startswith("/api/"):
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                status_code=404,
+                content={"detail": getattr(exc, "detail", "Not found")},
+            )
+        return HTMLResponse(
+            content=f"""<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><title>404 - Aixis</title>
+<style>body{{font-family:Inter,'Noto Sans JP',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f9fafb;color:#111827}}
+.box{{text-align:center}}.box h1{{font-size:4rem;font-weight:800;color:#1a365d;margin:0}}.box p{{color:#6b7280;margin:1rem 0}}
+a{{color:#1a365d;text-decoration:none;font-weight:600}}a:hover{{text-decoration:underline}}</style></head>
+<body><div class="box"><h1>404</h1><p>お探しのページは見つかりませんでした。</p><a href="/">ホームに戻る</a></div></body></html>""",
+            status_code=404,
+        )
+
+    @app.exception_handler(500)
+    async def server_error_handler(request: Request, exc: Exception):
+        logger.exception("Internal server error on %s", request.url.path)
+        if request.url.path.startswith("/api/"):
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Internal server error"},
+            )
+        return HTMLResponse(
+            content="""<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><title>500 - Aixis</title>
+<style>body{font-family:Inter,'Noto Sans JP',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f9fafb;color:#111827}
+.box{text-align:center}.box h1{font-size:4rem;font-weight:800;color:#e53e3e;margin:0}.box p{color:#6b7280;margin:1rem 0}
+a{color:#1a365d;text-decoration:none;font-weight:600}a:hover{text-decoration:underline}</style></head>
+<body><div class="box"><h1>500</h1><p>サーバーエラーが発生しました。しばらくしてからもう一度お試しください。</p><a href="/">ホームに戻る</a></div></body></html>""",
+            status_code=500,
+        )
 
     return app
 

@@ -1,6 +1,9 @@
 """Profile and target config API endpoints."""
+import logging
 from pathlib import Path
 from typing import Annotated
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, Query
 
@@ -64,6 +67,7 @@ async def list_target_configs(
                     "executor_type": data.get("executor_type", "playwright"),
                 })
             except Exception:
+                logger.warning("Failed to parse target config %s", f, exc_info=True)
                 items.append({"name": f.stem, "display_name": f.stem, "url": "", "executor_type": ""})
 
     return {"items": items, "total": len(items)}

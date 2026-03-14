@@ -100,8 +100,8 @@ async def update_settings(
     """Update settings (writes to .env file)."""
     if body.anthropic_api_key is not None:
         key = body.anthropic_api_key.strip()
-        if not key.startswith("sk-ant-"):
-            raise HTTPException(400, "APIキーは 'sk-ant-' で始まる必要があります")
+        if not key.startswith("sk-ant-") or len(key) < 20:
+            raise HTTPException(400, "有効なAnthropicのAPIキーを入力してください（'sk-ant-' で始まる20文字以上）")
         _write_env_key("AIXIS_ANTHROPIC_API_KEY", key)
         # Also update the runtime setting so the next audit picks it up
         import os

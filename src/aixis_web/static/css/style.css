@@ -48,36 +48,10 @@
 }
 
 /* ==========================================================================
-   2. CSS Custom Properties -- Dark Theme
+   2. CSS Custom Properties -- Dark Theme (retained for admin future use)
    ========================================================================== */
 
-html.dark {
-    --primary: #60a5fa;
-    --primary-light: #93bbfc;
-    --primary-lighter: #bfdbfe;
-    --accent: #f6ad55;
-    --accent-hover: #ed8936;
-    --bg: #0f1117;
-    --bg-alt: #1a1d2e;
-    --card-bg: #1e2235;
-    --card-border: #2d3748;
-    --text: #e2e8f0;
-    --text-light: #a0aec0;
-    --text-lighter: #718096;
-    --border: #2d3748;
-    --success: #48bb78;
-    --success-light: rgba(72,187,120,0.15);
-    --warning: #ecc94b;
-    --warning-light: rgba(236,201,75,0.15);
-    --danger: #fc8181;
-    --danger-light: rgba(252,129,129,0.15);
-    --nav-bg: rgba(15,17,23,0.85);
-    --nav-border: rgba(255,255,255,0.06);
-    --shadow: 0 1px 3px rgba(0,0,0,0.3);
-    --shadow-md: 0 2px 8px rgba(0,0,0,0.4);
-    --shadow-lg: 0 4px 16px rgba(0,0,0,0.5);
-    /* Grade colors remain the same -- already high contrast */
-}
+/* html.dark variables kept but inactive -- light theme is default */
 
 /* ==========================================================================
    3. Global Styles

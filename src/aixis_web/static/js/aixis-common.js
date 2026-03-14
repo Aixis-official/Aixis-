@@ -81,11 +81,10 @@ function scoreLevel(score) {
 }
 
 function scoreLevelColor(score) {
-  const isDark = document.documentElement.classList.contains('dark');
-  if (score >= 4.0) return isDark ? '#48bb78' : '#38a169';
-  if (score >= 3.0) return isDark ? '#63b3ed' : '#2b6cb0';
-  if (score >= 2.0) return isDark ? '#ecc94b' : '#d69e2e';
-  return isDark ? '#fc8181' : '#e53e3e';
+  if (score >= 4.0) return '#38a169';
+  if (score >= 3.0) return '#2b6cb0';
+  if (score >= 2.0) return '#d69e2e';
+  return '#e53e3e';
 }
 
 function formatScore(score) {

@@ -1,4 +1,5 @@
 """SSR page routes using Jinja2 templates."""
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
@@ -12,6 +13,9 @@ from .i18n import get_translator, detect_language
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+# Register global template functions
+templates.env.globals["now"] = datetime.utcnow
 
 page_router = APIRouter(default_response_class=HTMLResponse)
 

@@ -7,8 +7,9 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import Response, StreamingResponse
@@ -590,12 +591,16 @@ async def delete_audit(
     await db.commit()
 
 
+class _StatusUpdateBody(BaseModel):
+    status: str
+
+
 @router.patch("/{session_id}/status")
 async def update_audit_status(
     session_id: str,
+    body: _StatusUpdateBody,
     db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
-    body: dict = None,
 ):
     """Update the status of an audit session (for manual corrections)."""
     result = await db.execute(
@@ -622,14 +627,8 @@ async def update_audit_status(
             )
         # Process is dead — allow status change of stale session
 
-    if not body:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="リクエストボディが必要です",
-        )
-
     allowed_statuses = {"pending", "completed", "failed", "cancelled", "aborted", "awaiting_manual"}
-    new_status = body.get("status")
+    new_status = body.status
     if not new_status or new_status not in allowed_statuses:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

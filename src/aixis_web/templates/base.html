@@ -391,7 +391,7 @@
                             <li><a href="/pricing" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">料金</a></li>
                             <li><a href="/contact" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">お問い合わせ</a></li>
                             <li><a href="https://aixis.jp/privacy-policy/" target="_blank" rel="noopener" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">プライバシーポリシー</a></li>
-                            <li><a href="#" title="準備中" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">利用規約</a></li>
+                            <li><a href="https://aixis.jp/terms/" target="_blank" rel="noopener" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">利用規約</a></li>
                             <li><a href="/independence" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">独立性宣言</a></li>
                         </ul>
                     </div>
@@ -412,7 +412,7 @@
             <!-- Copyright -->
             <div class="mt-10 pt-6 border-t border-gray-200 dark:border-aixis-700">
                 <p class="text-center text-xs text-gray-400 dark:text-gray-500">
-                    &copy;︎ <script>document.write(new Date().getFullYear())</script> Aixis
+                    &copy;︎ {{ now().year if now is defined else 2026 }} Aixis
                 </p>
             </div>
         </div>
