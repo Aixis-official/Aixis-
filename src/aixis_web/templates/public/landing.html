@@ -169,8 +169,8 @@
 </section>
 
 
-<!-- ===== ABOUT / PHILOSOPHY (Dark, normal flow) ===== -->
-<section class="bg-[#0a0f1a] overflow-hidden">
+<!-- ===== ABOUT / PHILOSOPHY (Dark, full viewport) ===== -->
+<section id="about-section" class="relative bg-[#0a0f1a] overflow-hidden min-h-screen flex flex-col justify-center">
     <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
     <div class="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
         <span class="report-label font-sans" style="color: #475569;">About Aixis</span>
@@ -190,9 +190,9 @@
     </div>
 </section>
 
-
 <!-- ===== 5-AXIS AUDIT MODEL ===== -->
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+<section id="white-content-start" class="bg-gray-50 dark:bg-gray-950 min-h-screen">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
     <div class="text-left mb-12 sm:mb-16">
         <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
             5つの評価軸
@@ -368,12 +368,14 @@
             <p class="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">0.0 -- 5.0 の精密スコアで評価 / S (4.5+) A (3.5+) B (2.5+) C (1.5+) D (1.5未満)</p>
         </div>
     </div>
+</div>
 </section>
 
 
 
 <!-- ===== FEATURED TOOLS ===== -->
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+<section class="bg-gray-50 dark:bg-gray-950">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
     <div class="text-left mb-12 sm:mb-16">
         <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
             最新の監査レポート
@@ -395,6 +397,7 @@
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
         </a>
     </div>
+</div>
 </section>
 
 
@@ -771,6 +774,78 @@
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') hideOverlay();
     });
+})();
+
+// ===== Instant dark→white scene transition (quants.co.jp style) =====
+// Intercept wheel/touch at the About↔White boundary and snap instantly.
+(function() {
+    var about = document.getElementById('about-section');
+    var white = document.getElementById('white-content-start');
+    if (!about || !white) return;
+
+    var locked = false;
+    var LOCK_MS = 600;
+
+    function getAboutBottom() {
+        return about.offsetTop + about.offsetHeight;
+    }
+
+    // Snap zone: within 200px of the boundary
+    var SNAP_ZONE = 200;
+
+    function handleSnap(directionDown) {
+        var boundary = getAboutBottom();
+        var scrollY = window.scrollY;
+        var vh = window.innerHeight;
+        // Distance from the boundary to viewport bottom (scrolling down)
+        // or from boundary to viewport top (scrolling up)
+        var distFromBoundary = boundary - scrollY - vh; // negative = past boundary
+
+        if (directionDown) {
+            // Scrolling down: if we're near the end of About section, snap to white
+            // Trigger when About's bottom is within viewport or just below
+            if (distFromBoundary < SNAP_ZONE && distFromBoundary > -vh) {
+                locked = true;
+                window.scrollTo({ top: boundary, behavior: 'instant' });
+                setTimeout(function() { locked = false; }, LOCK_MS);
+                return true;
+            }
+        } else {
+            // Scrolling up: if we're at/near the top of white section, snap back to About
+            var distFromTop = scrollY - boundary; // positive = we're in white section
+            if (distFromTop >= 0 && distFromTop < SNAP_ZONE) {
+                locked = true;
+                // Snap to show bottom of About (About bottom at viewport bottom)
+                window.scrollTo({ top: boundary - vh, behavior: 'instant' });
+                setTimeout(function() { locked = false; }, LOCK_MS);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Wheel event (desktop)
+    window.addEventListener('wheel', function(e) {
+        if (locked) { e.preventDefault(); return; }
+        var down = e.deltaY > 0;
+        if (handleSnap(down)) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Touch events (mobile)
+    var touchStartY = 0;
+    window.addEventListener('touchstart', function(e) {
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener('touchend', function(e) {
+        if (locked) return;
+        var touchEndY = e.changedTouches[0].clientY;
+        var diff = touchStartY - touchEndY;
+        if (Math.abs(diff) < 30) return; // ignore small swipes
+        handleSnap(diff > 0);
+    }, { passive: true });
 })();
 </script>
 {% endblock %}
