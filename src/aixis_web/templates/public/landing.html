@@ -14,15 +14,16 @@
 
     /* ===== Dark→White scene transition (quants.co.jp pattern) ===== */
     /*
-     * About section = dark bg, transitions to white independently.
-     * White sections wrapper = white bg + dark ::after overlay that fades.
-     * The ::after extends 200px UPWARD past the boundary to hide any seam.
-     * Both transitions happen simultaneously so the boundary is invisible.
+     * ROOT CAUSE of seam: bg-color interpolation ≠ opacity blending at mid-transition.
+     * FIX: ONE overlay covers BOTH About + white sections.
+     * About bg = always #f9fafb (white). Overlay makes it look dark.
+     * About text floats ABOVE the overlay (z-index: 11 > overlay z-index: 10).
+     * When overlay fades, everything is seamlessly white — ZERO seam.
      */
     #scene-wrapper {
         position: relative;
     }
-    /* Dark overlay (real DOM element, not pseudo) */
+    /* Single dark overlay covering ALL sections */
     #dark-overlay {
         position: absolute;
         top: 0; left: 0; width: 100%; height: 100%;
@@ -30,40 +31,27 @@
         opacity: 1;
         transition: opacity 0.5s ease-in-out;
         pointer-events: none;
-        z-index: 2;
+        z-index: 10;
     }
     #dark-overlay.--fade {
         opacity: 0;
     }
-    /* Bridge overlay: extends behind About section to eliminate seam */
-    #dark-overlay-bridge {
-        position: absolute;
-        top: -200px; left: 0; width: 100%; height: 200px;
-        background-color: #0a0f1a;
-        opacity: 1;
-        transition: opacity 0.5s ease-in-out;
-        pointer-events: none;
-        z-index: -1;
+    /* About content floats above the overlay */
+    .about-content-inner {
+        position: relative;
+        z-index: 11;
     }
-    #dark-overlay-bridge.--fade {
-        opacity: 0;
-    }
-    /* About section transitions */
-    #about-section {
-        transition: background-color 0.5s ease-in-out;
-    }
-    #about-section .about-text,
-    #about-section .about-heading,
-    #about-section .about-label,
-    #about-section .about-link {
-        transition: color 0.5s ease-in-out;
-    }
+    /* About dot pattern: above overlay, fades on reveal */
     #about-section .about-dot-pattern {
+        z-index: 11;
         transition: opacity 0.5s ease-in-out;
     }
-    /* State after reveal */
-    #scene-wrapper.--reveal #about-section {
-        background-color: #f9fafb;
+    #scene-wrapper.--reveal .about-dot-pattern {
+        opacity: 0 !important;
+    }
+    /* About text: starts white (on dark overlay), transitions to dark on reveal */
+    .about-heading, .about-text, .about-label, .about-link {
+        transition: color 0.5s ease-in-out;
     }
     #scene-wrapper.--reveal .about-heading {
         color: #111827;
@@ -76,9 +64,6 @@
     }
     #scene-wrapper.--reveal .about-link {
         color: #6b7280;
-    }
-    #scene-wrapper.--reveal .about-dot-pattern {
-        opacity: 0 !important;
     }
 
     /* ===== Transparent header on hero (landing page only) ===== */
@@ -286,9 +271,9 @@
 <div id="scene-wrapper">
 
 <!-- ===== ABOUT / PHILOSOPHY ===== -->
-<section id="about-section" class="relative bg-[#0a0f1a] overflow-hidden">
+<section id="about-section" class="relative bg-gray-50 overflow-hidden">
     <div class="about-dot-pattern absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
-    <div class="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
+    <div class="about-content-inner max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
         <span class="report-label font-sans about-label" style="color: #475569;">About Aixis</span>
         <h2 class="about-heading mt-8 text-2xl sm:text-3xl lg:text-[2.5rem] font-bold font-serif text-white tracking-tight leading-[1.5] lg:leading-[1.55]">
             AI実装の投資判断を科学する、<br>独立系AI調査・監査機関。
@@ -306,10 +291,7 @@
     </div>
 </section>
 
-<!-- ===== WHITE SECTIONS ===== -->
-<div style="position: relative;">
-<!-- Dark overlay (real DOM element) + bridge extending behind About -->
-<div id="dark-overlay-bridge"></div>
+<!-- Single dark overlay covering About + all white sections -->
 <div id="dark-overlay"></div>
 
 <!-- ===== 5-AXIS AUDIT MODEL ===== -->
@@ -637,7 +619,6 @@
     </div>
 </div>
 
-</div><!-- /white-sections relative wrapper -->
 </div><!-- /#scene-wrapper -->
 
 <!-- ===== CTA SECTION ===== -->
@@ -933,12 +914,12 @@
 })();
 
 // ===== Dark→White scene transition (quants.co.jp pattern) =====
-// Real DOM overlay divs fade out; About section transitions colors.
+// Single overlay covers About + white sections. Text floats above overlay.
+// When overlay fades, everything is seamlessly white — zero seam.
 (function() {
     var aboutSection = document.getElementById('about-section');
     var sceneWrapper = document.getElementById('scene-wrapper');
     var darkOverlay = document.getElementById('dark-overlay');
-    var darkBridge = document.getElementById('dark-overlay-bridge');
     if (!aboutSection || !sceneWrapper || !darkOverlay) return;
 
     var revealed = false;
@@ -951,12 +932,10 @@
         if (rect.bottom < trigger && !revealed) {
             sceneWrapper.classList.add('--reveal');
             darkOverlay.classList.add('--fade');
-            if (darkBridge) darkBridge.classList.add('--fade');
             revealed = true;
         } else if (rect.bottom >= trigger && revealed) {
             sceneWrapper.classList.remove('--reveal');
             darkOverlay.classList.remove('--fade');
-            if (darkBridge) darkBridge.classList.remove('--fade');
             revealed = false;
         }
     }
