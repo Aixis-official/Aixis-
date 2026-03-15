@@ -173,7 +173,7 @@
                     <div class="nav-dropdown" id="nav-service-dropdown">
                         <button type="button"
                                 class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200 inline-flex items-center gap-1
-                                       {% if active_page in ['audit-process', 'about'] %}
+                                       {% if active_page in ['audit-process', 'about', 'transparency', 'audit-protocol'] %}
                                        text-gray-900 dark:text-white
                                        {% else %}
                                        text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white
@@ -182,7 +182,7 @@
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                             </svg>
-                            {% if active_page in ['audit-process', 'about'] %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900 dark:bg-white"></span>{% endif %}
+                            {% if active_page in ['audit-process', 'about', 'transparency', 'audit-protocol'] %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900 dark:bg-white"></span>{% endif %}
                         </button>
                         <div class="nav-dropdown-menu pt-2">
                             <div class="bg-white dark:bg-aixis-700 rounded-lg shadow-lg ring-1 ring-black/5 dark:ring-white/10 py-1.5">
@@ -197,11 +197,13 @@
                                     独立性宣言
                                 </a>
                                 <a href="/transparency"
-                                   class="block px-4 py-2 text-sm font-medium transition-colors duration-150 text-gray-700 hover:bg-gray-50">
+                                   class="block px-4 py-2 text-sm font-medium transition-colors duration-150
+                                          {% if active_page == 'transparency' %}text-aixis-500 dark:text-white bg-gray-50 dark:bg-aixis-600{% else %}text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-aixis-600{% endif %}">
                                     透明性ポリシー
                                 </a>
                                 <a href="/audit-protocol"
-                                   class="block px-4 py-2 text-sm font-medium transition-colors duration-150 text-gray-700 hover:bg-gray-50">
+                                   class="block px-4 py-2 text-sm font-medium transition-colors duration-150
+                                          {% if active_page == 'audit-protocol' %}text-aixis-500 dark:text-white bg-gray-50 dark:bg-aixis-600{% else %}text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-aixis-600{% endif %}">
                                     監査プロトコル
                                 </a>
                             </div>

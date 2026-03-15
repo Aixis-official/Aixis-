@@ -11,7 +11,7 @@
 <!-- Page Header -->
 <section class="bg-white dark:bg-aixis-800 border-b border-gray-200 dark:border-aixis-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-left">
-        <span class="report-label font-sans">Aixis Pricing Structure</span>
+        <span class="report-label font-sans" style="text-transform: none;">Aixis Pricing Structure</span>
         <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
             料金プラン
         </h1>
@@ -19,18 +19,6 @@
             14日間の無料トライアルですべての機能をお試しいただけます
         </p>
         <hr class="divider-thin">
-
-        <!-- Toggle: Monthly / Yearly -->
-        <div class="mt-8 inline-flex items-center bg-gray-100 dark:bg-aixis-700 rounded-sm p-1">
-            <button id="tab-monthly" onclick="setPricingTab('monthly')"
-                    class="px-5 py-2 text-sm font-semibold rounded-md transition-all duration-200 bg-white dark:bg-aixis-600 text-gray-900 dark:text-white shadow-sm">
-                月額
-            </button>
-            <button id="tab-yearly" onclick="setPricingTab('yearly')"
-                    class="px-5 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-gray-500 dark:text-gray-400">
-                年額<span class="ml-1 text-xs text-blue-600 dark:text-blue-400">¥297,600/年（2ヶ月分お得）</span>
-            </button>
-        </div>
     </div>
 </section>
 
@@ -75,7 +63,20 @@
             </div>
             <h3 class="text-lg font-bold text-gray-900 dark:text-white">スタンダード</h3>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">本格的なAI選定に</p>
-            <div class="mt-6 flex items-baseline gap-1">
+
+            <!-- Toggle: Monthly / Yearly -->
+            <div class="mt-4 inline-flex items-center bg-gray-100 dark:bg-aixis-700 rounded-sm p-1 self-start">
+                <button id="tab-monthly" onclick="setPricingTab('monthly')"
+                        class="px-4 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 bg-white dark:bg-aixis-600 text-gray-900 dark:text-white shadow-sm">
+                    月額
+                </button>
+                <button id="tab-yearly" onclick="setPricingTab('yearly')"
+                        class="px-4 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 text-gray-500 dark:text-gray-400">
+                    年額<span class="ml-1 text-[10px] text-blue-600 dark:text-blue-400">2ヶ月分お得</span>
+                </button>
+            </div>
+
+            <div class="mt-4 flex items-baseline gap-1">
                 <span id="price-standard" class="text-4xl font-bold text-gray-900 dark:text-white">&yen;29,800</span>
                 <span id="price-standard-period" class="text-sm text-gray-500 dark:text-gray-400">/月（税別）</span>
             </div>
