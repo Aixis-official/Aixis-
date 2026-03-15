@@ -11,6 +11,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from threading import Lock
 
+import httpx
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, status
 
 from ...config import settings
@@ -37,7 +38,6 @@ class _RateLimiter:
         cutoff = now - window_seconds
 
         with self._lock:
-            # Prune old entries
             self._attempts[ip] = [t for t in self._attempts[ip] if t > cutoff]
 
             if len(self._attempts[ip]) >= max_requests:
@@ -68,16 +68,17 @@ def _sanitize_body(value: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Email construction
+# Email content builders (plain text)
 # ---------------------------------------------------------------------------
 
-def _build_notification_email(req: ContactRequest) -> MIMEMultipart:
-    """Build notification email to Aixis team."""
-    subject = _sanitize_header(
+def _notification_subject(req: ContactRequest) -> str:
+    return _sanitize_header(
         f"[Aixis] お問い合わせ: {req.inquiry_type} - {req.company_name}"
     )
 
-    body_lines = [
+
+def _notification_body(req: ContactRequest) -> str:
+    lines = [
         "以下のお問い合わせを受け付けました。",
         "",
         "─" * 30,
@@ -92,22 +93,11 @@ def _build_notification_email(req: ContactRequest) -> MIMEMultipart:
         "【お問い合わせ内容】",
         _sanitize_body(req.message),
     ]
-    body = "\n".join(body_lines)
-
-    msg = MIMEMultipart()
-    msg["Subject"] = subject
-    msg["From"] = settings.smtp_from
-    msg["To"] = settings.smtp_to
-    msg["Reply-To"] = _sanitize_header(req.email)
-    msg.attach(MIMEText(body, "plain", "utf-8"))
-    return msg
+    return "\n".join(lines)
 
 
-def _build_autoreply_email(req: ContactRequest) -> MIMEMultipart:
-    """Build auto-reply confirmation email to the customer."""
-    subject = "[Aixis] お問い合わせを受け付けました"
-
-    body_lines = [
+def _autoreply_body(req: ContactRequest) -> str:
+    lines = [
         f"{_sanitize_body(req.name)} 様",
         "",
         "この度は Aixis にお問い合わせいただき、誠にありがとうございます。",
@@ -131,22 +121,61 @@ def _build_autoreply_email(req: ContactRequest) -> MIMEMultipart:
         "※ このメールは自動送信されています。",
         "  本メールへの返信はお控えください。",
     ]
-    body = "\n".join(body_lines)
+    return "\n".join(lines)
 
+
+# ---------------------------------------------------------------------------
+# Resend API (HTTPS — works on PaaS where SMTP ports are blocked)
+# ---------------------------------------------------------------------------
+
+def _send_via_resend(
+    to: str,
+    subject: str,
+    body: str,
+    reply_to: str | None = None,
+) -> None:
+    """Send email using Resend HTTP API (https://resend.com/docs/api-reference)."""
+    payload: dict = {
+        "from": settings.resend_from,
+        "to": [to],
+        "subject": subject,
+        "text": body,
+    }
+    if reply_to:
+        payload["reply_to"] = reply_to
+
+    resp = httpx.post(
+        "https://api.resend.com/emails",
+        headers={
+            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=15,
+    )
+    if resp.status_code not in (200, 201):
+        raise RuntimeError(f"Resend API error {resp.status_code}: {resp.text}")
+    logger.info("Email sent via Resend to %s", to)
+
+
+# ---------------------------------------------------------------------------
+# SMTP fallback (for local development)
+# ---------------------------------------------------------------------------
+
+def _build_mime(to: str, subject: str, body: str, reply_to: str | None = None) -> MIMEMultipart:
     msg = MIMEMultipart()
     msg["Subject"] = subject
     msg["From"] = settings.smtp_from
-    msg["To"] = _sanitize_header(req.email)
+    msg["To"] = to
+    if reply_to:
+        msg["Reply-To"] = _sanitize_header(reply_to)
     msg.attach(MIMEText(body, "plain", "utf-8"))
     return msg
 
 
-# ---------------------------------------------------------------------------
-# Email sending
-# ---------------------------------------------------------------------------
-
-def _send_email(msg: MIMEMultipart) -> None:
-    """Send a single email via SMTP. Tries STARTTLS (587) first, then SSL (465)."""
+def _send_via_smtp(to: str, subject: str, body: str, reply_to: str | None = None) -> None:
+    """Send email via SMTP. Tries STARTTLS first, then SSL."""
+    msg = _build_mime(to, subject, body, reply_to)
     try:
         with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as server:
             server.starttls()
@@ -154,31 +183,50 @@ def _send_email(msg: MIMEMultipart) -> None:
             server.send_message(msg)
             return
     except Exception as e:
-        logger.warning("STARTTLS on port %d failed: %s — trying SSL on 465", settings.smtp_port, e)
+        logger.warning("STARTTLS failed: %s — trying SSL on 465", e)
 
-    # Fallback: SSL on port 465
     with smtplib.SMTP_SSL(settings.smtp_host, 465, timeout=10) as server:
         server.login(settings.smtp_user, settings.smtp_password)
         server.send_message(msg)
 
 
+# ---------------------------------------------------------------------------
+# Unified send function
+# ---------------------------------------------------------------------------
+
+def _send_email(to: str, subject: str, body: str, reply_to: str | None = None) -> None:
+    """Send email using best available method: Resend API > SMTP."""
+    if settings.resend_api_key:
+        _send_via_resend(to, subject, body, reply_to)
+    elif settings.smtp_host:
+        _send_via_smtp(to, subject, body, reply_to)
+    else:
+        logger.warning("No email backend configured (neither Resend nor SMTP)")
+
+
 def _send_emails_background(req: ContactRequest) -> None:
     """Send notification + auto-reply emails (runs in background thread)."""
-    # Send notification to Aixis team
+    # Notification to Aixis team
     try:
-        notification = _build_notification_email(req)
-        _send_email(notification)
+        _send_email(
+            to=settings.smtp_to,
+            subject=_notification_subject(req),
+            body=_notification_body(req),
+            reply_to=req.email,
+        )
         logger.info("Notification email sent for %s (%s)", req.company_name, req.email)
     except Exception:
         logger.exception(
-            "CRITICAL: Failed to send notification email for %s (%s)",
-            req.company_name,
-            req.email,
+            "CRITICAL: Failed to send notification for %s (%s)",
+            req.company_name, req.email,
         )
-    # Send auto-reply to customer
+    # Auto-reply to customer
     try:
-        autoreply = _build_autoreply_email(req)
-        _send_email(autoreply)
+        _send_email(
+            to=req.email,
+            subject="[Aixis] お問い合わせを受け付けました",
+            body=_autoreply_body(req),
+        )
         logger.info("Auto-reply sent to %s", req.email)
     except Exception:
         logger.exception("Failed to send auto-reply to %s", req.email)
@@ -194,12 +242,7 @@ async def submit_contact(
     request: Request,
     background_tasks: BackgroundTasks,
 ):
-    """Receive contact form submission and send notification email.
-
-    Rate limited to prevent abuse. Emails are sent in the background
-    so the user gets an immediate response.
-    """
-    # Rate limiting by IP
+    """Receive contact form submission and send notification email."""
     client_ip = request.client.host if request.client else "unknown"
     if not _rate_limiter.check(
         client_ip,
@@ -212,17 +255,14 @@ async def submit_contact(
         )
 
     logger.info(
-        "Contact form submission from %s (%s): %s [IP: %s]",
-        req.company_name,
-        req.email,
-        req.inquiry_type,
-        client_ip,
+        "Contact form from %s (%s): %s [IP: %s]",
+        req.company_name, req.email, req.inquiry_type, client_ip,
     )
 
-    if settings.smtp_host:
+    if settings.resend_api_key or settings.smtp_host:
         background_tasks.add_task(_send_emails_background, req)
     else:
-        logger.warning("SMTP not configured; contact form submission logged only.")
+        logger.warning("No email backend configured; submission logged only.")
 
     return ContactResponse(
         success=True,
@@ -232,73 +272,53 @@ async def submit_contact(
 
 @router.get("/smtp-test")
 async def smtp_test():
-    """SMTP diagnostic endpoint. Tests connectivity with hard timeouts."""
+    """Email diagnostic endpoint. Tests all available backends."""
     loop = asyncio.get_running_loop()
-    results = {
+    results: dict = {
+        "resend_configured": bool(settings.resend_api_key),
         "smtp_host": settings.smtp_host,
-        "smtp_port": settings.smtp_port,
         "smtp_user": settings.smtp_user or "(empty)",
-        "smtp_from": settings.smtp_from,
-        "smtp_to": settings.smtp_to,
         "password_set": bool(settings.smtp_password),
     }
 
-    # 1. Raw TCP connectivity test (fastest way to check if ports are blocked)
+    # Test Resend API
+    if settings.resend_api_key:
+        try:
+            resp = httpx.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {settings.resend_api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": settings.resend_from,
+                    "to": [settings.smtp_to],
+                    "subject": "[Aixis] Email Test from Railway",
+                    "text": "This is a test email sent via Resend API from Railway.",
+                },
+                timeout=10,
+            )
+            if resp.status_code in (200, 201):
+                results["resend_test"] = f"OK (email sent to {settings.smtp_to})"
+            else:
+                results["resend_test"] = f"FAILED {resp.status_code}: {resp.text}"
+        except Exception as e:
+            results["resend_test"] = f"FAILED: {e}"
+    else:
+        results["resend_test"] = "SKIPPED (no API key)"
+
+    # Test TCP to SMTP ports
     for port in [587, 465]:
         try:
-            def _tcp_test(p=port):
+            def _tcp(p=port):
                 sock = socket.create_connection((settings.smtp_host, p), timeout=5)
                 sock.close()
                 return "OK"
-            result = await asyncio.wait_for(
-                loop.run_in_executor(None, _tcp_test), timeout=6
-            )
-            results[f"tcp_{port}"] = result
+            r = await asyncio.wait_for(loop.run_in_executor(None, _tcp), timeout=6)
+            results[f"tcp_{port}"] = r
         except asyncio.TimeoutError:
-            results[f"tcp_{port}"] = "BLOCKED (timeout — port likely firewalled)"
+            results[f"tcp_{port}"] = "BLOCKED (timeout)"
         except Exception as e:
             results[f"tcp_{port}"] = f"FAILED: {e}"
-
-    # 2. SMTP login test (only if TCP works)
-    if results.get("tcp_587") == "OK":
-        try:
-            def _smtp_test():
-                with smtplib.SMTP(settings.smtp_host, 587, timeout=5) as s:
-                    s.starttls()
-                    s.login(settings.smtp_user, settings.smtp_password)
-                return "OK"
-            result = await asyncio.wait_for(
-                loop.run_in_executor(None, _smtp_test), timeout=8
-            )
-            results["smtp_login_587"] = result
-        except asyncio.TimeoutError:
-            results["smtp_login_587"] = "TIMEOUT"
-        except Exception as e:
-            results["smtp_login_587"] = f"FAILED: {e}"
-    else:
-        results["smtp_login_587"] = "SKIPPED (tcp blocked)"
-
-    if results.get("tcp_465") == "OK":
-        try:
-            def _ssl_test():
-                with smtplib.SMTP_SSL(settings.smtp_host, 465, timeout=5) as s:
-                    s.login(settings.smtp_user, settings.smtp_password)
-                return "OK"
-            result = await asyncio.wait_for(
-                loop.run_in_executor(None, _ssl_test), timeout=8
-            )
-            results["smtp_login_465"] = result
-        except asyncio.TimeoutError:
-            results["smtp_login_465"] = "TIMEOUT"
-        except Exception as e:
-            results["smtp_login_465"] = f"FAILED: {e}"
-    else:
-        results["smtp_login_465"] = "SKIPPED (tcp blocked)"
-
-    # 3. Recommendation
-    if "BLOCKED" in results.get("tcp_587", "") and "BLOCKED" in results.get("tcp_465", ""):
-        results["recommendation"] = "SMTP ports blocked. Use Resend/SendGrid HTTP API instead."
-    elif results.get("smtp_login_587") == "OK" or results.get("smtp_login_465") == "OK":
-        results["recommendation"] = "SMTP works. Check env vars and try sending."
 
     return results

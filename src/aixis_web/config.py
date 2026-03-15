@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     smtp_from: str = "noreply@aixis.jp"
     smtp_to: str = "info@aixis.jp"
 
+    # Resend API (HTTP-based email — used when SMTP ports are blocked)
+    resend_api_key: str = ""
+    resend_from: str = "Aixis <noreply@aixis.jp>"
+
     # Webhook settings
     webhook_enabled: bool = True
     webhook_max_retries: int = 4
