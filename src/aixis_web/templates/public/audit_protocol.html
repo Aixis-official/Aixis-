@@ -2,7 +2,7 @@
 {% set active_page = 'audit-protocol' %}
 
 {% block meta_description %}
-<meta name="description" content="Aixisの監査プロトコル詳細。5つの評価軸（機能性・日本語対応・セキュリティ・UX・サポート）、スコアリング方法論、S〜Dグレード基準、品質保証プロセスを公開。">
+<meta name="description" content="Aixisの監査プロトコル詳細。5つの評価軸（実務適性・費用対効果・日本語能力・信頼性/安全性・革新性）、スコアリング方法論、S〜Dグレード基準、品質保証プロセスを公開。">
 {% endblock %}
 
 {% block meta_keywords %}
@@ -23,12 +23,13 @@
         line-height: 1;
         opacity: 0.04;
         position: absolute;
-        top: -8px;
-        right: 12px;
+        bottom: 8px;
         font-family: 'Inter', sans-serif;
         pointer-events: none;
         z-index: 0;
     }
+    .axis-card:nth-child(odd) .axis-number { right: 12px; }
+    .axis-card:nth-child(even) .axis-number { left: 12px; }
 </style>
 {% endblock %}
 
@@ -62,116 +63,116 @@
     <hr class="divider-thin">
 
     <div class="mt-10 space-y-6">
-        <!-- Axis 1 -->
+        <!-- Axis 1: 実務適性 -->
         <div class="axis-card relative border border-gray-200 rounded-sm p-6 overflow-hidden bg-white">
             <span class="axis-number text-gray-900">01</span>
             <div class="relative">
                 <div class="flex items-center gap-3">
-                    <h3 class="text-base font-bold text-gray-900">機能性・精度</h3>
+                    <h3 class="text-base font-bold text-gray-900">実務適性 <span class="text-xs font-normal text-gray-400 ml-1">Practicality</span></h3>
                 </div>
                 <p class="mt-3 text-sm text-gray-600 leading-relaxed">
-                    AIツールの中核機能が期待通りに動作するかを評価します。出力の正確性、タスク完了率、エッジケースへの対応力を測定します。
+                    業務での即戦力度合いを評価します。タスク完遂率・操作性・ワークフロー統合性から、実際の業務環境での有用性を測定します。
                 </p>
                 <div class="mt-4 border-t border-gray-100 pt-4">
                     <span class="text-xs font-semibold text-gray-500">計測項目:</span>
                     <ul class="mt-2 space-y-1 text-xs text-gray-500">
-                        <li>- 標準テストケース通過率（自動）</li>
-                        <li>- 出力の正確性スコア（自動 + 手動）</li>
-                        <li>- エッジケースハンドリング（手動）</li>
-                        <li>- 幻覚（ハルシネーション）発生率（自動）</li>
-                        <li>- 一貫性テスト（同一入力に対する出力の安定性）（自動）</li>
+                        <li>- タスク完遂率・成功率（自動）</li>
+                        <li>- チーム導入容易性・オンボーディング品質（手動）</li>
+                        <li>- 既存ワークフロー統合性（手動）</li>
+                        <li>- カスタマーサポート品質（手動）</li>
+                        <li>- 出力品質の一貫性（自動 + 手動）</li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <!-- Axis 2 -->
+        <!-- Axis 2: 費用対効果 -->
         <div class="axis-card relative border border-gray-200 rounded-sm p-6 overflow-hidden bg-white">
             <span class="axis-number text-gray-900">02</span>
             <div class="relative">
                 <div class="flex items-center gap-3">
-                    <h3 class="text-base font-bold text-gray-900">日本語対応品質</h3>
+                    <h3 class="text-base font-bold text-gray-900">費用対効果 <span class="text-xs font-normal text-gray-400 ml-1">Cost Performance</span></h3>
                 </div>
                 <p class="mt-3 text-sm text-gray-600 leading-relaxed">
-                    日本語ユーザーにとっての実用性を多角的に評価します。UI翻訳品質、日本語入出力の精度、日本固有の概念理解を検証します。
+                    価格に見合う価値を評価します。応答速度・成功率・API効率・出力品質から自動分析し、料金体系・ROIは手動で補完します。
                 </p>
                 <div class="mt-4 border-t border-gray-100 pt-4">
                     <span class="text-xs font-semibold text-gray-500">計測項目:</span>
                     <ul class="mt-2 space-y-1 text-xs text-gray-500">
-                        <li>- UI日本語翻訳率・翻訳品質（自動 + 手動）</li>
-                        <li>- 日本語入力に対する応答精度（自動）</li>
-                        <li>- 敬語・ビジネス日本語の適切性（手動）</li>
-                        <li>- 日本固有の日付・通貨・住所形式対応（自動）</li>
-                        <li>- 日本語ドキュメント・ヘルプの充実度（手動）</li>
+                        <li>- 月額コスト・TCO（総保有コスト）（手動）</li>
+                        <li>- 無料プランの実用性（手動）</li>
+                        <li>- 料金体系の透明性（手動）</li>
+                        <li>- 乗り換えコスト・ロックインリスク（手動）</li>
+                        <li>- 応答速度・API効率性（自動）</li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <!-- Axis 3 -->
+        <!-- Axis 3: 日本語能力 -->
         <div class="axis-card relative border border-gray-200 rounded-sm p-6 overflow-hidden bg-white">
             <span class="axis-number text-gray-900">03</span>
             <div class="relative">
                 <div class="flex items-center gap-3">
-                    <h3 class="text-base font-bold text-gray-900">セキュリティ・プライバシー</h3>
+                    <h3 class="text-base font-bold text-gray-900">日本語能力 <span class="text-xs font-normal text-gray-400 ml-1">Japanese Readiness</span></h3>
                 </div>
                 <p class="mt-3 text-sm text-gray-600 leading-relaxed">
-                    データ保護体制、認証方式、コンプライアンス対応を包括的に評価します。特に日本の個人情報保護法への準拠を重点的に検証します。
+                    日本語UI・ドキュメント・サポート品質を体系的に監査します。日本語入出力の精度、敬語・ビジネス日本語の適切性を検証します。
                 </p>
                 <div class="mt-4 border-t border-gray-100 pt-4">
                     <span class="text-xs font-semibold text-gray-500">計測項目:</span>
                     <ul class="mt-2 space-y-1 text-xs text-gray-500">
-                        <li>- データ暗号化方式（通信・保存）（自動 + 手動）</li>
-                        <li>- 認証方式・MFA対応（自動）</li>
-                        <li>- プライバシーポリシーの明確性（手動）</li>
-                        <li>- SOC 2/ISO 27001等の認証取得状況（手動）</li>
-                        <li>- データ所在地・越境移転ポリシー（手動）</li>
+                        <li>- UI日本語化品質（自動 + 手動）</li>
+                        <li>- 日本語入力に対する応答精度（自動）</li>
+                        <li>- ドキュメント日本語化・ヘルプ充実度（手動）</li>
+                        <li>- 日本固有機能対応（和暦・通貨・住所形式）（自動）</li>
+                        <li>- 敬語・ビジネス日本語の適切性（手動）</li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <!-- Axis 4 -->
+        <!-- Axis 4: 信頼性・安全性 -->
         <div class="axis-card relative border border-gray-200 rounded-sm p-6 overflow-hidden bg-white">
             <span class="axis-number text-gray-900">04</span>
             <div class="relative">
                 <div class="flex items-center gap-3">
-                    <h3 class="text-base font-bold text-gray-900">ユーザビリティ・UX</h3>
+                    <h3 class="text-base font-bold text-gray-900">信頼性・安全性 <span class="text-xs font-normal text-gray-400 ml-1">Safety</span></h3>
                 </div>
                 <p class="mt-3 text-sm text-gray-600 leading-relaxed">
-                    実際の利用体験に基づくUX品質を評価します。初回セットアップから日常的な操作まで、ユーザージャーニー全体を検証します。
+                    セキュリティ対策・稼働安定性・データ保護体制を監査します。特に日本の個人情報保護法への準拠を重点的に検証します。
                 </p>
                 <div class="mt-4 border-t border-gray-100 pt-4">
                     <span class="text-xs font-semibold text-gray-500">計測項目:</span>
                     <ul class="mt-2 space-y-1 text-xs text-gray-500">
-                        <li>- 初回セットアップ所要時間（自動）</li>
-                        <li>- 標準操作フロー完了率・ステップ数（自動）</li>
-                        <li>- UI一貫性・デザイン品質（手動）</li>
-                        <li>- エラーメッセージの明確性（手動）</li>
-                        <li>- モバイル対応・レスポンシブ品質（自動 + 手動）</li>
+                        <li>- データ保護ポリシー・暗号化方式（自動 + 手動）</li>
+                        <li>- アクセス制御・SSO/MFA対応（手動）</li>
+                        <li>- 監査ログ・操作記録（手動）</li>
+                        <li>- データ保存場所・越境移転ポリシー（手動）</li>
+                        <li>- インシデント対応体制・SLA（手動）</li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <!-- Axis 5 -->
+        <!-- Axis 5: 革新性 -->
         <div class="axis-card relative border border-gray-200 rounded-sm p-6 overflow-hidden bg-white">
             <span class="axis-number text-gray-900">05</span>
             <div class="relative">
                 <div class="flex items-center gap-3">
-                    <h3 class="text-base font-bold text-gray-900">サポート・エコシステム</h3>
+                    <h3 class="text-base font-bold text-gray-900">革新性 <span class="text-xs font-normal text-gray-400 ml-1">Uniqueness</span></h3>
                 </div>
                 <p class="mt-3 text-sm text-gray-600 leading-relaxed">
-                    ベンダーのサポート体制、API/インテグレーション、ドキュメント、コミュニティの充実度を評価します。
+                    独自技術・差別化機能・将来性を評価します。出力多様性・創造的対応力を自動分析し、独自技術・エコシステムは手動で補完します。
                 </p>
                 <div class="mt-4 border-t border-gray-100 pt-4">
                     <span class="text-xs font-semibold text-gray-500">計測項目:</span>
                     <ul class="mt-2 space-y-1 text-xs text-gray-500">
-                        <li>- サポート応答速度（日本語対応）（手動）</li>
-                        <li>- API/SDK提供状況・ドキュメント品質（手動）</li>
-                        <li>- サードパーティ連携数・品質（自動）</li>
-                        <li>- アップデート頻度・変更ログの透明性（自動）</li>
-                        <li>- コミュニティ・ナレッジベースの充実度（手動）</li>
+                        <li>- 独自技術・モデルの有無（手動）</li>
+                        <li>- 差別化機能の独自性（手動）</li>
+                        <li>- エコシステム・拡張性（手動）</li>
+                        <li>- 将来性・ロードマップ透明性（手動）</li>
+                        <li>- ラッパー製品リスク（APIラッパー依存度）（手動）</li>
                     </ul>
                 </div>
             </div>
@@ -411,38 +412,38 @@
                 <tbody class="divide-y divide-gray-100">
                     <tr>
                         <td class="px-4 py-3 font-semibold text-gray-900">実務適性</td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.75)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.65)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.80)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.70)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.80)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.65)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.85)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.70)"></span></td>
                     </tr>
                     <tr>
                         <td class="px-4 py-3 font-semibold text-gray-900">費用対効果</td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(245,158,11,0.50)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.80)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.60)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.75)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(99,102,241,0.40)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.80)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.60)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.75)"></span></td>
                     </tr>
                     <tr>
                         <td class="px-4 py-3 font-semibold text-gray-900">日本語能力</td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.85)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.70)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.85)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.65)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.90)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.70)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.85)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.65)"></span></td>
                     </tr>
                     <tr>
                         <td class="px-4 py-3 font-semibold text-gray-900">信頼性・安全性</td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.60)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(245,158,11,0.55)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.65)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.75)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.60)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(99,102,241,0.45)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.65)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.75)"></span></td>
                     </tr>
                     <tr>
                         <td class="px-4 py-3 font-semibold text-gray-900">革新性</td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(245,158,11,0.45)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(245,158,11,0.50)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(245,158,11,0.45)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(16,185,129,0.60)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(99,102,241,0.35)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(99,102,241,0.40)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(99,102,241,0.35)"></span></td>
+                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.60)"></span></td>
                     </tr>
                 </tbody>
             </table>
@@ -450,30 +451,30 @@
 
         <div class="mt-4 flex items-center gap-4 text-[10px] text-gray-500">
             <span class="font-semibold text-gray-700">凡例:</span>
-            <span class="flex items-center gap-1"><span class="w-4 h-3 rounded" style="background:rgba(16,185,129,0.80)"></span> 高信頼 (&ge;80)</span>
-            <span class="flex items-center gap-1"><span class="w-4 h-3 rounded" style="background:rgba(16,185,129,0.60)"></span> 標準 (50-79)</span>
-            <span class="flex items-center gap-1"><span class="w-4 h-3 rounded" style="background:rgba(245,158,11,0.50)"></span> 改善余地 (&lt;50)</span>
+            <span class="flex items-center gap-1"><span class="w-4 h-3 rounded" style="background:rgba(37,99,235,0.85)"></span> 高信頼 (&ge;80)</span>
+            <span class="flex items-center gap-1"><span class="w-4 h-3 rounded" style="background:rgba(37,99,235,0.60)"></span> 標準 (50-79)</span>
+            <span class="flex items-center gap-1"><span class="w-4 h-3 rounded" style="background:rgba(99,102,241,0.40)"></span> 改善余地 (&lt;50)</span>
         </div>
 
         <div class="mt-6 space-y-3 text-sm text-gray-600 leading-relaxed">
             <div class="border border-gray-200 rounded-sm p-5 bg-white">
                 <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider">信頼度4次元の定義</h3>
-                <dl class="mt-3 space-y-3 text-sm">
+                <dl class="mt-3 space-y-3 text-sm font-serif">
                     <div>
-                        <dt class="font-semibold text-gray-900">再現性 (Consistency)</dt>
-                        <dd class="text-gray-600 mt-0.5">同一条件での再実行時にスコアが安定するか。応答時間の変動係数とエラー率で計測。手動100%の軸は構造的に低くなるため、手動評価の必要性の根拠にもなります。</dd>
+                        <dt class="font-semibold text-gray-900">再現性 <span class="font-sans text-xs text-gray-400">(Consistency)</span></dt>
+                        <dd class="text-gray-600 mt-0.5 leading-relaxed">同一条件での再実行時にスコアが安定するか。応答時間の変動係数とエラー率で計測。手動100%の軸は構造的に低くなるため、手動評価の必要性の根拠にもなります。</dd>
                     </div>
                     <div>
-                        <dt class="font-semibold text-gray-900">正確性 (Correctness)</dt>
-                        <dd class="text-gray-600 mt-0.5">評価エンジンの確信度分布と、有効なエビデンス（非エラー応答）の割合で計測。自動スコアの信頼区間を定量化します。</dd>
+                        <dt class="font-semibold text-gray-900">正確性 <span class="font-sans text-xs text-gray-400">(Correctness)</span></dt>
+                        <dd class="text-gray-600 mt-0.5 leading-relaxed">評価エンジンの確信度分布と、有効なエビデンス（非エラー応答）の割合で計測。自動スコアの信頼区間を定量化します。</dd>
                     </div>
                     <div>
-                        <dt class="font-semibold text-gray-900">網羅性 (Comprehensiveness)</dt>
-                        <dd class="text-gray-600 mt-0.5">テスト計画の完遂率とカテゴリカバー率で計測。全テストカテゴリ（方言・長文・矛盾・曖昧・敬語など）を網羅的に実行したかを評価します。</dd>
+                        <dt class="font-semibold text-gray-900">網羅性 <span class="font-sans text-xs text-gray-400">(Comprehensiveness)</span></dt>
+                        <dd class="text-gray-600 mt-0.5 leading-relaxed">テスト計画の完遂率とカテゴリカバー率で計測。全テストカテゴリ（方言・長文・矛盾・曖昧・敬語など）を網羅的に実行したかを評価します。</dd>
                     </div>
                     <div>
-                        <dt class="font-semibold text-gray-900">解釈性 (Intelligibility)</dt>
-                        <dd class="text-gray-600 mt-0.5">結果の解釈しやすさ。応答データの充実度、軸スコアの詳細・強み・リスク情報の付与率で計測します。</dd>
+                        <dt class="font-semibold text-gray-900">解釈性 <span class="font-sans text-xs text-gray-400">(Intelligibility)</span></dt>
+                        <dd class="text-gray-600 mt-0.5 leading-relaxed">結果の解釈しやすさ。応答データの充実度、軸スコアの詳細・強み・リスク情報の付与率で計測します。</dd>
                     </div>
                 </dl>
             </div>
