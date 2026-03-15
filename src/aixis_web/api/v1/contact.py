@@ -4,6 +4,7 @@ import asyncio
 import logging
 import re
 import smtplib
+import socket
 import time
 from collections import defaultdict
 from email.mime.multipart import MIMEMultipart
@@ -124,7 +125,7 @@ def _build_autoreply_email(req: ContactRequest) -> MIMEMultipart:
         "─" * 30,
         "Aixis Inc.",
         "独立系AI調査・監査機関",
-        "https://aixis.jp",
+        "https://platform.aixis.jp",
         "─" * 30,
         "",
         "※ このメールは自動送信されています。",
@@ -140,10 +141,14 @@ def _build_autoreply_email(req: ContactRequest) -> MIMEMultipart:
     return msg
 
 
+# ---------------------------------------------------------------------------
+# Email sending
+# ---------------------------------------------------------------------------
+
 def _send_email(msg: MIMEMultipart) -> None:
     """Send a single email via SMTP. Tries STARTTLS (587) first, then SSL (465)."""
     try:
-        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as server:
+        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as server:
             server.starttls()
             server.login(settings.smtp_user, settings.smtp_password)
             server.send_message(msg)
@@ -152,7 +157,7 @@ def _send_email(msg: MIMEMultipart) -> None:
         logger.warning("STARTTLS on port %d failed: %s — trying SSL on 465", settings.smtp_port, e)
 
     # Fallback: SSL on port 465
-    with smtplib.SMTP_SSL(settings.smtp_host, 465, timeout=15) as server:
+    with smtplib.SMTP_SSL(settings.smtp_host, 465, timeout=10) as server:
         server.login(settings.smtp_user, settings.smtp_password)
         server.send_message(msg)
 
@@ -180,7 +185,7 @@ def _send_emails_background(req: ContactRequest) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Endpoint
+# Endpoints
 # ---------------------------------------------------------------------------
 
 @router.post("/", response_model=ContactResponse)
@@ -226,42 +231,74 @@ async def submit_contact(
 
 
 @router.get("/smtp-test")
-async def smtp_test(request: Request):
-    """Admin-only SMTP diagnostic endpoint. Returns connection test results."""
-    # Only allow from admin (check Authorization header)
-    from ...api.deps import require_admin, get_db
-    results = {"smtp_host": settings.smtp_host, "smtp_port": settings.smtp_port,
-               "smtp_user": settings.smtp_user, "smtp_from": settings.smtp_from,
-               "smtp_to": settings.smtp_to, "password_set": bool(settings.smtp_password)}
+async def smtp_test():
+    """SMTP diagnostic endpoint. Tests connectivity with hard timeouts."""
+    loop = asyncio.get_running_loop()
+    results = {
+        "smtp_host": settings.smtp_host,
+        "smtp_port": settings.smtp_port,
+        "smtp_user": settings.smtp_user or "(empty)",
+        "smtp_from": settings.smtp_from,
+        "smtp_to": settings.smtp_to,
+        "password_set": bool(settings.smtp_password),
+    }
 
-    # Test STARTTLS (port 587)
-    try:
-        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as server:
-            server.starttls()
-            server.login(settings.smtp_user, settings.smtp_password)
-            results["starttls_587"] = "OK"
-    except Exception as e:
-        results["starttls_587"] = f"FAILED: {e}"
+    # 1. Raw TCP connectivity test (fastest way to check if ports are blocked)
+    for port in [587, 465]:
+        try:
+            def _tcp_test(p=port):
+                sock = socket.create_connection((settings.smtp_host, p), timeout=5)
+                sock.close()
+                return "OK"
+            result = await asyncio.wait_for(
+                loop.run_in_executor(None, _tcp_test), timeout=6
+            )
+            results[f"tcp_{port}"] = result
+        except asyncio.TimeoutError:
+            results[f"tcp_{port}"] = "BLOCKED (timeout — port likely firewalled)"
+        except Exception as e:
+            results[f"tcp_{port}"] = f"FAILED: {e}"
 
-    # Test SSL (port 465)
-    try:
-        with smtplib.SMTP_SSL(settings.smtp_host, 465, timeout=10) as server:
-            server.login(settings.smtp_user, settings.smtp_password)
-            results["ssl_465"] = "OK"
-    except Exception as e:
-        results["ssl_465"] = f"FAILED: {e}"
+    # 2. SMTP login test (only if TCP works)
+    if results.get("tcp_587") == "OK":
+        try:
+            def _smtp_test():
+                with smtplib.SMTP(settings.smtp_host, 587, timeout=5) as s:
+                    s.starttls()
+                    s.login(settings.smtp_user, settings.smtp_password)
+                return "OK"
+            result = await asyncio.wait_for(
+                loop.run_in_executor(None, _smtp_test), timeout=8
+            )
+            results["smtp_login_587"] = result
+        except asyncio.TimeoutError:
+            results["smtp_login_587"] = "TIMEOUT"
+        except Exception as e:
+            results["smtp_login_587"] = f"FAILED: {e}"
+    else:
+        results["smtp_login_587"] = "SKIPPED (tcp blocked)"
 
-    # Try sending a test email
-    try:
-        from email.mime.text import MIMEText as MT
-        msg = MIMEMultipart()
-        msg["Subject"] = "[Aixis] SMTP Test from Railway"
-        msg["From"] = settings.smtp_from
-        msg["To"] = settings.smtp_to
-        msg.attach(MIMEText("SMTP test email from Railway deployment.", "plain", "utf-8"))
-        _send_email(msg)
-        results["test_send"] = "OK"
-    except Exception as e:
-        results["test_send"] = f"FAILED: {e}"
+    if results.get("tcp_465") == "OK":
+        try:
+            def _ssl_test():
+                with smtplib.SMTP_SSL(settings.smtp_host, 465, timeout=5) as s:
+                    s.login(settings.smtp_user, settings.smtp_password)
+                return "OK"
+            result = await asyncio.wait_for(
+                loop.run_in_executor(None, _ssl_test), timeout=8
+            )
+            results["smtp_login_465"] = result
+        except asyncio.TimeoutError:
+            results["smtp_login_465"] = "TIMEOUT"
+        except Exception as e:
+            results["smtp_login_465"] = f"FAILED: {e}"
+    else:
+        results["smtp_login_465"] = "SKIPPED (tcp blocked)"
+
+    # 3. Recommendation
+    if "BLOCKED" in results.get("tcp_587", "") and "BLOCKED" in results.get("tcp_465", ""):
+        results["recommendation"] = "SMTP ports blocked. Use Resend/SendGrid HTTP API instead."
+    elif results.get("smtp_login_587") == "OK" or results.get("smtp_login_465") == "OK":
+        results["recommendation"] = "SMTP works. Check env vars and try sending."
 
     return results
