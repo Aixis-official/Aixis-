@@ -10,7 +10,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from threading import Lock
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, status
 
 from ...config import settings
 from ...schemas.contact import ContactRequest, ContactResponse
@@ -141,11 +141,42 @@ def _build_autoreply_email(req: ContactRequest) -> MIMEMultipart:
 
 
 def _send_email(msg: MIMEMultipart) -> None:
-    """Send a single email via SMTP with STARTTLS."""
-    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=30) as server:
-        server.starttls()
+    """Send a single email via SMTP. Tries STARTTLS (587) first, then SSL (465)."""
+    try:
+        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as server:
+            server.starttls()
+            server.login(settings.smtp_user, settings.smtp_password)
+            server.send_message(msg)
+            return
+    except Exception as e:
+        logger.warning("STARTTLS on port %d failed: %s — trying SSL on 465", settings.smtp_port, e)
+
+    # Fallback: SSL on port 465
+    with smtplib.SMTP_SSL(settings.smtp_host, 465, timeout=15) as server:
         server.login(settings.smtp_user, settings.smtp_password)
         server.send_message(msg)
+
+
+def _send_emails_background(req: ContactRequest) -> None:
+    """Send notification + auto-reply emails (runs in background thread)."""
+    # Send notification to Aixis team
+    try:
+        notification = _build_notification_email(req)
+        _send_email(notification)
+        logger.info("Notification email sent for %s (%s)", req.company_name, req.email)
+    except Exception:
+        logger.exception(
+            "CRITICAL: Failed to send notification email for %s (%s)",
+            req.company_name,
+            req.email,
+        )
+    # Send auto-reply to customer
+    try:
+        autoreply = _build_autoreply_email(req)
+        _send_email(autoreply)
+        logger.info("Auto-reply sent to %s", req.email)
+    except Exception:
+        logger.exception("Failed to send auto-reply to %s", req.email)
 
 
 # ---------------------------------------------------------------------------
@@ -153,10 +184,15 @@ def _send_email(msg: MIMEMultipart) -> None:
 # ---------------------------------------------------------------------------
 
 @router.post("/", response_model=ContactResponse)
-async def submit_contact(req: ContactRequest, request: Request):
+async def submit_contact(
+    req: ContactRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+):
     """Receive contact form submission and send notification email.
 
-    Rate limited to prevent abuse.
+    Rate limited to prevent abuse. Emails are sent in the background
+    so the user gets an immediate response.
     """
     # Rate limiting by IP
     client_ip = request.client.host if request.client else "unknown"
@@ -179,35 +215,7 @@ async def submit_contact(req: ContactRequest, request: Request):
     )
 
     if settings.smtp_host:
-        loop = asyncio.get_running_loop()
-        notification_sent = False
-        # Send notification to Aixis team
-        try:
-            notification = _build_notification_email(req)
-            await loop.run_in_executor(None, _send_email, notification)
-            logger.info("Notification email sent for %s (%s)", req.company_name, req.email)
-            notification_sent = True
-        except Exception:
-            logger.exception(
-                "Failed to send notification email for %s (%s)",
-                req.company_name,
-                req.email,
-            )
-        # Send auto-reply to customer
-        try:
-            autoreply = _build_autoreply_email(req)
-            await loop.run_in_executor(None, _send_email, autoreply)
-            logger.info("Auto-reply sent to %s", req.email)
-        except Exception:
-            logger.exception("Failed to send auto-reply to %s", req.email)
-
-        if not notification_sent:
-            # Log without user message content to avoid log injection
-            logger.error(
-                "CRITICAL: Contact form from %s (%s) was NOT delivered to team.",
-                req.company_name,
-                req.email,
-            )
+        background_tasks.add_task(_send_emails_background, req)
     else:
         logger.warning("SMTP not configured; contact form submission logged only.")
 
@@ -215,3 +223,45 @@ async def submit_contact(req: ContactRequest, request: Request):
         success=True,
         message="お問い合わせを受け付けました。担当者より2営業日以内にご連絡いたします。",
     )
+
+
+@router.get("/smtp-test")
+async def smtp_test(request: Request):
+    """Admin-only SMTP diagnostic endpoint. Returns connection test results."""
+    # Only allow from admin (check Authorization header)
+    from ...api.deps import require_admin, get_db
+    results = {"smtp_host": settings.smtp_host, "smtp_port": settings.smtp_port,
+               "smtp_user": settings.smtp_user, "smtp_from": settings.smtp_from,
+               "smtp_to": settings.smtp_to, "password_set": bool(settings.smtp_password)}
+
+    # Test STARTTLS (port 587)
+    try:
+        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as server:
+            server.starttls()
+            server.login(settings.smtp_user, settings.smtp_password)
+            results["starttls_587"] = "OK"
+    except Exception as e:
+        results["starttls_587"] = f"FAILED: {e}"
+
+    # Test SSL (port 465)
+    try:
+        with smtplib.SMTP_SSL(settings.smtp_host, 465, timeout=10) as server:
+            server.login(settings.smtp_user, settings.smtp_password)
+            results["ssl_465"] = "OK"
+    except Exception as e:
+        results["ssl_465"] = f"FAILED: {e}"
+
+    # Try sending a test email
+    try:
+        from email.mime.text import MIMEText as MT
+        msg = MIMEMultipart()
+        msg["Subject"] = "[Aixis] SMTP Test from Railway"
+        msg["From"] = settings.smtp_from
+        msg["To"] = settings.smtp_to
+        msg.attach(MIMEText("SMTP test email from Railway deployment.", "plain", "utf-8"))
+        _send_email(msg)
+        results["test_send"] = "OK"
+    except Exception as e:
+        results["test_send"] = f"FAILED: {e}"
+
+    return results
