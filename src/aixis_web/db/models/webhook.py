@@ -1,7 +1,7 @@
 """Webhook models."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, JSON, String, Text
 
@@ -21,7 +21,7 @@ class WebhookSubscription(Base):
     secret = Column(String(200), nullable=False)  # For HMAC-SHA256 signatures
     events = Column(JSON, default=lambda: ["audit.completed"])
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class WebhookDelivery(Base):
@@ -38,4 +38,4 @@ class WebhookDelivery(Base):
     attempt_count = Column(Integer, default=0)
     next_retry_at = Column(DateTime, nullable=True)
     delivered_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

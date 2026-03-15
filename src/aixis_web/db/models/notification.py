@@ -1,7 +1,7 @@
 """Notification models."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, JSON, String, Text
 
@@ -24,7 +24,7 @@ class Notification(Base):
     body_jp = Column(Text, default="")
     link = Column(String(500), nullable=True)  # in-app link
     is_read = Column(Boolean, default=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
 
 class NotificationPreference(Base):
@@ -39,4 +39,4 @@ class NotificationPreference(Base):
     subscribed_events = Column(
         JSON, default=lambda: ["audit_complete", "score_published", "manual_eval_needed"]
     )
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

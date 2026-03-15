@@ -2,7 +2,11 @@
 {% set active_page = 'audit-protocol' %}
 
 {% block meta_description %}
-<meta name="description" content="Aixisの監査プロトコル詳細。5つの評価軸、スコアリング方法論、グレード基準、品質保証プロセスを公開しています。">
+<meta name="description" content="Aixisの監査プロトコル詳細。5つの評価軸（機能性・日本語対応・セキュリティ・UX・サポート）、スコアリング方法論、S〜Dグレード基準、品質保証プロセスを公開。">
+{% endblock %}
+
+{% block meta_keywords %}
+<meta name="keywords" content="AI評価 プロトコル,AIツール スコアリング,5軸評価 フレームワーク,AI監査 グレード基準,AIツール 品質評価方法">
 {% endblock %}
 
 {% block head %}
@@ -19,9 +23,11 @@
         line-height: 1;
         opacity: 0.04;
         position: absolute;
-        top: 8px;
-        right: 20px;
+        top: -8px;
+        right: 12px;
         font-family: 'Inter', sans-serif;
+        pointer-events: none;
+        z-index: 0;
     }
 </style>
 {% endblock %}
@@ -61,7 +67,6 @@
             <span class="axis-number text-gray-900">01</span>
             <div class="relative">
                 <div class="flex items-center gap-3">
-                    <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-sm">軸 1</span>
                     <h3 class="text-base font-bold text-gray-900">機能性・精度</h3>
                 </div>
                 <p class="mt-3 text-sm text-gray-600 leading-relaxed">
@@ -85,7 +90,6 @@
             <span class="axis-number text-gray-900">02</span>
             <div class="relative">
                 <div class="flex items-center gap-3">
-                    <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-sm">軸 2</span>
                     <h3 class="text-base font-bold text-gray-900">日本語対応品質</h3>
                 </div>
                 <p class="mt-3 text-sm text-gray-600 leading-relaxed">
@@ -109,7 +113,6 @@
             <span class="axis-number text-gray-900">03</span>
             <div class="relative">
                 <div class="flex items-center gap-3">
-                    <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-sm">軸 3</span>
                     <h3 class="text-base font-bold text-gray-900">セキュリティ・プライバシー</h3>
                 </div>
                 <p class="mt-3 text-sm text-gray-600 leading-relaxed">
@@ -133,7 +136,6 @@
             <span class="axis-number text-gray-900">04</span>
             <div class="relative">
                 <div class="flex items-center gap-3">
-                    <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-sm">軸 4</span>
                     <h3 class="text-base font-bold text-gray-900">ユーザビリティ・UX</h3>
                 </div>
                 <p class="mt-3 text-sm text-gray-600 leading-relaxed">
@@ -157,7 +159,6 @@
             <span class="axis-number text-gray-900">05</span>
             <div class="relative">
                 <div class="flex items-center gap-3">
-                    <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-sm">軸 5</span>
                     <h3 class="text-base font-bold text-gray-900">サポート・エコシステム</h3>
                 </div>
                 <p class="mt-3 text-sm text-gray-600 leading-relaxed">

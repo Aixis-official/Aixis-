@@ -5,7 +5,7 @@ import io
 import json as _json
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
@@ -39,9 +39,9 @@ router = APIRouter()
 
 
 def _generate_session_code() -> str:
-    """Generate a human-readable session code like AX-20260312-A1B2."""
-    now = datetime.utcnow()
-    short_id = uuid.uuid4().hex[:4].upper()
+    """Generate a human-readable session code like AX-20260312-A1B2C3D4."""
+    now = datetime.now(timezone.utc)
+    short_id = uuid.uuid4().hex[:8].upper()
     return f"AX-{now.strftime('%Y%m%d')}-{short_id}"
 
 
@@ -109,7 +109,7 @@ async def start_audit(
         profile_id=body.profile_id or tool.profile_id or "",
         status="running",
         initiated_by=user.id,
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(timezone.utc),
     )
     db.add(audit_session)
     await db.commit()
@@ -520,7 +520,7 @@ async def retry_audit(
         profile_id=original.profile_id,
         status="running",
         initiated_by=user.id,
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(timezone.utc),
     )
     db.add(new_session)
     await db.commit()
@@ -676,7 +676,7 @@ async def submit_manual_scores(
             evidence=item.evidence,
             evidence_url=item.evidence_url,
             evaluated_by=user.id,
-            evaluated_at=datetime.utcnow(),
+            evaluated_at=datetime.now(timezone.utc),
         )
         db.add(record)
 
@@ -708,7 +708,7 @@ async def finalize_audit(
         )
 
     session.status = "completed"
-    session.completed_at = datetime.utcnow()
+    session.completed_at = datetime.now(timezone.utc)
     await db.commit()
 
     return {"status": "finalized", "session_id": session_id}

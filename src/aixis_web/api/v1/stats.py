@@ -1,6 +1,6 @@
 """Public platform statistics endpoint."""
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -59,7 +59,7 @@ async def get_platform_stats(db: Annotated[AsyncSession, Depends(get_db)]):
         last_updated = last_updated_dt.strftime("%Y年%m月%d日") if last_updated_dt else None
 
         # New this month
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         new_month = await db.execute(
             select(func.count()).select_from(ToolPublishedScore).where(

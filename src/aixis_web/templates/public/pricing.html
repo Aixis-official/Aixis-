@@ -3,7 +3,11 @@
 {% set page_bg = 'page-bg-pure-white' %}
 
 {% block meta_description %}
-<meta name="description" content="Aixis AI監査プラットフォームの料金プラン。14日間無料トライアル、月額・年額プラン、個別監査レポートをご用意。">
+<meta name="description" content="Aixis AI監査プラットフォームの料金プラン。14日間無料トライアルで全機能をお試し。月額¥29,800から全監査データベースにアクセス。個別監査レポートも対応。">
+{% endblock %}
+
+{% block meta_keywords %}
+<meta name="keywords" content="AIツール 監査 料金,AI評価 価格,AIツール比較 費用,Aixis 料金プラン,AI監査 無料トライアル">
 {% endblock %}
 
 {% block content %}
@@ -231,34 +235,46 @@
 
 <!-- Individual Reports -->
 <section class="bg-gray-50 dark:bg-aixis-900 border-y border-gray-200 dark:border-aixis-700">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        <div class="text-center mb-10">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">個別監査レポート</h2>
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">サブスク不要。必要なレポートだけを購入できます</p>
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div class="section-line"></div>
+        <div class="mb-12">
+            <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">個別監査レポート</h2>
+            <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Individual Audit Reports</p>
+            <p class="mt-4 text-sm text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">サブスクリプション不要。特定のツールや比較検討に必要なレポートだけを個別に購入いただけます。</p>
+            <hr class="divider-thin">
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <div class="bg-white dark:bg-aixis-800 rounded-none border border-gray-200 dark:border-aixis-700 p-6 text-center">
-                <div class="section-line"></div>
-                <h3 class="text-base font-bold text-gray-900 dark:text-white">スポット監査</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">1ツールの完全5軸評価レポート（PDF・スコアカード付き）</p>
-                <div class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">&yen;29,800<span class="text-sm font-normal text-gray-500">/件</span></div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-0 border border-gray-200 dark:border-aixis-700 overflow-hidden">
+            <div class="bg-white dark:bg-aixis-800 p-8 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-aixis-700 flex flex-col">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-sans">Spot Audit</span>
+                <h3 class="mt-2 text-base font-bold text-gray-900 dark:text-white">スポット監査</h3>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed flex-1">1ツールの完全5軸評価レポート（PDF・スコアカード付き）</p>
+                <div class="mt-6 pt-4 border-t border-gray-100 dark:border-aixis-700">
+                    <span class="text-2xl font-bold text-gray-900 dark:text-white">&yen;29,800</span>
+                    <span class="text-xs text-gray-500 ml-1">/件（税別）</span>
+                </div>
             </div>
-            <div class="bg-white dark:bg-aixis-800 rounded-none border border-gray-200 dark:border-aixis-700 p-6 text-center">
-                <div class="section-line"></div>
-                <h3 class="text-base font-bold text-gray-900 dark:text-white">ベンチマーク監査</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">競合3〜5ツールのスコア比較・選定支援レポート</p>
-                <div class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">&yen;98,000<span class="text-sm font-normal text-gray-500">/件</span></div>
+            <div class="bg-white dark:bg-aixis-800 p-8 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-aixis-700 flex flex-col">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-sans">Benchmark Audit</span>
+                <h3 class="mt-2 text-base font-bold text-gray-900 dark:text-white">ベンチマーク監査</h3>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed flex-1">競合3〜5ツールのスコア比較・選定支援レポート</p>
+                <div class="mt-6 pt-4 border-t border-gray-100 dark:border-aixis-700">
+                    <span class="text-2xl font-bold text-gray-900 dark:text-white">&yen;98,000</span>
+                    <span class="text-xs text-gray-500 ml-1">/件（税別）</span>
+                </div>
             </div>
-            <div class="bg-white dark:bg-aixis-800 rounded-none border border-gray-200 dark:border-aixis-700 p-6 text-center">
-                <div class="section-line"></div>
-                <h3 class="text-base font-bold text-gray-900 dark:text-white">ガバナンス監査</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">全社AI活用のリスク・適正評価（カスタム設計）</p>
-                <div class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">&yen;198,000<span class="text-sm font-normal text-gray-500">〜</span></div>
+            <div class="bg-white dark:bg-aixis-800 p-8 flex flex-col">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-sans">Governance Audit</span>
+                <h3 class="mt-2 text-base font-bold text-gray-900 dark:text-white">ガバナンス監査</h3>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed flex-1">全社AI活用のリスク・適正評価（カスタム設計）</p>
+                <div class="mt-6 pt-4 border-t border-gray-100 dark:border-aixis-700">
+                    <span class="text-2xl font-bold text-gray-900 dark:text-white">&yen;198,000</span>
+                    <span class="text-xs text-gray-500 ml-1">〜（税別）</span>
+                </div>
             </div>
         </div>
         <div class="mt-8 text-center">
             <a href="/contact"
-               class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+               class="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold border border-gray-300 dark:border-aixis-600 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-aixis-700/50 transition-all duration-200">
                 見積もりを依頼する
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
             </a>
@@ -279,7 +295,7 @@
                 <svg class="faq-icon w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             </button>
             <div class="faq-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;">
-                <div class="px-6 pb-5 pl-[3.75rem] text-sm text-gray-600 dark:text-gray-400 leading-relaxed">いいえ。14日間は完全無料でご利用いただけます。トライアル終了後に自動で課金されることもありません。</div>
+                <div class="px-6 pb-5 pl-[3.75rem] text-sm text-gray-600 dark:text-gray-400 leading-relaxed">14日間は完全無料でご利用いただけます。トライアル期間中にご解約いただければ費用は一切発生しません。トライアル終了後は、ご登録いただいたお支払い方法に基づき自動的に有料プランへ移行します。</div>
             </div>
         </div>
         <div class="faq-item bg-white dark:bg-aixis-800 rounded-sm border border-gray-200 dark:border-aixis-700 overflow-hidden transition-all duration-300 hover:border-gray-300 dark:hover:border-aixis-600">

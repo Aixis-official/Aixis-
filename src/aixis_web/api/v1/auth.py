@@ -1,7 +1,9 @@
 """Authentication endpoints."""
+import time
+from collections import defaultdict, deque
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,13 +20,41 @@ from ..deps import (
 
 router = APIRouter()
 
+# Login rate limiting: IP -> deque of timestamps
+_login_attempts: dict[str, deque] = defaultdict(deque)
+_LOGIN_MAX_ATTEMPTS = 5  # max attempts per window
+_LOGIN_WINDOW_SECONDS = 300  # 5-minute window
+
+
+def _check_login_rate(ip: str) -> bool:
+    """Return True if login attempt is allowed, False if rate-limited."""
+    now = time.time()
+    window = _login_attempts[ip]
+    while window and window[0] < now - _LOGIN_WINDOW_SECONDS:
+        window.popleft()
+    if len(window) >= _LOGIN_MAX_ATTEMPTS:
+        return False
+    window.append(now)
+    return True
+
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
     body: LoginRequest,
+    request: Request,
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Authenticate user and return JWT tokens."""
+    # Rate limit by client IP
+    client_ip = request.client.host if request.client else "unknown"
+    if not _check_login_rate(client_ip):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="ログイン試行回数が上限に達しました。5分後に再度お試しください。",
+            headers={"Retry-After": str(_LOGIN_WINDOW_SECONDS)},
+        )
+
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
 
@@ -49,11 +79,23 @@ async def login(
     access_token = create_access_token(data={"sub": user.id, "role": user.role})
     refresh_token = create_refresh_token(data={"sub": user.id})
 
+    # Set HttpOnly cookie for SSR page authentication (more secure than localStorage)
+    max_age = settings.access_token_expire_minutes * 60
+    response.set_cookie(
+        key="aixis_token",
+        value=access_token,
+        max_age=max_age,
+        path="/",
+        httponly=True,
+        samesite="lax",
+        secure=not settings.debug,
+    )
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
-        expires_in=settings.access_token_expire_minutes * 60,
+        expires_in=max_age,
     )
 
 

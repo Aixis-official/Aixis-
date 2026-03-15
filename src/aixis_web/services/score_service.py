@@ -1,5 +1,5 @@
 """Score merging service - combines automated and manual scores."""
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -94,7 +94,7 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
         overall_grade=grade.value,
         source_session_id=session_id,
         version=next_version,
-        published_at=datetime.utcnow(),
+        published_at=datetime.now(timezone.utc),
         published_by=published_by,
     )
     db.add(published)
@@ -113,7 +113,7 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
     session_obj = session.scalar_one_or_none()
     if session_obj:
         session_obj.status = "completed"
-        session_obj.completed_at = datetime.utcnow()
+        session_obj.completed_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(published)

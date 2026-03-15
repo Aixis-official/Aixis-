@@ -1,6 +1,6 @@
 """Tool CRUD endpoints."""
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 from typing import Annotated
@@ -296,7 +296,7 @@ async def save_target_config(
         config_yaml=body.config_yaml,
         version=max_ver + 1,
         is_active=True,
-        validated_at=datetime.utcnow(),
+        validated_at=datetime.now(timezone.utc),
     )
     db.add(new_cfg)
     await db.commit()

@@ -1,6 +1,6 @@
 """Audit schedule CRUD endpoints."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -34,7 +34,7 @@ async def create_schedule(
         )
 
     # Calculate initial next_run_at
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     next_run = _calculate_next_run(body.cron_expression, now)
 
     schedule = AuditSchedule(
@@ -99,7 +99,7 @@ async def update_schedule(
     if body.cron_expression is not None:
         schedule.cron_expression = body.cron_expression
         schedule.next_run_at = _calculate_next_run(
-            body.cron_expression, datetime.utcnow()
+            body.cron_expression, datetime.now(timezone.utc)
         )
 
     await db.commit()
@@ -161,7 +161,7 @@ async def trigger_schedule(
             status_code=status.HTTP_404_NOT_FOUND, detail="ツールが見つかりません"
         )
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     session_id = f"sched-manual-{uuid.uuid4().hex[:8]}"
     db_session_id = str(uuid.uuid4())
     session_code = f"AX-{now.strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}"

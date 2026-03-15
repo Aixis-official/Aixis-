@@ -1,6 +1,41 @@
 {% extends "base.html" %}
 {% set active_page = 'home' %}
 
+{% block meta_description %}
+<meta name="description" content="AIツールを独立した5軸監査で徹底比較。機能性・日本語対応・セキュリティ・UX・サポートを定量評価。企業のAIツール選定を、感覚ではなくデータで支援します。">
+{% endblock %}
+
+{% block meta_keywords %}
+<meta name="keywords" content="AIツール 比較,AIツール 一覧,AIツール 評価,AI監査,AIツール ランキング,AIツール おすすめ,企業向けAI,AI導入 比較,AIツール レビュー">
+{% endblock %}
+
+{% block ogp %}
+<meta property="og:title" content="AIツール比較・一覧 | Aixis 独立系AI監査プラットフォーム">
+<meta property="og:description" content="AIツールを独立した5軸監査で徹底比較。感覚ではなくデータでAIツール選定を支援。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://aixis.jp/">
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Aixis",
+  "url": "https://aixis.jp",
+  "logo": "https://aixis.jp/static/img/Aixis-logo-final.png",
+  "description": "独立系AI調査・監査機関。AIツールを5軸評価フレームワークで定量的に監査・比較。",
+  "sameAs": [],
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "customer service",
+    "url": "https://aixis.jp/contact",
+    "availableLanguage": "Japanese"
+  }
+}
+</script>
+{% endblock %}
+
 {% block head %}
 <style>
     /* ===== Landing page: nav overlays hero ===== */
@@ -548,9 +583,9 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <!-- Left Card: プラットフォーム月額プラン -->
             <div class="relative bg-white dark:bg-aixis-800 rounded-none p-8 border-2 border-blue-500 dark:border-blue-400 flex flex-col shadow-sm card-hover-primary">
-                <!-- 人気 badge -->
+                <!-- 推奨 badge -->
                 <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white shadow-sm">人気</span>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white shadow-sm">推奨</span>
                 </div>
 
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">プラットフォーム月額プラン</h3>

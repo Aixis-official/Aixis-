@@ -1,7 +1,7 @@
 """Benchmark and leaderboard business logic."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -85,7 +85,7 @@ async def publish_suite(db: AsyncSession, suite_id: str) -> BenchmarkSuite:
         raise ValueError("ベンチマークスイートが見つかりません")
 
     suite.is_published = True
-    suite.published_at = datetime.utcnow()
+    suite.published_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(suite)
     return suite
@@ -151,7 +151,7 @@ async def compute_leaderboard(db: AsyncSession, suite_id: str) -> None:
         await db.delete(entry)
 
     # Create new entries with ranks
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     for rank, (tool_id, best_score) in enumerate(entries, 1):
         # Find the best run
         run_result = await db.execute(

@@ -1,6 +1,6 @@
 """Report generation service."""
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +26,7 @@ async def generate_report(db: AsyncSession, session_id: str, report_type: str = 
     output_dir = Path(settings.output_dir) / "reports"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     filename = f"{session_obj.session_code}_{report_type}_{timestamp}"
 
     # TODO: Build AuditReport from DB data, call appropriate renderer

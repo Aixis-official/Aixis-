@@ -34,7 +34,7 @@ async def run_audit(ctx, session_id: str):
     from aixis_agent.scoring.engine import ScoringEngine
     from aixis_agent.core.models import TargetConfig, TestResult as CoreTestResult
     from sqlalchemy import select
-    from datetime import datetime
+    from datetime import datetime, timezone
     from pathlib import Path
     import yaml
 
@@ -49,7 +49,7 @@ async def run_audit(ctx, session_id: str):
 
         # Update status
         session.status = "running"
-        session.started_at = datetime.utcnow()
+        session.started_at = datetime.now(timezone.utc)
         await db.commit()
 
         try:

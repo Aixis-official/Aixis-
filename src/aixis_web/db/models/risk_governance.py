@@ -1,7 +1,7 @@
 """Risk and governance assessment models, separate from the 5-axis scoring."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean,
@@ -81,8 +81,8 @@ class ToolRiskGovernance(Base):
     assessed_at = Column(DateTime)
     assessed_by = Column(String(36), ForeignKey("users.id"))
     source = Column(String(20), default="manual")  # manual|auto|hybrid
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     tool = relationship("Tool", back_populates="risk_governance")
 

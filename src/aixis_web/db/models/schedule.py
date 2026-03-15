@@ -1,7 +1,7 @@
 """Audit schedule models for periodic re-testing."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, JSON, String
 
@@ -25,4 +25,4 @@ class AuditSchedule(Base):
     next_run_at = Column(DateTime, nullable=True)
     run_count = Column(Integer, default=0)
     created_by = Column(String(36), ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

@@ -2,7 +2,7 @@
 
 import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -116,7 +116,7 @@ async def approve_submission(
     submission.reviewed_by = reviewer_id
     submission.reviewer_notes = notes
     submission.approved_tool_id = tool.id
-    submission.updated_at = datetime.utcnow()
+    submission.updated_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(submission)
@@ -163,7 +163,7 @@ async def reject_submission(
     submission.status = "rejected"
     submission.reviewed_by = reviewer_id
     submission.reviewer_notes = notes
-    submission.updated_at = datetime.utcnow()
+    submission.updated_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(submission)

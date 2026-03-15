@@ -1,7 +1,7 @@
 """User and organization models."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 
@@ -19,7 +19,7 @@ class Organization(Base):
     name = Column(String(200), nullable=False)
     name_jp = Column(String(200))
     subscription_tier = Column(String(20), default="free")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class User(Base):
@@ -34,7 +34,7 @@ class User(Base):
     organization_id = Column(String(36), ForeignKey("organizations.id"))
     preferred_language = Column(String(5), default="ja")  # ja, en
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class AuditReportRecord(Base):
@@ -47,4 +47,4 @@ class AuditReportRecord(Base):
     file_path = Column(String(500))
     file_size_bytes = Column(Integer)
     is_public = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

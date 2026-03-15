@@ -1,7 +1,7 @@
 """Audit session and test result models."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text, JSON
 from sqlalchemy.orm import relationship
@@ -29,7 +29,7 @@ class AuditSession(Base):
     initiated_by = Column(String(36), ForeignKey("users.id"))
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # AI agent volume tracking
     executor_type = Column(String(20), default="playwright")
@@ -92,7 +92,7 @@ class DBTestResult(Base):
     error = Column(Text)
     screenshot_path = Column(String(500))
     page_url = Column(String(500))
-    executed_at = Column(DateTime, default=datetime.utcnow)
+    executed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     metadata_json = Column(JSON, default=dict)
     # AI agent per-test metrics
     ai_steps_taken = Column(Integer, default=0)

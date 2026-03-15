@@ -1,7 +1,7 @@
 """Scoring and evaluation models."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean,
@@ -42,7 +42,7 @@ class AxisScoreRecord(Base):
     details = Column(JSON, default=list)
     strengths = Column(JSON, default=list)
     risks = Column(JSON, default=list)
-    scored_at = Column(DateTime, default=datetime.utcnow)
+    scored_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     scored_by = Column(String(36), ForeignKey("users.id"))
 
     session = relationship("AuditSession", back_populates="axis_scores")
@@ -66,7 +66,7 @@ class ToolPublishedScore(Base):
     overall_grade = Column(String(2))  # S|A|B|C|D|F
     source_session_id = Column(String(36), ForeignKey("audit_sessions.id"))
     version = Column(Integer, default=1)
-    published_at = Column(DateTime, default=datetime.utcnow)
+    published_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     published_by = Column(String(36), ForeignKey("users.id"))
 
     tool = relationship("Tool", back_populates="scores")
@@ -83,7 +83,7 @@ class ScoreHistory(Base):
     tool_id = Column(String(36), ForeignKey("tools.id"), nullable=False)
     axis = Column(String(30), nullable=False)
     score = Column(Float, nullable=False)
-    recorded_at = Column(DateTime, default=datetime.utcnow)
+    recorded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     source_session_id = Column(String(36), ForeignKey("audit_sessions.id"))
 
 

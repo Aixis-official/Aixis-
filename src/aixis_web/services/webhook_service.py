@@ -11,7 +11,7 @@ import json
 import logging
 import urllib.request
 import urllib.error
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -113,7 +113,7 @@ async def deliver_webhook(
             delivery.attempt_count += 1
 
             if 200 <= response_status < 300:
-                delivery.delivered_at = datetime.utcnow()
+                delivery.delivered_at = datetime.now(timezone.utc)
                 delivery.next_retry_at = None
                 logger.info("Webhook delivered: %s -> %s (status=%d)", event_type, url, response_status)
             else:
@@ -175,7 +175,7 @@ def _schedule_retry(delivery: WebhookDelivery) -> None:
     attempt = delivery.attempt_count
     if attempt < len(RETRY_INTERVALS):
         delay = RETRY_INTERVALS[attempt]
-        delivery.next_retry_at = datetime.utcnow() + timedelta(seconds=delay)
+        delivery.next_retry_at = datetime.now(timezone.utc) + timedelta(seconds=delay)
     else:
         # Max retries exceeded — no more retries
         delivery.next_retry_at = None
@@ -201,7 +201,7 @@ async def send_test_event(
     test_payload = {
         "event": "test",
         "message": "This is a test webhook delivery from Aixis.",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
     delivery = WebhookDelivery(

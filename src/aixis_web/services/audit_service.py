@@ -1,6 +1,6 @@
 """Audit session orchestration service."""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,7 +25,7 @@ async def create_audit_session(db: AsyncSession, tool_id: str, profile_id: str, 
         profile_id=profile_id,
         status="pending",
         initiated_by=initiated_by,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
     db.add(session)
     await db.commit()

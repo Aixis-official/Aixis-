@@ -1,6 +1,6 @@
 """Pydantic domain models for the Aixis AI audit platform."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -153,7 +153,7 @@ class TestResult(BaseModel):
     response_time_ms: float = 0.0
     error: str | None = None
     screenshot_path: str | None = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 

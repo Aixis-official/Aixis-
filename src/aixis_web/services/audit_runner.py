@@ -9,7 +9,7 @@ import asyncio
 import logging
 import threading
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -473,7 +473,7 @@ def _sync_results_to_web_db(
             "status": new_status,
             "total_planned": total_planned,
             "total_executed": total_executed,
-            "now": datetime.utcnow().isoformat(),
+            "now": datetime.now(timezone.utc).isoformat(),
             "session_id": db_session_id,
             "executor_type": ai_vol.get("executor_type", "playwright"),
             "ai_total_steps": ai_vol.get("ai_total_steps", 0),
@@ -540,7 +540,7 @@ def _sync_results_to_web_db(
                 "time_ms": int(result.response_time_ms),
                 "error": result.error,
                 "screenshot": result.screenshot_path,
-                "executed_at": result.timestamp.isoformat() if result.timestamp else datetime.utcnow().isoformat(),
+                "executed_at": result.timestamp.isoformat() if result.timestamp else datetime.now(timezone.utc).isoformat(),
                 "metadata": json.dumps(meta, ensure_ascii=False) if meta else "{}",
                 "ai_steps": meta.get("ai_steps_taken", 0),
                 "ai_calls": meta.get("ai_calls_used", 0),
@@ -568,7 +568,7 @@ def _sync_results_to_web_db(
                 "details": json.dumps(score_data["details"], ensure_ascii=False, default=str),
                 "strengths": json.dumps(score_data["strengths"], ensure_ascii=False),
                 "risks": json.dumps(score_data["risks"], ensure_ascii=False),
-                "scored_at": datetime.utcnow().isoformat(),
+                "scored_at": datetime.now(timezone.utc).isoformat(),
             }
             if _is_sqlite:
                 conn.execute(text("""
@@ -657,7 +657,7 @@ def _sync_failure_to_web_db(db_url: str, db_session_id: str, error_msg: str) -> 
             WHERE id = :session_id
         """), {
             "error": error_msg[:2000],
-            "now": datetime.utcnow().isoformat(),
+            "now": datetime.now(timezone.utc).isoformat(),
             "session_id": db_session_id,
         })
 
@@ -799,7 +799,7 @@ def start_audit(
             "status": "starting",
             "phase": "init",
             "error": None,
-            "started_at": datetime.utcnow().isoformat(),
+            "started_at": datetime.now(timezone.utc).isoformat(),
             "completed": 0,
             "total": 0,
             "current_category": "",

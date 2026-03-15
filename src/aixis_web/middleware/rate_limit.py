@@ -3,7 +3,7 @@
 import hashlib
 import time
 from collections import defaultdict, deque
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
@@ -42,7 +42,7 @@ def _check_rate_limit(key_hash: str, per_minute: int, per_day: int) -> tuple[boo
         return False, retry_after
 
     # Per-day counter
-    today = datetime.utcnow().strftime("%Y-%m-%d")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     if key_hash in _daily_counts:
         date_str, count = _daily_counts[key_hash]
         if date_str == today:
@@ -95,7 +95,7 @@ async def get_api_key_record(
             detail="API key has been deactivated",
         )
 
-    if api_key.expires_at and api_key.expires_at < datetime.utcnow():
+    if api_key.expires_at and api_key.expires_at < datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="API key has expired",
@@ -113,7 +113,7 @@ async def get_api_key_record(
         )
 
     # Update last_used_at
-    api_key.last_used_at = datetime.utcnow()
+    api_key.last_used_at = datetime.now(timezone.utc)
     await db.commit()
 
     return api_key

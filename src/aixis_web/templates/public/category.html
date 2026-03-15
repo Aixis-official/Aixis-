@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% set active_page = 'categories' %}
 
+{% block meta_description %}
+<meta name="description" content="カテゴリ別AIツールランキング。独立した5軸監査スコアに基づく、信頼性の高いAIツール比較・評価ランキングです。">
+{% endblock %}
+
+{% block meta_keywords %}
+<meta name="keywords" content="AIツール ランキング,AIツール カテゴリ別,AI 比較ランキング,AIツール おすすめ,AI評価 ランキング">
+{% endblock %}
+
 {% block head %}
 <style>
     .rank-1 { background: rgba(26, 54, 93, 0.04); }

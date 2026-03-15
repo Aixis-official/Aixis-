@@ -11,7 +11,17 @@
     </style>
     <meta name="description" content="Aixis - AI実装の投資判断を科学する、独立系AI調査・監査機関">
     {% block meta_description %}{% endblock %}
+    {% block meta_keywords %}{% endblock %}
     <title>{{ title | default("Aixis") }} - Aixis AI監査プラットフォーム</title>
+    {% block canonical %}{% endblock %}
+    <!-- OGP -->
+    <meta property="og:site_name" content="Aixis">
+    <meta property="og:locale" content="ja_JP">
+    {% block ogp %}
+    <meta property="og:title" content="{{ title | default('Aixis') }} - Aixis AI監査プラットフォーム">
+    <meta property="og:type" content="website">
+    {% endblock %}
+    {% block structured_data %}{% endblock %}
 
     <!-- Google Analytics 4 (excluded for admin role and ?notrack=1 opt-out) -->
     <script>

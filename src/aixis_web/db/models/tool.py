@@ -1,7 +1,7 @@
 """Tool catalog models."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, JSON
 from sqlalchemy.orm import relationship
@@ -98,8 +98,8 @@ class Tool(Base):
     is_active = Column(Boolean, default=True)
 
     # timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # relationships
     category = relationship("ToolCategory", back_populates="tools")
@@ -122,6 +122,6 @@ class ToolTargetConfig(Base):
     version = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
     validated_at = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     tool = relationship("Tool", back_populates="target_configs")

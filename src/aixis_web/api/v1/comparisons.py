@@ -60,6 +60,7 @@ async def create_comparison(
 async def get_comparison(
     group_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[User, Depends(require_analyst)],
 ):
     """Get comparison data."""
     result = await db.execute(
@@ -119,6 +120,7 @@ async def add_tool_to_comparison(
 async def auto_benchmark(
     category_slug: str,
     db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[User, Depends(require_analyst)],
 ):
     """Auto-generate benchmark comparison for a category."""
     cat_result = await db.execute(

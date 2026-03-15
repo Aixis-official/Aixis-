@@ -1,6 +1,6 @@
 """Audit preset / template models."""
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, JSON, Boolean
 from sqlalchemy.orm import relationship
@@ -26,5 +26,5 @@ class AuditPreset(Base):
     budget_max_cost_jpy = Column(Integer, default=20)
     is_default = Column(Boolean, default=False)
     created_by = Column(String(36), ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
