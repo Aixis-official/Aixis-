@@ -260,7 +260,6 @@
     var form = document.getElementById('contactForm');
     var submitBtn = document.getElementById('contact-submit-btn');
     var successEl = document.getElementById('contact-success');
-    var successText = document.getElementById('contact-success-text');
     var errorEl = document.getElementById('contact-error');
     var errorText = document.getElementById('contact-error-text');
     var formCard = document.getElementById('contact-form');
@@ -370,8 +369,8 @@
             if (data.success) {
                 formCard.classList.add('hidden');
                 errorEl.classList.add('hidden');
-                successText.textContent = data.message;
                 successEl.classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
                 showError(data.message || '送信に失敗しました。');
             }
