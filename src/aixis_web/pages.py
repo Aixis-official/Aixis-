@@ -128,6 +128,20 @@ async def independence_page(request: Request):
     return templates.TemplateResponse("public/independence.html", ctx)
 
 
+@page_router.get("/transparency")
+async def transparency_page(request: Request):
+    """Transparency policy page."""
+    ctx = _get_template_context(request, title="透明性ポリシー", active_page="about")
+    return templates.TemplateResponse("public/transparency.html", ctx)
+
+
+@page_router.get("/audit-protocol")
+async def audit_protocol_page(request: Request):
+    """Detailed audit protocol page."""
+    ctx = _get_template_context(request, title="監査プロトコル", active_page="audit-process")
+    return templates.TemplateResponse("public/audit_protocol.html", ctx)
+
+
 @page_router.get("/contact")
 async def contact_page(request: Request):
     """Contact form page."""

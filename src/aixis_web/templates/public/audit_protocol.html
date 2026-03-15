@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+{% set active_page = 'audit-process' %}
+
+{% block meta_description %}
+<meta name="description" content="Aixisの監査プロトコル詳細。5つの評価軸、スコアリング方法論、グレード基準、品質保証プロセスを公開しています。">
+{% endblock %}
+
+{% block head %}
+<style>
+    .axis-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .axis-card:hover {
+        transform: translateY(-1px);
+    }
+    .axis-number {
+        font-size: 72px;
+        font-weight: 900;
+        line-height: 1;
+        opacity: 0.04;
+        position: absolute;
+        top: -8px;
+        right: 12px;
+        font-family: 'Inter', sans-serif;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<section class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-left">
+        <div class="section-line"></div>
+        <span class="report-label font-sans text-gray-400">Audit Protocol</span>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 tracking-tight mt-2">
+            監査プロトコル
+        </h1>
+        <p class="mt-4 text-base sm:text-lg text-gray-600 max-w-2xl">
+            Aixisが採用する5軸評価フレームワークの詳細な方法論
+        </p>
+        <hr class="divider-thin">
+    </div>
+</section>
+
+<!-- 5 Evaluation Axes -->
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+    <div class="section-line"></div>
+    <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+        5つの評価軸
+    </h2>
+    <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Five Evaluation Axes</p>
+    <p class="mt-4 text-sm text-gray-600 max-w-2xl leading-relaxed">
+        すべてのAIツールは、以下の5つの独立した評価軸に基づいて定量的に評価されます。各軸は0.0〜5.0のスコアで採点されます。
+    </p>
+    <hr class="divider-thin">
+
+    <div class="mt-10 space-y-6">
+        <!-- Axis 1 -->
+        <div class="axis-card relative border border-gray-200 rounded-sm p-6 overflow-hidden bg-white">
+            <span class="axis-number text-gray-900">01</span>
+            <div class="relative">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-sm">軸 1</span>
+                    <h3 class="text-base font-bold text-gray-900">機能性・精度</h3>
+                </div>
+                <p class="mt-2 text-xs text-gray-400 uppercase tracking-wider font-sans">Functionality &amp; Accuracy</p>
+                <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+                    AIツールの中核機能が期待通りに動作するかを評価します。出力の正確性、タスク完了率、エッジケースへの対応力を測定します。
+                </p>
+                <div class="mt-4 border-t border-gray-100 pt-4">
+                    <span class="text-xs font-semibold text-gray-500">計測項目:</span>
+                    <ul class="mt-2 space-y-1 text-xs text-gray-500">
+                        <li>- 標準テストケース通過率（自動）</li>
+                        <li>- 出力の正確性スコア（自動 + 手動）</li>
+                        <li>- エッジケースハンドリング（手動）</li>
+                        <li>- 幻覚（ハルシネーション）発生率（自動）</li>
+                        <li>- 一貫性テスト（同一入力に対する出力の安定性）（自動）</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Axis 2 -->
+        <div class="axis-card relative border border-gray-200 rounded-sm p-6 overflow-hidden bg-white">
+            <span class="axis-number text-gray-900">02</span>
+            <div class="relative">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-sm">軸 2</span>
+                    <h3 class="text-base font-bold text-gray-900">日本語対応品質</h3>
+                </div>
+                <p class="mt-2 text-xs text-gray-400 uppercase tracking-wider font-sans">Japanese Language Quality</p>
+                <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+                    日本語ユーザーにとっての実用性を多角的に評価します。UI翻訳品質、日本語入出力の精度、日本固有の概念理解を検証します。
+                </p>
+                <div class="mt-4 border-t border-gray-100 pt-4">
+                    <span class="text-xs font-semibold text-gray-500">計測項目:</span>
+                    <ul class="mt-2 space-y-1 text-xs text-gray-500">
+                        <li>- UI日本語翻訳率・翻訳品質（自動 + 手動）</li>
+                        <li>- 日本語入力に対する応答精度（自動）</li>
+                        <li>- 敬語・ビジネス日本語の適切性（手動）</li>
+                        <li>- 日本固有の日付・通貨・住所形式対応（自動）</li>
+                        <li>- 日本語ドキュメント・ヘルプの充実度（手動）</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Axis 3 -->
+        <div class="axis-card relative border border-gray-200 rounded-sm p-6 overflow-hidden bg-white">
+            <span class="axis-number text-gray-900">03</span>
+            <div class="relative">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-sm">軸 3</span>
+                    <h3 class="text-base font-bold text-gray-900">セキュリティ・プライバシー</h3>
+                </div>
+                <p class="mt-2 text-xs text-gray-400 uppercase tracking-wider font-sans">Security &amp; Privacy</p>
+                <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+                    データ保護体制、認証方式、コンプライアンス対応を包括的に評価します。特に日本の個人情報保護法への準拠を重点的に検証します。
+                </p>
+                <div class="mt-4 border-t border-gray-100 pt-4">
+                    <span class="text-xs font-semibold text-gray-500">計測項目:</span>
+                    <ul class="mt-2 space-y-1 text-xs text-gray-500">
+                        <li>- データ暗号化方式（通信・保存）（自動 + 手動）</li>
+                        <li>- 認証方式・MFA対応（自動）</li>
+                        <li>- プライバシーポリシーの明確性（手動）</li>
+                        <li>- SOC 2/ISO 27001等の認証取得状況（手動）</li>
+                        <li>- データ所在地・越境移転ポリシー（手動）</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Axis 4 -->
+        <div class="axis-card relative border border-gray-200 rounded-sm p-6 overflow-hidden bg-white">
+            <span class="axis-number text-gray-900">04</span>
+            <div class="relative">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-sm">軸 4</span>
+                    <h3 class="text-base font-bold text-gray-900">ユーザビリティ・UX</h3>
+                </div>
+                <p class="mt-2 text-xs text-gray-400 uppercase tracking-wider font-sans">Usability &amp; User Experience</p>
+                <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+                    実際の利用体験に基づくUX品質を評価します。初回セットアップから日常的な操作まで、ユーザージャーニー全体を検証します。
+                </p>
+                <div class="mt-4 border-t border-gray-100 pt-4">
+                    <span class="text-xs font-semibold text-gray-500">計測項目:</span>
+                    <ul class="mt-2 space-y-1 text-xs text-gray-500">
+                        <li>- 初回セットアップ所要時間（自動）</li>
+                        <li>- 標準操作フロー完了率・ステップ数（自動）</li>
+                        <li>- UI一貫性・デザイン品質（手動）</li>
+                        <li>- エラーメッセージの明確性（手動）</li>
+                        <li>- モバイル対応・レスポンシブ品質（自動 + 手動）</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Axis 5 -->
+        <div class="axis-card relative border border-gray-200 rounded-sm p-6 overflow-hidden bg-white">
+            <span class="axis-number text-gray-900">05</span>
+            <div class="relative">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-sm">軸 5</span>
+                    <h3 class="text-base font-bold text-gray-900">サポート・エコシステム</h3>
+                </div>
+                <p class="mt-2 text-xs text-gray-400 uppercase tracking-wider font-sans">Support &amp; Ecosystem</p>
+                <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+                    ベンダーのサポート体制、API/インテグレーション、ドキュメント、コミュニティの充実度を評価します。
+                </p>
+                <div class="mt-4 border-t border-gray-100 pt-4">
+                    <span class="text-xs font-semibold text-gray-500">計測項目:</span>
+                    <ul class="mt-2 space-y-1 text-xs text-gray-500">
+                        <li>- サポート応答速度（日本語対応）（手動）</li>
+                        <li>- API/SDK提供状況・ドキュメント品質（手動）</li>
+                        <li>- サードパーティ連携数・品質（自動）</li>
+                        <li>- アップデート頻度・変更ログの透明性（自動）</li>
+                        <li>- コミュニティ・ナレッジベースの充実度（手動）</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Automated vs Manual -->
+<section class="bg-gray-50 border-y border-gray-200">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div class="section-line"></div>
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+            自動テスト vs 専門家評価
+        </h2>
+        <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Automated Tests vs Expert Evaluation</p>
+        <hr class="divider-thin">
+
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-0 border border-gray-200 rounded-sm overflow-hidden">
+            <!-- Automated -->
+            <div class="p-6 border-b md:border-b-0 md:border-r border-gray-200 bg-white">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-sans">自動テスト（Automated）</span>
+                <p class="mt-3 text-sm text-gray-600 leading-relaxed">ブラウザ自動化による再現可能な定量測定</p>
+                <ul class="mt-4 space-y-2 text-sm text-gray-600">
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>API応答速度（p50/p95/p99）</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>標準テストケース通過率</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>日本語形態素解析精度</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>操作フロー完了率</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>エラー発生率・復帰率</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>暗号化・認証チェック</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>ハルシネーション検出</li>
+                </ul>
+                <div class="mt-4 text-xs text-gray-400">
+                    配分比率: 全体スコアの約60%
+                </div>
+            </div>
+
+            <!-- Manual -->
+            <div class="p-6 bg-white">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-sans">専門家評価（Manual）</span>
+                <p class="mt-3 text-sm text-gray-600 leading-relaxed">独立した専門家チームによる定性評価</p>
+                <ul class="mt-4 space-y-2 text-sm text-gray-600">
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>UX設計品質・直感性</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>ドキュメント充実度</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>サポート応答品質</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>セキュリティ体制精査</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>ビジネス日本語適切性</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>出力品質・バイアス検証</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>コンプライアンス確認</li>
+                </ul>
+                <div class="mt-4 text-xs text-gray-400">
+                    配分比率: 全体スコアの約40%
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Scoring Methodology -->
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+    <div class="section-line"></div>
+    <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+        スコアリング方法論
+    </h2>
+    <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Scoring Methodology</p>
+    <hr class="divider-thin">
+
+    <div class="mt-8 space-y-6 text-sm text-gray-600 leading-relaxed">
+        <div class="border border-gray-200 rounded-sm p-6 bg-white">
+            <h3 class="text-sm font-bold text-gray-900">スコアの算出方法</h3>
+            <p class="mt-3 text-sm text-gray-600">
+                各評価軸のスコアは、自動テストスコア（60%）と専門家評価スコア（40%）の加重平均で算出されます。総合スコアは5軸の均等平均です。
+            </p>
+            <div class="mt-4 bg-gray-50 border border-gray-100 rounded-sm p-4 font-mono text-xs text-gray-600">
+                <p>軸スコア = (自動テスト結果 x 0.6) + (専門家評価 x 0.4)</p>
+                <p class="mt-1">総合スコア = (軸1 + 軸2 + 軸3 + 軸4 + 軸5) / 5</p>
+            </div>
+        </div>
+
+        <div class="border border-gray-200 rounded-sm p-6 bg-white">
+            <h3 class="text-sm font-bold text-gray-900">軸ごとの重み付け</h3>
+            <p class="mt-3 text-sm text-gray-600">
+                標準の総合スコアでは5軸を均等に扱いますが、業界別ランキングではユースケースに応じた重み付けが適用される場合があります。重み付けが適用される場合は、その旨を明示します。
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Grade Criteria -->
+<section class="bg-gray-50 border-y border-gray-200">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div class="section-line"></div>
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+            グレード判定基準
+        </h2>
+        <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Grade Assignment Criteria</p>
+        <hr class="divider-thin">
+
+        <div class="mt-8">
+            <div class="bg-white border border-gray-200 rounded-sm overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">グレード</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">スコア範囲</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">評価</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">判定基準</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr>
+                            <td class="px-6 py-3"><span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-black bg-grade-s">S</span></td>
+                            <td class="px-6 py-3 text-gray-700 font-medium">4.5 - 5.0</td>
+                            <td class="px-6 py-3 text-gray-500">業界最高水準</td>
+                            <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">全軸3.5以上 かつ 総合4.5以上</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-3"><span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-black bg-grade-a">A</span></td>
+                            <td class="px-6 py-3 text-gray-700 font-medium">3.5 - 4.4</td>
+                            <td class="px-6 py-3 text-gray-500">高品質・推奨</td>
+                            <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">全軸2.5以上 かつ 総合3.5以上</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-3"><span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-black bg-grade-b">B</span></td>
+                            <td class="px-6 py-3 text-gray-700 font-medium">2.5 - 3.4</td>
+                            <td class="px-6 py-3 text-gray-500">標準的</td>
+                            <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">致命的欠陥なし かつ 総合2.5以上</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-3"><span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-black bg-grade-c">C</span></td>
+                            <td class="px-6 py-3 text-gray-700 font-medium">1.5 - 2.4</td>
+                            <td class="px-6 py-3 text-gray-500">改善の余地あり</td>
+                            <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">複数軸で基準未達</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-3"><span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-black bg-grade-d">D</span></td>
+                            <td class="px-6 py-3 text-gray-700 font-medium">0.0 - 1.4</td>
+                            <td class="px-6 py-3 text-gray-500">要注意</td>
+                            <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">重大な品質問題あり</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="mt-4 text-xs text-gray-500">
+                グレードは総合スコアだけでなく、各軸の最低スコアも考慮して判定されます。特定の軸が極端に低い場合、総合スコアが高くても上位グレードに判定されない場合があります。
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Quality Assurance -->
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+    <div class="section-line"></div>
+    <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+        品質保証プロセス
+    </h2>
+    <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Quality Assurance Process</p>
+    <hr class="divider-thin">
+
+    <div class="mt-8 space-y-6 text-sm text-gray-600 leading-relaxed">
+        <div class="space-y-4">
+            <div class="flex items-start gap-4">
+                <div class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 text-xs font-bold rounded-sm shrink-0">01</div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">独立評価者の選定</h3>
+                    <p class="mt-1 text-sm text-gray-600">評価対象ベンダーとの利害関係がない専門家を選定。利益相反チェックを事前に実施します。</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-4">
+                <div class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 text-xs font-bold rounded-sm shrink-0">02</div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">ダブルチェック評価</h3>
+                    <p class="mt-1 text-sm text-gray-600">手動評価は2名以上の独立した評価者が別々に実施。評価者間の乖離が大きい場合は第3の評価者を追加します。</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-4">
+                <div class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 text-xs font-bold rounded-sm shrink-0">03</div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">自動テスト検証</h3>
+                    <p class="mt-1 text-sm text-gray-600">自動テストスクリプトの精度を定期検証。テスト環境の差異による誤差を統計的に補正します。</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-4">
+                <div class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 text-xs font-bold rounded-sm shrink-0">04</div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">最終レビュー</h3>
+                    <p class="mt-1 text-sm text-gray-600">シニアアナリストが全スコアを最終レビュー。異常値の検出・データ整合性の確認を行います。</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-4">
+                <div class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 text-xs font-bold rounded-sm shrink-0">05</div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">公開前チェック</h3>
+                    <p class="mt-1 text-sm text-gray-600">公開前に事実関係の最終確認を実施。スコアの根拠となるデータの完全性を保証します。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Re-audit Triggers -->
+<section class="bg-gray-50 border-y border-gray-200">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div class="section-line"></div>
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+            再監査トリガーと頻度
+        </h2>
+        <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Re-audit Triggers &amp; Frequency</p>
+        <hr class="divider-thin">
+
+        <div class="mt-8 space-y-6 text-sm text-gray-600 leading-relaxed">
+            <div class="border border-gray-200 rounded-sm overflow-hidden bg-white">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-sm font-bold text-gray-900">定期再監査</h3>
+                </div>
+                <div class="px-6 py-4 space-y-2 text-sm text-gray-600">
+                    <p>すべてのツールは90日サイクルで定期再監査の対象となります。再監査では前回と同一のテストケースに加え、新たに追加されたテストケースも適用されます。</p>
+                </div>
+            </div>
+
+            <div class="border border-gray-200 rounded-sm overflow-hidden bg-white">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-sm font-bold text-gray-900">臨時再監査トリガー</h3>
+                </div>
+                <ul class="px-6 py-4 space-y-2 text-sm text-gray-600">
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>ツールのメジャーバージョンアップ</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>重大なセキュリティインシデントの報告</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>ベンダーからの訂正依頼（検証の結果、再評価が必要と判断された場合）</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>ユーザーからの複数の品質低下報告</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>AIモデルの大幅な変更（基盤モデルの切り替え等）</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>サービスの運営体制の大幅な変更</li>
+                </ul>
+            </div>
+
+            <p class="text-xs text-gray-500 border-l-2 border-gray-200 pl-4">
+                臨時再監査は通常30営業日以内に完了します。再監査中は現行スコアに「再評価中」ラベルが付与されます。
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="bg-gradient-to-br from-[#0f172a] to-[#1e3a5f]">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <div class="section-line" style="--line-color: #334155;"></div>
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-white">監査結果をご覧になりたい方へ</h2>
+        <p class="mt-3 text-sm text-slate-300">データベースで最新の監査レポートをご確認ください</p>
+        <div class="mt-8 flex flex-wrap justify-center gap-4">
+            <a href="/tools"
+               class="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-bold bg-white text-[#0f172a] hover:bg-gray-100 shadow-sm transition-all duration-200">
+                監査データベースを見る
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+            </a>
+            <a href="/transparency"
+               class="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-bold text-white border border-white/30 hover:bg-white/10 transition-all duration-200">
+                透明性ポリシーを読む
+            </a>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

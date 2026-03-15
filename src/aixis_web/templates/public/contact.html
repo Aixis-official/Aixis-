@@ -55,7 +55,7 @@
             お問い合わせ
         </h1>
         <p class="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            監査のご依頼・料金のご相談・デモのお申し込みなど、お気軽にお問い合わせください。1営業日以内に担当者よりご連絡いたします。
+            監査のご依頼・料金のご相談・クイック診断のお申し込みなど、お気軽にお問い合わせください。1営業日以内に担当者よりご連絡いたします。
         </p>
     </div>
 </section>
@@ -96,7 +96,7 @@
         <form id="contactForm" novalidate>
             <!-- Inquiry type quick-select chips -->
             <div class="mb-6 flex flex-wrap gap-2">
-                <button type="button" onclick="selectInquiryType(event, 'デモ依頼')" class="inquiry-chip px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 dark:border-aixis-600 text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-colors hover-lift">デモ依頼</button>
+                <button type="button" onclick="selectInquiryType(event, 'クイック診断')" class="inquiry-chip px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors hover-lift">クイック診断</button>
                 <button type="button" onclick="selectInquiryType(event, '料金プラン')" class="inquiry-chip px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 dark:border-aixis-600 text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-colors hover-lift">料金プラン</button>
                 <button type="button" onclick="selectInquiryType(event, '個別監査レポート')" class="inquiry-chip px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 dark:border-aixis-600 text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-colors hover-lift">個別監査レポート</button>
                 <button type="button" onclick="selectInquiryType(event, 'ツール掲載依頼')" class="inquiry-chip px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 dark:border-aixis-600 text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-colors hover-lift">ツール掲載依頼</button>
@@ -167,7 +167,7 @@
                             <option value="料金プラン">料金プラン</option>
                             <option value="個別監査レポート">個別監査レポート</option>
                             <option value="プラットフォーム利用">プラットフォーム利用</option>
-                            <option value="デモ依頼">デモ依頼</option>
+                            <option value="クイック診断">クイック診断</option>
                             <option value="ツール掲載依頼">ツール掲載依頼</option>
                             <option value="その他">その他</option>
                         </select>
@@ -180,7 +180,7 @@
                         お問い合わせ内容 <span class="required-dot">*</span>
                     </label>
                     <textarea id="message" name="message" required rows="5"
-                              placeholder="AIツール監査に関するご質問、デモのご依頼など、具体的にご記入ください。"
+                              placeholder="AIツール監査に関するご質問、クイック診断のご依頼など、具体的にご記入ください。"
                               class="bg-white dark:bg-aixis-900 border-gray-300 dark:border-aixis-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-aixis-500 dark:focus:border-aixis-400 resize-y"></textarea>
                 </div>
 
@@ -257,10 +257,12 @@
 
     // --- Auto-select demo inquiry type from URL param ---
     var urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('type') === 'demo') {
+    var typeMap = { 'quick': 'クイック診断', 'pricing': '料金プラン', 'report': '個別監査レポート', 'listing': 'ツール掲載依頼' };
+    var urlType = urlParams.get('type');
+    if (urlType && typeMap[urlType]) {
         var inquirySelect = document.getElementById('inquiry_type');
         if (inquirySelect) {
-            inquirySelect.value = 'デモ依頼';
+            inquirySelect.value = typeMap[urlType];
         }
     }
 
@@ -356,7 +358,7 @@
         var hintText = document.getElementById('inquiry-hint-text');
         var msgField = document.getElementById('message');
         var hints = {
-            'デモ依頼': { hint: '所要30分・Zoomで実施。デモ環境でDBを実際にお試しいただけます。ご希望の日時があればご記入ください。', placeholder: 'ご希望の日時（例: 来週火曜午後）や、特に確認したい機能があればご記入ください。' },
+            'クイック診断': { hint: '候補3ツール比較クイック診断（¥50,000〜、最短3営業日）。5軸評価基準で横並び比較し、稟議用レポートをお届けします。', placeholder: '比較対象のツール名（最大3つ）、ツールのURL、利用予定の業務内容をご記入ください。' },
             '料金プラン': { hint: '14日間無料トライアル実施中。ご利用人数や用途に応じて最適なプランをご提案します。', placeholder: '利用予定人数、用途（ツール選定・社内レポート等）をご記入ください。' },
             '個別監査レポート': { hint: 'スポット¥29,800〜。特定ツールの5軸評価レポートを作成します。', placeholder: '監査対象のツール名・URL、比較対象がある場合はあわせてご記入ください。' },
             'ツール掲載依頼': { hint: '掲載は無料です。Aixisの独立監査を経て5軸スコアで評価・公開されます。', placeholder: 'ツール名・URL・簡単な概要をご記入ください。' }

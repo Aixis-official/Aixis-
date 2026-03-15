@@ -19,6 +19,7 @@ from .vendor import router as vendor_router
 from .benchmarks import router as benchmarks_router
 from .industries import router as industries_router
 from .risk_governance import router as risk_governance_router
+from .stats import router as stats_router
 
 api_router = APIRouter()
 
@@ -46,3 +47,4 @@ api_router.include_router(vendor_router, prefix="/vendor", tags=["ベンダー"]
 api_router.include_router(benchmarks_router, prefix="/benchmarks", tags=["ベンチマーク"])
 api_router.include_router(industries_router, prefix="/industries", tags=["業界・ユースケース"])
 api_router.include_router(risk_governance_router, prefix="/risk-governance", tags=["リスク・ガバナンス"])
+api_router.include_router(stats_router, prefix="/stats", tags=["stats"])

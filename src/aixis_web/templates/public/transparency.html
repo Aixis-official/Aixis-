@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% set active_page = 'about' %}
+
+{% block meta_description %}
+<meta name="description" content="Aixisの透明性ポリシー。評価プロセスにおける透明性と誠実性に関する方針を公開しています。">
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<section class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-left">
+        <div class="section-line"></div>
+        <span class="report-label font-sans text-gray-400">Transparency Policy</span>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 tracking-tight mt-2">
+            透明性ポリシー
+        </h1>
+        <p class="mt-4 text-base sm:text-lg text-gray-600 max-w-2xl">
+            Aixisの評価プロセスにおける透明性と誠実性に関する方針
+        </p>
+        <hr class="divider-thin">
+    </div>
+</section>
+
+<!-- Section 1: 監査プロトコルの公開方針 -->
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+    <div class="section-line"></div>
+    <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+        監査プロトコルの公開方針
+    </h2>
+    <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Audit Protocol Disclosure</p>
+    <hr class="divider-thin">
+
+    <div class="mt-8 space-y-6 text-sm text-gray-600 leading-relaxed">
+        <p>
+            Aixisは、評価の再現性と信頼性を確保するため、監査プロトコルの主要な構成要素を公開しています。
+        </p>
+
+        <div class="border border-gray-200 rounded-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h3 class="text-sm font-bold text-gray-900">自動テストで計測する項目</h3>
+                <p class="mt-1 text-xs text-gray-500">ブラウザ自動化を用いた客観的・定量的データ収集</p>
+            </div>
+            <ul class="px-6 py-4 space-y-2 text-sm text-gray-600">
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>API応答速度（p50/p95/p99レイテンシ）</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>機能テスト成功率（標準テストケースの通過率）</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>日本語処理精度（形態素解析・文脈理解精度）</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>UI操作性スコア（標準操作フローの完了率・操作ステップ数）</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>エラーハンドリング品質（エラー発生時の挙動・復帰率）</li>
+            </ul>
+        </div>
+
+        <div class="border border-gray-200 rounded-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h3 class="text-sm font-bold text-gray-900">専門家が手動で評価する項目</h3>
+                <p class="mt-1 text-xs text-gray-500">独立した専門家チームによるチェックリスト評価</p>
+            </div>
+            <ul class="px-6 py-4 space-y-2 text-sm text-gray-600">
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>UX設計品質（直感性・一貫性・アクセシビリティ）</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>ドキュメント充実度（日本語対応・網羅性・最新性）</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>サポート対応品質（応答速度・日本語対応・解決力）</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>セキュリティ体制（認証方式・データ暗号化・コンプライアンス）</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>出力品質（回答の正確性・幻覚発生率・バイアス検証）</li>
+            </ul>
+        </div>
+
+        <p>
+            評価基準の詳細は<a href="/audit-protocol" class="text-blue-600 hover:text-blue-800 underline underline-offset-2">監査プロトコル</a>ページに記載しています。
+        </p>
+    </div>
+</section>
+
+<!-- Section 2: 更新ポリシー -->
+<section class="bg-gray-50 border-y border-gray-200">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div class="section-line"></div>
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+            更新ポリシー
+        </h2>
+        <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Update Policy</p>
+        <hr class="divider-thin">
+
+        <div class="mt-8 space-y-6 text-sm text-gray-600 leading-relaxed">
+            <p>
+                AIツールは急速に進化するため、Aixisは定期的な再評価を通じてデータの鮮度を維持します。
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="border border-gray-200 rounded-sm p-5 bg-white">
+                    <div class="text-2xl font-bold font-serif text-gray-900">90日</div>
+                    <div class="text-xs text-gray-500 mt-1">標準再評価サイクル</div>
+                    <p class="mt-3 text-xs text-gray-500 leading-relaxed">全ツールを原則90日ごとに再監査し、スコアを更新します。</p>
+                </div>
+                <div class="border border-gray-200 rounded-sm p-5 bg-white">
+                    <div class="text-2xl font-bold font-serif text-gray-900">即時</div>
+                    <div class="text-xs text-gray-500 mt-1">メジャーアップデート時</div>
+                    <p class="mt-3 text-xs text-gray-500 leading-relaxed">ツールの大幅なバージョンアップが確認された場合、臨時再評価を実施します。</p>
+                </div>
+            </div>
+
+            <div class="border border-gray-200 rounded-sm p-5 bg-white">
+                <h3 class="text-sm font-bold text-gray-900">スコアの有効期限</h3>
+                <p class="mt-2 text-sm text-gray-600">
+                    公開スコアには最終評価日が明記されます。最終評価から180日を超えたスコアには「要更新」ラベルが付与され、ユーザーにデータの鮮度を明示します。360日を超過したスコアは「期限切れ」として非表示となります。
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section 3: 利益相反ポリシー -->
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+    <div class="section-line"></div>
+    <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+        利益相反ポリシー
+    </h2>
+    <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Conflict of Interest Policy</p>
+    <hr class="divider-thin">
+
+    <div class="mt-8 space-y-6 text-sm text-gray-600 leading-relaxed">
+        <p>
+            Aixisは評価の中立性を担保するため、以下の原則を厳格に遵守しています。
+        </p>
+
+        <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+                <span class="text-blue-500 shrink-0 mt-0.5 font-bold">1.</span>
+                <div>
+                    <span class="font-bold text-gray-900">ベンダーからの報酬受領の完全禁止</span>
+                    <p class="mt-1 text-gray-600">紹介手数料、広告費、掲載料、スポンサーシップ、その他いかなる名目においても、評価対象ベンダーからの報酬を受け取りません。</p>
+                </div>
+            </li>
+            <li class="flex items-start gap-3">
+                <span class="text-blue-500 shrink-0 mt-0.5 font-bold">2.</span>
+                <div>
+                    <span class="font-bold text-gray-900">収益源の限定と公開</span>
+                    <p class="mt-1 text-gray-600">収益はユーザー組織からのサブスクリプション契約および個別監査レポートの販売に限定されます。収益モデルは常に公開され、変更がある場合は事前に告知します。</p>
+                </div>
+            </li>
+            <li class="flex items-start gap-3">
+                <span class="text-blue-500 shrink-0 mt-0.5 font-bold">3.</span>
+                <div>
+                    <span class="font-bold text-gray-900">掲載順序の中立性</span>
+                    <p class="mt-1 text-gray-600">ツールの掲載順序はスコアに基づいてのみ決定されます。有料枠、優先掲載、スポンサード表示は一切存在しません。</p>
+                </div>
+            </li>
+            <li class="flex items-start gap-3">
+                <span class="text-blue-500 shrink-0 mt-0.5 font-bold">4.</span>
+                <div>
+                    <span class="font-bold text-gray-900">評価者の利益相反チェック</span>
+                    <p class="mt-1 text-gray-600">手動評価を行う専門家は、評価対象ベンダーとの利害関係がないことを事前に申告・確認します。</p>
+                </div>
+            </li>
+        </ul>
+
+        <p>
+            独立性に関する詳細は<a href="/independence" class="text-blue-600 hover:text-blue-800 underline underline-offset-2">独立性宣言</a>をご覧ください。
+        </p>
+    </div>
+</section>
+
+<!-- Section 4: 再評価依頼の取り扱い -->
+<section class="bg-gray-50 border-y border-gray-200">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div class="section-line"></div>
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+            再評価依頼の取り扱い
+        </h2>
+        <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Re-evaluation Requests</p>
+        <hr class="divider-thin">
+
+        <div class="mt-8 space-y-6 text-sm text-gray-600 leading-relaxed">
+            <p>
+                ベンダーおよびユーザーは、以下の条件に該当する場合に再評価を依頼できます。
+            </p>
+
+            <div class="border border-gray-200 rounded-sm overflow-hidden bg-white">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h3 class="text-sm font-bold text-gray-900">再評価が認められるケース</h3>
+                </div>
+                <ul class="px-6 py-4 space-y-2 text-sm text-gray-600">
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>ツールのメジャーバージョンアップが実施された場合</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>評価時に存在しなかった新機能が追加された場合</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>評価結果に事実誤認の可能性がある場合</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>前回の評価から90日以上が経過した場合</li>
+                </ul>
+            </div>
+
+            <div class="border border-gray-200 rounded-sm p-5 bg-white">
+                <h3 class="text-sm font-bold text-gray-900">再評価プロセス</h3>
+                <p class="mt-2 text-sm text-gray-600">
+                    再評価依頼は<a href="/contact" class="text-blue-600 hover:text-blue-800 underline underline-offset-2">お問い合わせフォーム</a>から受け付けています。依頼受領後、通常10営業日以内に再評価の可否を回答し、承認された場合は30営業日以内に再評価を完了します。再評価の結果、スコアが上昇・下降いずれの方向にも変動する可能性があります。
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section 5: ベンダーからの訂正依頼 -->
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+    <div class="section-line"></div>
+    <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+        ベンダーからの訂正依頼への対応方針
+    </h2>
+    <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Vendor Correction Requests</p>
+    <hr class="divider-thin">
+
+    <div class="mt-8 space-y-6 text-sm text-gray-600 leading-relaxed">
+        <p>
+            Aixisは評価の正確性を最重要視しています。ベンダーから事実関係に関する訂正依頼があった場合、以下のプロセスで対応します。
+        </p>
+
+        <div class="space-y-4">
+            <div class="flex items-start gap-4">
+                <div class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 text-xs font-bold rounded-sm shrink-0">01</div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">訂正依頼の受付</h3>
+                    <p class="mt-1 text-sm text-gray-600">ベンダーは具体的な根拠資料を添えて訂正依頼を提出できます。</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-4">
+                <div class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 text-xs font-bold rounded-sm shrink-0">02</div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">独立検証</h3>
+                    <p class="mt-1 text-sm text-gray-600">原評価者とは異なる独立した評価者が訂正内容を検証します。</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-4">
+                <div class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 text-xs font-bold rounded-sm shrink-0">03</div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">結果の反映</h3>
+                    <p class="mt-1 text-sm text-gray-600">事実誤認が確認された場合、スコアを修正し、修正履歴を公開します。訂正が認められなかった場合もその理由を依頼者に通知します。</p>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-xs text-gray-500 border-l-2 border-gray-200 pl-4">
+            訂正依頼はスコアの変更を保証するものではありません。Aixisは独立した検証プロセスに基づいて判断を行います。
+        </p>
+    </div>
+</section>
+
+<!-- Section 6: 保証範囲と免責事項 -->
+<section class="bg-gray-50 border-y border-gray-200">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div class="section-line"></div>
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+            保証範囲と免責事項
+        </h2>
+        <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Scope of Guarantee &amp; Disclaimers</p>
+        <hr class="divider-thin">
+
+        <div class="mt-8 space-y-6 text-sm text-gray-600 leading-relaxed">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-0 border border-gray-200 rounded-sm overflow-hidden">
+                <div class="p-6 border-b md:border-b-0 md:border-r border-gray-200 bg-white">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-sans">Aixisが保証すること</span>
+                    <ul class="mt-4 space-y-3">
+                        <li class="flex items-start gap-2 text-sm text-gray-700">
+                            <span class="text-blue-500 shrink-0 mt-0.5">&#10003;</span>
+                            評価プロセスの独立性と中立性
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-gray-700">
+                            <span class="text-blue-500 shrink-0 mt-0.5">&#10003;</span>
+                            公開された基準に基づく評価の実施
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-gray-700">
+                            <span class="text-blue-500 shrink-0 mt-0.5">&#10003;</span>
+                            定期的な再評価による鮮度の維持
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-gray-700">
+                            <span class="text-blue-500 shrink-0 mt-0.5">&#10003;</span>
+                            誤りが判明した場合の迅速な修正
+                        </li>
+                    </ul>
+                </div>
+                <div class="p-6 bg-white">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-sans">免責事項</span>
+                    <ul class="mt-4 space-y-3">
+                        <li class="flex items-start gap-2 text-sm text-gray-600">
+                            <span class="text-gray-400 shrink-0 mt-0.5">-</span>
+                            評価結果に基づく導入判断の最終責任はユーザーに帰属します
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-gray-600">
+                            <span class="text-gray-400 shrink-0 mt-0.5">-</span>
+                            ツールの将来的な品質変動を保証するものではありません
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-gray-600">
+                            <span class="text-gray-400 shrink-0 mt-0.5">-</span>
+                            特定の業務要件への適合性を保証するものではありません
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-gray-600">
+                            <span class="text-gray-400 shrink-0 mt-0.5">-</span>
+                            評価は公開時点でのツールの状態に基づいています
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section 7: データの正確性への取り組み -->
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+    <div class="section-line"></div>
+    <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+        データの正確性への取り組み
+    </h2>
+    <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-sans">Commitment to Accuracy</p>
+    <hr class="divider-thin">
+
+    <div class="mt-8 space-y-6 text-sm text-gray-600 leading-relaxed">
+        <p>
+            Aixisは、公開するすべてのデータの正確性を担保するため、以下の取り組みを継続的に実施しています。
+        </p>
+
+        <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+                <span class="text-blue-500 shrink-0 mt-0.5 font-bold">-</span>
+                <div>
+                    <span class="font-bold text-gray-900">ダブルチェック体制</span>
+                    <p class="mt-1 text-gray-600">手動評価は必ず2名以上の独立した評価者が実施し、結果を照合します。</p>
+                </div>
+            </li>
+            <li class="flex items-start gap-3">
+                <span class="text-blue-500 shrink-0 mt-0.5 font-bold">-</span>
+                <div>
+                    <span class="font-bold text-gray-900">自動テストの継続監視</span>
+                    <p class="mt-1 text-gray-600">自動テストスクリプトの精度を定期的に検証し、テスト環境の変動による誤差を排除します。</p>
+                </div>
+            </li>
+            <li class="flex items-start gap-3">
+                <span class="text-blue-500 shrink-0 mt-0.5 font-bold">-</span>
+                <div>
+                    <span class="font-bold text-gray-900">修正履歴の完全公開</span>
+                    <p class="mt-1 text-gray-600">スコアの修正が発生した場合、修正日時・理由・変更前後の値を完全に公開します。</p>
+                </div>
+            </li>
+            <li class="flex items-start gap-3">
+                <span class="text-blue-500 shrink-0 mt-0.5 font-bold">-</span>
+                <div>
+                    <span class="font-bold text-gray-900">外部フィードバックの受付</span>
+                    <p class="mt-1 text-gray-600">ユーザー・ベンダーからのフィードバックを常時受け付け、データの精度向上に活用します。</p>
+                </div>
+            </li>
+        </ul>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="bg-gradient-to-br from-[#0f172a] to-[#1e3a5f]">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <div class="section-line" style="--line-color: #334155;"></div>
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-white leading-snug">ご質問・ご意見がございましたら</h2>
+        <p class="mt-3 text-sm text-slate-400">透明性ポリシーに関するご質問やフィードバックをお待ちしています。</p>
+        <div class="mt-8 flex flex-wrap justify-center gap-4">
+            <a href="/contact"
+               class="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-bold bg-white text-[#0f172a] hover:bg-gray-100 shadow-sm transition-all duration-200">
+                お問い合わせ
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+            </a>
+            <a href="/independence"
+               class="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-bold text-white border border-white/30 hover:bg-white/10 transition-all duration-200">
+                独立性宣言を読む
+            </a>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
