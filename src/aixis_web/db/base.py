@@ -5,7 +5,18 @@ from sqlalchemy.orm import DeclarativeBase
 
 from ..config import settings
 
-engine = create_async_engine(settings.database_url, echo=False)
+# Configure connection pool — SQLite uses NullPool by default,
+# PostgreSQL/MySQL benefit from explicit pool limits.
+_engine_kwargs: dict = {"echo": False}
+if "sqlite" not in settings.database_url:
+    _engine_kwargs.update({
+        "pool_size": 20,
+        "max_overflow": 40,
+        "pool_pre_ping": True,
+        "pool_recycle": 3600,
+    })
+
+engine = create_async_engine(settings.database_url, **_engine_kwargs)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 

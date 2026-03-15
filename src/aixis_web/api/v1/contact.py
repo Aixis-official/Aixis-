@@ -1,12 +1,16 @@
-"""Contact form API endpoint."""
+"""Contact form API endpoint with rate limiting and input sanitization."""
 
 import asyncio
 import logging
+import re
 import smtplib
+import time
+from collections import defaultdict
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from threading import Lock
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Request, status
 
 from ...config import settings
 from ...schemas.contact import ContactRequest, ContactResponse
@@ -15,24 +19,77 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+# ---------------------------------------------------------------------------
+# In-memory rate limiter (per-IP, sliding window)
+# ---------------------------------------------------------------------------
+
+class _RateLimiter:
+    """Simple in-memory rate limiter keyed by IP address."""
+
+    def __init__(self):
+        self._attempts: dict[str, list[float]] = defaultdict(list)
+        self._lock = Lock()
+
+    def check(self, ip: str, max_requests: int, window_seconds: int) -> bool:
+        """Return True if the request is allowed, False if rate-limited."""
+        now = time.time()
+        cutoff = now - window_seconds
+
+        with self._lock:
+            # Prune old entries
+            self._attempts[ip] = [t for t in self._attempts[ip] if t > cutoff]
+
+            if len(self._attempts[ip]) >= max_requests:
+                return False
+
+            self._attempts[ip].append(now)
+            return True
+
+
+_rate_limiter = _RateLimiter()
+
+
+# ---------------------------------------------------------------------------
+# Email sanitization helpers
+# ---------------------------------------------------------------------------
+
+_HEADER_INJECT_RE = re.compile(r'[\r\n]')
+
+
+def _sanitize_header(value: str) -> str:
+    """Strip CR/LF characters to prevent email header injection."""
+    return _HEADER_INJECT_RE.sub(' ', value).strip()
+
+
+def _sanitize_body(value: str) -> str:
+    """Basic body sanitization — strip control characters except newlines/tabs."""
+    return ''.join(c for c in value if c in ('\n', '\t') or (ord(c) >= 32))
+
+
+# ---------------------------------------------------------------------------
+# Email construction
+# ---------------------------------------------------------------------------
+
 def _build_notification_email(req: ContactRequest) -> MIMEMultipart:
     """Build notification email to Aixis team."""
-    subject = f"[Aixis] お問い合わせ: {req.inquiry_type} - {req.company_name}"
+    subject = _sanitize_header(
+        f"[Aixis] お問い合わせ: {req.inquiry_type} - {req.company_name}"
+    )
 
     body_lines = [
         "以下のお問い合わせを受け付けました。",
         "",
         "─" * 30,
-        f"会社名: {req.company_name}",
-        f"部署: {req.department or '未記入'}",
-        f"お名前: {req.name}",
+        f"会社名: {_sanitize_body(req.company_name)}",
+        f"部署: {_sanitize_body(req.department or '未記入')}",
+        f"お名前: {_sanitize_body(req.name)}",
         f"メールアドレス: {req.email}",
-        f"電話番号: {req.phone or '未記入'}",
-        f"お問い合わせ種別: {req.inquiry_type}",
+        f"電話番号: {_sanitize_body(req.phone or '未記入')}",
+        f"お問い合わせ種別: {_sanitize_body(req.inquiry_type)}",
         "─" * 30,
         "",
         "【お問い合わせ内容】",
-        req.message,
+        _sanitize_body(req.message),
     ]
     body = "\n".join(body_lines)
 
@@ -40,7 +97,7 @@ def _build_notification_email(req: ContactRequest) -> MIMEMultipart:
     msg["Subject"] = subject
     msg["From"] = settings.smtp_from
     msg["To"] = settings.smtp_to
-    msg["Reply-To"] = req.email
+    msg["Reply-To"] = _sanitize_header(req.email)
     msg.attach(MIMEText(body, "plain", "utf-8"))
     return msg
 
@@ -50,15 +107,15 @@ def _build_autoreply_email(req: ContactRequest) -> MIMEMultipart:
     subject = "[Aixis] お問い合わせを受け付けました"
 
     body_lines = [
-        f"{req.name} 様",
+        f"{_sanitize_body(req.name)} 様",
         "",
         "この度は Aixis にお問い合わせいただき、誠にありがとうございます。",
         "以下の内容でお問い合わせを受け付けました。",
         "",
         "─" * 30,
-        f"お問い合わせ種別: {req.inquiry_type}",
+        f"お問い合わせ種別: {_sanitize_body(req.inquiry_type)}",
         f"お問い合わせ内容:",
-        req.message,
+        _sanitize_body(req.message),
         "─" * 30,
         "",
         "担当者より2営業日以内にご連絡いたします。",
@@ -78,7 +135,7 @@ def _build_autoreply_email(req: ContactRequest) -> MIMEMultipart:
     msg = MIMEMultipart()
     msg["Subject"] = subject
     msg["From"] = settings.smtp_from
-    msg["To"] = req.email
+    msg["To"] = _sanitize_header(req.email)
     msg.attach(MIMEText(body, "plain", "utf-8"))
     return msg
 
@@ -91,18 +148,34 @@ def _send_email(msg: MIMEMultipart) -> None:
         server.send_message(msg)
 
 
+# ---------------------------------------------------------------------------
+# Endpoint
+# ---------------------------------------------------------------------------
+
 @router.post("/", response_model=ContactResponse)
-async def submit_contact(req: ContactRequest):
+async def submit_contact(req: ContactRequest, request: Request):
     """Receive contact form submission and send notification email.
 
-    When SMTP is configured, sends an email to info@aixis.jp.
-    When SMTP is not configured, logs the submission and returns success.
+    Rate limited to prevent abuse.
     """
+    # Rate limiting by IP
+    client_ip = request.client.host if request.client else "unknown"
+    if not _rate_limiter.check(
+        client_ip,
+        settings.contact_rate_limit_per_ip,
+        settings.contact_rate_limit_window_seconds,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="送信回数の上限に達しました。しばらくしてからもう一度お試しください。",
+        )
+
     logger.info(
-        "Contact form submission from %s (%s): %s",
+        "Contact form submission from %s (%s): %s [IP: %s]",
         req.company_name,
         req.email,
         req.inquiry_type,
+        client_ip,
     )
 
     if settings.smtp_host:
@@ -129,12 +202,11 @@ async def submit_contact(req: ContactRequest):
             logger.exception("Failed to send auto-reply to %s", req.email)
 
         if not notification_sent:
+            # Log without user message content to avoid log injection
             logger.error(
-                "CRITICAL: Contact form from %s (%s) was NOT delivered to team. "
-                "Message: %s",
+                "CRITICAL: Contact form from %s (%s) was NOT delivered to team.",
                 req.company_name,
                 req.email,
-                req.message[:200],
             )
     else:
         logger.warning("SMTP not configured; contact form submission logged only.")

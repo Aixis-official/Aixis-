@@ -50,8 +50,18 @@ async def legacy_platform_landing(request: Request):
 
 @page_router.get("/platform/{path:path}")
 async def legacy_platform_redirect(path: str):
-    """Redirect old /platform/... URLs to new /... URLs."""
-    return RedirectResponse(url=f"/{path}", status_code=302)
+    """Redirect old /platform/... URLs to new /... URLs.
+
+    Sanitizes the path to prevent open redirect attacks.
+    """
+    import re
+    # Only allow safe path characters (alphanumeric, hyphens, slashes, underscores)
+    safe_path = re.sub(r'[^a-zA-Z0-9\-_/]', '', path)
+    # Strip leading slashes to prevent //evil.com open redirect
+    safe_path = safe_path.lstrip('/')
+    if not safe_path:
+        return RedirectResponse(url="/", status_code=302)
+    return RedirectResponse(url=f"/{safe_path}", status_code=302)
 
 
 # ──────────── Public Pages ────────────
@@ -105,6 +115,13 @@ async def category_page(request: Request, slug: str):
         "public/category.html",
         {"request": request, "title": "カテゴリ", "slug": slug, "active_page": "categories"},
     )
+
+
+@page_router.get("/terms")
+async def terms_page(request: Request):
+    """Terms of service page."""
+    ctx = _get_template_context(request, title="利用規約", active_page="terms")
+    return templates.TemplateResponse("public/terms.html", ctx)
 
 
 @page_router.get("/pricing")

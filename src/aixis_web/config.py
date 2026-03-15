@@ -1,5 +1,13 @@
 """Application configuration using pydantic-settings."""
+import logging
+import secrets
+
 from pydantic_settings import BaseSettings
+
+logger = logging.getLogger(__name__)
+
+_DEFAULT_SECRET = "CHANGE-ME-IN-PRODUCTION"
+_DEFAULT_ADMIN_PW = "changeme123"
 
 
 class Settings(BaseSettings):
@@ -15,7 +23,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379"
 
     # Auth
-    secret_key: str = "CHANGE-ME-IN-PRODUCTION"
+    secret_key: str = _DEFAULT_SECRET
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 30
 
@@ -25,7 +33,7 @@ class Settings(BaseSettings):
 
     # Admin seed
     admin_email: str = "admin@aixis.jp"
-    admin_password: str = "changeme123"
+    admin_password: str = _DEFAULT_ADMIN_PW
 
     # Audit
     default_timeout_ms: int = 120000
@@ -59,7 +67,45 @@ class Settings(BaseSettings):
     public_api_default_rate_limit_per_minute: int = 60
     public_api_default_rate_limit_per_day: int = 10000
 
+    # Security: Contact form rate limiting
+    contact_rate_limit_per_ip: int = 5  # max submissions per IP per hour
+    contact_rate_limit_window_seconds: int = 3600
+
     model_config = {"env_file": ".env"}
 
 
 settings = Settings()
+
+
+def validate_settings():
+    """Validate critical security settings on startup."""
+    warnings = []
+
+    if settings.secret_key == _DEFAULT_SECRET:
+        # In production this is critical; in development, auto-generate
+        if not settings.debug:
+            logger.critical(
+                "SECURITY: secret_key is set to the default value! "
+                "Set SECRET_KEY environment variable to a secure random string (min 32 chars). "
+                "Auto-generating a temporary key for this session."
+            )
+        settings.secret_key = secrets.token_urlsafe(48)
+        warnings.append("secret_key was default — auto-generated temporary key")
+
+    if len(settings.secret_key) < 32:
+        logger.warning(
+            "SECURITY: secret_key is shorter than 32 characters. "
+            "Use a longer key for production."
+        )
+
+    if settings.admin_password == _DEFAULT_ADMIN_PW and not settings.debug:
+        logger.warning(
+            "SECURITY: admin_password is set to the default value. "
+            "Set ADMIN_PASSWORD environment variable to a secure password."
+        )
+
+    return warnings
+
+
+# Run validation on import
+_startup_warnings = validate_settings()

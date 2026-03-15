@@ -3,11 +3,14 @@ import asyncio as _asyncio
 import csv
 import io
 import json as _json
+import logging
 import uuid
 from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+
+logger = logging.getLogger(__name__)
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import func, select
@@ -127,9 +130,10 @@ async def start_audit(
         audit_session.status = "failed"
         audit_session.error_message = result["error"]
         await db.commit()
+        logger.error("Audit start failed for %s: %s", tool.slug, result["error"])
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result["error"],
+            detail="監査の開始に失敗しました。管理者にお問い合わせください。",
         )
 
     return AuditStartResponse(
@@ -536,9 +540,10 @@ async def retry_audit(
         new_session.status = "failed"
         new_session.error_message = result["error"]
         await db.commit()
+        logger.error("Audit retry failed for %s: %s", tool.slug, result["error"])
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result["error"],
+            detail="監査の再試行に失敗しました。管理者にお問い合わせください。",
         )
 
     return AuditStartResponse(

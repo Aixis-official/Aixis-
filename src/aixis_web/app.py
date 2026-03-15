@@ -4,9 +4,12 @@ import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 
 from .config import settings
 from .db.base import init_db
@@ -15,6 +18,28 @@ from .api.v1.router import api_router
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).parent
+
+
+# ---------------------------------------------------------------------------
+# Security headers middleware
+# ---------------------------------------------------------------------------
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add security headers to all responses."""
+
+    async def dispatch(self, request: Request, call_next):
+        response: Response = await call_next(request)
+        # Prevent clickjacking
+        response.headers["X-Frame-Options"] = "DENY"
+        # Prevent MIME-type sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        # XSS protection (legacy browsers)
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        # Referrer policy
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        # Permissions policy
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        return response
 
 
 @asynccontextmanager
@@ -40,6 +65,22 @@ def create_app() -> FastAPI:
         version=settings.app_version,
         description="日本初の独立系AI監査プラットフォーム",
         lifespan=lifespan,
+    )
+
+    # Security headers middleware
+    app.add_middleware(SecurityHeadersMiddleware)
+
+    # CORS middleware — restrict origins in production
+    allowed_origins = ["https://aixis.jp", "https://www.aixis.jp"]
+    if settings.debug:
+        allowed_origins.append("http://localhost:8000")
+        allowed_origins.append("http://127.0.0.1:8000")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+        allow_headers=["*"],
     )
 
     # Mount static files
