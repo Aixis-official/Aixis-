@@ -73,7 +73,7 @@ def _sanitize_body(value: str) -> str:
 
 def _notification_subject(req: ContactRequest) -> str:
     return _sanitize_header(
-        f"[Aixis] お問い合わせ: {req.inquiry_type} - {req.company_name}"
+        f"[Aixis-platform] お問い合わせ: {req.inquiry_type} - {req.company_name}"
     )
 
 
@@ -113,8 +113,9 @@ def _autoreply_body(req: ContactRequest) -> str:
         "今しばらくお待ちくださいますようお願い申し上げます。",
         "",
         "─" * 30,
-        "Aixis Inc.",
+        "Aixis",
         "独立系AI調査・監査機関",
+        "https://aixis.jp",
         "https://platform.aixis.jp",
         "─" * 30,
         "",
@@ -224,7 +225,7 @@ def _send_emails_background(req: ContactRequest) -> None:
     try:
         _send_email(
             to=req.email,
-            subject="[Aixis] お問い合わせを受け付けました",
+            subject="[Aixis-platform] お問い合わせを受け付けました",
             body=_autoreply_body(req),
         )
         logger.info("Auto-reply sent to %s", req.email)

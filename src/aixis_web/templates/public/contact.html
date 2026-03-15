@@ -99,24 +99,65 @@
 <section class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
 
     <!-- Success Message (hidden by default) -->
-    <div id="contact-success" class="hidden mb-8">
-        <div class="py-6">
-            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-widest mb-3">Sent</p>
-            <p id="contact-success-text" class="text-sm font-medium text-gray-700"></p>
-            <p class="mt-2 text-[13px] text-gray-400 leading-relaxed">担当者より2営業日以内にご連絡いたします。</p>
-            <p class="mt-1 text-[11px] text-gray-300">確認メールを送信しました。届かない場合は迷惑メールフォルダをご確認ください。</p>
+    <div id="contact-success" class="hidden">
+        <div class="text-center py-16 sm:py-24">
+            <!-- Check icon -->
+            <div class="mx-auto mb-8 w-16 h-16 rounded-full border-2 border-gray-900 flex items-center justify-center">
+                <svg class="w-7 h-7 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <div class="section-line mx-auto" style="width: 24px; margin-bottom: 1rem;"></div>
+            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-[0.2em] mb-4">Thank you</p>
+            <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+                お問い合わせを受け付けました
+            </h2>
+            <p class="mt-4 text-sm text-gray-500 leading-relaxed max-w-sm mx-auto">
+                担当者より<span class="font-medium text-gray-700">2営業日以内</span>にご連絡いたします。<br>
+                今しばらくお待ちくださいますようお願いいたします。
+            </p>
+            <div class="mt-6 pt-6 border-t border-gray-100 max-w-xs mx-auto">
+                <p class="text-[11px] text-gray-300 leading-relaxed">
+                    確認メールを送信しました。届かない場合は迷惑メールフォルダをご確認ください。
+                </p>
+            </div>
+            <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="/"
+                   class="inline-flex items-center gap-2 px-8 py-3 text-sm font-bold text-white bg-[#0f172a] hover:bg-[#1e293b] transition-colors duration-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    ホームに戻る
+                </a>
+                <a href="/tools"
+                   class="inline-flex items-center gap-2 px-8 py-3 text-sm font-medium text-gray-500 border border-gray-200 hover:border-gray-400 hover:text-gray-700 transition-colors duration-200">
+                    監査データベースを見る
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </a>
+            </div>
         </div>
     </div>
 
     <!-- Error Message (hidden by default) -->
-    <div id="contact-error" class="hidden mb-8">
-        <div class="py-6">
-            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-widest mb-3">Error</p>
-            <p id="contact-error-text" class="text-[13px] text-gray-500 leading-relaxed"></p>
-            <button onclick="document.getElementById('contact-error').classList.add('hidden'); document.getElementById('contact-form').classList.remove('hidden');"
-                    class="mt-4 text-[12px] text-gray-400 underline underline-offset-2 hover:text-gray-600 transition-colors duration-200">
-                もう一度試す
-            </button>
+    <div id="contact-error" class="hidden">
+        <div class="text-center py-16 sm:py-24">
+            <!-- Error icon -->
+            <div class="mx-auto mb-8 w-16 h-16 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                </svg>
+            </div>
+            <div class="section-line mx-auto" style="width: 24px; margin-bottom: 1rem;"></div>
+            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-[0.2em] mb-4">Error</p>
+            <h2 class="text-xl font-bold font-serif text-gray-900 tracking-tight">
+                送信できませんでした
+            </h2>
+            <p id="contact-error-text" class="mt-4 text-sm text-gray-500 leading-relaxed max-w-sm mx-auto"></p>
+            <div class="mt-10">
+                <button onclick="document.getElementById('contact-error').classList.add('hidden'); document.getElementById('contact-form').classList.remove('hidden');"
+                        class="inline-flex items-center gap-2 px-8 py-3 text-sm font-bold text-white bg-[#0f172a] hover:bg-[#1e293b] transition-colors duration-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    もう一度試す
+                </button>
+            </div>
         </div>
     </div>
 
@@ -177,10 +218,9 @@
                     </label>
                     <select id="inquiry_type" name="inquiry_type" required>
                         <option value="" disabled selected>選択してください</option>
+                        <option value="監査データベース利用に関するご相談">監査データベース利用に関するご相談</option>
                         <option value="クイック診断のご相談">クイック診断のご相談</option>
-                        <option value="料金プランのご相談">料金プランのご相談</option>
                         <option value="個別監査レポートのご相談">個別監査レポートのご相談</option>
-                        <option value="無料トライアルのご相談">無料トライアルのご相談</option>
                         <option value="ツール掲載に関するご相談">ツール掲載に関するご相談</option>
                         <option value="パートナーシップに関するご相談">パートナーシップに関するご相談</option>
                         <option value="その他のご相談">その他のご相談</option>
@@ -268,11 +308,11 @@
     // --- Auto-select inquiry type from URL param ---
     var urlParams = new URLSearchParams(window.location.search);
     var typeMap = {
+        'database': '監査データベース利用に関するご相談',
         'quick': 'クイック診断のご相談',
-        'pricing': '料金プランのご相談',
         'report': '個別監査レポートのご相談',
         'listing': 'ツール掲載に関するご相談',
-        'trial': '無料トライアルのご相談'
+        'partner': 'パートナーシップに関するご相談'
     };
     var urlType = urlParams.get('type');
     if (urlType && typeMap[urlType]) {
