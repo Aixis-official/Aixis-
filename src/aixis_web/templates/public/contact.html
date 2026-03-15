@@ -100,19 +100,21 @@
 
     <!-- Success Message (hidden by default) -->
     <div id="contact-success" class="hidden mb-8">
-        <div class="border-l-2 border-gray-900 pl-6 py-4">
-            <p id="contact-success-text" class="text-base font-semibold text-gray-900"></p>
-            <p class="mt-2 text-sm text-gray-500">担当者より2営業日以内にご連絡いたします。</p>
-            <p class="mt-1 text-xs text-gray-400">確認メールを送信しました。届かない場合は迷惑メールフォルダをご確認ください。</p>
+        <div class="py-6">
+            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-widest mb-3">Sent</p>
+            <p id="contact-success-text" class="text-sm font-medium text-gray-700"></p>
+            <p class="mt-2 text-[13px] text-gray-400 leading-relaxed">担当者より2営業日以内にご連絡いたします。</p>
+            <p class="mt-1 text-[11px] text-gray-300">確認メールを送信しました。届かない場合は迷惑メールフォルダをご確認ください。</p>
         </div>
     </div>
 
     <!-- Error Message (hidden by default) -->
     <div id="contact-error" class="hidden mb-8">
-        <div class="border-l-2 border-gray-400 pl-6 py-4">
-            <p id="contact-error-text" class="text-sm font-medium text-gray-700"></p>
+        <div class="py-6">
+            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-widest mb-3">Error</p>
+            <p id="contact-error-text" class="text-[13px] text-gray-500 leading-relaxed"></p>
             <button onclick="document.getElementById('contact-error').classList.add('hidden'); document.getElementById('contact-form').classList.remove('hidden');"
-                    class="mt-4 text-sm font-medium text-gray-500 underline underline-offset-2 hover:text-gray-900 transition-colors duration-200">
+                    class="mt-4 text-[12px] text-gray-400 underline underline-offset-2 hover:text-gray-600 transition-colors duration-200">
                 もう一度試す
             </button>
         </div>

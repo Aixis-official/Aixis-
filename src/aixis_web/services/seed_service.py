@@ -7,8 +7,10 @@ import yaml
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..config import settings
 from ..db.models.tool_industry import IndustryTag, UseCaseTag
 from ..db.models.risk_governance import RegulatoryFramework
+from ..db.models.user import Organization, User
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +19,50 @@ SEED_DIR = Path(__file__).resolve().parent.parent.parent.parent / "config" / "se
 
 async def seed_all(db: AsyncSession) -> None:
     """Seed all master data tables if they are empty."""
+    await _seed_admin_user(db)
     await _seed_industry_tags(db)
     await _seed_use_case_tags(db)
     await _seed_regulatory_frameworks(db)
     await db.commit()
+
+
+async def _seed_admin_user(db: AsyncSession) -> None:
+    """Create or update the admin user on every startup."""
+    from ..api.deps import hash_password
+
+    result = await db.execute(
+        select(User).where(User.email == settings.admin_email)
+    )
+    existing = result.scalar_one_or_none()
+    if existing:
+        existing.hashed_password = hash_password(settings.admin_password)
+        existing.is_active = True
+        logger.info("Admin user password synced: %s", settings.admin_email)
+        return
+
+    # Ensure organization exists
+    org_name = "Aixis Inc."
+    result = await db.execute(
+        select(Organization).where(Organization.name == org_name)
+    )
+    org = result.scalar_one_or_none()
+    if org is None:
+        org = Organization(name=org_name, name_jp="Aixis株式会社")
+        db.add(org)
+        await db.flush()
+        logger.info("Created organization: %s", org_name)
+
+    admin = User(
+        email=settings.admin_email,
+        name="管理者",
+        name_jp="管理者",
+        hashed_password=hash_password(settings.admin_password),
+        role="admin",
+        is_active=True,
+        organization_id=org.id,
+    )
+    db.add(admin)
+    logger.info("Created admin user: %s", settings.admin_email)
 
 
 async def _seed_industry_tags(db: AsyncSession) -> None:

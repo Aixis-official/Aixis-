@@ -39,18 +39,30 @@
 {% block head %}
 <style>
     /* ===== Landing page: nav overlays hero ===== */
+    /*
+     * Fix: override Tailwind utility classes (bg-white/80, backdrop-blur-lg, border-gray-200/50)
+     * that are baked into base.html's nav element. Without !important on the initial state,
+     * the browser renders the white bg from Tailwind classes for one frame before CSS specificity
+     * kicks in — causing a flash on navigation from other pages.
+     *
+     * The nav starts as .nav-transparent (added via inline <script> below, before first paint).
+     * On scroll past hero, JS swaps to .nav-solid.
+     */
     #main-nav {
         position: fixed !important;
-        /* Start transparent immediately — prevents white flash on page navigation */
-        background-color: transparent !important;
+    }
+    /* Initial + at-top-of-page state: fully transparent */
+    #main-nav:not(.nav-solid) {
+        background: transparent !important;
+        -webkit-backdrop-filter: none !important;
         backdrop-filter: none !important;
         border-bottom-color: transparent !important;
     }
-    /* Once JS marks it as scrolled, restore solid background */
+    /* Scrolled state: restore solid frosted-glass background */
     #main-nav.nav-solid {
-        background-color: rgba(255,255,255,0.8) !important;
-        backdrop-filter: blur(12px) !important;
+        background: rgba(255,255,255,0.8) !important;
         -webkit-backdrop-filter: blur(12px) !important;
+        backdrop-filter: blur(12px) !important;
         border-bottom-color: rgba(229,231,235,0.5) !important;
     }
     /* Dark overscroll area: prevents white flash when bouncing above hero */
@@ -112,35 +124,37 @@
         color: #6b7280;
     }
 
-    /* ===== Transparent header on hero (landing page only) ===== */
-    #main-nav.nav-transparent {
-        background-color: transparent !important;
-        backdrop-filter: none !important;
-        border-bottom-color: transparent !important;
-    }
+    /* ===== Transparent header text colors (landing page only) =====
+     * Use :not(.nav-solid) so text is white from first paint (pure CSS, no JS dependency).
+     * The .nav-transparent class is kept as an alias for the same effect. */
+    #main-nav:not(.nav-solid) .nav-link,
+    #main-nav:not(.nav-solid) .nav-dropdown button,
     #main-nav.nav-transparent .nav-link,
     #main-nav.nav-transparent .nav-dropdown button {
         color: #ffffff !important;
     }
-    #main-nav.nav-transparent .nav-link:hover,
-    #main-nav.nav-transparent .nav-dropdown button:hover {
+    #main-nav:not(.nav-solid) .nav-link:hover,
+    #main-nav:not(.nav-solid) .nav-dropdown button:hover {
         color: #ffffff !important;
         opacity: 0.8;
     }
+    #main-nav:not(.nav-solid) .nav-auth-link,
     #main-nav.nav-transparent .nav-auth-link {
         color: #ffffff !important;
     }
-    #main-nav.nav-transparent .nav-auth-link:hover {
+    #main-nav:not(.nav-solid) .nav-auth-link:hover {
         opacity: 0.8;
     }
+    #main-nav:not(.nav-solid) .nav-auth-cta,
     #main-nav.nav-transparent .nav-auth-cta {
         color: #ffffff !important;
         border-color: rgba(255, 255, 255, 0.5) !important;
     }
-    #main-nav.nav-transparent .nav-auth-cta:hover {
+    #main-nav:not(.nav-solid) .nav-auth-cta:hover {
         border-color: #ffffff !important;
     }
     /* Mobile hamburger white on transparent nav */
+    #main-nav:not(.nav-solid) #mobile-menu-btn,
     #main-nav.nav-transparent #mobile-menu-btn {
         color: #ffffff !important;
     }
