@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings
 logger = logging.getLogger(__name__)
 
 _DEFAULT_SECRET = "CHANGE-ME-IN-PRODUCTION"
-_DEFAULT_ADMIN_PW = "changeme123"
+_DEFAULT_ADMIN_PW = "changeme123"  # Only used for checking if password was changed
 
 
 class Settings(BaseSettings):

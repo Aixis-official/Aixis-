@@ -47,19 +47,19 @@
         border-color: #1a365d;
     }
     .contact-field .field-error {
-        border-bottom-color: #ef4444 !important;
+        border-bottom-color: #9ca3af !important;
     }
     .contact-field textarea.field-error {
-        border-color: #ef4444 !important;
+        border-color: #9ca3af !important;
     }
     .contact-field .field-error-msg {
         display: block;
         margin-top: 0.375rem;
         font-size: 0.75rem;
-        color: #ef4444;
+        color: #6b7280;
     }
     .contact-field .required-dot {
-        color: #ef4444;
+        color: #9ca3af;
         font-weight: 700;
         font-size: 0.6875rem;
         margin-left: 0.125rem;
@@ -109,10 +109,10 @@
 
     <!-- Error Message (hidden by default) -->
     <div id="contact-error" class="hidden mb-8">
-        <div class="border-l-2 border-red-500 pl-6 py-4">
-            <p id="contact-error-text" class="text-base font-semibold text-red-800"></p>
+        <div class="border-l-2 border-gray-400 pl-6 py-4">
+            <p id="contact-error-text" class="text-sm font-medium text-gray-700"></p>
             <button onclick="document.getElementById('contact-error').classList.add('hidden'); document.getElementById('contact-form').classList.remove('hidden');"
-                    class="mt-4 text-sm font-medium text-gray-600 underline hover:text-gray-900 transition-colors duration-200">
+                    class="mt-4 text-sm font-medium text-gray-500 underline underline-offset-2 hover:text-gray-900 transition-colors duration-200">
                 もう一度試す
             </button>
         </div>

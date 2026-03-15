@@ -41,6 +41,17 @@
     /* ===== Landing page: nav overlays hero ===== */
     #main-nav {
         position: fixed !important;
+        /* Start transparent immediately — prevents white flash on page navigation */
+        background-color: transparent !important;
+        backdrop-filter: none !important;
+        border-bottom-color: transparent !important;
+    }
+    /* Once JS marks it as scrolled, restore solid background */
+    #main-nav.nav-solid {
+        background-color: rgba(255,255,255,0.8) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        border-bottom-color: rgba(229,231,235,0.5) !important;
     }
     /* Dark overscroll area: prevents white flash when bouncing above hero */
     body {
@@ -1187,15 +1198,17 @@
     var nav = document.getElementById('main-nav');
     if (!nav) return;
 
-    // Start transparent
+    // Start transparent (CSS handles initial state, add class for text colors)
     nav.classList.add('nav-transparent');
 
     function checkNav() {
         // Switch to solid when scrolled past ~80px
         if (window.scrollY > 80) {
             nav.classList.remove('nav-transparent');
+            nav.classList.add('nav-solid');
         } else {
             nav.classList.add('nav-transparent');
+            nav.classList.remove('nav-solid');
         }
     }
 

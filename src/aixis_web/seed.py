@@ -25,7 +25,11 @@ async def seed() -> None:
         )
         existing = result.scalar_one_or_none()
         if existing:
-            print(f"[スキップ] 管理者ユーザー ({settings.admin_email}) は既に存在します。")
+            # Update password to match current config (supports password rotation)
+            existing.hashed_password = hash_password(settings.admin_password)
+            existing.is_active = True
+            await session.commit()
+            print(f"[更新] 管理者ユーザー ({settings.admin_email}) のパスワードを更新しました。")
             return
 
         # --- 組織の作成（存在しなければ） ---
