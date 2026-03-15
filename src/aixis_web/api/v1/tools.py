@@ -120,7 +120,14 @@ async def get_tool(slug: str, db: Annotated[AsyncSession, Depends(get_db)]):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="ツールが見つかりません"
         )
-    return tool
+    # Resolve category name
+    resp = ToolResponse.model_validate(tool)
+    if tool.category_id:
+        cat_result = await db.execute(
+            select(ToolCategory.name_jp).where(ToolCategory.id == tool.category_id)
+        )
+        resp.category_name_jp = cat_result.scalar_one_or_none()
+    return resp
 
 
 @router.post("/", response_model=ToolResponse, status_code=status.HTTP_201_CREATED)

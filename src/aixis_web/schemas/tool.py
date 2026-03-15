@@ -112,6 +112,7 @@ class ToolResponse(BaseModel):
     description: str | None = None
     description_jp: str | None = None
     category_id: str | None = None
+    category_name_jp: str | None = None
     pricing_model: str | None = None
     price_min_jpy: int | None = None
     price_max_jpy: int | None = None
