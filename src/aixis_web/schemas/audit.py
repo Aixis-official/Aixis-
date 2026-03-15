@@ -95,6 +95,8 @@ class AuditDetailResponse(AuditResponse):
     axis_scores: list[dict[str, Any]] = []
     tool_name: str | None = None
     volume_metrics: VolumeMetrics | None = None
+    reliability_scores: dict[str, Any] | None = None
+    score_diff: dict[str, Any] | None = None
 
 
 class AuditListResponse(BaseModel):

@@ -41,6 +41,10 @@ class AuditSession(Base):
     ai_screenshots_captured = Column(Integer, default=0)
     completeness_ratio = Column(Integer, default=0)  # 0-100 percentage
 
+    # BenchRisk-inspired reliability meta-scores (JSON)
+    # {consistency, comprehensiveness, correctness, intelligibility, overall, details}
+    reliability_scores = Column(JSON)
+
     # relationships
     tool = relationship("Tool", back_populates="audit_sessions")
     test_results = relationship("DBTestResult", back_populates="session")

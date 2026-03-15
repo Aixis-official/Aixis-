@@ -252,6 +252,21 @@ def _run_pipeline_sync(
                 ),
             }
 
+        # -- Phase 3.5: Calculate reliability meta-scores (BenchRisk-inspired) ---
+        reliability_data = None
+        try:
+            from .reliability_service import calculate_reliability
+            reliability_data = calculate_reliability(
+                results=results,
+                cases=cases,
+                axis_scores_data=axis_scores_data,
+                total_planned=total_planned,
+                total_executed=total_executed,
+            )
+            logger.info("Reliability scores for %s: overall=%.1f", session_id, reliability_data.get("overall", 0))
+        except Exception:
+            logger.warning("Failed to calculate reliability scores for %s", session_id, exc_info=True)
+
         _sync_results_to_web_db(
             db_url=db_url,
             db_session_id=db_session_id,
@@ -263,6 +278,7 @@ def _run_pipeline_sync(
             report=report,
             ai_volume=ai_volume,
             was_aborted=was_aborted,
+            reliability_data=reliability_data,
         )
 
         final_status = "aborted" if was_aborted else "completed"
@@ -425,6 +441,7 @@ def _sync_results_to_web_db(
     report: Any,
     ai_volume: dict | None = None,
     was_aborted: bool = False,
+    reliability_data: dict | None = None,
 ) -> None:
     """Write agent results back to the web app's SQLAlchemy database (synchronously)."""
     import json
@@ -467,7 +484,8 @@ def _sync_results_to_web_db(
                 ai_total_output_tokens = :ai_total_output_tokens,
                 ai_estimated_cost_usd = :ai_estimated_cost,
                 ai_screenshots_captured = :ai_screenshots,
-                completeness_ratio = :completeness
+                completeness_ratio = :completeness,
+                reliability_scores = :reliability
             WHERE id = :session_id
         """), {
             "status": new_status,
@@ -483,6 +501,7 @@ def _sync_results_to_web_db(
             "ai_estimated_cost": estimated_cost_cents,
             "ai_screenshots": ai_vol.get("ai_screenshots_captured", 0),
             "completeness": completeness,
+            "reliability": json.dumps(reliability_data, ensure_ascii=False) if reliability_data else None,
         })
 
         # Detect DB dialect for portable upsert syntax

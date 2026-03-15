@@ -165,6 +165,55 @@
             </div>
         </div>
 
+        <!-- Reliability Meta-Scores (BenchRisk-inspired) -->
+        <div id="reliability-section" class="hidden">
+            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                        </svg>
+                        監査信頼度 <span class="text-xs font-normal text-gray-400 dark:text-gray-500 ml-1">Audit Reliability</span>
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl font-bold tabular-nums" id="reliability-overall">--</span>
+                        <span class="text-xs text-gray-400 dark:text-gray-500">/ 100</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="reliability-gauges"></div>
+                <!-- Expandable details -->
+                <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/50">
+                    <button onclick="toggleReliabilityDetails()" class="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors font-jp flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 transition-transform" id="reliability-chevron" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+                        </svg>
+                        詳細を表示
+                    </button>
+                    <div id="reliability-details" class="hidden mt-3 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-[#161929] rounded-lg p-4 font-mono overflow-x-auto whitespace-pre-wrap"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Score Diff (Re-audit comparison) -->
+        <div id="score-diff-section" class="hidden">
+            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-indigo-100 dark:border-indigo-700/30 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/>
+                        </svg>
+                        スコア変動レポート <span class="text-xs font-normal text-gray-400 dark:text-gray-500 ml-1">Re-audit Diff</span>
+                    </h2>
+                    <span class="text-xs text-gray-400 dark:text-gray-500 font-jp" id="diff-previous-info"></span>
+                </div>
+                <div id="score-diff-cards" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
+                <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+                    <span class="text-xs text-gray-500 dark:text-gray-400 font-jp">総合スコア変動</span>
+                    <span class="text-sm font-bold tabular-nums" id="diff-overall-delta"></span>
+                </div>
+            </div>
+        </div>
+
         <!-- 5-Axis Scores -->
         <div id="scores-section" class="hidden">
             <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6">
@@ -546,6 +595,16 @@
             renderVolumeMetrics(data.volume_metrics, data.total_planned, data.total_executed);
         }
 
+        // Reliability meta-scores (BenchRisk)
+        if (data.reliability_scores) {
+            renderReliability(data.reliability_scores);
+        }
+
+        // Score diff (re-audit comparison)
+        if (data.score_diff && data.score_diff.has_previous) {
+            renderScoreDiff(data.score_diff);
+        }
+
         // Scores section
         if (data.axis_scores && data.axis_scores.length > 0) {
             document.getElementById('scores-section').classList.remove('hidden');
@@ -592,6 +651,91 @@
                 '<div class="text-lg font-bold text-gray-900 dark:text-white tabular-nums">' + item.value + '</div>' +
             '</div>';
         }).join('');
+    }
+
+    /* ===== Reliability Meta-Scores (BenchRisk-inspired) ===== */
+    function renderReliability(rel) {
+        if (!rel || typeof rel.overall === 'undefined') return;
+        document.getElementById('reliability-section').classList.remove('hidden');
+        document.getElementById('reliability-overall').textContent = rel.overall;
+
+        var DIMENSIONS = [
+            { key: 'consistency',       label: '再現性',   labelEn: 'Consistency',       color: '#3b82f6', icon: '🔄' },
+            { key: 'comprehensiveness', label: '網羅性',   labelEn: 'Comprehensiveness', color: '#10b981', icon: '📐' },
+            { key: 'correctness',       label: '正確性',   labelEn: 'Correctness',       color: '#f59e0b', icon: '🎯' },
+            { key: 'intelligibility',   label: '解釈性',   labelEn: 'Intelligibility',   color: '#8b5cf6', icon: '📖' },
+        ];
+
+        var container = document.getElementById('reliability-gauges');
+        container.innerHTML = DIMENSIONS.map(function(dim) {
+            var val = rel[dim.key] || 0;
+            var rating = val >= 80 ? '高信頼' : val >= 50 ? '標準' : '要改善';
+            var ratingColor = val >= 80 ? 'text-emerald-600 dark:text-emerald-400' : val >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400';
+            return '<div class="p-4 rounded-lg border border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-[#161929]">' +
+                '<div class="flex items-center justify-between mb-2">' +
+                    '<div>' +
+                        '<span class="text-sm font-semibold text-gray-900 dark:text-white font-jp">' + dim.label + '</span>' +
+                        '<span class="text-[10px] text-gray-400 dark:text-gray-500 ml-1">' + dim.labelEn + '</span>' +
+                    '</div>' +
+                    '<span class="text-lg font-bold tabular-nums text-gray-900 dark:text-white">' + val.toFixed(1) + '</span>' +
+                '</div>' +
+                '<div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-1.5">' +
+                    '<div class="h-2 rounded-full transition-all duration-700" style="width:' + Math.min(100, val) + '%;background-color:' + dim.color + '"></div>' +
+                '</div>' +
+                '<div class="text-[10px] font-medium ' + ratingColor + ' font-jp">' + rating + '</div>' +
+            '</div>';
+        }).join('');
+
+        // Store details for expand toggle
+        if (rel.details) {
+            document.getElementById('reliability-details').textContent = JSON.stringify(rel.details, null, 2);
+        }
+    }
+
+    window.toggleReliabilityDetails = function() {
+        var details = document.getElementById('reliability-details');
+        var chevron = document.getElementById('reliability-chevron');
+        details.classList.toggle('hidden');
+        chevron.style.transform = details.classList.contains('hidden') ? '' : 'rotate(180deg)';
+    };
+
+    /* ===== Score Diff (Re-audit comparison) ===== */
+    function renderScoreDiff(diff) {
+        if (!diff || !diff.has_previous) return;
+        document.getElementById('score-diff-section').classList.remove('hidden');
+
+        // Previous session info
+        var prevDate = diff.previous_completed_at ? new Date(diff.previous_completed_at).toLocaleDateString('ja-JP') : '不明';
+        document.getElementById('diff-previous-info').textContent =
+            '前回: ' + (diff.previous_session_code || '') + ' (' + prevDate + ')';
+
+        // Per-axis diff cards
+        var container = document.getElementById('score-diff-cards');
+        container.innerHTML = (diff.axes || []).map(function(a) {
+            var arrow = a.direction === 'up' ? '↑' : (a.direction === 'down' ? '↓' : '→');
+            var color = a.direction === 'up' ? 'text-emerald-600 dark:text-emerald-400' :
+                        (a.direction === 'down' ? 'text-red-500 dark:text-red-400' : 'text-gray-400 dark:text-gray-500');
+            var bgColor = a.direction === 'up' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700/40' :
+                          (a.direction === 'down' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700/40' :
+                           'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700/50');
+            var deltaStr = a.delta > 0 ? '+' + a.delta.toFixed(1) : a.delta.toFixed(1);
+            return '<div class="p-3 rounded-lg border ' + bgColor + '">' +
+                '<div class="text-xs font-medium text-gray-500 dark:text-gray-400 font-jp mb-1">' + a.axis_name_jp + '</div>' +
+                '<div class="flex items-baseline gap-1.5">' +
+                    '<span class="text-lg font-bold tabular-nums text-gray-900 dark:text-white">' + a.current.toFixed(1) + '</span>' +
+                    '<span class="text-sm font-semibold tabular-nums ' + color + '">' + arrow + ' ' + deltaStr + '</span>' +
+                '</div>' +
+                '<div class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums mt-0.5">前回: ' + a.previous.toFixed(1) + '</div>' +
+            '</div>';
+        }).join('');
+
+        // Overall delta
+        var overall = document.getElementById('diff-overall-delta');
+        var d = diff.overall_delta || 0;
+        var dColor = d > 0 ? 'text-emerald-600 dark:text-emerald-400' : (d < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500');
+        var dStr = d > 0 ? '+' + d.toFixed(2) : d.toFixed(2);
+        overall.className = 'text-sm font-bold tabular-nums ' + dColor;
+        overall.textContent = dStr + ' (' + (diff.overall_previous || 0).toFixed(1) + ' → ' + (diff.overall_current || 0).toFixed(1) + ')';
     }
 
     function renderScores(scores) {

@@ -361,6 +361,24 @@ async def get_audit(
         completeness_ratio=session.completeness_ratio or 0,
     )
 
+    # Parse reliability_scores (stored as JSON string in some DB backends)
+    reliability = session.reliability_scores
+    if isinstance(reliability, str):
+        import json as _json
+        try:
+            reliability = _json.loads(reliability)
+        except Exception:
+            reliability = None
+
+    # Generate score diff against previous audit (best-effort)
+    score_diff = None
+    if session.status in ("completed", "awaiting_manual") and axis_scores:
+        try:
+            from ...services.score_service import generate_score_diff
+            score_diff = await generate_score_diff(db, session.tool_id, session.id)
+        except Exception:
+            pass
+
     return AuditDetailResponse(
         id=session.id,
         session_code=session.session_code,
@@ -378,6 +396,8 @@ async def get_audit(
         axis_scores=axis_scores,
         tool_name=tool_name,
         volume_metrics=volume_metrics,
+        reliability_scores=reliability,
+        score_diff=score_diff,
     )
 
 

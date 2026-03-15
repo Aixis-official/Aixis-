@@ -138,6 +138,100 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
     return published
 
 
+AXIS_NAMES_JP = {
+    "practicality": "実務適性",
+    "cost_performance": "費用対効果",
+    "localization": "日本語能力",
+    "safety": "信頼性・安全性",
+    "uniqueness": "革新性",
+}
+
+
+async def generate_score_diff(db: AsyncSession, tool_id: str, current_session_id: str) -> dict | None:
+    """Compare current audit scores against the previous version for the same tool.
+
+    Returns a diff report dict or None if no previous audit exists.
+    """
+    # Get current session's auto scores
+    current_scores = await get_auto_scores(db, current_session_id)
+    if not current_scores:
+        return None
+
+    # Find the previous completed audit for this tool (excluding current)
+    prev_sessions = await db.execute(
+        select(AuditSession)
+        .where(
+            AuditSession.tool_id == tool_id,
+            AuditSession.id != current_session_id,
+            AuditSession.status.in_(["completed", "awaiting_manual"]),
+        )
+        .order_by(AuditSession.completed_at.desc())
+        .limit(1)
+    )
+    prev_session = prev_sessions.scalar_one_or_none()
+    if not prev_session:
+        return None
+
+    prev_scores = await get_auto_scores(db, prev_session.id)
+    if not prev_scores:
+        return None
+
+    # Build diff
+    axes_diff = []
+    all_axes = set(list(current_scores.keys()) + list(prev_scores.keys()))
+    for axis in sorted(all_axes):
+        curr = current_scores.get(axis, 0.0)
+        prev = prev_scores.get(axis, 0.0)
+        delta = round(curr - prev, 2)
+        axes_diff.append({
+            "axis": axis,
+            "axis_name_jp": AXIS_NAMES_JP.get(axis, axis),
+            "current": curr,
+            "previous": prev,
+            "delta": delta,
+            "direction": "up" if delta > 0 else ("down" if delta < 0 else "same"),
+        })
+
+    # Previous reliability scores
+    prev_reliability = prev_session.reliability_scores
+    if isinstance(prev_reliability, str):
+        import json
+        try:
+            prev_reliability = json.loads(prev_reliability)
+        except Exception:
+            prev_reliability = None
+
+    # Current reliability
+    curr_session_result = await db.execute(
+        select(AuditSession).where(AuditSession.id == current_session_id)
+    )
+    curr_session = curr_session_result.scalar_one_or_none()
+    curr_reliability = curr_session.reliability_scores if curr_session else None
+    if isinstance(curr_reliability, str):
+        import json
+        try:
+            curr_reliability = json.loads(curr_reliability)
+        except Exception:
+            curr_reliability = None
+
+    # Calculate overall change
+    curr_avg = sum(current_scores.values()) / len(current_scores) if current_scores else 0
+    prev_avg = sum(prev_scores.values()) / len(prev_scores) if prev_scores else 0
+
+    return {
+        "has_previous": True,
+        "previous_session_id": prev_session.id,
+        "previous_session_code": prev_session.session_code,
+        "previous_completed_at": prev_session.completed_at.isoformat() if prev_session.completed_at else None,
+        "axes": axes_diff,
+        "overall_current": round(curr_avg, 2),
+        "overall_previous": round(prev_avg, 2),
+        "overall_delta": round(curr_avg - prev_avg, 2),
+        "reliability_current": curr_reliability,
+        "reliability_previous": prev_reliability,
+    }
+
+
 def load_checklist_template(axis: str, checklists_dir: Path | None = None) -> list[dict]:
     """Load manual checklist YAML template for an axis."""
     if checklists_dir is None:
