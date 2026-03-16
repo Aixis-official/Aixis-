@@ -1,14 +1,25 @@
 """Google Drive auto-export service for database backups.
 
 Periodically creates a SQLite backup and uploads it to a specified Google Drive folder
-using a service account. This protects against volume loss on Railway or similar PaaS.
+using OAuth2 refresh token (personal Google account). This protects against volume loss
+on Railway or similar PaaS.
+
+Authentication approach: OAuth2 refresh token
+  - Works with free personal Google accounts (no Workspace required)
+  - User authorises once via Google consent screen, obtains a refresh token
+  - The refresh token is stored and used to get fresh access tokens automatically
+
+Setup:
+  1. Create OAuth2 "Desktop app" credentials in Google Cloud Console
+  2. Enable Google Drive API
+  3. Run the one-time auth flow (provided via /gdrive/auth endpoint)
+  4. Store client_id, client_secret, and refresh_token
 """
 
 import json
 import logging
 import threading
 from datetime import datetime, timezone
-from io import BytesIO
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -17,21 +28,23 @@ _export_thread: threading.Thread | None = None
 _export_stop = threading.Event()
 _last_export: dict | None = None
 
+SCOPES = ["https://www.googleapis.com/auth/drive.file"]
+
 
 # ---------------------------------------------------------------------------
 # Google Drive API helpers
 # ---------------------------------------------------------------------------
 
 def _get_drive_service():
-    """Build a Google Drive API client from service account credentials."""
-    from google.oauth2.service_account import Credentials
+    """Build a Google Drive API client from OAuth2 refresh token credentials."""
+    from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
 
     from ..config import settings
 
     creds_json = settings.gdrive_credentials_json.strip()
     if not creds_json:
-        raise ValueError("GDRIVE_CREDENTIALS_JSON is not configured")
+        raise ValueError("Google Drive認証情報が設定されていません")
 
     # Support both inline JSON string and file path
     if creds_json.startswith("{"):
@@ -39,12 +52,32 @@ def _get_drive_service():
     else:
         path = Path(creds_json)
         if not path.exists():
-            raise FileNotFoundError(f"Credentials file not found: {creds_json}")
+            raise FileNotFoundError(f"認証情報ファイルが見つかりません: {creds_json}")
         info = json.loads(path.read_text(encoding="utf-8"))
 
-    creds = Credentials.from_service_account_info(
-        info, scopes=["https://www.googleapis.com/auth/drive.file"]
-    )
+    # Detect credential type and build accordingly
+    cred_type = info.get("type", "")
+
+    if cred_type == "service_account":
+        # Service account — use for shared drives or domain-wide delegation
+        from google.oauth2.service_account import Credentials as SACredentials
+        creds = SACredentials.from_service_account_info(info, scopes=SCOPES)
+    elif "refresh_token" in info:
+        # OAuth2 refresh token (personal account — recommended)
+        creds = Credentials(
+            token=None,
+            refresh_token=info["refresh_token"],
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=info.get("client_id", ""),
+            client_secret=info.get("client_secret", ""),
+            scopes=SCOPES,
+        )
+    else:
+        raise ValueError(
+            "認証情報にrefresh_tokenが含まれていません。"
+            "設定画面の手順に従ってOAuth2認証を行ってください。"
+        )
+
     return build("drive", "v3", credentials=creds, cache_discovery=False)
 
 
@@ -58,9 +91,52 @@ def _upload_file(service, file_path: Path, folder_id: str) -> dict:
         "parents": [folder_id],
     }
     result = service.files().create(
-        body=file_metadata, media_body=media, fields="id,name,size,createdTime,webViewLink"
+        body=file_metadata,
+        media_body=media,
+        fields="id,name,size,createdTime,webViewLink",
+        supportsAllDrives=True,
     ).execute()
     return result
+
+
+# ---------------------------------------------------------------------------
+# OAuth2 authorization helper (one-time setup)
+# ---------------------------------------------------------------------------
+
+def generate_auth_url(client_id: str, client_secret: str, redirect_uri: str = "urn:ietf:wg:oauth:2.0:oob") -> str:
+    """Generate Google OAuth2 authorization URL for one-time consent."""
+    from urllib.parse import urlencode
+    params = {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": " ".join(SCOPES),
+        "access_type": "offline",
+        "prompt": "consent",
+    }
+    return "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
+
+
+def exchange_code_for_tokens(client_id: str, client_secret: str, code: str,
+                              redirect_uri: str = "urn:ietf:wg:oauth:2.0:oob") -> dict:
+    """Exchange authorization code for refresh token."""
+    import httpx
+
+    resp = httpx.post("https://oauth2.googleapis.com/token", data={
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "code": code,
+        "grant_type": "authorization_code",
+        "redirect_uri": redirect_uri,
+    })
+    data = resp.json()
+    if "error" in data:
+        raise ValueError(f"トークン取得失敗: {data.get('error_description', data['error'])}")
+    return {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "refresh_token": data["refresh_token"],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -135,6 +211,7 @@ def list_gdrive_exports(max_results: int = 20) -> list[dict]:
             pageSize=max_results,
             fields="files(id,name,size,createdTime,webViewLink)",
             orderBy="createdTime desc",
+            supportsAllDrives=True,
         ).execute()
 
         files = []

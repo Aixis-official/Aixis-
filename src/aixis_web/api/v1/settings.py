@@ -1,5 +1,6 @@
 """Settings API — manage .env configuration from the dashboard."""
 
+import json
 from pathlib import Path
 from typing import Annotated
 
@@ -177,6 +178,52 @@ async def gdrive_list_files(
     """List backup files stored in Google Drive."""
     from ...services.gdrive_export_service import list_gdrive_exports
     return {"files": list_gdrive_exports()}
+
+
+class GDriveAuthRequest(BaseModel):
+    client_id: str
+    client_secret: str
+
+
+class GDriveTokenRequest(BaseModel):
+    client_id: str
+    client_secret: str
+    code: str
+
+
+@router.post("/gdrive/auth-url")
+async def gdrive_get_auth_url(
+    body: GDriveAuthRequest,
+    user: Annotated[User, Depends(require_admin)],
+):
+    """Generate Google OAuth2 authorization URL."""
+    from ...services.gdrive_export_service import generate_auth_url
+    url = generate_auth_url(body.client_id.strip(), body.client_secret.strip())
+    return {"auth_url": url}
+
+
+@router.post("/gdrive/exchange-token")
+async def gdrive_exchange_token(
+    body: GDriveTokenRequest,
+    user: Annotated[User, Depends(require_admin)],
+):
+    """Exchange authorization code for refresh token and save credentials."""
+    import os
+    from ...services.gdrive_export_service import exchange_code_for_tokens
+    try:
+        tokens = exchange_code_for_tokens(
+            body.client_id.strip(), body.client_secret.strip(), body.code.strip()
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+    # Save as JSON credentials
+    creds_json = json.dumps(tokens, ensure_ascii=False)
+    _write_env_key("AIXIS_GDRIVE_CREDENTIALS_JSON", creds_json)
+    os.environ["AIXIS_GDRIVE_CREDENTIALS_JSON"] = creds_json
+    settings.gdrive_credentials_json = creds_json
+
+    return {"status": "ok", "message": "Google Drive認証が完了しました"}
 
 
 class GDriveSettingsUpdate(BaseModel):

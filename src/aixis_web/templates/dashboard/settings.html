@@ -100,19 +100,41 @@
         </div>
 
         <div class="space-y-4">
-            <!-- Service Account Credentials -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 font-jp mb-1">
-                    サービスアカウント認証情報（JSON）
-                </label>
-                <textarea id="gdrive-creds"
-                    rows="3"
-                    placeholder='{"type":"service_account","project_id":"...","private_key":"..."}'
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
-                <p class="text-xs text-gray-400 mt-1 font-jp">
-                    Google Cloud Consoleでサービスアカウントを作成し、JSONキーをここに貼り付けてください。
-                    <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank" class="text-blue-500 underline">Google Cloud Console</a>
+
+            <!-- Step 1: OAuth2 Authentication -->
+            <div class="border border-gray-200 rounded-lg p-4">
+                <h3 class="text-sm font-semibold text-gray-800 font-jp mb-2">Step 1: Google認証</h3>
+                <p class="text-xs text-gray-500 font-jp mb-3">
+                    <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-blue-500 underline">Google Cloud Console</a>
+                    で「OAuth 2.0 クライアントID」（デスクトップアプリ）を作成し、Drive APIを有効化してください。
                 </p>
+                <div class="space-y-2">
+                    <input id="gdrive-client-id" type="text" placeholder="クライアントID"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input id="gdrive-client-secret" type="password" placeholder="クライアントシークレット"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button onclick="startGDriveAuth()"
+                        class="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors font-jp">
+                        Googleで認証する
+                    </button>
+                </div>
+
+                <!-- Step 2: Authorization code (shown after clicking auth) -->
+                <div id="gdrive-code-section" class="hidden mt-3 pt-3 border-t border-gray-100">
+                    <p class="text-xs text-gray-500 font-jp mb-2">
+                        Googleの認証画面で許可した後、表示された認証コードを貼り付けてください。
+                    </p>
+                    <div class="flex gap-2">
+                        <input id="gdrive-auth-code" type="text" placeholder="認証コード（4/0A...）"
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <button onclick="exchangeGDriveToken()"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors font-jp whitespace-nowrap">
+                            認証完了
+                        </button>
+                    </div>
+                </div>
+
+                <div id="gdrive-auth-status" class="hidden mt-2 text-xs font-jp"></div>
             </div>
 
             <!-- Folder ID -->
@@ -126,7 +148,6 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <p class="text-xs text-gray-400 mt-1 font-jp">
                     DriveフォルダのURLから取得: https://drive.google.com/drive/folders/<strong>ここの部分</strong>
-                    ※サービスアカウントをこのフォルダに共有（編集者権限）してください。
                 </p>
             </div>
 
@@ -135,16 +156,14 @@
                 <label class="block text-sm font-medium text-gray-700 font-jp mb-1">
                     エクスポート間隔
                 </label>
-                <div class="flex items-center gap-2">
-                    <select id="gdrive-interval"
-                        class="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="6">6時間ごと</option>
-                        <option value="12">12時間ごと</option>
-                        <option value="24" selected>24時間ごと（推奨）</option>
-                        <option value="48">48時間ごと</option>
-                        <option value="168">週1回</option>
-                    </select>
-                </div>
+                <select id="gdrive-interval"
+                    class="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="6">6時間ごと</option>
+                    <option value="12">12時間ごと</option>
+                    <option value="24" selected>24時間ごと（推奨）</option>
+                    <option value="48">48時間ごと</option>
+                    <option value="168">週1回</option>
+                </select>
             </div>
 
             <!-- Actions -->
@@ -250,6 +269,7 @@
             const dot = document.getElementById('gdrive-status-dot');
             const text = document.getElementById('gdrive-status-text');
             const toggle = document.getElementById('gdrive-enabled');
+            const authStatus = document.getElementById('gdrive-auth-status');
 
             toggle.checked = data.enabled;
 
@@ -259,12 +279,19 @@
                 text.className = 'text-emerald-700 font-jp';
             } else if (data.enabled && !data.has_credentials) {
                 dot.className = 'w-2 h-2 rounded-full bg-amber-400';
-                text.textContent = '認証情報が未設定です';
+                text.textContent = '認証が必要です';
                 text.className = 'text-amber-700 font-jp';
-            } else {
+            } else if (!data.enabled) {
                 dot.className = 'w-2 h-2 rounded-full bg-gray-300';
                 text.textContent = '無効';
                 text.className = 'text-gray-500 font-jp';
+            }
+
+            // Show auth status
+            if (data.has_credentials) {
+                authStatus.classList.remove('hidden');
+                authStatus.textContent = '✓ Google認証済み';
+                authStatus.className = 'mt-2 text-xs font-jp text-emerald-600';
             }
 
             if (data.folder_id) {
@@ -279,12 +306,57 @@
                 text.textContent += ` — 最終: ${dt} (${le.backup_size_mb} MB)`;
             }
 
-            // Load files list
             if (data.has_credentials && data.folder_id) {
                 loadGDriveFiles();
             }
         } catch (e) {
             console.error('Failed to load GDrive status:', e);
+        }
+    }
+
+    async function startGDriveAuth() {
+        const clientId = document.getElementById('gdrive-client-id').value.trim();
+        const clientSecret = document.getElementById('gdrive-client-secret').value.trim();
+        if (!clientId || !clientSecret) {
+            showGDriveAlert('クライアントIDとシークレットを入力してください', 'err');
+            return;
+        }
+        try {
+            const data = await aixisAPI('/settings/gdrive/auth-url', {
+                method: 'POST',
+                body: JSON.stringify({ client_id: clientId, client_secret: clientSecret }),
+            });
+            // Open Google consent screen
+            window.open(data.auth_url, '_blank', 'width=600,height=700');
+            // Show code input
+            document.getElementById('gdrive-code-section').classList.remove('hidden');
+            showGDriveAlert('Googleの画面で許可し、認証コードをコピーしてください', 'ok');
+        } catch (e) {
+            showGDriveAlert(e.detail || '認証URL取得に失敗: ' + e.message, 'err');
+        }
+    }
+
+    async function exchangeGDriveToken() {
+        const clientId = document.getElementById('gdrive-client-id').value.trim();
+        const clientSecret = document.getElementById('gdrive-client-secret').value.trim();
+        const code = document.getElementById('gdrive-auth-code').value.trim();
+        if (!code) {
+            showGDriveAlert('認証コードを入力してください', 'err');
+            return;
+        }
+        try {
+            await aixisAPI('/settings/gdrive/exchange-token', {
+                method: 'POST',
+                body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
+            });
+            showGDriveAlert('Google Drive認証が完了しました！', 'ok');
+            document.getElementById('gdrive-code-section').classList.add('hidden');
+            document.getElementById('gdrive-client-id').value = '';
+            document.getElementById('gdrive-client-secret').value = '';
+            document.getElementById('gdrive-auth-code').value = '';
+            loadGDriveStatus();
+        } catch (e) {
+            showGDriveAlert(e.detail || '認証に失敗しました: ' + e.message, 'err');
         }
     }
 
@@ -316,11 +388,9 @@
 
     async function saveGDriveSettings() {
         const body = {};
-        const creds = document.getElementById('gdrive-creds').value.trim();
         const folder = document.getElementById('gdrive-folder').value.trim();
         const interval = parseInt(document.getElementById('gdrive-interval').value);
 
-        if (creds) body.credentials_json = creds;
         if (folder) body.folder_id = folder;
         if (interval) body.interval_hours = interval;
 
@@ -330,7 +400,6 @@
                 body: JSON.stringify(body),
             });
             showGDriveAlert('設定を保存しました', 'ok');
-            document.getElementById('gdrive-creds').value = '';
             loadGDriveStatus();
         } catch (e) {
             showGDriveAlert(e.detail || '保存に失敗しました: ' + e.message, 'err');
