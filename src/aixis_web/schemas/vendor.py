@@ -1,6 +1,7 @@
 """Vendor portal schemas."""
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -87,5 +88,5 @@ class ScoreDisputeResponse(BaseModel):
 
 
 class SubmissionReviewRequest(BaseModel):
-    action: str  # "approve" or "reject"
+    action: Literal["approve", "reject"]
     notes: str = ""

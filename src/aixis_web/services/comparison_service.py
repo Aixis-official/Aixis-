@@ -1,6 +1,7 @@
 """Comparison and benchmarking service."""
+import bisect
 import math
-from sqlalchemy import select, func
+from sqlalchemy import delete, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db.models.comparison import ComparisonGroup, ComparisonMember, ComparisonNormalizedScore
@@ -69,14 +70,14 @@ async def compute_normalized_scores(db: AsyncSession, group_id: str):
             z = (raw - mean) / stddev if stddev > 0 else 0.0
             normalized = max(0.0, min(5.0, 2.5 + z * 1.0))
 
-            # Sort values to compute percentile
+            # Sort values to compute percentile (bisect avoids float equality issues)
             sorted_vals = sorted(values)
-            rank = sorted_vals.index(raw) + 1
+            rank = bisect.bisect_right(sorted_vals, raw)
             percentile = (rank / len(sorted_vals)) * 100
 
             # Delete existing if any
             await db.execute(
-                select(ComparisonNormalizedScore).where(
+                delete(ComparisonNormalizedScore).where(
                     ComparisonNormalizedScore.group_id == group_id,
                     ComparisonNormalizedScore.tool_id == tool_id,
                     ComparisonNormalizedScore.axis == axis,
@@ -104,7 +105,7 @@ async def auto_benchmark_category(db: AsyncSession, category_slug: str) -> Compa
 
     # Find all tools in category with published scores
     tools = await db.execute(
-        select(Tool).where(Tool.category_id == cat_obj.id, Tool.is_active == True)
+        select(Tool).where(Tool.category_id == cat_obj.id, Tool.is_active.is_(True))
     )
     tool_list = tools.scalars().all()
 

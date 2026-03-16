@@ -7,7 +7,7 @@ from ..db.models.tool import Tool, ToolCategory
 async def list_tools(db: AsyncSession, category_slug: str | None = None, search: str | None = None,
                      is_public: bool | None = None, offset: int = 0, limit: int = 20):
     """List tools with optional filtering."""
-    query = select(Tool).where(Tool.is_active == True)
+    query = select(Tool).where(Tool.is_active.is_(True))
     if category_slug:
         cat = await db.execute(select(ToolCategory).where(ToolCategory.slug == category_slug))
         cat_obj = cat.scalar_one_or_none()

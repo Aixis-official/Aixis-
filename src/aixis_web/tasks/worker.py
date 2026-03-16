@@ -59,7 +59,7 @@ async def run_audit(ctx, session_id: str):
 
             config_result = await db.execute(
                 select(ToolTargetConfig)
-                .where(ToolTargetConfig.tool_id == tool_obj.id, ToolTargetConfig.is_active == True)
+                .where(ToolTargetConfig.tool_id == tool_obj.id, ToolTargetConfig.is_active.is_(True))
                 .order_by(ToolTargetConfig.version.desc())
             )
             target_config_record = config_result.scalar_one_or_none()

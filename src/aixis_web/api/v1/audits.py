@@ -89,7 +89,7 @@ async def start_audit(
     if not target_config_name:
         config_result = await db.execute(
             select(ToolTargetConfig)
-            .where(ToolTargetConfig.tool_id == tool.id, ToolTargetConfig.is_active == True)
+            .where(ToolTargetConfig.tool_id == tool.id, ToolTargetConfig.is_active.is_(True))
             .order_by(ToolTargetConfig.version.desc())
             .limit(1)
         )
@@ -520,7 +520,7 @@ async def retry_audit(
     target_config_yaml = None
     config_result = await db.execute(
         select(ToolTargetConfig)
-        .where(ToolTargetConfig.tool_id == tool.id, ToolTargetConfig.is_active == True)
+        .where(ToolTargetConfig.tool_id == tool.id, ToolTargetConfig.is_active.is_(True))
         .order_by(ToolTargetConfig.version.desc())
         .limit(1)
     )

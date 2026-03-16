@@ -126,16 +126,22 @@ class ToolResponse(BaseModel):
     updated_at: datetime
     # SEO article content fields
     use_cases_jp: list[dict] | None = None
+    use_cases_en: list[dict] | None = None
     pricing_detail_jp: str | None = None
+    pricing_detail_en: str | None = None
     pricing_tiers: list[dict] | None = None
     free_trial_available: bool | None = None
     free_trial_days: int | None = None
     risks_jp: str | None = None
+    risks_en: str | None = None
     target_company_profile_jp: str | None = None
+    target_company_profile_en: str | None = None
     target_company_sizes: list[str] | None = None
     target_departments: list[str] | None = None
     pros_jp: list[str] | None = None
+    pros_en: list[str] | None = None
     cons_jp: list[str] | None = None
+    cons_en: list[str] | None = None
     alternatives_slugs: list[str] | None = None
     seo_title_jp: str | None = None
     seo_description_jp: str | None = None
