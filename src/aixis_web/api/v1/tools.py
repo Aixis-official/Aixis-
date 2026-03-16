@@ -58,8 +58,8 @@ async def list_tools(
     user: Annotated[User | None, Depends(get_current_user)],
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    category_id: str | None = None,
-    q: str | None = None,
+    category_id: str | None = Query(None, max_length=50),
+    q: str | None = Query(None, min_length=1, max_length=100),
     all: bool = Query(False, description="Admin: include non-public tools"),
 ):
     """List tools with pagination, category filter, and search.

@@ -194,12 +194,34 @@ function formatDateTime(isoString) {
 }
 
 
+// ===== CSRF HELPER =====
+
+function getCSRFToken() {
+  const match = document.cookie.match(/(?:^|;\s*)aixis_csrf=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
+// Configure htmx to send CSRF token on every non-GET request
+document.addEventListener('DOMContentLoaded', function() {
+  document.body.addEventListener('htmx:configRequest', function(evt) {
+    if (evt.detail.verb !== 'get') {
+      evt.detail.headers['X-CSRF-Token'] = getCSRFToken();
+    }
+  });
+});
+
+
 // ===== API HELPER =====
 
 async function aixisAPI(path, options = {}) {
   const token = localStorage.getItem('aixis_token');
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   if (token) headers['Authorization'] = `Bearer ${token}`;
+  // Include CSRF token for state-changing requests
+  const method = (options.method || 'GET').toUpperCase();
+  if (method !== 'GET' && method !== 'HEAD') {
+    headers['X-CSRF-Token'] = getCSRFToken();
+  }
 
   const response = await fetch(`/api/v1${path}`, { ...options, headers });
 

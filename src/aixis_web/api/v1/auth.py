@@ -22,20 +22,35 @@ router = APIRouter()
 
 # Login rate limiting: IP -> deque of timestamps
 _login_attempts: dict[str, deque] = defaultdict(deque)
-_LOGIN_MAX_ATTEMPTS = 5  # max attempts per window
+_LOGIN_MAX_ATTEMPTS = 3  # max attempts per window (stricter: 3 instead of 5)
 _LOGIN_WINDOW_SECONDS = 300  # 5-minute window
+# Track consecutive failures for progressive lockout
+_login_failures: dict[str, int] = defaultdict(int)
 
 
-def _check_login_rate(ip: str) -> bool:
-    """Return True if login attempt is allowed, False if rate-limited."""
+def _check_login_rate(ip: str) -> tuple[bool, int]:
+    """Return (allowed, retry_after_seconds). Applies progressive lockout."""
     now = time.time()
     window = _login_attempts[ip]
     while window and window[0] < now - _LOGIN_WINDOW_SECONDS:
         window.popleft()
     if len(window) >= _LOGIN_MAX_ATTEMPTS:
-        return False
+        # Progressive lockout: base 5min * (1 + failure_count // 3)
+        multiplier = 1 + _login_failures[ip] // _LOGIN_MAX_ATTEMPTS
+        retry_after = _LOGIN_WINDOW_SECONDS * min(multiplier, 4)  # Cap at 20min
+        return False, retry_after
     window.append(now)
-    return True
+    return True, 0
+
+
+def _record_login_failure(ip: str) -> None:
+    """Track consecutive failures for progressive lockout."""
+    _login_failures[ip] += 1
+
+
+def _reset_login_failures(ip: str) -> None:
+    """Reset failure counter on successful login."""
+    _login_failures.pop(ip, None)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -46,25 +61,29 @@ async def login(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Authenticate user and return JWT tokens."""
-    # Rate limit by client IP
+    # Rate limit by client IP (progressive lockout)
     client_ip = request.client.host if request.client else "unknown"
-    if not _check_login_rate(client_ip):
+    allowed, retry_after = _check_login_rate(client_ip)
+    if not allowed:
+        mins = retry_after // 60
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="ログイン試行回数が上限に達しました。5分後に再度お試しください。",
-            headers={"Retry-After": str(_LOGIN_WINDOW_SECONDS)},
+            detail=f"ログイン試行回数が上限に達しました。{mins}分後に再度お試しください。",
+            headers={"Retry-After": str(retry_after)},
         )
 
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
 
     if not user or not user.hashed_password:
+        _record_login_failure(client_ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="メールアドレスまたはパスワードが正しくありません",
         )
 
     if not verify_password(body.password, user.hashed_password):
+        _record_login_failure(client_ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="メールアドレスまたはパスワードが正しくありません",
@@ -76,11 +95,16 @@ async def login(
             detail="アカウントが無効化されています",
         )
 
+    # Successful login — reset failure counter
+    _reset_login_failures(client_ip)
+
     access_token = create_access_token(data={"sub": user.id, "role": user.role})
     refresh_token = create_refresh_token(data={"sub": user.id})
 
     # Set HttpOnly cookie for SSR page authentication (more secure than localStorage)
     max_age = settings.access_token_expire_minutes * 60
+    # Always use Secure flag unless explicitly running in local debug mode
+    is_production = not settings.debug
     response.set_cookie(
         key="aixis_token",
         value=access_token,
@@ -88,7 +112,7 @@ async def login(
         path="/",
         httponly=True,
         samesite="lax",
-        secure=not settings.debug,
+        secure=is_production,
     )
 
     return TokenResponse(

@@ -354,7 +354,7 @@
 
         fetch('/api/v1/contact/', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCSRFToken() },
             body: JSON.stringify(payload)
         })
         .then(function(resp) {

@@ -12,10 +12,14 @@ from email.mime.text import MIMEText
 from threading import Lock
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, status
+from typing import Annotated
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...config import settings
+from ...db.models.user import User
 from ...schemas.contact import ContactRequest, ContactResponse
+from ..deps import require_admin
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -276,8 +280,10 @@ async def submit_contact(
 
 
 @router.get("/smtp-test")
-async def smtp_test():
-    """Email diagnostic endpoint. Tests all available backends."""
+async def smtp_test(
+    _admin: Annotated[User, Depends(require_admin)],
+):
+    """Email diagnostic endpoint (admin only). Tests all available backends."""
     loop = asyncio.get_running_loop()
     results: dict = {
         "resend_configured": bool(settings.resend_api_key),

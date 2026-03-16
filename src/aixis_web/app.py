@@ -1,11 +1,12 @@
 """Aixis AI Audit Platform - FastAPI Application."""
 import logging
+import secrets
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -39,10 +40,17 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         # Permissions policy
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        # HSTS — force HTTPS for 1 year (with subdomains + preload)
+        if not settings.debug:
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains; preload"
+            )
+        # Prevent cross-domain policy loading (Flash/PDF)
+        response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
         # Content Security Policy
         csp_directives = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.tailwindcss.com",
+            "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.tailwindcss.com https://cdn.plot.ly https://unpkg.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com",
             "font-src 'self' https://fonts.gstatic.com",
             "img-src 'self' data: https:",
@@ -53,6 +61,73 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         ]
         response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
         return response
+
+
+# ---------------------------------------------------------------------------
+# CSRF protection middleware (double-submit cookie pattern)
+# ---------------------------------------------------------------------------
+
+_CSRF_COOKIE = "aixis_csrf"
+_CSRF_HEADER = "X-CSRF-Token"
+_CSRF_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+# Paths exempt from CSRF (API-key auth, health, login — no session to hijack)
+_CSRF_EXEMPT_PREFIXES = ("/api/public/", "/api/v1/health", "/api/v1/auth/login")
+
+
+class CSRFMiddleware(BaseHTTPMiddleware):
+    """Double-submit cookie CSRF protection for state-changing requests.
+
+    - On every response, sets an `aixis_csrf` cookie with a random token.
+    - On POST/PUT/PATCH/DELETE, validates that the `X-CSRF-Token` header
+      matches the cookie value. API-key-authenticated endpoints and
+      Bearer-token-only requests are exempt.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        # Always allow safe methods
+        if request.method in _CSRF_SAFE_METHODS:
+            response = await call_next(request)
+            self._ensure_csrf_cookie(request, response)
+            return response
+
+        # Exempt paths (public API with X-API-Key, health checks)
+        path = request.url.path
+        if any(path.startswith(p) for p in _CSRF_EXEMPT_PREFIXES):
+            return await call_next(request)
+
+        # Exempt requests with Bearer token (API clients, not browser forms)
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            return await call_next(request)
+
+        # Validate CSRF: cookie token must match header token
+        cookie_token = request.cookies.get(_CSRF_COOKIE)
+        header_token = request.headers.get(_CSRF_HEADER)
+
+        if not cookie_token or not header_token or cookie_token != header_token:
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "CSRF token missing or invalid"},
+            )
+
+        response = await call_next(request)
+        self._ensure_csrf_cookie(request, response)
+        return response
+
+    @staticmethod
+    def _ensure_csrf_cookie(request: Request, response: Response):
+        """Set CSRF cookie if not already present."""
+        if _CSRF_COOKIE not in request.cookies:
+            token = secrets.token_urlsafe(32)
+            response.set_cookie(
+                key=_CSRF_COOKIE,
+                value=token,
+                max_age=86400,  # 24h
+                path="/",
+                httponly=False,  # JS must read this to set header
+                samesite="lax",
+                secure=not settings.debug,
+            )
 
 
 @asynccontextmanager
@@ -73,18 +148,33 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    # Disable OpenAPI docs in production to prevent info disclosure
+    docs_url = "/docs" if settings.debug else None
+    redoc_url = "/redoc" if settings.debug else None
+    openapi_url = "/openapi.json" if settings.debug else None
+
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
         description="日本初の独立系AI監査プラットフォーム",
         lifespan=lifespan,
+        docs_url=docs_url,
+        redoc_url=redoc_url,
+        openapi_url=openapi_url,
     )
 
     # Security headers middleware
     app.add_middleware(SecurityHeadersMiddleware)
 
+    # CSRF protection middleware
+    app.add_middleware(CSRFMiddleware)
+
     # CORS middleware — restrict origins in production
-    allowed_origins = ["https://aixis.jp", "https://www.aixis.jp"]
+    allowed_origins = [
+        "https://aixis.jp",
+        "https://www.aixis.jp",
+        "https://platform.aixis.jp",
+    ]
     if settings.debug:
         allowed_origins.append("http://localhost:8000")
         allowed_origins.append("http://127.0.0.1:8000")
@@ -93,7 +183,10 @@ def create_app() -> FastAPI:
         allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-        allow_headers=["Authorization", "Content-Type", "X-API-Key", "X-Requested-With"],
+        allow_headers=[
+            "Authorization", "Content-Type", "X-API-Key",
+            "X-Requested-With", "X-CSRF-Token",
+        ],
     )
 
     # Mount static files

@@ -49,8 +49,16 @@ def _read_env_key(key_name: str) -> str:
     return ""
 
 
+# Allowlist of keys that can be written via the settings API
+_ALLOWED_ENV_KEYS = frozenset({"AIXIS_ANTHROPIC_API_KEY"})
+
+
 def _write_env_key(key_name: str, value: str) -> None:
-    """Write or update a key in the .env file."""
+    """Write or update a key in the .env file (restricted to allowlist)."""
+    if key_name not in _ALLOWED_ENV_KEYS:
+        raise ValueError(f"Key '{key_name}' is not in the settings allowlist")
+    # Sanitize value: strip newlines to prevent env injection
+    value = value.replace("\n", "").replace("\r", "").strip()
     if not _ENV_PATH.exists():
         _ENV_PATH.write_text(
             f"# Aixis Platform Configuration\n{key_name}={value}\n",
