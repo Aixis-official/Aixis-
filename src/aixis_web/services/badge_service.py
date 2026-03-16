@@ -153,6 +153,30 @@ def generate_tool_badge(
     return generate_svg_badge(label, grade, color, style)
 
 
+def generate_evaluated_badge(
+    tool_name: str,
+    overall_grade: str | None = None,
+    overall_score: float | None = None,
+    style: str = "flat",
+) -> str:
+    """Generate an 'Aixis Evaluated' badge — factual, not a recommendation.
+
+    This badge indicates that the tool has been independently evaluated
+    by Aixis and has published 5-axis scores.
+    """
+    grade = overall_grade or (
+        _score_to_grade(overall_score) if overall_score is not None else None
+    )
+    if grade:
+        value = f"Evaluated — {grade}"
+        color = GRADE_COLORS.get(grade, "#6366f1")
+    else:
+        value = "Evaluated"
+        color = "#6366f1"  # Aixis indigo
+    label = "Aixis"
+    return generate_svg_badge(label, value, color, style)
+
+
 def generate_axis_badge(
     tool_name: str,
     axis: str,

@@ -9,6 +9,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -83,8 +84,14 @@ class ScoreHistory(Base):
     tool_id = Column(String(36), ForeignKey("tools.id"), nullable=False)
     axis = Column(String(30), nullable=False)
     score = Column(Float, nullable=False)
+    overall_score = Column(Float, nullable=True)
+    overall_grade = Column(String(2), nullable=True)
     recorded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     source_session_id = Column(String(36), ForeignKey("audit_sessions.id"))
+
+    __table_args__ = (
+        Index("ix_score_history_tool_recorded", "tool_id", "recorded_at"),
+    )
 
 
 class ManualChecklistRecord(Base):

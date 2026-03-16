@@ -34,6 +34,8 @@ class ScoreResponse(BaseModel):
 class ScoreHistoryItem(BaseModel):
     axis: str
     score: float
+    overall_score: float | None = None
+    overall_grade: str | None = None
     recorded_at: datetime
     source_session_id: str | None = None
 

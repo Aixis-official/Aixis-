@@ -99,12 +99,14 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
     )
     db.add(published)
 
-    # Record score history
+    # Record score history (per-axis + overall snapshot for time-series)
     for axis, score in final.items():
         db.add(ScoreHistory(
             tool_id=tool_id,
             axis=axis,
             score=score,
+            overall_score=overall,
+            overall_grade=grade.value,
             source_session_id=session_id,
         ))
 

@@ -84,3 +84,12 @@ def _auto_migrate_columns(conn):
                 conn.execute(
                     text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {col_type}{default}')
                 )
+
+        # Add missing indexes
+        existing_indexes = {idx["name"] for idx in inspector.get_indexes(table.name) if idx["name"]}
+        for idx in table.indexes:
+            if idx.name and idx.name not in existing_indexes:
+                try:
+                    idx.create(conn)
+                except Exception:
+                    pass  # Index may already exist under a different name

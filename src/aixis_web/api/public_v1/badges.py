@@ -13,6 +13,7 @@ from ...db.models.tool import Tool
 from ...services.badge_service import (
     GRADE_COLORS,
     generate_axis_badge,
+    generate_evaluated_badge,
     generate_tool_badge,
 )
 
@@ -168,6 +169,71 @@ async def embed_widget(
             "Access-Control-Allow-Origin": "*",
         },
     )
+
+
+@router.get("/evaluated/{tool_slug}.svg")
+async def evaluated_badge_svg(
+    tool_slug: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    style: str = Query("flat", pattern="^(flat|for-the-badge)$"),
+):
+    """'Aixis Evaluated' SVG badge — indicates independent evaluation with published scores."""
+    tool, score = await _get_tool_and_score(tool_slug, db)
+
+    if not score:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No published scores found — badge available after evaluation",
+        )
+
+    svg = generate_evaluated_badge(
+        tool_name=tool.name,
+        overall_grade=score.overall_grade,
+        overall_score=score.overall_score,
+        style=style,
+    )
+
+    return Response(
+        content=svg,
+        media_type="image/svg+xml",
+        headers={
+            "Cache-Control": "public, max-age=3600",
+            "Access-Control-Allow-Origin": "*",
+        },
+    )
+
+
+@router.get("/evaluated/{tool_slug}/snippet")
+async def evaluated_badge_snippet(
+    tool_slug: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    format: str = Query("html", pattern="^(html|markdown)$"),
+):
+    """Return an embed snippet (HTML or Markdown) for the Aixis Evaluated badge."""
+    tool, score = await _get_tool_and_score(tool_slug, db)
+
+    if not score:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No published scores found",
+        )
+
+    badge_url = f"/api/public/v1/evaluated/{tool_slug}.svg"
+    tool_url = f"/tools/{tool_slug}"
+
+    if format == "markdown":
+        snippet = f"[![Aixis Evaluated]({badge_url})]({tool_url})"
+    else:
+        import html as html_mod
+        badge_url_escaped = html_mod.escape(badge_url)
+        tool_url_escaped = html_mod.escape(tool_url)
+        snippet = (
+            f'<a href="{tool_url_escaped}" target="_blank" rel="noopener">'
+            f'<img src="{badge_url_escaped}" alt="Aixis Evaluated" />'
+            f"</a>"
+        )
+
+    return {"snippet": snippet, "badge_url": badge_url, "tool_url": tool_url}
 
 
 def _render_embed_html(
