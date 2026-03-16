@@ -360,18 +360,29 @@
 
             if (data.files && data.files.length > 0) {
                 section.classList.remove('hidden');
-                list.innerHTML = data.files.map(f => {
+                list.innerHTML = '';
+                data.files.forEach(f => {
                     const dt = new Date(f.created_at).toLocaleString('ja-JP');
-                    const link = f.link ? `<a href="${f.link}" target="_blank" class="text-blue-500 hover:underline">開く</a>` : '';
-                    return `<div class="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-50 text-xs">
-                        <span class="font-mono text-gray-600">${f.name}</span>
-                        <span class="flex items-center gap-3 text-gray-400">
-                            <span>${f.size_mb} MB</span>
-                            <span>${dt}</span>
-                            ${link}
-                        </span>
-                    </div>`;
-                }).join('');
+                    const row = document.createElement('div');
+                    row.className = 'flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-50 text-xs';
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'font-mono text-gray-600';
+                    nameSpan.textContent = f.name;
+                    const metaSpan = document.createElement('span');
+                    metaSpan.className = 'flex items-center gap-3 text-gray-400';
+                    metaSpan.innerHTML = `<span>${f.size_mb} MB</span><span>${dt}</span>`;
+                    if (f.link && f.link.startsWith('https://')) {
+                        const a = document.createElement('a');
+                        a.href = f.link;
+                        a.target = '_blank';
+                        a.className = 'text-blue-500 hover:underline';
+                        a.textContent = '開く';
+                        metaSpan.appendChild(a);
+                    }
+                    row.appendChild(nameSpan);
+                    row.appendChild(metaSpan);
+                    list.appendChild(row);
+                });
             }
         } catch (e) {
             console.error('Failed to load GDrive files:', e);

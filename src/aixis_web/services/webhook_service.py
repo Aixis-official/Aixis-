@@ -65,6 +65,9 @@ def validate_webhook_url(url: str) -> None:
 
     for family, type_, proto, canonname, sockaddr in addr_infos:
         ip = ipaddress.ip_address(sockaddr[0])
+        # Normalize IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1 → 127.0.0.1)
+        if hasattr(ip, "ipv4_mapped") and ip.ipv4_mapped:
+            ip = ip.ipv4_mapped
         for network in _BLOCKED_NETWORKS:
             if ip in network:
                 raise ValueError(

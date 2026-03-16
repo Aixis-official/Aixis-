@@ -61,15 +61,25 @@ _ALLOWED_ENV_KEYS = frozenset({
 })
 
 
+def _quote_env_value(value: str) -> str:
+    """Quote a .env value to prevent injection of shell metacharacters."""
+    # Strip control characters
+    value = value.replace("\n", "").replace("\r", "").strip()
+    # If value contains special chars, wrap in single quotes (escaping existing ones)
+    if any(c in value for c in ('"', "'", "$", "`", "\\", " ", "#", ";")):
+        escaped = value.replace("'", "'\"'\"'")
+        return f"'{escaped}'"
+    return value
+
+
 def _write_env_key(key_name: str, value: str) -> None:
     """Write or update a key in the .env file (restricted to allowlist)."""
     if key_name not in _ALLOWED_ENV_KEYS:
         raise ValueError(f"Key '{key_name}' is not in the settings allowlist")
-    # Sanitize value: strip newlines to prevent env injection
-    value = value.replace("\n", "").replace("\r", "").strip()
+    safe_value = _quote_env_value(value)
     if not _ENV_PATH.exists():
         _ENV_PATH.write_text(
-            f"# Aixis Platform Configuration\n{key_name}={value}\n",
+            f"# Aixis Platform Configuration\n{key_name}={safe_value}\n",
             encoding="utf-8",
         )
         return
@@ -82,13 +92,13 @@ def _write_env_key(key_name: str, value: str) -> None:
         if not stripped.startswith("#") and "=" in stripped:
             k, _, _ = stripped.partition("=")
             if k.strip() == key_name:
-                new_lines.append(f"{key_name}={value}")
+                new_lines.append(f"{key_name}={safe_value}")
                 found = True
                 continue
         new_lines.append(line)
 
     if not found:
-        new_lines.append(f"\n{key_name}={value}")
+        new_lines.append(f"\n{key_name}={safe_value}")
 
     _ENV_PATH.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
 
@@ -122,6 +132,7 @@ async def update_settings(
         # Also update the runtime setting so the next audit picks it up
         import os
         os.environ["AIXIS_ANTHROPIC_API_KEY"] = key
+        settings.anthropic_api_key = key
         return {"status": "ok", "message": "APIキーを保存しました"}
 
     return {"status": "ok", "message": "変更なし"}
@@ -226,10 +237,11 @@ async def gdrive_oauth_callback(
     """OAuth2 callback — Google redirects here after user consent."""
     import base64
     import os
+    from urllib.parse import urlencode
     from ...services.gdrive_export_service import exchange_code_for_tokens
 
     if error:
-        return RedirectResponse(f"/dashboard/settings?gdrive_error={error}")
+        return RedirectResponse(f"/dashboard/settings?{urlencode({'gdrive_error': error})}")
 
     if not code or not state:
         return RedirectResponse("/dashboard/settings?gdrive_error=missing_code")
@@ -251,7 +263,7 @@ async def gdrive_oauth_callback(
             redirect_uri=redirect_uri,
         )
     except ValueError as e:
-        return RedirectResponse(f"/dashboard/settings?gdrive_error={e}")
+        return RedirectResponse(f"/dashboard/settings?{urlencode({'gdrive_error': str(e)})}")
 
     # Save credentials
     creds_json = json.dumps(tokens, ensure_ascii=False)
