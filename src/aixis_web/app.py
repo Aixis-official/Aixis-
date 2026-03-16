@@ -30,7 +30,12 @@ _CSRF_COOKIE = "aixis_csrf"
 _CSRF_HEADER = "X-CSRF-Token"
 _CSRF_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 # Paths exempt from CSRF (API-key auth, health, login — no session to hijack)
-_CSRF_EXEMPT_PREFIXES = ("/api/public/", "/api/v1/health", "/api/v1/auth/login")
+_CSRF_EXEMPT_PREFIXES = (
+    "/api/public/",
+    "/api/v1/health",
+    "/api/v1/auth/login",
+    "/api/v1/clients/invite/",  # Public invite completion (no session to hijack)
+)
 
 
 class SecurityMiddleware(BaseHTTPMiddleware):
@@ -116,8 +121,12 @@ async def lifespan(app: FastAPI):
     # Start Google Drive auto-export
     from .services.gdrive_export_service import start_gdrive_export, stop_gdrive_export
     start_gdrive_export()
+    # Start trial expiration checker
+    from .services.trial_service import start_trial_checker, stop_trial_checker
+    start_trial_checker()
     yield
     # Shutdown
+    stop_trial_checker()
     stop_gdrive_export()
     stop_scheduler()
 

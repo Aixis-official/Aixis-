@@ -98,10 +98,29 @@ async def get_current_user(
             if revoked.scalar_one_or_none():
                 return None
 
+            # Verify session is still active (concurrent session enforcement)
+            from ..db.models.user_session import UserSession
+            session_result = await db.execute(
+                select(UserSession).where(
+                    UserSession.jti == jti, UserSession.is_active == True
+                )
+            )
+            session = session_result.scalar_one_or_none()
+            if session:
+                # Throttle last_active_at updates (only if >5 min since last)
+                from datetime import datetime, timezone
+                now = datetime.now(timezone.utc)
+                if not session.last_active_at or (now - session.last_active_at).total_seconds() > 300:
+                    session.last_active_at = now
+                    await db.commit()
+
     except JWTError:
         return None
     result = await db.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
+    user = result.scalar_one_or_none()
+    if user and not user.is_active:
+        return None  # Deactivated accounts can't access anything
+    return user
 
 
 async def require_auth(
@@ -150,6 +169,20 @@ async def require_vendor(user: Annotated[User, Depends(require_auth)]) -> User:
 
 async def require_viewer(user: Annotated[User, Depends(require_auth)]) -> User:
     """Allow any authenticated user (including viewer role)."""
+    return user
+
+
+async def require_active_subscription(
+    user: Annotated[User, Depends(require_auth)],
+) -> User:
+    """Require an authenticated user with an active subscription (trial or paid)."""
+    from ..services.subscription_service import get_subscription_info
+    info = get_subscription_info(user)
+    if not info.is_active or info.tier == "free":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="有効なサブスクリプションが必要です",
+        )
     return user
 
 

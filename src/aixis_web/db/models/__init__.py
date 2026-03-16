@@ -56,6 +56,9 @@ from .rate_limit import RateLimitEntry
 # Token revocation (for logout)
 from .revoked_token import RevokedToken
 
+# User sessions (concurrent session tracking)
+from .user_session import UserSession
+
 # Audit log (operation tracking)
 from .audit_log import AuditLog
 
@@ -117,6 +120,8 @@ __all__ = [
     "RateLimitEntry",
     # token revocation
     "RevokedToken",
+    # user sessions
+    "UserSession",
     # audit log
     "AuditLog",
 ]

@@ -165,6 +165,36 @@ async def login_page(request: Request):
     return templates.TemplateResponse("public/login.html", ctx)
 
 
+@page_router.get("/invite/{token}")
+async def invite_page(request: Request, token: str):
+    """Invite password-setup page (public)."""
+    from .db.base import get_db as _get_db
+    from .services.client_service import validate_invite_token
+
+    # Validate token to show appropriate page
+    async for db in _get_db():
+        user = await validate_invite_token(db, token)
+        break
+
+    if not user:
+        ctx = _get_template_context(
+            request,
+            title="招待リンクが無効です",
+            invite_valid=False,
+            invite_user_name="",
+            invite_token=token,
+        )
+    else:
+        ctx = _get_template_context(
+            request,
+            title="パスワード設定",
+            invite_valid=True,
+            invite_user_name=user.name,
+            invite_token=token,
+        )
+    return templates.TemplateResponse("public/invite.html", ctx)
+
+
 # ──────────── Auth-Protected Pages ────────────
 
 # Dashboard role whitelist — only these roles can access /dashboard/* pages
@@ -226,6 +256,18 @@ async def settings_page(
         return redirect
     ctx = _get_template_context(request, user=user, title="設定", active_page="settings")
     return templates.TemplateResponse("dashboard/settings.html", ctx)
+
+
+@page_router.get("/dashboard/clients")
+async def clients_management_page(
+    request: Request,
+    user: Annotated[User | None, Depends(get_current_user)] = None,
+):
+    """Client management page (admin only)."""
+    if redirect := _check_dashboard_access(user):
+        return redirect
+    ctx = _get_template_context(request, user=user, title="クライアント管理", active_page="clients")
+    return templates.TemplateResponse("dashboard/clients.html", ctx)
 
 
 @page_router.get("/dashboard/audits/new")

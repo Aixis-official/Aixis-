@@ -72,6 +72,13 @@ class Settings(BaseSettings):
     gdrive_folder_id: str = ""         # Target folder ID in Google Drive
     gdrive_export_interval_hours: int = 24  # Export frequency (hours)
 
+    # Trial management
+    trial_duration_days: int = 14
+    trial_reminder_days_before: int = 3
+    trial_checker_enabled: bool = True
+    trial_checker_interval_seconds: int = 3600  # Check every hour
+    max_sessions_per_user: int = 5
+
     # Public API settings
     public_api_enabled: bool = True
     public_api_default_rate_limit_per_minute: int = 60

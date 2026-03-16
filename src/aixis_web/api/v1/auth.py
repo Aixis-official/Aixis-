@@ -83,6 +83,20 @@ async def login(
     access_token = create_access_token(data={"sub": user.id, "role": user.role})
     refresh_token = create_refresh_token(data={"sub": user.id})
 
+    # Session tracking: create session record and enforce concurrent session limit
+    from ...services.session_service import create_session, enforce_session_limit
+    from jose import jwt as jose_jwt
+    payload = jose_jwt.decode(access_token, settings.secret_key, algorithms=["HS256"])
+    jti = payload.get("jti", "")
+    await create_session(
+        db,
+        user_id=user.id,
+        jti=jti,
+        ip_address=client_ip,
+        user_agent=request.headers.get("user-agent", "")[:500],
+    )
+    await enforce_session_limit(db, user.id)
+
     # Set HttpOnly cookie for SSR page authentication (more secure than localStorage)
     max_age = settings.access_token_expire_minutes * 60
     is_production = not settings.debug
@@ -169,6 +183,9 @@ async def logout(
                     expires_at=datetime.fromtimestamp(exp, tz=timezone.utc),
                 )
                 db.add(revoked)
+                # Also deactivate the session record
+                from ...services.session_service import deactivate_session
+                await deactivate_session(db, jti)
                 await db.commit()
         except Exception:
             pass  # Token parse failure — cookie cleared anyway

@@ -19,6 +19,7 @@ class Organization(Base):
     name = Column(String(200), nullable=False)
     name_jp = Column(String(200))
     subscription_tier = Column(String(20), default="free")
+    max_users = Column(Integer, default=5)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
@@ -30,11 +31,23 @@ class User(Base):
     name = Column(String(200), nullable=False)
     name_jp = Column(String(200))
     hashed_password = Column(String(200))
-    role = Column(String(20), default="client")  # admin|auditor|client
+    role = Column(String(20), default="client")  # admin|auditor|analyst|client|vendor|viewer
     organization_id = Column(String(36), ForeignKey("organizations.id"))
     preferred_language = Column(String(5), default="ja")  # ja, en
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Trial & subscription management
+    account_status = Column(String(20), default="active")  # pending|active|suspended|expired
+    subscription_tier = Column(String(20), default="trial")  # trial|standard|professional|enterprise
+    trial_start = Column(DateTime, nullable=True)
+    trial_end = Column(DateTime, nullable=True)
+    trial_reminder_sent = Column(Boolean, default=False)
+
+    # Invite flow
+    invite_token_hash = Column(String(128), nullable=True, unique=True)
+    invite_token_expires_at = Column(DateTime, nullable=True)
+    invite_sent_at = Column(DateTime, nullable=True)
 
 
 class AuditReportRecord(Base):
