@@ -103,9 +103,20 @@ def _upload_file(service, file_path: Path, folder_id: str) -> dict:
 # OAuth2 authorization helper (one-time setup)
 # ---------------------------------------------------------------------------
 
-def generate_auth_url(client_id: str, client_secret: str, redirect_uri: str = "urn:ietf:wg:oauth:2.0:oob") -> str:
-    """Generate Google OAuth2 authorization URL for one-time consent."""
+def generate_auth_url(client_id: str, client_secret: str, redirect_uri: str = "") -> str:
+    """Generate Google OAuth2 authorization URL for one-time consent.
+
+    ``redirect_uri`` must be set to the app's callback URL, e.g.
+    ``https://platform.aixis.jp/api/v1/settings/gdrive/callback``.
+    """
+    if not redirect_uri:
+        raise ValueError("redirect_uri is required")
     from urllib.parse import urlencode
+    # Encode client_id & client_secret in the state parameter so the
+    # callback can exchange the code without session storage.
+    import base64 as _b64
+    state_payload = json.dumps({"cid": client_id, "cs": client_secret})
+    state = _b64.urlsafe_b64encode(state_payload.encode()).decode()
     params = {
         "client_id": client_id,
         "redirect_uri": redirect_uri,
@@ -113,13 +124,16 @@ def generate_auth_url(client_id: str, client_secret: str, redirect_uri: str = "u
         "scope": " ".join(SCOPES),
         "access_type": "offline",
         "prompt": "consent",
+        "state": state,
     }
     return "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
 
 
 def exchange_code_for_tokens(client_id: str, client_secret: str, code: str,
-                              redirect_uri: str = "urn:ietf:wg:oauth:2.0:oob") -> dict:
+                              redirect_uri: str = "") -> dict:
     """Exchange authorization code for refresh token."""
+    if not redirect_uri:
+        raise ValueError("redirect_uri is required")
     import httpx
 
     resp = httpx.post("https://oauth2.googleapis.com/token", data={

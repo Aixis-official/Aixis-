@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from ...api.deps import require_admin
@@ -191,28 +192,90 @@ class GDriveTokenRequest(BaseModel):
     code: str
 
 
+def _gdrive_callback_uri(request: Request) -> str:
+    """Build the OAuth2 callback URI from the current request."""
+    # Use X-Forwarded-Proto / X-Forwarded-Host if behind a reverse proxy
+    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = request.headers.get("x-forwarded-host", request.url.netloc)
+    return f"{scheme}://{host}/api/v1/settings/gdrive/callback"
+
+
 @router.post("/gdrive/auth-url")
 async def gdrive_get_auth_url(
     body: GDriveAuthRequest,
+    request: Request,
     user: Annotated[User, Depends(require_admin)],
 ):
     """Generate Google OAuth2 authorization URL."""
     from ...services.gdrive_export_service import generate_auth_url
-    url = generate_auth_url(body.client_id.strip(), body.client_secret.strip())
-    return {"auth_url": url}
+    redirect_uri = _gdrive_callback_uri(request)
+    url = generate_auth_url(
+        body.client_id.strip(), body.client_secret.strip(),
+        redirect_uri=redirect_uri,
+    )
+    return {"auth_url": url, "redirect_uri": redirect_uri}
+
+
+@router.get("/gdrive/callback")
+async def gdrive_oauth_callback(
+    request: Request,
+    code: str = "",
+    state: str = "",
+    error: str = "",
+):
+    """OAuth2 callback — Google redirects here after user consent."""
+    import base64
+    import os
+    from ...services.gdrive_export_service import exchange_code_for_tokens
+
+    if error:
+        return RedirectResponse(f"/dashboard/settings?gdrive_error={error}")
+
+    if not code or not state:
+        return RedirectResponse("/dashboard/settings?gdrive_error=missing_code")
+
+    # Decode client credentials from state parameter
+    try:
+        state_json = base64.urlsafe_b64decode(state.encode()).decode()
+        state_data = json.loads(state_json)
+        client_id = state_data["cid"]
+        client_secret = state_data["cs"]
+    except Exception:
+        return RedirectResponse("/dashboard/settings?gdrive_error=invalid_state")
+
+    redirect_uri = _gdrive_callback_uri(request)
+
+    try:
+        tokens = exchange_code_for_tokens(
+            client_id, client_secret, code,
+            redirect_uri=redirect_uri,
+        )
+    except ValueError as e:
+        return RedirectResponse(f"/dashboard/settings?gdrive_error={e}")
+
+    # Save credentials
+    creds_json = json.dumps(tokens, ensure_ascii=False)
+    _write_env_key("AIXIS_GDRIVE_CREDENTIALS_JSON", creds_json)
+    os.environ["AIXIS_GDRIVE_CREDENTIALS_JSON"] = creds_json
+    settings.gdrive_credentials_json = creds_json
+
+    return RedirectResponse("/dashboard/settings?gdrive=ok")
 
 
 @router.post("/gdrive/exchange-token")
 async def gdrive_exchange_token(
     body: GDriveTokenRequest,
+    request: Request,
     user: Annotated[User, Depends(require_admin)],
 ):
     """Exchange authorization code for refresh token and save credentials."""
     import os
     from ...services.gdrive_export_service import exchange_code_for_tokens
+    redirect_uri = _gdrive_callback_uri(request)
     try:
         tokens = exchange_code_for_tokens(
-            body.client_id.strip(), body.client_secret.strip(), body.code.strip()
+            body.client_id.strip(), body.client_secret.strip(), body.code.strip(),
+            redirect_uri=redirect_uri,
         )
     except ValueError as e:
         raise HTTPException(400, str(e))
