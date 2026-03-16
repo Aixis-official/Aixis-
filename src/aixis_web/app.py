@@ -22,32 +22,57 @@ BASE_DIR = Path(__file__).parent
 
 
 # ---------------------------------------------------------------------------
-# Security headers middleware
+# Unified security middleware (headers + CSRF in single BaseHTTPMiddleware
+# to avoid Starlette's known issue with stacking multiple BaseHTTPMiddleware)
 # ---------------------------------------------------------------------------
 
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """Add security headers to all responses."""
+_CSRF_COOKIE = "aixis_csrf"
+_CSRF_HEADER = "X-CSRF-Token"
+_CSRF_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+# Paths exempt from CSRF (API-key auth, health, login — no session to hijack)
+_CSRF_EXEMPT_PREFIXES = ("/api/public/", "/api/v1/health", "/api/v1/auth/login")
+
+
+class SecurityMiddleware(BaseHTTPMiddleware):
+    """Combined security headers + CSRF protection middleware.
+
+    Security headers: X-Frame-Options, CSP, HSTS, etc.
+    CSRF: Double-submit cookie — sets `aixis_csrf` cookie, validates
+    X-CSRF-Token header on state-changing requests. Bearer-token and
+    API-key-authenticated requests are exempt.
+    """
 
     async def dispatch(self, request: Request, call_next):
+        # --- CSRF check (before calling route) ---
+        if request.method not in _CSRF_SAFE_METHODS:
+            path = request.url.path
+            is_exempt = any(path.startswith(p) for p in _CSRF_EXEMPT_PREFIXES)
+            auth_header = request.headers.get("Authorization", "")
+            has_bearer = auth_header.startswith("Bearer ")
+
+            if not is_exempt and not has_bearer:
+                cookie_token = request.cookies.get(_CSRF_COOKIE)
+                header_token = request.headers.get(_CSRF_HEADER)
+                if not cookie_token or not header_token or cookie_token != header_token:
+                    return JSONResponse(
+                        status_code=403,
+                        content={"detail": "CSRF token missing or invalid"},
+                    )
+
+        # --- Call the actual route ---
         response: Response = await call_next(request)
-        # Prevent clickjacking
+
+        # --- Security headers ---
         response.headers["X-Frame-Options"] = "DENY"
-        # Prevent MIME-type sniffing
         response.headers["X-Content-Type-Options"] = "nosniff"
-        # XSS protection (legacy browsers)
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        # Referrer policy
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        # Permissions policy
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-        # HSTS — force HTTPS for 1 year (with subdomains + preload)
+        response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
         if not settings.debug:
             response.headers["Strict-Transport-Security"] = (
                 "max-age=31536000; includeSubDomains; preload"
             )
-        # Prevent cross-domain policy loading (Flash/PDF)
-        response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
-        # Content Security Policy
         csp_directives = [
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.tailwindcss.com https://cdn.plot.ly https://unpkg.com",
@@ -60,74 +85,20 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "form-action 'self'",
         ]
         response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
-        return response
 
-
-# ---------------------------------------------------------------------------
-# CSRF protection middleware (double-submit cookie pattern)
-# ---------------------------------------------------------------------------
-
-_CSRF_COOKIE = "aixis_csrf"
-_CSRF_HEADER = "X-CSRF-Token"
-_CSRF_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
-# Paths exempt from CSRF (API-key auth, health, login — no session to hijack)
-_CSRF_EXEMPT_PREFIXES = ("/api/public/", "/api/v1/health", "/api/v1/auth/login")
-
-
-class CSRFMiddleware(BaseHTTPMiddleware):
-    """Double-submit cookie CSRF protection for state-changing requests.
-
-    - On every response, sets an `aixis_csrf` cookie with a random token.
-    - On POST/PUT/PATCH/DELETE, validates that the `X-CSRF-Token` header
-      matches the cookie value. API-key-authenticated endpoints and
-      Bearer-token-only requests are exempt.
-    """
-
-    async def dispatch(self, request: Request, call_next):
-        # Always allow safe methods
-        if request.method in _CSRF_SAFE_METHODS:
-            response = await call_next(request)
-            self._ensure_csrf_cookie(request, response)
-            return response
-
-        # Exempt paths (public API with X-API-Key, health checks)
-        path = request.url.path
-        if any(path.startswith(p) for p in _CSRF_EXEMPT_PREFIXES):
-            return await call_next(request)
-
-        # Exempt requests with Bearer token (API clients, not browser forms)
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            return await call_next(request)
-
-        # Validate CSRF: cookie token must match header token
-        cookie_token = request.cookies.get(_CSRF_COOKIE)
-        header_token = request.headers.get(_CSRF_HEADER)
-
-        if not cookie_token or not header_token or cookie_token != header_token:
-            return JSONResponse(
-                status_code=403,
-                content={"detail": "CSRF token missing or invalid"},
-            )
-
-        response = await call_next(request)
-        self._ensure_csrf_cookie(request, response)
-        return response
-
-    @staticmethod
-    def _ensure_csrf_cookie(request: Request, response: Response):
-        """Set CSRF cookie if not already present."""
+        # --- CSRF cookie (set on every response if not already present) ---
         if _CSRF_COOKIE not in request.cookies:
-            token = secrets.token_urlsafe(32)
             response.set_cookie(
                 key=_CSRF_COOKIE,
-                value=token,
-                max_age=86400,  # 24h
+                value=secrets.token_urlsafe(32),
+                max_age=86400,
                 path="/",
                 httponly=False,  # JS must read this to set header
                 samesite="lax",
                 secure=not settings.debug,
             )
+
+        return response
 
 
 @asynccontextmanager
@@ -163,11 +134,8 @@ def create_app() -> FastAPI:
         openapi_url=openapi_url,
     )
 
-    # Security headers middleware
-    app.add_middleware(SecurityHeadersMiddleware)
-
-    # CSRF protection middleware
-    app.add_middleware(CSRFMiddleware)
+    # Security middleware (headers + CSRF — single BaseHTTPMiddleware)
+    app.add_middleware(SecurityMiddleware)
 
     # CORS middleware — restrict origins in production
     allowed_origins = [
