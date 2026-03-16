@@ -25,10 +25,13 @@ if "sqlite" in settings.database_url:
 
     @event.listens_for(engine.sync_engine, "connect")
     def _set_sqlite_pragma(dbapi_conn, connection_record):
-        cursor = dbapi_conn.cursor()
-        cursor.execute("PRAGMA journal_mode=WAL")
-        cursor.execute("PRAGMA synchronous=NORMAL")
-        cursor.close()
+        # aiosqlite wraps the real connection; unwrap if needed
+        raw = getattr(dbapi_conn, "_connection", dbapi_conn)
+        try:
+            raw.execute("PRAGMA journal_mode=WAL")
+            raw.execute("PRAGMA synchronous=NORMAL")
+        except Exception:
+            pass  # WAL requires write access to create -wal/-shm files
 
 
 class Base(DeclarativeBase):
