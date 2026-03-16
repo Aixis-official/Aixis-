@@ -186,9 +186,13 @@ def _send_via_smtp(to: str, subject: str, body: str, reply_to: str | None = None
     except Exception as e:
         logger.warning("STARTTLS failed: %s — trying SSL on 465", e)
 
-    with smtplib.SMTP_SSL(settings.smtp_host, 465, timeout=10) as server:
-        server.login(settings.smtp_user, settings.smtp_password)
-        server.send_message(msg)
+    try:
+        with smtplib.SMTP_SSL(settings.smtp_host, 465, timeout=10) as server:
+            server.login(settings.smtp_user, settings.smtp_password)
+            server.send_message(msg)
+    except Exception as e:
+        logger.error("SSL fallback also failed: %s", e)
+        raise RuntimeError(f"Both STARTTLS and SSL failed for {settings.smtp_host}") from e
 
 
 # ---------------------------------------------------------------------------
