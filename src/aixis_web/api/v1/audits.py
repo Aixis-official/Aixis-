@@ -250,8 +250,8 @@ async def list_audits(
     audit_status: str | None = Query(None, alias="status"),
 ):
     """List audit sessions (analyst+ only)."""
-    query = select(AuditSession)
-    count_query = select(func.count()).select_from(AuditSession)
+    query = select(AuditSession).where(AuditSession.deleted_at.is_(None))
+    count_query = select(func.count()).select_from(AuditSession).where(AuditSession.deleted_at.is_(None))
 
     if tool_id:
         query = query.where(AuditSession.tool_id == tool_id)
@@ -295,7 +295,7 @@ async def get_audit(
 ):
     """Get audit session detail with test results and scores."""
     result = await db.execute(
-        select(AuditSession).where(AuditSession.id == session_id)
+        select(AuditSession).where(AuditSession.id == session_id, AuditSession.deleted_at.is_(None))
     )
     session = result.scalar_one_or_none()
     if not session:
@@ -580,11 +580,12 @@ async def delete_audit(
     db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Delete an audit session and all related data."""
-    from sqlalchemy import delete as sql_delete
-
+    """Soft-delete an audit session (data is preserved and can be restored)."""
     result = await db.execute(
-        select(AuditSession).where(AuditSession.id == session_id)
+        select(AuditSession).where(
+            AuditSession.id == session_id,
+            AuditSession.deleted_at.is_(None),
+        )
     )
     session = result.scalar_one_or_none()
     if not session:
@@ -594,7 +595,6 @@ async def delete_audit(
         )
 
     if session.status in ("running", "waiting_login"):
-        # Check if the process is actually still running
         from ...services.audit_runner import get_running_audit, list_running_audits
         actually_running = any(
             r.get("db_session_id") == session_id
@@ -605,15 +605,100 @@ async def delete_audit(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="実行中のセッションは削除できません。先に中止してください。",
             )
-        # Process is dead — allow deletion of stale session
 
-    # Delete related records first
-    await db.execute(sql_delete(DBTestResult).where(DBTestResult.session_id == session_id))
-    await db.execute(sql_delete(DBTestCase).where(DBTestCase.session_id == session_id))
-    await db.execute(sql_delete(AxisScoreRecord).where(AxisScoreRecord.session_id == session_id))
-    await db.execute(sql_delete(ManualChecklistRecord).where(ManualChecklistRecord.session_id == session_id))
-    await db.delete(session)
+    # Soft-delete: mark as deleted instead of destroying data
+    session.deleted_at = datetime.now(timezone.utc)
+    session.deleted_by = _user.id
     await db.commit()
+
+    # Log the action
+    try:
+        from ...db.models.audit_log import AuditLog
+        db.add(AuditLog(
+            entity_type="audit_session",
+            entity_id=session_id,
+            action="soft_delete",
+            performed_by=_user.id,
+            changes={"session_code": session.session_code, "tool_id": session.tool_id},
+        ))
+        await db.commit()
+    except Exception:
+        pass
+
+
+@router.get("/deleted", response_model=AuditListResponse)
+async def list_deleted_audits(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[User, Depends(require_analyst)],
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+):
+    """List soft-deleted audit sessions (for recovery)."""
+    query = select(AuditSession).where(AuditSession.deleted_at.isnot(None))
+    count_query = select(func.count()).select_from(AuditSession).where(AuditSession.deleted_at.isnot(None))
+
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    offset = (page - 1) * page_size
+    query = query.order_by(AuditSession.deleted_at.desc()).offset(offset).limit(page_size)
+    result = await db.execute(query)
+    items = result.scalars().all()
+
+    tool_ids = list({item.tool_id for item in items if item.tool_id})
+    tool_names = {}
+    if tool_ids:
+        tools_result = await db.execute(select(Tool).where(Tool.id.in_(tool_ids)))
+        for t in tools_result.scalars().all():
+            tool_names[t.id] = t.name_jp or t.name
+
+    response_items = []
+    for item in items:
+        data = AuditResponse.model_validate(item)
+        data.tool_name = tool_names.get(item.tool_id)
+        response_items.append(data)
+
+    return AuditListResponse(items=response_items, total=total)
+
+
+@router.post("/{session_id}/restore")
+async def restore_audit(
+    session_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[User, Depends(require_analyst)],
+):
+    """Restore a soft-deleted audit session."""
+    result = await db.execute(
+        select(AuditSession).where(
+            AuditSession.id == session_id,
+            AuditSession.deleted_at.isnot(None),
+        )
+    )
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="削除済みセッションが見つかりません",
+        )
+
+    session.deleted_at = None
+    session.deleted_by = None
+    await db.commit()
+
+    try:
+        from ...db.models.audit_log import AuditLog
+        db.add(AuditLog(
+            entity_type="audit_session",
+            entity_id=session_id,
+            action="restore",
+            performed_by=_user.id,
+            changes={"session_code": session.session_code},
+        ))
+        await db.commit()
+    except Exception:
+        pass
+
+    return {"message": "セッションを復元しました", "session_id": session_id}
 
 
 class _StatusUpdateBody(BaseModel):

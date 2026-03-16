@@ -31,6 +31,10 @@ class AuditSession(Base):
     completed_at = Column(DateTime)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+    # Soft-delete support (audit data must never be permanently lost)
+    deleted_at = Column(DateTime, nullable=True, default=None)
+    deleted_by = Column(String(36), ForeignKey("users.id"), nullable=True, default=None)
+
     # AI agent volume tracking
     executor_type = Column(String(20), default="playwright")
     ai_total_steps = Column(Integer, default=0)

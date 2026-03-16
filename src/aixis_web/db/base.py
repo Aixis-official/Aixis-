@@ -19,6 +19,17 @@ if "sqlite" not in settings.database_url:
 engine = create_async_engine(settings.database_url, **_engine_kwargs)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
+# Enable SQLite WAL mode for better concurrent read performance and crash resilience
+if "sqlite" in settings.database_url:
+    from sqlalchemy import event
+
+    @event.listens_for(engine.sync_engine, "connect")
+    def _set_sqlite_pragma(dbapi_conn, connection_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.close()
+
 
 class Base(DeclarativeBase):
     pass

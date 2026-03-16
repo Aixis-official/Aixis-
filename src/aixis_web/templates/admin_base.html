@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block page_title %}{{ title | default("Aixis") }}{% endblock %} - Aixis 管理</title>
 
-    <!-- Light theme is default; dark mode removed -->
-
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -37,7 +34,8 @@
                     },
                     fontFamily: {
                         sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
-                        jp: ['Noto Sans JP', 'sans-serif']
+                        jp: ['Noto Sans JP', 'sans-serif'],
+                        serif: ['Cormorant Garamond', 'serif']
                     }
                 }
             }
@@ -47,7 +45,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Libraries -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -56,75 +54,166 @@
     <!-- Custom styles -->
     <link rel="stylesheet" href="/static/css/style.css">
 
+    <style>
+        /* Sidebar transitions */
+        .sidebar { transition: width 200ms ease; }
+        .sidebar-label { transition: opacity 150ms ease; }
+        .sidebar.collapsed .sidebar-label { opacity: 0; pointer-events: none; }
+        .sidebar.collapsed .group-arrow { display: none; }
+    </style>
+
     {% block head %}{% endblock %}
 </head>
-<body class="min-h-screen flex flex-col bg-gray-50 dark:bg-aixis-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300">
+<body class="min-h-screen bg-gray-50 text-gray-900 font-sans">
 
-    <!-- Admin Top Bar -->
-    <header class="sticky top-0 z-50 w-full bg-white dark:bg-aixis-800 border-b border-gray-200 dark:border-aixis-700/60 shadow-sm dark:shadow-none transition-colors duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-14">
+    <!-- Mobile sidebar overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 hidden md:hidden" onclick="toggleMobileSidebar()"></div>
 
-                <!-- Left: Logo -->
-                <div class="flex items-center gap-3 shrink-0">
-                    <span class="text-lg font-[800] tracking-[0.04em] bg-gradient-to-r from-aixis-500 to-blue-600 dark:from-blue-300 dark:to-blue-500 bg-clip-text text-transparent">
-                        Aixis
-                    </span>
-                    <span class="hidden sm:inline-block text-[10px] font-medium text-gray-400 dark:text-gray-500 border-l border-gray-200 dark:border-gray-600 pl-3 leading-tight font-jp uppercase tracking-wider">
-                        Admin
-                    </span>
-                </div>
+    <!-- Top Bar -->
+    <header class="fixed top-0 left-0 right-0 z-30 h-14 bg-white/80 backdrop-blur-lg border-b border-gray-200">
+        <div class="flex items-center justify-between h-full px-4">
+            <!-- Left: hamburger (mobile) + logo -->
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileSidebar()" class="md:hidden p-1.5 -ml-1 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+                </button>
+                <a href="/dashboard" class="flex items-center gap-2.5">
+                    <span class="text-lg font-[800] tracking-[0.04em] bg-gradient-to-r from-aixis-500 to-blue-600 bg-clip-text text-transparent">Aixis</span>
+                    <span class="text-[10px] font-medium text-gray-400 border-l border-gray-200 pl-2.5 uppercase tracking-wider">Admin</span>
+                </a>
+            </div>
 
-                <!-- Center: Page title -->
-                <div class="hidden sm:block absolute left-1/2 -translate-x-1/2">
-                    <h1 class="text-sm font-semibold text-gray-700 dark:text-gray-300 font-jp whitespace-nowrap">
-                        {% block header_title %}{% endblock %}
-                    </h1>
-                </div>
+            <!-- Center: breadcrumb -->
+            <div class="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 absolute left-1/2 -translate-x-1/2">
+                {% block breadcrumb %}
+                <span class="font-jp">{{ title | default("") }}</span>
+                {% endblock %}
+            </div>
 
-                <!-- Right: User actions -->
-                <div class="flex items-center gap-3">
-                    {% if user %}
-                    <span class="hidden md:inline text-xs text-gray-500 dark:text-gray-400 font-jp">{{ user.name }}</span>
-                    <span class="hidden md:inline text-gray-300 dark:text-gray-600">|</span>
-                    {% endif %}
-
-                    <a href="/dashboard/settings"
-                       class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150 font-jp"
-                       title="設定">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </a>
-
-                    <a href="/"
-                       class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150 font-jp">
-                        利用者画面へ
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                        </svg>
-                    </a>
-
-                    <button onclick="aixisLogout()"
-                            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors duration-150 font-jp">
-                        ログアウト
-                    </button>
-                </div>
+            <!-- Right: user actions -->
+            <div class="flex items-center gap-2.5">
+                {% if user %}
+                <span class="hidden lg:inline text-xs text-gray-500 font-jp">{{ user.name }}</span>
+                <span class="hidden lg:inline text-gray-200">|</span>
+                {% endif %}
+                <a href="/" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors font-jp">
+                    利用者画面
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+                </a>
+                <button onclick="aixisLogout()" class="text-xs text-gray-400 hover:text-red-500 transition-colors font-jp">ログアウト</button>
             </div>
         </div>
     </header>
 
-    <!-- Main content -->
-    <main class="flex-1 main-constrained">
-        {% block content %}{% endblock %}
-    </main>
+    <!-- Layout wrapper -->
+    <div class="flex pt-14 min-h-screen">
+
+        <!-- Sidebar -->
+        <aside id="admin-sidebar" class="sidebar fixed md:sticky top-14 left-0 z-40 md:z-10 h-[calc(100vh-3.5rem)] w-56 bg-white border-r border-gray-200 overflow-y-auto -translate-x-full md:translate-x-0 transition-transform duration-200 flex flex-col">
+            <nav class="flex-1 py-3 px-2.5 space-y-0.5">
+
+                <!-- Dashboard -->
+                <a href="/dashboard" class="sidebar-link {% if active_page == 'dashboard' %}active{% endif %}">
+                    <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+                    <span class="sidebar-label">ダッシュボード</span>
+                </a>
+
+                <!-- Audit group -->
+                <div class="pt-3">
+                    <p class="sidebar-group-title">監査</p>
+                    <a href="/dashboard/audits/new" class="sidebar-link {% if active_page == 'audit-new' %}active{% endif %}">
+                        <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        <span class="sidebar-label">新規監査</span>
+                    </a>
+                    <a href="/dashboard/manual" class="sidebar-link {% if active_page == 'manual' %}active{% endif %}">
+                        <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
+                        <span class="sidebar-label">手動評価</span>
+                    </a>
+                </div>
+
+                <!-- Tools group -->
+                <div class="pt-3">
+                    <p class="sidebar-group-title">ツール</p>
+                    <a href="/dashboard/tools" class="sidebar-link {% if active_page == 'tools' %}active{% endif %}">
+                        <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75"/></svg>
+                        <span class="sidebar-label">ツール管理</span>
+                    </a>
+                </div>
+
+                <!-- Analytics group -->
+                <div class="pt-3">
+                    <p class="sidebar-group-title">分析</p>
+                    <a href="/dashboard/comparison" class="sidebar-link {% if active_page == 'comparison' %}active{% endif %}">
+                        <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+                        <span class="sidebar-label">スコア比較</span>
+                    </a>
+                    <a href="/dashboard/benchmarks" class="sidebar-link {% if active_page == 'benchmarks' %}active{% endif %}">
+                        <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-4.5A3.375 3.375 0 0012.75 10.5h-1.5A3.375 3.375 0 007.875 13.875v4.875m8.625 0h.375a3.375 3.375 0 003.375-3.375V10.5a8.25 8.25 0 10-16.5 0v5.25a3.375 3.375 0 003.375 3.375h.375"/></svg>
+                        <span class="sidebar-label">ベンチマーク</span>
+                    </a>
+                    <a href="/dashboard/custom-tests" class="sidebar-link {% if active_page == 'custom-tests' %}active{% endif %}">
+                        <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47 2.47a2.25 2.25 0 01-1.59.659H9.06a2.25 2.25 0 01-1.591-.659L5 14.5m14 0V17a3 3 0 01-3 3H8a3 3 0 01-3-3v-2.5"/></svg>
+                        <span class="sidebar-label">カスタムテスト</span>
+                    </a>
+                </div>
+
+                <!-- Integration group -->
+                <div class="pt-3">
+                    <p class="sidebar-group-title">連携</p>
+                    <a href="/dashboard/api-keys" class="sidebar-link {% if active_page == 'api-keys' %}active{% endif %}">
+                        <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg>
+                        <span class="sidebar-label">APIキー</span>
+                    </a>
+                    <a href="/dashboard/webhooks" class="sidebar-link {% if active_page == 'webhooks' %}active{% endif %}">
+                        <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+                        <span class="sidebar-label">Webhook</span>
+                    </a>
+                    <a href="/dashboard/schedules" class="sidebar-link {% if active_page == 'schedules' %}active{% endif %}">
+                        <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="sidebar-label">スケジュール</span>
+                    </a>
+                </div>
+
+                <!-- Admin group -->
+                <div class="pt-3">
+                    <p class="sidebar-group-title">管理</p>
+                    <a href="/dashboard/settings" class="sidebar-link {% if active_page == 'settings' %}active{% endif %}">
+                        <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span class="sidebar-label">設定</span>
+                    </a>
+                    <a href="/dashboard/notifications" class="sidebar-link {% if active_page == 'notifications' %}active{% endif %}">
+                        <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+                        <span class="sidebar-label">通知</span>
+                    </a>
+                    <a href="/dashboard/submissions" class="sidebar-link {% if active_page == 'submissions' %}active{% endif %}">
+                        <svg class="sidebar-icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3.75H6.912a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859"/></svg>
+                        <span class="sidebar-label">ベンダー申請</span>
+                    </a>
+                </div>
+
+            </nav>
+
+            <!-- Collapse toggle (desktop only) -->
+            <div class="hidden md:block border-t border-gray-100 p-2.5">
+                <button onclick="toggleSidebarCollapse()" class="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-md transition-colors">
+                    <svg id="collapse-icon" class="w-4 h-4 shrink-0 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5"/></svg>
+                    <span class="sidebar-label text-left">折りたたむ</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 
     <!-- Shared utilities -->
     <script src="/static/js/aixis-common.js"></script>
 
-    <!-- Logout helper -->
+    <!-- Sidebar + Logout logic -->
     <script>
+        /* Logout */
         function aixisLogout() {
             localStorage.removeItem('aixis_token');
             localStorage.removeItem('aixis-user');
@@ -132,9 +221,71 @@
             document.cookie = 'aixis_session=; Max-Age=0; path=/;';
             window.location.href = '/';
         }
+
+        /* Mobile sidebar toggle */
+        function toggleMobileSidebar() {
+            const sb = document.getElementById('admin-sidebar');
+            const ov = document.getElementById('sidebar-overlay');
+            const isOpen = !sb.classList.contains('-translate-x-full');
+            if (isOpen) {
+                sb.classList.add('-translate-x-full');
+                ov.classList.add('hidden');
+            } else {
+                sb.classList.remove('-translate-x-full');
+                ov.classList.remove('hidden');
+            }
+        }
+
+        /* Desktop sidebar collapse */
+        function toggleSidebarCollapse() {
+            const sb = document.getElementById('admin-sidebar');
+            const icon = document.getElementById('collapse-icon');
+            const collapsed = sb.classList.toggle('collapsed');
+            sb.style.width = collapsed ? '4rem' : '14rem';
+            icon.style.transform = collapsed ? 'rotate(180deg)' : '';
+            localStorage.setItem('aixis-sidebar-collapsed', collapsed ? '1' : '0');
+        }
+
+        /* Restore sidebar state */
+        (function() {
+            if (window.innerWidth >= 768 && localStorage.getItem('aixis-sidebar-collapsed') === '1') {
+                const sb = document.getElementById('admin-sidebar');
+                const icon = document.getElementById('collapse-icon');
+                sb.classList.add('collapsed');
+                sb.style.width = '4rem';
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            }
+        })();
     </script>
 
-    <!-- Theme toggle removed (light theme only) -->
+    <!-- Sidebar link styles (injected as <style> so Tailwind purge doesn't matter) -->
+    <style>
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.8125rem;
+            color: #6b7280;
+            transition: all 150ms ease;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .sidebar-link:hover { background: #f9fafb; color: #374151; }
+        .sidebar-link.active { background: #eef2ff; color: #4338ca; font-weight: 500; }
+        .sidebar-icon { width: 1.125rem; height: 1.125rem; flex-shrink: 0; }
+        .sidebar-group-title {
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #9ca3af;
+            padding: 0 0.5rem 0.25rem;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        .sidebar.collapsed .sidebar-group-title { display: none; }
+    </style>
 
     {% block scripts %}{% endblock %}
 </body>

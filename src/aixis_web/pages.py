@@ -200,7 +200,7 @@ async def tools_management_page(
     """Tool management page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="ツール管理", active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="ツール管理", active_page="tools")
     return templates.TemplateResponse("dashboard/tools.html", ctx)
 
 
@@ -212,7 +212,7 @@ async def manual_list_page(
     """Manual evaluation list page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="手動評価一覧", active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="手動評価一覧", active_page="manual")
     return templates.TemplateResponse("dashboard/manual_list.html", ctx)
 
 
@@ -224,7 +224,7 @@ async def settings_page(
     """Platform settings page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="設定", active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="設定", active_page="settings")
     return templates.TemplateResponse("dashboard/settings.html", ctx)
 
 
@@ -236,7 +236,7 @@ async def new_audit_page(
     """New audit creation page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="新規監査を開始", active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="新規監査を開始", active_page="audit-new")
     return templates.TemplateResponse("dashboard/audit_new.html", ctx)
 
 
@@ -249,7 +249,7 @@ async def audit_detail_page(
     """Audit session detail page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="監査セッション詳細", session_id=session_id, active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="監査セッション詳細", session_id=session_id, active_page="audit-new")
     return templates.TemplateResponse("dashboard/audit_detail.html", ctx)
 
 
@@ -262,7 +262,7 @@ async def manual_checklist_page(
     """Manual checklist evaluation page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="手動チェックリスト評価", session_id=session_id, active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="手動チェックリスト評価", session_id=session_id, active_page="manual")
     return templates.TemplateResponse("dashboard/manual_checklist.html", ctx)
 
 
@@ -274,7 +274,7 @@ async def comparison_page(
     """Tool score comparison page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="スコア比較", active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="スコア比較", active_page="comparison")
     return templates.TemplateResponse("dashboard/comparison.html", ctx)
 
 
@@ -286,7 +286,7 @@ async def custom_tests_page(
     """Custom test case management page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="カスタムテスト管理", active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="カスタムテスト管理", active_page="custom-tests")
     return templates.TemplateResponse("dashboard/custom_tests.html", ctx)
 
 
@@ -298,7 +298,7 @@ async def api_keys_page(
     """API key management page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="APIキー管理", active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="APIキー管理", active_page="api-keys")
     return templates.TemplateResponse("dashboard/api_keys.html", ctx)
 
 
@@ -311,7 +311,7 @@ async def audit_log_page(
     """Audit log detail page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="監査ログ詳細", session_id=session_id, active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="監査ログ詳細", session_id=session_id, active_page="audit-new")
     return templates.TemplateResponse("dashboard/audit_log.html", ctx)
 
 
@@ -323,7 +323,7 @@ async def webhooks_page(
     """Webhook management page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="Webhook管理", active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="Webhook管理", active_page="webhooks")
     return templates.TemplateResponse("dashboard/webhooks.html", ctx)
 
 
@@ -335,7 +335,7 @@ async def notifications_page(
     """Notification center page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="通知センター", active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="通知センター", active_page="notifications")
     return templates.TemplateResponse("dashboard/notifications.html", ctx)
 
 
@@ -362,7 +362,7 @@ async def schedules_page(
     """Audit schedule management page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="スケジュール管理", active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="スケジュール管理", active_page="schedules")
     return templates.TemplateResponse("dashboard/schedules.html", ctx)
 
 
@@ -411,7 +411,7 @@ async def admin_submissions_page(
     """Admin submission review queue."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="申請審査", active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="申請審査", active_page="submissions")
     return templates.TemplateResponse("dashboard/submissions.html", ctx)
 
 
@@ -437,5 +437,5 @@ async def benchmark_manage_page(
     """Admin benchmark management page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="ベンチマーク管理", active_page="dashboard")
+    ctx = _get_template_context(request, user=user, title="ベンチマーク管理", active_page="benchmarks")
     return templates.TemplateResponse("dashboard/benchmark_manage.html", ctx)

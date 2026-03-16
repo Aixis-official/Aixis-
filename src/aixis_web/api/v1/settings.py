@@ -117,3 +117,24 @@ async def update_settings(
         return {"status": "ok", "message": "APIキーを保存しました"}
 
     return {"status": "ok", "message": "変更なし"}
+
+
+@router.post("/backup")
+async def create_backup(
+    user: Annotated[User, Depends(require_admin)],
+):
+    """Create a database backup (SQLite only)."""
+    from ...services.backup_service import create_backup as do_backup
+    result = do_backup()
+    if "error" in result:
+        raise HTTPException(400, result["error"])
+    return result
+
+
+@router.get("/backups")
+async def list_backups(
+    user: Annotated[User, Depends(require_admin)],
+):
+    """List existing database backups."""
+    from ...services.backup_service import list_backups as do_list
+    return {"backups": do_list()}

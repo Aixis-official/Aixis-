@@ -166,6 +166,7 @@ async def generate_score_diff(db: AsyncSession, tool_id: str, current_session_id
             AuditSession.tool_id == tool_id,
             AuditSession.id != current_session_id,
             AuditSession.status.in_(["completed", "awaiting_manual"]),
+            AuditSession.deleted_at.is_(None),
         )
         .order_by(AuditSession.completed_at.desc())
         .limit(1)
