@@ -154,7 +154,7 @@ async def audit_protocol_page(request: Request):
 @page_router.get("/contact")
 async def contact_page(request: Request):
     """Contact form page."""
-    ctx = _get_template_context(request, title="お問い合わせ | 無料相談・見積もり依頼", active_page="contact")
+    ctx = _get_template_context(request, title="お問い合わせ | 14日間の無料トライアル申請", active_page="contact")
     return templates.TemplateResponse("public/contact.html", ctx)
 
 

@@ -2,7 +2,7 @@
 {% set active_page = 'contact' %}
 
 {% block meta_description %}
-<meta name="description" content="Aixisへのお問い合わせ。AIツール監査のご依頼、料金のご相談、導入支援など、お気軽にご連絡ください。無料相談・見積もり対応。">
+<meta name="description" content="Aixisへのお問い合わせ。AIツール監査のご依頼、料金のご相談、導入支援など、お気軽にご連絡ください。14日間の無料トライアル対応。">
 {% endblock %}
 
 {% block meta_keywords %}
@@ -218,7 +218,7 @@
                     </label>
                     <select id="inquiry_type" name="inquiry_type" required>
                         <option value="" disabled selected>選択してください</option>
-                        <option value="監査データベース利用に関するご相談">監査データベース利用に関するご相談</option>
+                        <option value="監査データベース利用（無料トライアル）に関するご相談">監査データベース利用（無料トライアル）に関するご相談</option>
                         <option value="クイック診断のご相談">クイック診断のご相談</option>
                         <option value="個別監査レポートのご相談">個別監査レポートのご相談</option>
                         <option value="ツール掲載に関するご相談">ツール掲載に関するご相談</option>
@@ -307,7 +307,7 @@
     // --- Auto-select inquiry type from URL param ---
     var urlParams = new URLSearchParams(window.location.search);
     var typeMap = {
-        'database': '監査データベース利用に関するご相談',
+        'database': '監査データベース利用（無料トライアル）に関するご相談',
         'quick': 'クイック診断のご相談',
         'report': '個別監査レポートのご相談',
         'listing': 'ツール掲載に関するご相談',
