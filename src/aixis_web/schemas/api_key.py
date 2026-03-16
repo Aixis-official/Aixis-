@@ -2,14 +2,31 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
+
+# Allowed scopes for public API keys
+ALLOWED_SCOPES = {"read:tools", "read:scores", "read:rankings"}
+
+# Rate limit caps to prevent abuse
+MAX_RATE_LIMIT_PER_MINUTE = 120
+MAX_RATE_LIMIT_PER_DAY = 50000
 
 
 class ApiKeyCreate(BaseModel):
-    name: str
+    name: str = Field(..., min_length=1, max_length=200)
     scopes: list[str] = ["read:tools", "read:scores", "read:rankings"]
-    rate_limit_per_minute: int = 60
-    rate_limit_per_day: int = 10000
+    rate_limit_per_minute: int = Field(60, ge=1, le=MAX_RATE_LIMIT_PER_MINUTE)
+    rate_limit_per_day: int = Field(10000, ge=1, le=MAX_RATE_LIMIT_PER_DAY)
+
+    @field_validator("scopes")
+    @classmethod
+    def validate_scopes(cls, v: list[str]) -> list[str]:
+        invalid = set(v) - ALLOWED_SCOPES
+        if invalid:
+            raise ValueError(f"Invalid scopes: {invalid}. Allowed: {ALLOWED_SCOPES}")
+        if not v:
+            raise ValueError("At least one scope is required")
+        return v
 
 
 class ApiKeyResponse(BaseModel):

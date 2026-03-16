@@ -7,18 +7,69 @@ delivering payloads with HMAC-SHA256 signatures and retry logic.
 import asyncio
 import hashlib
 import hmac
+import ipaddress
 import json
 import logging
+import socket
 import urllib.request
 import urllib.error
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db.models.webhook import WebhookDelivery, WebhookSubscription
+from ..crypto import encrypt_value, decrypt_value
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# SSRF Protection — block internal/private IP ranges and metadata endpoints
+# ---------------------------------------------------------------------------
+
+_BLOCKED_NETWORKS = [
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("169.254.0.0/16"),  # Link-local / cloud metadata
+    ipaddress.ip_network("0.0.0.0/8"),
+    ipaddress.ip_network("::1/128"),
+    ipaddress.ip_network("fc00::/7"),  # IPv6 unique local
+    ipaddress.ip_network("fe80::/10"),  # IPv6 link-local
+]
+
+
+def validate_webhook_url(url: str) -> None:
+    """Validate a webhook URL to prevent SSRF attacks.
+
+    Raises ValueError if the URL points to an internal/private IP or
+    uses a non-HTTPS scheme.
+    """
+    parsed = urlparse(url)
+
+    # Only allow http(s) schemes
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(f"Unsupported URL scheme: {parsed.scheme}")
+
+    hostname = parsed.hostname
+    if not hostname:
+        raise ValueError("URL must have a hostname")
+
+    # Resolve hostname to IP and check against blocked networks
+    try:
+        addr_infos = socket.getaddrinfo(hostname, parsed.port or 443, proto=socket.IPPROTO_TCP)
+    except socket.gaierror:
+        raise ValueError(f"Cannot resolve hostname: {hostname}")
+
+    for family, type_, proto, canonname, sockaddr in addr_infos:
+        ip = ipaddress.ip_address(sockaddr[0])
+        for network in _BLOCKED_NETWORKS:
+            if ip in network:
+                raise ValueError(
+                    f"Webhook URL resolves to blocked address: {ip}"
+                )
 
 # Retry intervals in seconds: 60s, 5min, 30min, 2h
 RETRY_INTERVALS = [60, 300, 1800, 7200]
@@ -66,12 +117,18 @@ async def emit_event(
         await db.flush()
         delivery_ids.append(delivery.id)
 
+        # Decrypt secret for HMAC signing
+        try:
+            plain_secret = decrypt_value(sub.secret)
+        except Exception:
+            plain_secret = sub.secret  # Fallback for pre-encryption secrets
+
         # Fire background delivery (non-blocking)
         asyncio.create_task(
             deliver_webhook(
                 delivery_id=delivery.id,
                 url=sub.url,
-                secret=sub.secret,
+                secret=plain_secret,
                 event_type=event_type,
                 payload=payload,
                 db=db,
@@ -148,6 +205,9 @@ def _do_post(
     event_type: str,
 ) -> tuple[int, str]:
     """Synchronous HTTP POST (runs in thread)."""
+    # Re-validate URL at delivery time to defend against DNS rebinding
+    validate_webhook_url(url)
+
     req = urllib.request.Request(
         url,
         data=payload_bytes,
@@ -213,11 +273,17 @@ async def send_test_event(
     db.add(delivery)
     await db.flush()
 
+    # Decrypt secret for HMAC signing
+    try:
+        plain_secret = decrypt_value(sub.secret)
+    except Exception:
+        plain_secret = sub.secret  # Fallback for pre-encryption secrets
+
     asyncio.create_task(
         deliver_webhook(
             delivery_id=delivery.id,
             url=sub.url,
-            secret=sub.secret,
+            secret=plain_secret,
             event_type="test",
             payload=test_payload,
             db=db,

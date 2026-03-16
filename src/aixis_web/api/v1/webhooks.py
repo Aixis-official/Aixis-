@@ -16,7 +16,8 @@ from ...schemas.webhook import (
     WebhookResponse,
     WebhookTestRequest,
 )
-from ...services.webhook_service import send_test_event
+from ...crypto import encrypt_value
+from ...services.webhook_service import send_test_event, validate_webhook_url
 from ..deps import require_auth
 
 router = APIRouter()
@@ -29,12 +30,22 @@ async def create_webhook(
     user: Annotated[User, Depends(require_auth)],
 ):
     """Register a new webhook subscription."""
-    secret = body.secret or secrets.token_hex(32)
+    # SSRF protection: validate URL does not point to internal/private IPs
+    try:
+        validate_webhook_url(body.url)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"無効なWebhook URL: {e}",
+        )
+
+    raw_secret = body.secret or secrets.token_hex(32)
+    encrypted_secret = encrypt_value(raw_secret)
 
     subscription = WebhookSubscription(
         user_id=user.id,
         url=body.url,
-        secret=secret,
+        secret=encrypted_secret,
         events=body.events,
     )
     db.add(subscription)

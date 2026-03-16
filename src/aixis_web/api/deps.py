@@ -1,5 +1,6 @@
 """API dependencies for authentication and database access."""
 import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
@@ -44,14 +45,22 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
     )
-    to_encode.update({"exp": expire})
+    to_encode.update({
+        "exp": expire,
+        "type": "access",
+        "jti": secrets.token_urlsafe(16),
+    })
     return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
 
 
 def create_refresh_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
-    to_encode.update({"exp": expire, "type": "refresh"})
+    to_encode.update({
+        "exp": expire,
+        "type": "refresh",
+        "jti": secrets.token_urlsafe(16),
+    })
     return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
 
 
@@ -73,6 +82,22 @@ async def get_current_user(
         user_id = payload.get("sub")
         if not user_id:
             return None
+
+        # Reject refresh tokens used as access tokens
+        token_type = payload.get("type")
+        if token_type != "access":
+            return None
+
+        # Check if token has been revoked (logout support)
+        jti = payload.get("jti")
+        if jti:
+            from ..db.models.revoked_token import RevokedToken
+            revoked = await db.execute(
+                select(RevokedToken).where(RevokedToken.jti == jti)
+            )
+            if revoked.scalar_one_or_none():
+                return None
+
     except JWTError:
         return None
     result = await db.execute(select(User).where(User.id == user_id))

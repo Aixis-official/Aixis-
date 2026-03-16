@@ -1,6 +1,6 @@
 """Contact form schemas with input validation."""
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 
 
@@ -31,6 +31,15 @@ class ContactRequest(BaseModel):
     phone: Optional[str] = Field(None, max_length=30, pattern=r'^[\d\-\+\(\)\s]*$')
     inquiry_type: str = Field(..., min_length=1, max_length=50)
     message: str = Field(..., min_length=1, max_length=5000)
+
+    @field_validator("inquiry_type")
+    @classmethod
+    def validate_inquiry_type(cls, v: str) -> str:
+        if v not in ALLOWED_INQUIRY_TYPES:
+            raise ValueError(
+                f"無効なお問い合わせ種別です。許可された値: {', '.join(sorted(ALLOWED_INQUIRY_TYPES))}"
+            )
+        return v
 
 
 class ContactResponse(BaseModel):

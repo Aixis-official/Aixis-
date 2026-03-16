@@ -72,6 +72,9 @@ class ScoreHistoryItem(BaseModel):
 class ScoreHistoryResponse(BaseModel):
     tool_slug: str
     history: list[ScoreHistoryItem]
+    total: int
+    page: int
+    page_size: int
 
 
 class RankingItem(BaseModel):
@@ -226,9 +229,10 @@ async def get_score_history(
     tool_slug: str,
     db: Annotated[AsyncSession, Depends(get_db)],
     _key: Annotated[ApiKey, Depends(require_scope("read:scores"))],
-    limit: int = Query(50, ge=1, le=200),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
 ):
-    """Get score history timeline for a tool."""
+    """Get score history timeline for a tool (paginated)."""
     tool_result = await db.execute(
         select(Tool).where(Tool.slug == tool_slug, Tool.is_public.is_(True))
     )
@@ -238,11 +242,21 @@ async def get_score_history(
             status_code=status.HTTP_404_NOT_FOUND, detail="Tool not found"
         )
 
+    # Count total entries
+    total_result = await db.execute(
+        select(func.count())
+        .select_from(ScoreHistory)
+        .where(ScoreHistory.tool_id == tool.id)
+    )
+    total = total_result.scalar() or 0
+
+    offset = (page - 1) * page_size
     history_result = await db.execute(
         select(ScoreHistory)
         .where(ScoreHistory.tool_id == tool.id)
         .order_by(ScoreHistory.recorded_at.desc())
-        .limit(limit)
+        .offset(offset)
+        .limit(page_size)
     )
     rows = history_result.scalars().all()
 
@@ -256,6 +270,9 @@ async def get_score_history(
             )
             for r in rows
         ],
+        total=total,
+        page=page,
+        page_size=page_size,
     )
 
 

@@ -67,10 +67,10 @@ async def list_tools(
     Public access returns only public, active tools.
     Pass all=true with analyst+ auth to see all tools.
     """
-    if all and not user:
+    if all and (not user or user.role not in ("admin", "analyst", "auditor")):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="認証が必要です",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="アナリスト以上の権限が必要です",
         )
     if all:
         query = select(Tool)

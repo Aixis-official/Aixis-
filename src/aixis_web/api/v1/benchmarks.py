@@ -32,7 +32,7 @@ from ...services.benchmark_service import (
     publish_suite,
     start_benchmark_run,
 )
-from ..deps import require_admin, require_analyst
+from ..deps import get_current_user, require_admin, require_analyst
 
 router = APIRouter()
 
@@ -40,9 +40,15 @@ router = APIRouter()
 @router.get("/", response_model=list[BenchmarkSuiteResponse])
 async def list_suites(
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User | None, Depends(get_current_user)] = None,
     include_drafts: bool = Query(False),
 ):
     """List benchmark suites. Public sees only published; analysts see all."""
+    if include_drafts and (not user or user.role not in ("admin", "analyst", "auditor")):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="ドラフト閲覧にはアナリスト以上の権限が必要です",
+        )
     query = select(BenchmarkSuite)
     if not include_drafts:
         query = query.where(BenchmarkSuite.is_published.is_(True))

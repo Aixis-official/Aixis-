@@ -1,10 +1,10 @@
 """Authentication schemas."""
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=1, max_length=256)
 
 
 class TokenResponse(BaseModel):

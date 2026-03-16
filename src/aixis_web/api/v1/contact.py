@@ -5,11 +5,8 @@ import logging
 import re
 import smtplib
 import socket
-import time
-from collections import defaultdict
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from threading import Lock
 
 import httpx
 from typing import Annotated
@@ -17,41 +14,14 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request,
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...config import settings
+from ...db.base import get_db
 from ...db.models.user import User
 from ...schemas.contact import ContactRequest, ContactResponse
+from ...services.rate_limit_service import check_rate_limit
 from ..deps import require_admin
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-
-# ---------------------------------------------------------------------------
-# In-memory rate limiter (per-IP, sliding window)
-# ---------------------------------------------------------------------------
-
-class _RateLimiter:
-    """Simple in-memory rate limiter keyed by IP address."""
-
-    def __init__(self):
-        self._attempts: dict[str, list[float]] = defaultdict(list)
-        self._lock = Lock()
-
-    def check(self, ip: str, max_requests: int, window_seconds: int) -> bool:
-        """Return True if the request is allowed, False if rate-limited."""
-        now = time.time()
-        cutoff = now - window_seconds
-
-        with self._lock:
-            self._attempts[ip] = [t for t in self._attempts[ip] if t > cutoff]
-
-            if len(self._attempts[ip]) >= max_requests:
-                return False
-
-            self._attempts[ip].append(now)
-            return True
-
-
-_rate_limiter = _RateLimiter()
 
 
 # ---------------------------------------------------------------------------
@@ -250,14 +220,18 @@ async def submit_contact(
     req: ContactRequest,
     request: Request,
     background_tasks: BackgroundTasks,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Receive contact form submission and send notification email."""
     client_ip = request.client.host if request.client else "unknown"
-    if not _rate_limiter.check(
-        client_ip,
+    allowed, _retry = await check_rate_limit(
+        db,
+        f"contact:{client_ip}",
         settings.contact_rate_limit_per_ip,
         settings.contact_rate_limit_window_seconds,
-    ):
+    )
+    if not allowed:
+        await db.commit()
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="送信回数の上限に達しました。しばらくしてからもう一度お試しください。",
@@ -267,6 +241,8 @@ async def submit_contact(
         "Contact form from %s (%s): %s [IP: %s]",
         req.company_name, req.email, req.inquiry_type, client_ip,
     )
+
+    await db.commit()
 
     if settings.resend_api_key or settings.smtp_host:
         background_tasks.add_task(_send_emails_background, req)
@@ -283,16 +259,18 @@ async def submit_contact(
 async def smtp_test(
     _admin: Annotated[User, Depends(require_admin)],
 ):
-    """Email diagnostic endpoint (admin only). Tests all available backends."""
+    """Email diagnostic endpoint (admin only). Tests all available backends.
+
+    Only reports connectivity status — no sensitive config values are exposed.
+    """
     loop = asyncio.get_running_loop()
     results: dict = {
         "resend_configured": bool(settings.resend_api_key),
-        "smtp_host": settings.smtp_host,
-        "smtp_user": settings.smtp_user or "(empty)",
-        "password_set": bool(settings.smtp_password),
+        "smtp_configured": bool(settings.smtp_host),
+        "smtp_credentials_set": bool(settings.smtp_user and settings.smtp_password),
     }
 
-    # Test Resend API
+    # Test Resend API connectivity (send a test email)
     if settings.resend_api_key:
         try:
             resp = httpx.post(
@@ -310,26 +288,27 @@ async def smtp_test(
                 timeout=10,
             )
             if resp.status_code in (200, 201):
-                results["resend_test"] = f"OK (email sent to {settings.smtp_to})"
+                results["resend_test"] = "OK"
             else:
-                results["resend_test"] = f"FAILED {resp.status_code}: {resp.text}"
-        except Exception as e:
-            results["resend_test"] = f"FAILED: {e}"
+                results["resend_test"] = f"FAILED (status {resp.status_code})"
+        except Exception:
+            results["resend_test"] = "FAILED (connection error)"
     else:
-        results["resend_test"] = "SKIPPED (no API key)"
+        results["resend_test"] = "SKIPPED (not configured)"
 
-    # Test TCP to SMTP ports
-    for port in [587, 465]:
-        try:
-            def _tcp(p=port):
-                sock = socket.create_connection((settings.smtp_host, p), timeout=5)
-                sock.close()
-                return "OK"
-            r = await asyncio.wait_for(loop.run_in_executor(None, _tcp), timeout=6)
-            results[f"tcp_{port}"] = r
-        except asyncio.TimeoutError:
-            results[f"tcp_{port}"] = "BLOCKED (timeout)"
-        except Exception as e:
-            results[f"tcp_{port}"] = f"FAILED: {e}"
+    # Test TCP connectivity to SMTP ports (no credentials exposed)
+    if settings.smtp_host:
+        for port in [587, 465]:
+            try:
+                def _tcp(p=port):
+                    sock = socket.create_connection((settings.smtp_host, p), timeout=5)
+                    sock.close()
+                    return "OK"
+                r = await asyncio.wait_for(loop.run_in_executor(None, _tcp), timeout=6)
+                results[f"tcp_{port}"] = r
+            except asyncio.TimeoutError:
+                results[f"tcp_{port}"] = "BLOCKED (timeout)"
+            except Exception:
+                results[f"tcp_{port}"] = "FAILED"
 
     return results

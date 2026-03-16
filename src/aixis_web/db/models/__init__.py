@@ -50,6 +50,12 @@ from .risk_governance import ToolRiskGovernance, RegulatoryFramework
 # Adoption / Benchmark
 from .adoption import IndustryAdoptionPattern, AdoptionSurveyResponse
 
+# Rate limiting (DB-backed for multi-worker support)
+from .rate_limit import RateLimitEntry
+
+# Token revocation (for logout)
+from .revoked_token import RevokedToken
+
 __all__ = [
     # user
     "Organization",
@@ -104,4 +110,8 @@ __all__ = [
     # adoption
     "IndustryAdoptionPattern",
     "AdoptionSurveyResponse",
+    # rate limiting
+    "RateLimitEntry",
+    # token revocation
+    "RevokedToken",
 ]
