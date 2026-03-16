@@ -43,10 +43,6 @@ class SecurityMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next):
-        # --- Generate per-request nonce for CSP ---
-        csp_nonce = secrets.token_urlsafe(16)
-        request.state.csp_nonce = csp_nonce
-
         # --- CSRF check (before calling route) ---
         if request.method not in _CSRF_SAFE_METHODS:
             path = request.url.path
@@ -77,10 +73,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             response.headers["Strict-Transport-Security"] = (
                 "max-age=31536000; includeSubDomains; preload"
             )
-        nonce = getattr(request.state, "csp_nonce", "")
         csp_directives = [
             "default-src 'self'",
-            f"script-src 'self' 'nonce-{nonce}' https://www.googletagmanager.com https://cdn.tailwindcss.com https://cdn.plot.ly https://unpkg.com",
+            "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.tailwindcss.com https://cdn.plot.ly https://unpkg.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com",
             "font-src 'self' https://fonts.gstatic.com",
             "img-src 'self' data: https:",

@@ -29,13 +29,11 @@ def _get_template_context(request: Request, user=None, **extra) -> dict:
         cookie_lang=request.cookies.get("aixis_lang"),
     )
     translator = get_translator(lang)
-    csp_nonce = getattr(request.state, "csp_nonce", "")
     return {
         "request": request,
         "user": user,
         "_": translator,
         "lang": lang,
-        "csp_nonce": csp_nonce,
         **extra,
     }
 
