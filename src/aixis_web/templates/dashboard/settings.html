@@ -6,32 +6,32 @@
 <div class="max-w-3xl mx-auto">
 
     <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">設定</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">AI監査エージェントの設定</p>
+        <h1 class="text-2xl font-bold text-gray-900 font-jp">設定</h1>
+        <p class="mt-1 text-sm text-gray-500 font-jp">AI監査エージェントの設定</p>
     </div>
 
     <!-- API Key Section -->
-    <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6 mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp mb-1">Anthropic APIキー</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 font-jp mb-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 font-jp mb-1">Anthropic APIキー</h2>
+        <p class="text-sm text-gray-500 font-jp mb-4">
             AI監査エージェント（Haiku Vision）が使用するAPIキーです。
-            <a href="https://console.anthropic.com/" target="_blank" class="text-blue-600 dark:text-blue-400 underline">Anthropicコンソール</a>で取得できます。
+            <a href="https://console.anthropic.com/" target="_blank" class="text-blue-600 underline">Anthropicコンソール</a>で取得できます。
         </p>
 
         <div id="alert-area" class="hidden mb-4 p-3 rounded-lg text-sm font-jp"></div>
 
         <div class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 font-jp mb-1">
+                <label class="block text-sm font-medium text-gray-700 font-jp mb-1">
                     APIキー
                 </label>
                 <div class="flex gap-2">
                     <input id="api-key-input"
                            type="password"
                            placeholder="sk-ant-api03-..."
-                           class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <button onclick="toggleKeyVisibility()"
-                            class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            class="px-3 py-2 text-sm text-gray-500 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                             title="表示/非表示">
                         <svg id="eye-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
@@ -46,41 +46,131 @@
                         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors font-jp">
                     保存
                 </button>
-                <span id="status-text" class="text-sm text-gray-500 dark:text-gray-400 font-jp"></span>
+                <span id="status-text" class="text-sm text-gray-500 font-jp"></span>
             </div>
         </div>
     </div>
 
     <!-- Budget Section -->
-    <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6 mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp mb-1">コスト管理</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 font-jp mb-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 font-jp mb-1">コスト管理</h2>
+        <p class="text-sm text-gray-500 font-jp mb-4">
             1回の監査あたりのAPI使用上限（Haiku Vision使用、ハイブリッド方式）
         </p>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
-                <div class="text-sm text-gray-500 dark:text-gray-400 font-jp">コスト上限</div>
-                <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1" id="cost-limit">--</div>
+            <div class="bg-gray-50/50 rounded-lg p-4">
+                <div class="text-sm text-gray-500 font-jp">コスト上限</div>
+                <div class="text-2xl font-bold text-gray-900 mt-1" id="cost-limit">--</div>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
-                <div class="text-sm text-gray-500 dark:text-gray-400 font-jp">API呼び出し上限</div>
-                <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1" id="call-limit">--</div>
+            <div class="bg-gray-50/50 rounded-lg p-4">
+                <div class="text-sm text-gray-500 font-jp">API呼び出し上限</div>
+                <div class="text-2xl font-bold text-gray-900 mt-1" id="call-limit">--</div>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
-                <div class="text-sm text-gray-500 dark:text-gray-400 font-jp">使用モデル</div>
-                <div class="text-lg font-bold text-gray-900 dark:text-white mt-1" id="model-name">--</div>
+            <div class="bg-gray-50/50 rounded-lg p-4">
+                <div class="text-sm text-gray-500 font-jp">使用モデル</div>
+                <div class="text-lg font-bold text-gray-900 mt-1" id="model-name">--</div>
             </div>
         </div>
 
-        <p class="text-xs text-gray-400 dark:text-gray-500 mt-3 font-jp">
+        <p class="text-xs text-gray-400 mt-3 font-jp">
             ハイブリッド方式: 1回目のテストでUIを学習し、2回目以降はAPIを使わずに再生します。通常1監査あたり5〜10回のAPI呼び出しで済みます。
         </p>
     </div>
 
+    <!-- Google Drive Auto-Export Section -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div class="flex items-center justify-between mb-1">
+            <h2 class="text-lg font-semibold text-gray-900 font-jp">Google Drive 自動エクスポート</h2>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="gdrive-enabled" class="sr-only peer" onchange="toggleGDrive(this.checked)">
+                <div class="w-9 h-5 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+        </div>
+        <p class="text-sm text-gray-500 font-jp mb-4">
+            データベースバックアップを定期的にGoogle Driveへ自動アップロードします。Railway等のボリューム障害対策として推奨します。
+        </p>
+
+        <div id="gdrive-alert" class="hidden mb-4 p-3 rounded-lg text-sm font-jp"></div>
+
+        <!-- Status indicator -->
+        <div id="gdrive-status-bar" class="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-gray-50 text-sm">
+            <span id="gdrive-status-dot" class="w-2 h-2 rounded-full bg-gray-300"></span>
+            <span id="gdrive-status-text" class="text-gray-500 font-jp">読み込み中...</span>
+        </div>
+
+        <div class="space-y-4">
+            <!-- Service Account Credentials -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 font-jp mb-1">
+                    サービスアカウント認証情報（JSON）
+                </label>
+                <textarea id="gdrive-creds"
+                    rows="3"
+                    placeholder='{"type":"service_account","project_id":"...","private_key":"..."}'
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
+                <p class="text-xs text-gray-400 mt-1 font-jp">
+                    Google Cloud Consoleでサービスアカウントを作成し、JSONキーをここに貼り付けてください。
+                    <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank" class="text-blue-500 underline">Google Cloud Console</a>
+                </p>
+            </div>
+
+            <!-- Folder ID -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 font-jp mb-1">
+                    Google DriveフォルダID
+                </label>
+                <input id="gdrive-folder"
+                    type="text"
+                    placeholder="1ABCdef..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <p class="text-xs text-gray-400 mt-1 font-jp">
+                    DriveフォルダのURLから取得: https://drive.google.com/drive/folders/<strong>ここの部分</strong>
+                    ※サービスアカウントをこのフォルダに共有（編集者権限）してください。
+                </p>
+            </div>
+
+            <!-- Interval -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 font-jp mb-1">
+                    エクスポート間隔
+                </label>
+                <div class="flex items-center gap-2">
+                    <select id="gdrive-interval"
+                        class="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="6">6時間ごと</option>
+                        <option value="12">12時間ごと</option>
+                        <option value="24" selected>24時間ごと（推奨）</option>
+                        <option value="48">48時間ごと</option>
+                        <option value="168">週1回</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-3 pt-2">
+                <button onclick="saveGDriveSettings()"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors font-jp">
+                    設定を保存
+                </button>
+                <button onclick="triggerGDriveExport()"
+                    id="gdrive-export-btn"
+                    class="px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors font-jp">
+                    今すぐエクスポート
+                </button>
+            </div>
+        </div>
+
+        <!-- Recent exports in Drive -->
+        <div id="gdrive-files-section" class="hidden mt-6 pt-4 border-t border-gray-100">
+            <h3 class="text-sm font-semibold text-gray-700 font-jp mb-2">Google Drive上のバックアップ</h3>
+            <div id="gdrive-files-list" class="space-y-1"></div>
+        </div>
+    </div>
+
     <!-- Back link -->
     <div class="mt-6">
-        <a href="/dashboard" class="text-sm text-blue-600 dark:text-blue-400 hover:underline font-jp">
+        <a href="/dashboard" class="text-sm text-blue-600 hover:underline font-jp">
             &larr; ダッシュボードに戻る
         </a>
     </div>
@@ -101,10 +191,10 @@
 
             if (data.has_api_key) {
                 document.getElementById('status-text').textContent = 'APIキー設定済み';
-                document.getElementById('status-text').classList.add('text-emerald-600', 'dark:text-emerald-400');
+                document.getElementById('status-text').classList.add('text-emerald-600');
             } else {
                 document.getElementById('status-text').textContent = '未設定';
-                document.getElementById('status-text').classList.add('text-amber-600', 'dark:text-amber-400');
+                document.getElementById('status-text').classList.add('text-amber-600');
             }
         } catch (e) {
             console.error('Failed to load settings:', e);
@@ -137,19 +227,155 @@
 
     function showAlert(msg, type) {
         const el = document.getElementById('alert-area');
-        el.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'dark:bg-emerald-900/30', 'dark:text-emerald-300',
-                           'bg-red-50', 'text-red-800', 'dark:bg-red-900/30', 'dark:text-red-300',
-                           'bg-amber-50', 'text-amber-800', 'dark:bg-amber-900/30', 'dark:text-amber-300');
+        el.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800',
+                           'bg-red-50', 'text-red-800',
+                           'bg-amber-50', 'text-amber-800');
         if (type === 'ok') {
-            el.classList.add('bg-emerald-50', 'text-emerald-800', 'dark:bg-emerald-900/30', 'dark:text-emerald-300');
+            el.classList.add('bg-emerald-50', 'text-emerald-800');
         } else if (type === 'err') {
-            el.classList.add('bg-red-50', 'text-red-800', 'dark:bg-red-900/30', 'dark:text-red-300');
+            el.classList.add('bg-red-50', 'text-red-800');
         } else {
-            el.classList.add('bg-amber-50', 'text-amber-800', 'dark:bg-amber-900/30', 'dark:text-amber-300');
+            el.classList.add('bg-amber-50', 'text-amber-800');
         }
         el.textContent = msg;
     }
 
     loadSettings();
+
+    // ── Google Drive Export ──
+
+    async function loadGDriveStatus() {
+        try {
+            const data = await aixisAPI('/settings/gdrive/status');
+            const dot = document.getElementById('gdrive-status-dot');
+            const text = document.getElementById('gdrive-status-text');
+            const toggle = document.getElementById('gdrive-enabled');
+
+            toggle.checked = data.enabled;
+
+            if (data.thread_running) {
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+                text.textContent = '自動エクスポート稼働中';
+                text.className = 'text-emerald-700 font-jp';
+            } else if (data.enabled && !data.has_credentials) {
+                dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+                text.textContent = '認証情報が未設定です';
+                text.className = 'text-amber-700 font-jp';
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-gray-300';
+                text.textContent = '無効';
+                text.className = 'text-gray-500 font-jp';
+            }
+
+            if (data.folder_id) {
+                document.getElementById('gdrive-folder').value = data.folder_id;
+            }
+            if (data.interval_hours) {
+                document.getElementById('gdrive-interval').value = String(data.interval_hours);
+            }
+            if (data.last_export) {
+                const le = data.last_export;
+                const dt = new Date(le.exported_at).toLocaleString('ja-JP');
+                text.textContent += ` — 最終: ${dt} (${le.backup_size_mb} MB)`;
+            }
+
+            // Load files list
+            if (data.has_credentials && data.folder_id) {
+                loadGDriveFiles();
+            }
+        } catch (e) {
+            console.error('Failed to load GDrive status:', e);
+        }
+    }
+
+    async function loadGDriveFiles() {
+        try {
+            const data = await aixisAPI('/settings/gdrive/files');
+            const section = document.getElementById('gdrive-files-section');
+            const list = document.getElementById('gdrive-files-list');
+
+            if (data.files && data.files.length > 0) {
+                section.classList.remove('hidden');
+                list.innerHTML = data.files.map(f => {
+                    const dt = new Date(f.created_at).toLocaleString('ja-JP');
+                    const link = f.link ? `<a href="${f.link}" target="_blank" class="text-blue-500 hover:underline">開く</a>` : '';
+                    return `<div class="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-50 text-xs">
+                        <span class="font-mono text-gray-600">${f.name}</span>
+                        <span class="flex items-center gap-3 text-gray-400">
+                            <span>${f.size_mb} MB</span>
+                            <span>${dt}</span>
+                            ${link}
+                        </span>
+                    </div>`;
+                }).join('');
+            }
+        } catch (e) {
+            console.error('Failed to load GDrive files:', e);
+        }
+    }
+
+    async function saveGDriveSettings() {
+        const body = {};
+        const creds = document.getElementById('gdrive-creds').value.trim();
+        const folder = document.getElementById('gdrive-folder').value.trim();
+        const interval = parseInt(document.getElementById('gdrive-interval').value);
+
+        if (creds) body.credentials_json = creds;
+        if (folder) body.folder_id = folder;
+        if (interval) body.interval_hours = interval;
+
+        try {
+            await aixisAPI('/settings/gdrive', {
+                method: 'PUT',
+                body: JSON.stringify(body),
+            });
+            showGDriveAlert('設定を保存しました', 'ok');
+            document.getElementById('gdrive-creds').value = '';
+            loadGDriveStatus();
+        } catch (e) {
+            showGDriveAlert(e.detail || '保存に失敗しました: ' + e.message, 'err');
+        }
+    }
+
+    async function toggleGDrive(enabled) {
+        try {
+            await aixisAPI('/settings/gdrive', {
+                method: 'PUT',
+                body: JSON.stringify({ enabled }),
+            });
+            loadGDriveStatus();
+        } catch (e) {
+            showGDriveAlert(e.detail || 'エラー: ' + e.message, 'err');
+        }
+    }
+
+    async function triggerGDriveExport() {
+        const btn = document.getElementById('gdrive-export-btn');
+        btn.disabled = true;
+        btn.textContent = 'エクスポート中...';
+        try {
+            const result = await aixisAPI('/settings/gdrive/export', { method: 'POST' });
+            showGDriveAlert(`エクスポート完了: ${result.gdrive_file_name} (${result.backup_size_mb} MB)`, 'ok');
+            loadGDriveStatus();
+        } catch (e) {
+            showGDriveAlert(e.detail || 'エクスポートに失敗しました: ' + e.message, 'err');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '今すぐエクスポート';
+        }
+    }
+
+    function showGDriveAlert(msg, type) {
+        const el = document.getElementById('gdrive-alert');
+        el.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'bg-red-50', 'text-red-800');
+        if (type === 'ok') {
+            el.classList.add('bg-emerald-50', 'text-emerald-800');
+        } else {
+            el.classList.add('bg-red-50', 'text-red-800');
+        }
+        el.textContent = msg;
+    }
+
+    loadGDriveStatus();
 </script>
 {% endblock %}

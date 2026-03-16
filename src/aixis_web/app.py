@@ -113,8 +113,12 @@ async def lifespan(app: FastAPI):
     # Start background audit scheduler
     from .services.scheduler_service import start_scheduler, stop_scheduler
     start_scheduler()
+    # Start Google Drive auto-export
+    from .services.gdrive_export_service import start_gdrive_export, stop_gdrive_export
+    start_gdrive_export()
     yield
     # Shutdown
+    stop_gdrive_export()
     stop_scheduler()
 
 

@@ -66,6 +66,12 @@ class Settings(BaseSettings):
     scheduler_enabled: bool = True
     scheduler_check_interval_seconds: int = 60
 
+    # Google Drive auto-export
+    gdrive_enabled: bool = False
+    gdrive_credentials_json: str = ""  # Service account JSON (full string or file path)
+    gdrive_folder_id: str = ""         # Target folder ID in Google Drive
+    gdrive_export_interval_hours: int = 24  # Export frequency (hours)
+
     # Public API settings
     public_api_enabled: bool = True
     public_api_default_rate_limit_per_minute: int = 60
