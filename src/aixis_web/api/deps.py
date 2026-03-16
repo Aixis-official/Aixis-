@@ -21,12 +21,22 @@ ALGORITHM = "HS256"
 COOKIE_NAME = "aixis_token"
 
 
+def _prehash(password: str) -> bytes:
+    """SHA-256 pre-hash to safely handle passwords longer than bcrypt's 72-byte limit.
+
+    This is the standard approach recommended by OWASP: hash the password with
+    SHA-256 first, then pass the fixed-length digest to bcrypt. This preserves
+    the full entropy of long passwords while staying within bcrypt's limit.
+    """
+    return hashlib.sha256(password.encode("utf-8")).hexdigest().encode("utf-8")
+
+
 def verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+    return bcrypt.checkpw(_prehash(plain), hashed.encode("utf-8"))
 
 
 def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    return bcrypt.hashpw(_prehash(password), bcrypt.gensalt()).decode("utf-8")
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
