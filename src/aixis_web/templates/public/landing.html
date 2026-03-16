@@ -227,13 +227,16 @@
 
 {% block content %}
 
+<!-- ===== HERO + STATS: fills exactly one viewport ===== -->
+<div id="hero-viewport" class="relative lg:flex lg:flex-col lg:h-screen lg:min-h-[600px]">
+
 <!-- ===== HERO SECTION ===== -->
-<section class="relative overflow-hidden bg-[#0a0f1a] min-h-screen flex flex-col justify-center">
+<section class="relative overflow-hidden bg-[#0a0f1a] min-h-screen lg:min-h-0 lg:flex-1 flex flex-col justify-center">
     <div class="absolute inset-0">
         <img src="/static/img/Aixis-platform-hero.jpeg" alt="" class="w-full h-full object-cover object-center opacity-[0.65]">
         <div class="absolute inset-0 bg-gradient-to-r from-[#0a0f1a]/90 via-[#0a0f1a]/70 to-[#0a0f1a]/50"></div>
     </div>
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28 sm:py-36 lg:py-44">
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28 sm:py-36 lg:py-28">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-12 lg:gap-20">
             <!-- Left: Text -->
             <div class="max-w-3xl lg:max-w-none lg:flex-1 lg:min-w-0">
@@ -327,12 +330,14 @@
             </div>
         </div>
     </div>
-    <!-- Hero→About gradient blend -->
-    <div class="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-b from-transparent to-[#0a0f1a] z-10"></div>
+    <!-- Hero→Stats gradient blend (taller on desktop for seamless transition) -->
+    <div class="absolute bottom-0 left-0 right-0 h-40 lg:h-32 bg-gradient-to-b from-transparent to-[#0a0f1a] lg:from-transparent lg:via-[#0a0f1a]/60 lg:to-[#0a0f1a] z-10"></div>
 </section>
 
-<!-- ===== PLATFORM STATS BAR ===== -->
-<section class="bg-[#0a0f1a] border-t border-white/5">
+<!-- ===== PLATFORM STATS BAR (inside viewport wrapper) ===== -->
+<section class="relative bg-[#0a0f1a] border-t border-white/5 lg:border-t-0 lg:flex-shrink-0 z-20">
+    <!-- Subtle divider line (desktop only, replaces border) -->
+    <div class="hidden lg:block mx-auto" style="max-width: 600px; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.08) 70%, transparent);"></div>
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
             <div>
@@ -354,6 +359,8 @@
         </div>
     </div>
 </section>
+
+</div><!-- /hero-viewport -->
 
 <!-- ===== SCENE WRAPPER: single overlay covers About + white sections ===== -->
 <div id="scene-wrapper">
