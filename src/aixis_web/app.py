@@ -34,6 +34,8 @@ _CSRF_EXEMPT_PREFIXES = (
     "/api/public/",
     "/api/v1/health",
     "/api/v1/auth/login",
+    "/api/v1/auth/forgot-password",
+    "/api/v1/auth/reset-password",
     "/api/v1/clients/invite/",  # Public invite completion (no session to hijack)
 )
 

@@ -62,6 +62,9 @@ from .user_session import UserSession
 # Audit log (operation tracking)
 from .audit_log import AuditLog
 
+# Password reset tokens
+from .password_reset import PasswordResetToken
+
 __all__ = [
     # user
     "Organization",
@@ -124,4 +127,6 @@ __all__ = [
     "UserSession",
     # audit log
     "AuditLog",
+    # password reset
+    "PasswordResetToken",
 ]

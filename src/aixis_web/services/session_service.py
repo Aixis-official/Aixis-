@@ -95,6 +95,35 @@ async def get_active_sessions(db: AsyncSession, user_id: str) -> list[UserSessio
     return list(result.scalars().all())
 
 
+async def revoke_all_user_sessions(db: AsyncSession, user_id: str) -> int:
+    """Revoke all active sessions for a user (e.g., on password change).
+
+    Returns the number of sessions revoked.
+    """
+    from ..db.models.revoked_token import RevokedToken
+
+    result = await db.execute(
+        select(UserSession)
+        .where(UserSession.user_id == user_id, UserSession.is_active == True)
+    )
+    sessions = list(result.scalars().all())
+
+    revoked = 0
+    for session in sessions:
+        session.is_active = False
+        db.add(RevokedToken(
+            jti=session.jti,
+            expires_at=datetime(2099, 1, 1, tzinfo=timezone.utc),
+        ))
+        revoked += 1
+
+    if revoked:
+        await db.flush()
+        logger.info("Revoked %d sessions for user %s (password change)", revoked, user_id[:8])
+
+    return revoked
+
+
 async def update_session_activity(db: AsyncSession, jti: str) -> None:
     """Update last_active_at timestamp for a session.
 

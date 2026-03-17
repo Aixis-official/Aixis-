@@ -1,8 +1,11 @@
-"""Sliding window rate limiter and API key validation middleware."""
+"""DB-backed rate limiter and API key validation middleware.
+
+Uses the same DB-backed rate limiter as login to work correctly with
+multiple Uvicorn workers.
+"""
 
 import hashlib
-import time
-from collections import defaultdict, deque
+import logging
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -12,11 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db.base import get_db
 from ..db.models.api_key import ApiKey
+from ..services.rate_limit_service import check_rate_limit as _db_check_rate_limit
 
-
-# In-memory rate tracking: key_hash -> deque of timestamps
-_rate_windows: dict[str, deque] = defaultdict(deque)
-_daily_counts: dict[str, tuple[str, int]] = {}  # key_hash -> (date_str, count)
+logger = logging.getLogger(__name__)
 
 
 def _hash_api_key(raw_key: str) -> str:
@@ -24,39 +25,24 @@ def _hash_api_key(raw_key: str) -> str:
     return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
 
 
-def _check_rate_limit(key_hash: str, per_minute: int, per_day: int) -> tuple[bool, int]:
-    """Check if the request is within rate limits.
+async def _check_api_rate_limit(
+    db: AsyncSession, key_hash: str, per_minute: int, per_day: int,
+) -> tuple[bool, int]:
+    """Check per-minute and per-day rate limits using DB backend.
 
     Returns (allowed, retry_after_seconds).
     """
-    now = time.time()
-
-    # Per-minute sliding window
-    window = _rate_windows[key_hash]
-    # Remove entries older than 60 seconds
-    while window and window[0] < now - 60:
-        window.popleft()
-
-    if len(window) >= per_minute:
-        retry_after = int(60 - (now - window[0])) + 1
+    # Per-minute check
+    minute_key = f"api_min:{key_hash[:16]}"
+    allowed, retry_after = await _db_check_rate_limit(db, minute_key, per_minute, 60)
+    if not allowed:
         return False, retry_after
 
-    # Per-day counter
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    if key_hash in _daily_counts:
-        date_str, count = _daily_counts[key_hash]
-        if date_str == today:
-            if count >= per_day:
-                return False, 3600  # Retry after 1 hour
-        else:
-            _daily_counts[key_hash] = (today, 0)
-    else:
-        _daily_counts[key_hash] = (today, 0)
-
-    # Record this request
-    window.append(now)
-    date_str, count = _daily_counts[key_hash]
-    _daily_counts[key_hash] = (date_str, count + 1)
+    # Per-day check
+    day_key = f"api_day:{key_hash[:16]}"
+    allowed, retry_after = await _db_check_rate_limit(db, day_key, per_day, 86400)
+    if not allowed:
+        return False, max(retry_after, 3600)
 
     return True, 0
 
@@ -101,16 +87,21 @@ async def get_api_key_record(
             detail="API key has expired",
         )
 
-    # Rate limiting
-    allowed, retry_after = _check_rate_limit(
-        key_hash, api_key.rate_limit_per_minute, api_key.rate_limit_per_day
-    )
-    if not allowed:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Rate limit exceeded",
-            headers={"Retry-After": str(retry_after)},
+    # Rate limiting (DB-backed, works across multiple workers)
+    try:
+        allowed, retry_after = await _check_api_rate_limit(
+            db, key_hash, api_key.rate_limit_per_minute, api_key.rate_limit_per_day
         )
+        if not allowed:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Rate limit exceeded",
+                headers={"Retry-After": str(retry_after)},
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        logger.warning("API rate limit check failed (non-critical)", exc_info=True)
 
     # Update last_used_at
     api_key.last_used_at = datetime.now(timezone.utc)

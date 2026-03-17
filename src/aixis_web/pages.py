@@ -182,6 +182,28 @@ async def login_page(request: Request, user: _OptionalUser = None):
     return templates.TemplateResponse("public/login.html", ctx)
 
 
+@page_router.get("/forgot-password")
+async def forgot_password_page(request: Request, user: _OptionalUser = None):
+    """Forgot password page."""
+    if user:
+        if user.role in _DASHBOARD_ROLES:
+            return RedirectResponse(url="/dashboard", status_code=302)
+        return RedirectResponse(url="/tools", status_code=302)
+    ctx = _get_template_context(request, title="パスワード再設定", active_page="forgot-password")
+    return templates.TemplateResponse("public/forgot-password.html", ctx)
+
+
+@page_router.get("/reset-password")
+async def reset_password_page(request: Request, user: _OptionalUser = None):
+    """Password reset page (accessed via email link with token)."""
+    if user:
+        if user.role in _DASHBOARD_ROLES:
+            return RedirectResponse(url="/dashboard", status_code=302)
+        return RedirectResponse(url="/tools", status_code=302)
+    ctx = _get_template_context(request, title="パスワード再設定", active_page="reset-password")
+    return templates.TemplateResponse("public/reset-password.html", ctx)
+
+
 @page_router.get("/invite/{token}")
 async def invite_page(request: Request, token: str):
     """Invite password-setup page (public)."""
