@@ -251,6 +251,10 @@
                            class="px-4 py-1.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-blue-500 dark:hover:bg-blue-400 dark:text-white rounded-lg shadow-sm transition-all duration-150">
                             {% if user.role in ('admin', 'analyst', 'auditor') %}管理画面{% else %}マイページ{% endif %}
                         </a>
+                        <button onclick="aixisLogout()"
+                                class="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-red-500 transition-colors duration-150">
+                            ログアウト
+                        </button>
                         {% else %}
                         <a href="/login"
                            class="nav-auth-link px-4 py-1.5 text-sm font-medium tracking-wide text-gray-500 hover:text-gray-900 transition-colors duration-200">
@@ -462,15 +466,19 @@
     <!-- Logout helper -->
     <script>
         function aixisLogout() {
-            // Clear auth token from localStorage
-            localStorage.removeItem('aixis_token');
-            localStorage.removeItem('aixis-user');
-            // Clear auth cookie
-            document.cookie = 'access_token=; Max-Age=0; path=/;';
-            document.cookie = 'aixis_token=; Max-Age=0; path=/;';
-            document.cookie = 'aixis_session=; Max-Age=0; path=/;';
-            // Redirect to platform home
-            window.location.href = '/';
+            var token = localStorage.getItem('aixis_token') || '';
+            // Call server logout to clear HttpOnly cookie
+            fetch('/api/v1/auth/logout', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            }).finally(function() {
+                // Clear client-side state regardless of server response
+                localStorage.removeItem('aixis_token');
+                localStorage.removeItem('aixis-user');
+                document.cookie = 'access_token=; Max-Age=0; path=/;';
+                document.cookie = 'aixis_session=; Max-Age=0; path=/;';
+                window.location.href = '/';
+            });
         }
     </script>
 

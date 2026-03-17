@@ -139,7 +139,6 @@ async def login(
 async def logout(
     request: Request,
     response: Response,
-    user: Annotated[User, Depends(require_auth)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Log out by clearing auth cookies and recording token revocation."""

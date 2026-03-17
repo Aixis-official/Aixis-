@@ -36,8 +36,13 @@
 
             <!-- Error Message -->
             <div id="login-error"
-                 class="hidden mb-6 py-3 text-[12px] text-gray-400 dark:text-gray-500 leading-relaxed tracking-wide">
-                <span id="login-error-text"></span>
+                 class="hidden mb-6 rounded-lg border px-4 py-3 text-sm leading-relaxed">
+                <div class="flex items-start gap-2.5">
+                    <svg id="login-error-icon" class="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+                    </svg>
+                    <span id="login-error-text"></span>
+                </div>
             </div>
 
             <!-- Login Form -->
@@ -138,10 +143,22 @@
     }
 
     var errorText = document.getElementById('login-error-text');
+    var errorIcon = document.getElementById('login-error-icon');
 
-    function showError(msg) {
+    function showError(msg, type) {
         errorText.textContent = msg;
         errorDiv.classList.remove('hidden');
+        // Reset classes
+        errorDiv.className = 'mb-6 rounded-lg border px-4 py-3 text-sm leading-relaxed';
+        if (type === 'lock') {
+            // Rate limit / lockout — amber warning
+            errorDiv.classList.add('bg-amber-50', 'dark:bg-amber-900/20', 'border-amber-200', 'dark:border-amber-800/50', 'text-amber-800', 'dark:text-amber-200');
+            errorIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>';
+        } else {
+            // Auth error — red
+            errorDiv.classList.add('bg-red-50', 'dark:bg-red-900/20', 'border-red-200', 'dark:border-red-800/50', 'text-red-700', 'dark:text-red-300');
+            errorIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>';
+        }
     }
 
     function hideError() {
@@ -166,7 +183,11 @@
 
             if (!resp.ok) {
                 var data = await resp.json().catch(function() { return {}; });
-                throw new Error(data.detail || 'メールアドレスまたはパスワードが正しくありません。');
+                var errMsg = data.detail || 'メールアドレスまたはパスワードが正しくありません。';
+                var errType = (resp.status === 429) ? 'lock' : 'auth';
+                showError(errMsg, errType);
+                setLoading(false);
+                return;
             }
 
             var data = await resp.json();
@@ -196,7 +217,7 @@
                 window.location.href = '/tools';
             }
         } catch (err) {
-            showError(err.message);
+            showError('ネットワークエラーが発生しました。接続を確認してください。', 'auth');
             setLoading(false);
         }
     });
