@@ -21,7 +21,7 @@ page_router = APIRouter(default_response_class=HTMLResponse)
 
 
 def _get_template_context(request: Request, user=None, **extra) -> dict:
-    """Build template context with i18n support."""
+    """Build template context with i18n support and optional subscription info."""
     lang = detect_language(
         query_param=request.query_params.get("lang"),
         accept_language=request.headers.get("accept-language"),
@@ -29,22 +29,35 @@ def _get_template_context(request: Request, user=None, **extra) -> dict:
         cookie_lang=request.cookies.get("aixis_lang"),
     )
     translator = get_translator(lang)
-    return {
+    ctx = {
         "request": request,
         "user": user,
         "_": translator,
         "lang": lang,
+        "subscription": None,
         **extra,
     }
+    # Attach subscription info when user is authenticated
+    if user:
+        try:
+            from .services.subscription_service import get_subscription_info
+            ctx["subscription"] = get_subscription_info(user)
+        except Exception:
+            pass
+    return ctx
+
+
+# Common dependency for optional user on public pages
+_OptionalUser = Annotated[User | None, Depends(get_current_user)]
 
 
 # ──────────── Legacy /platform redirect ────────────
 
 
 @page_router.get("/platform")
-async def legacy_platform_landing(request: Request):
+async def legacy_platform_landing(request: Request, user: _OptionalUser = None):
     """Serve landing page at old /platform URL for cached 301 redirects."""
-    ctx = _get_template_context(request, title="AIツール比較・一覧 | 独立監査で選ぶ", active_page="home")
+    ctx = _get_template_context(request, user=user, title="AIツール比較・一覧 | 独立監査で選ぶ", active_page="home")
     return templates.TemplateResponse("public/landing.html", ctx)
 
 
@@ -68,99 +81,103 @@ async def legacy_platform_redirect(path: str):
 
 
 @page_router.get("/")
-async def landing(request: Request):
+async def landing(request: Request, user: _OptionalUser = None):
     """Landing page."""
-    ctx = _get_template_context(request, title="AIツール比較・一覧 | 独立監査で選ぶ", active_page="home")
+    ctx = _get_template_context(request, user=user, title="AIツール比較・一覧 | 独立監査で選ぶ", active_page="home")
     return templates.TemplateResponse("public/landing.html", ctx)
 
 
 @page_router.get("/tools")
-async def tools_page(request: Request):
+async def tools_page(request: Request, user: _OptionalUser = None):
     """Tool catalog page."""
-    ctx = _get_template_context(request, title="AIツール一覧・比較データベース | カテゴリ別評価", active_page="tools")
+    ctx = _get_template_context(request, user=user, title="AIツール一覧・比較データベース | カテゴリ別評価", active_page="tools")
     return templates.TemplateResponse("public/tools.html", ctx)
 
 
 @page_router.get("/categories")
-async def categories_index(request: Request):
+async def categories_index(request: Request, user: _OptionalUser = None):
     """Categories index page."""
-    ctx = _get_template_context(request, title="AIツール カテゴリ別比較・ランキング", active_page="categories")
+    ctx = _get_template_context(request, user=user, title="AIツール カテゴリ別比較・ランキング", active_page="categories")
     return templates.TemplateResponse("public/categories.html", ctx)
 
 
 @page_router.get("/tools/{slug}")
-async def tool_detail_page(request: Request, slug: str):
+async def tool_detail_page(request: Request, slug: str, user: _OptionalUser = None):
     """Tool detail page."""
-    ctx = _get_template_context(request, title="ツール詳細レビュー・評価", slug=slug, active_page="tools")
+    ctx = _get_template_context(request, user=user, title="ツール詳細レビュー・評価", slug=slug, active_page="tools")
     return templates.TemplateResponse("public/tool_detail.html", ctx)
 
 
 @page_router.get("/compare")
-async def compare_page(request: Request):
+async def compare_page(request: Request, user: _OptionalUser = None):
     """Comparison view page."""
-    ctx = _get_template_context(request, title="AIツール比較 | 5軸スコアで横並び比較", active_page="compare")
+    ctx = _get_template_context(request, user=user, title="AIツール比較 | 5軸スコアで横並び比較", active_page="compare")
     return templates.TemplateResponse("public/compare.html", ctx)
 
 
 @page_router.get("/categories/{slug}")
-async def category_page(request: Request, slug: str):
+async def category_page(request: Request, slug: str, user: _OptionalUser = None):
     """Category page."""
-    ctx = _get_template_context(request, title="カテゴリ別AIツールランキング", slug=slug, active_page="categories")
+    ctx = _get_template_context(request, user=user, title="カテゴリ別AIツールランキング", slug=slug, active_page="categories")
     return templates.TemplateResponse("public/category.html", ctx)
 
 
 @page_router.get("/terms")
-async def terms_page(request: Request):
+async def terms_page(request: Request, user: _OptionalUser = None):
     """Terms of service page."""
-    ctx = _get_template_context(request, title="利用規約 | サービス利用条件", active_page="terms")
+    ctx = _get_template_context(request, user=user, title="利用規約 | サービス利用条件", active_page="terms")
     return templates.TemplateResponse("public/terms.html", ctx)
 
 
 @page_router.get("/pricing")
-async def pricing_page(request: Request):
+async def pricing_page(request: Request, user: _OptionalUser = None):
     """Pricing plans page."""
-    ctx = _get_template_context(request, title="料金プラン | 14日間無料トライアル", active_page="pricing")
+    ctx = _get_template_context(request, user=user, title="料金プラン | 14日間無料トライアル", active_page="pricing")
     return templates.TemplateResponse("public/pricing.html", ctx)
 
 
 @page_router.get("/audit-process")
-async def audit_process_page(request: Request):
+async def audit_process_page(request: Request, user: _OptionalUser = None):
     """Audit process explanation page."""
-    ctx = _get_template_context(request, title="AI監査プロセス | 評価方法の詳細", active_page="services")
+    ctx = _get_template_context(request, user=user, title="AI監査プロセス | 評価方法の詳細", active_page="services")
     return templates.TemplateResponse("public/audit_process.html", ctx)
 
 
 @page_router.get("/independence")
-async def independence_page(request: Request):
+async def independence_page(request: Request, user: _OptionalUser = None):
     """Independence declaration page."""
-    ctx = _get_template_context(request, title="独立性宣言 | ベンダー非依存の評価体制", active_page="about")
+    ctx = _get_template_context(request, user=user, title="独立性宣言 | ベンダー非依存の評価体制", active_page="about")
     return templates.TemplateResponse("public/independence.html", ctx)
 
 
 @page_router.get("/transparency")
-async def transparency_page(request: Request):
+async def transparency_page(request: Request, user: _OptionalUser = None):
     """Transparency policy page."""
-    ctx = _get_template_context(request, title="透明性ポリシー | 評価基準と利益相反の開示", active_page="transparency")
+    ctx = _get_template_context(request, user=user, title="透明性ポリシー | 評価基準と利益相反の開示", active_page="transparency")
     return templates.TemplateResponse("public/transparency.html", ctx)
 
 
 @page_router.get("/audit-protocol")
-async def audit_protocol_page(request: Request):
+async def audit_protocol_page(request: Request, user: _OptionalUser = None):
     """Detailed audit protocol page."""
-    ctx = _get_template_context(request, title="監査プロトコル | 5軸評価フレームワーク詳細", active_page="audit-protocol")
+    ctx = _get_template_context(request, user=user, title="監査プロトコル | 5軸評価フレームワーク詳細", active_page="audit-protocol")
     return templates.TemplateResponse("public/audit_protocol.html", ctx)
 
 
 @page_router.get("/contact")
-async def contact_page(request: Request):
+async def contact_page(request: Request, user: _OptionalUser = None):
     """Contact form page."""
-    ctx = _get_template_context(request, title="お問い合わせ | 14日間の無料トライアル申請", active_page="contact")
+    ctx = _get_template_context(request, user=user, title="お問い合わせ | 14日間の無料トライアル申請", active_page="contact")
     return templates.TemplateResponse("public/contact.html", ctx)
 
 
 @page_router.get("/login")
-async def login_page(request: Request):
-    """Login page."""
+async def login_page(request: Request, user: _OptionalUser = None):
+    """Login page. Redirects to appropriate page if already logged in."""
+    if user:
+        if user.role in _DASHBOARD_ROLES:
+            return RedirectResponse(url="/dashboard", status_code=302)
+        return RedirectResponse(url="/tools", status_code=302)
     ctx = _get_template_context(request, title="ログイン", active_page="login")
     return templates.TemplateResponse("public/login.html", ctx)
 
@@ -382,15 +399,25 @@ async def notifications_page(
 
 
 @page_router.get("/portal")
-async def portal_page(
-    request: Request,
-    user: Annotated[User | None, Depends(get_current_user)] = None,
-):
-    """Client portal (requires auth)."""
+async def portal_redirect(user: _OptionalUser = None):
+    """Legacy portal URL — redirect to /tools (clients) or /dashboard (admin)."""
     if not user:
         return RedirectResponse(url="/login", status_code=302)
-    ctx = _get_template_context(request, user=user, title="クライアントポータル", active_page="portal")
-    return templates.TemplateResponse("portal/index.html", ctx)
+    if user.role in _DASHBOARD_ROLES:
+        return RedirectResponse(url="/dashboard", status_code=302)
+    return RedirectResponse(url="/tools", status_code=302)
+
+
+@page_router.get("/mypage")
+async def mypage(
+    request: Request,
+    user: _OptionalUser = None,
+):
+    """My Page — account info, subscription status, password change, logout."""
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+    ctx = _get_template_context(request, user=user, title="マイページ", active_page="mypage")
+    return templates.TemplateResponse("public/mypage.html", ctx)
 
 
 # ──────────── Scheduled Re-audits ────────────

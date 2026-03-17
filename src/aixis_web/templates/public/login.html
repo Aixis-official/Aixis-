@@ -187,13 +187,13 @@
                     if (role === 'admin' || role === 'auditor') {
                         window.location.href = '/dashboard';
                     } else {
-                        window.location.href = '/portal';
+                        window.location.href = '/tools';
                     }
                 } else {
-                    window.location.href = '/portal';
+                    window.location.href = '/tools';
                 }
             } catch (meErr) {
-                window.location.href = '/portal';
+                window.location.href = '/tools';
             }
         } catch (err) {
             showError(err.message);

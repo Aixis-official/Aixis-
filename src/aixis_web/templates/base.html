@@ -247,14 +247,10 @@
                     <!-- Auth links (desktop) -->
                     <div class="hidden md:flex items-center gap-2">
                         {% if user %}
-                        <a href="/dashboard"
+                        <a href="{% if user.role in ('admin', 'analyst', 'auditor') %}/dashboard{% else %}/mypage{% endif %}"
                            class="px-4 py-1.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-blue-500 dark:hover:bg-blue-400 dark:text-white rounded-lg shadow-sm transition-all duration-150">
-                            マイページ
+                            {% if user.role in ('admin', 'analyst', 'auditor') %}管理画面{% else %}マイページ{% endif %}
                         </a>
-                        <button onclick="aixisLogout()"
-                                class="px-3 py-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-150">
-                            ログアウト
-                        </button>
                         {% else %}
                         <a href="/login"
                            class="nav-auth-link px-4 py-1.5 text-sm font-medium tracking-wide text-gray-500 hover:text-gray-900 transition-colors duration-200">
@@ -361,9 +357,9 @@
             <!-- Auth section -->
             <div class="mx-3 mt-4 pt-4 border-t border-gray-200 dark:border-aixis-700">
                 {% if user %}
-                <a href="/dashboard"
+                <a href="{% if user.role in ('admin', 'analyst', 'auditor') %}/dashboard{% else %}/mypage{% endif %}"
                    class="block w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-aixis-500 dark:bg-blue-500 text-center transition-colors duration-150">
-                    マイページ
+                    {% if user.role in ('admin', 'analyst', 'auditor') %}管理画面{% else %}マイページ{% endif %}
                 </a>
                 <button onclick="aixisLogout(); closeMobileDrawer();"
                         class="block w-full mt-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-aixis-700/50 text-center transition-colors duration-150">

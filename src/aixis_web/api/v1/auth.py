@@ -201,3 +201,45 @@ async def logout(
 async def get_me(user: Annotated[User, Depends(require_auth)]):
     """Get the currently authenticated user."""
     return user
+
+
+@router.post("/change-password", status_code=status.HTTP_200_OK)
+async def change_password(
+    request: Request,
+    user: Annotated[User, Depends(require_auth)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Change the authenticated user's password."""
+    from pydantic import BaseModel, Field
+
+    class ChangePasswordRequest(BaseModel):
+        current_password: str
+        new_password: str = Field(min_length=8)
+        new_password_confirm: str
+
+    body = ChangePasswordRequest(**(await request.json()))
+
+    if body.new_password != body.new_password_confirm:
+        raise HTTPException(status_code=400, detail="新しいパスワードが一致しません")
+
+    if not user.hashed_password or not verify_password(body.current_password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="現在のパスワードが正しくありません")
+
+    # Password policy
+    from ...services.client_service import validate_password_policy, check_password_hibp, PasswordPolicyError
+    try:
+        validate_password_policy(body.new_password)
+    except PasswordPolicyError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if await check_password_hibp(body.new_password):
+        raise HTTPException(
+            status_code=400,
+            detail="このパスワードは過去のデータ漏洩で確認されています。別のパスワードを設定してください。",
+        )
+
+    from ..deps import hash_password
+    user.hashed_password = hash_password(body.new_password)
+    await db.commit()
+
+    return {"message": "パスワードを変更しました"}
