@@ -88,6 +88,9 @@ class Settings(BaseSettings):
     contact_rate_limit_per_ip: int = 5  # max submissions per IP per hour
     contact_rate_limit_window_seconds: int = 3600
 
+    # Admin IPs that bypass login rate limiting (comma-separated)
+    admin_ips: str = ""
+
     model_config = {"env_file": ".env"}
 
 

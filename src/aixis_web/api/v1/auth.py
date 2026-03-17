@@ -21,8 +21,13 @@ from ..deps import (
 
 router = APIRouter()
 
-_LOGIN_MAX_ATTEMPTS = 3  # max attempts per window
+_LOGIN_MAX_ATTEMPTS = 5  # max attempts per window
 _LOGIN_WINDOW_SECONDS = 300  # 5-minute window
+
+# Admin IPs that bypass rate limiting (set ADMIN_IPS env var, comma-separated)
+_ADMIN_IPS: set[str] = set(
+    ip.strip() for ip in settings.admin_ips.split(",") if ip.strip()
+)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -33,32 +38,43 @@ async def login(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Authenticate user and return JWT tokens."""
-    # Rate limit by client IP (DB-backed, works across multiple workers)
     client_ip = request.client.host if request.client else "unknown"
-    rate_key = f"login:{client_ip}"
 
-    # Progressive lockout: check failure count to determine window multiplier
-    failure_count = await count_recent_events(db, f"login_fail:{client_ip}", _LOGIN_WINDOW_SECONDS * 4)
-    multiplier = min(1 + failure_count // _LOGIN_MAX_ATTEMPTS, 4)  # Cap at 20min
-    effective_window = _LOGIN_WINDOW_SECONDS * multiplier
+    # Admin IP bypass — skip rate limiting entirely
+    if client_ip not in _ADMIN_IPS:
+        try:
+            rate_key = f"login:{client_ip}"
+            # Progressive lockout: check failure count to determine window multiplier
+            failure_count = await count_recent_events(db, f"login_fail:{client_ip}", _LOGIN_WINDOW_SECONDS * 4)
+            multiplier = min(1 + failure_count // _LOGIN_MAX_ATTEMPTS, 4)  # Cap at 20min
+            effective_window = _LOGIN_WINDOW_SECONDS * multiplier
 
-    allowed, retry_after = await check_rate_limit(
-        db, rate_key, _LOGIN_MAX_ATTEMPTS, effective_window
-    )
-    if not allowed:
-        await db.commit()
-        mins = retry_after // 60
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"ログイン試行回数が上限に達しました。{mins}分後に再度お試しください。",
-            headers={"Retry-After": str(retry_after)},
-        )
+            allowed, retry_after = await check_rate_limit(
+                db, rate_key, _LOGIN_MAX_ATTEMPTS, effective_window
+            )
+            if not allowed:
+                await db.commit()
+                mins = max(retry_after // 60, 1)
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"ログイン試行回数が上限に達しました。{mins}分後に再度お試しください。",
+                    headers={"Retry-After": str(retry_after)},
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning("Rate limit check failed (non-critical)", exc_info=True)
 
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
 
     if not user or not user.hashed_password:
-        await record_rate_limit_event(db, f"login_fail:{client_ip}")
+        if client_ip not in _ADMIN_IPS:
+            try:
+                await record_rate_limit_event(db, f"login_fail:{client_ip}")
+            except Exception:
+                pass
         await db.commit()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -66,7 +82,11 @@ async def login(
         )
 
     if not verify_password(body.password, user.hashed_password):
-        await record_rate_limit_event(db, f"login_fail:{client_ip}")
+        if client_ip not in _ADMIN_IPS:
+            try:
+                await record_rate_limit_event(db, f"login_fail:{client_ip}")
+            except Exception:
+                pass
         await db.commit()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -242,3 +262,20 @@ async def change_password(
     await db.commit()
 
     return {"message": "パスワードを変更しました"}
+
+
+@router.post("/clear-rate-limit", status_code=status.HTTP_200_OK)
+async def clear_rate_limit(
+    request: Request,
+    user: Annotated[User, Depends(require_auth)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Clear all rate limit entries (admin only)."""
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="管理者のみ実行できます")
+
+    from sqlalchemy import delete
+    from ...db.models.rate_limit import RateLimitEntry
+    result = await db.execute(delete(RateLimitEntry))
+    await db.commit()
+    return {"message": f"レート制限をクリアしました（{result.rowcount}件削除）"}
