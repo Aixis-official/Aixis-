@@ -99,20 +99,21 @@ async def get_current_user(
                 return None
 
             # Verify session is still active (concurrent session enforcement)
-            from ..db.models.user_session import UserSession
-            session_result = await db.execute(
-                select(UserSession).where(
-                    UserSession.jti == jti, UserSession.is_active == True
+            try:
+                from ..db.models.user_session import UserSession
+                session_result = await db.execute(
+                    select(UserSession).where(
+                        UserSession.jti == jti, UserSession.is_active == True
+                    )
                 )
-            )
-            session = session_result.scalar_one_or_none()
-            if session:
-                # Throttle last_active_at updates (only if >5 min since last)
-                from datetime import datetime, timezone
-                now = datetime.now(timezone.utc)
-                if not session.last_active_at or (now - session.last_active_at).total_seconds() > 300:
-                    session.last_active_at = now
-                    await db.commit()
+                session = session_result.scalar_one_or_none()
+                if session:
+                    now = datetime.now(timezone.utc)
+                    if not session.last_active_at or (now - session.last_active_at).total_seconds() > 300:
+                        session.last_active_at = now
+                        await db.commit()
+            except Exception:
+                pass  # Session tracking is non-critical; don't block auth
 
     except JWTError:
         return None

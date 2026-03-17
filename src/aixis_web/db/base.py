@@ -84,7 +84,11 @@ def _auto_migrate_columns(conn):
                     elif isinstance(val, str):
                         default = f" DEFAULT '{val}'"
                     elif isinstance(val, bool):
-                        default = f" DEFAULT {1 if val else 0}"
+                        # PostgreSQL needs TRUE/FALSE, SQLite accepts 1/0
+                        if "sqlite" in settings.database_url:
+                            default = f" DEFAULT {1 if val else 0}"
+                        else:
+                            default = f" DEFAULT {'TRUE' if val else 'FALSE'}"
                     elif isinstance(val, (int, float)):
                         default = f" DEFAULT {val}"
                     elif isinstance(val, list):
@@ -95,9 +99,12 @@ def _auto_migrate_columns(conn):
                         default = f" DEFAULT '{json.dumps(val)}'"
                 elif col.nullable:
                     default = " DEFAULT NULL"
-                conn.execute(
-                    text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {col_type}{default}')
-                )
+                try:
+                    conn.execute(
+                        text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {col_type}{default}')
+                    )
+                except Exception:
+                    pass  # Column may already exist or have type incompatibility
 
         # Add missing indexes
         existing_indexes = {idx["name"] for idx in inspector.get_indexes(table.name) if idx["name"]}

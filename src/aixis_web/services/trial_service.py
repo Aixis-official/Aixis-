@@ -48,7 +48,10 @@ def _checker_loop():
     from ..config import settings
     interval = settings.trial_checker_interval_seconds
     # Run immediately on start, then every interval
-    _run_trial_checks()
+    try:
+        _run_trial_checks()
+    except Exception:
+        logger.exception("Initial trial check failed")
     while not _checker_stop.wait(interval):
         try:
             _run_trial_checks()

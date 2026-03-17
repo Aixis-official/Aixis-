@@ -84,18 +84,22 @@ async def login(
     refresh_token = create_refresh_token(data={"sub": user.id})
 
     # Session tracking: create session record and enforce concurrent session limit
-    from ...services.session_service import create_session, enforce_session_limit
-    from jose import jwt as jose_jwt
-    payload = jose_jwt.decode(access_token, settings.secret_key, algorithms=["HS256"])
-    jti = payload.get("jti", "")
-    await create_session(
-        db,
-        user_id=user.id,
-        jti=jti,
-        ip_address=client_ip,
-        user_agent=request.headers.get("user-agent", "")[:500],
-    )
-    await enforce_session_limit(db, user.id)
+    try:
+        from ...services.session_service import create_session, enforce_session_limit
+        from jose import jwt as jose_jwt
+        payload = jose_jwt.decode(access_token, settings.secret_key, algorithms=["HS256"])
+        jti = payload.get("jti", "")
+        await create_session(
+            db,
+            user_id=user.id,
+            jti=jti,
+            ip_address=client_ip,
+            user_agent=request.headers.get("user-agent", "")[:500],
+        )
+        await enforce_session_limit(db, user.id)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("Session tracking failed (non-critical)", exc_info=True)
 
     # Set HttpOnly cookie for SSR page authentication (more secure than localStorage)
     max_age = settings.access_token_expire_minutes * 60
