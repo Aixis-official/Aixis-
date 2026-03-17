@@ -108,23 +108,54 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Startup — data safety first
+    # 1. Create pre-migration backup (best-effort)
+    try:
+        from .services.backup_service import create_backup
+        backup_result = create_backup(reason="pre_deploy")
+        if "error" not in backup_result:
+            logger.info("Pre-deploy backup: %s", backup_result.get("filename"))
+        else:
+            logger.warning("Pre-deploy backup skipped: %s", backup_result.get("error"))
+    except Exception as e:
+        logger.warning("Pre-deploy backup failed (non-critical): %s", e)
+
+    # 2. Initialize database (create tables + add columns — never drops)
     await init_db()
-    # Seed master data (industry tags, use case tags, regulatory frameworks)
+
+    # 3. Data integrity check — log user/client counts for monitoring
+    try:
+        from .db.base import async_session as _session_factory
+        from sqlalchemy import func, select, text
+        from .db.models.user import User
+        async with _session_factory() as session:
+            user_count = (await session.execute(select(func.count()).select_from(User))).scalar() or 0
+            client_count = (await session.execute(
+                select(func.count()).select_from(User).where(User.role == "client")
+            )).scalar() or 0
+            logger.info(
+                "DATA INTEGRITY CHECK — users: %d, clients: %d",
+                user_count, client_count,
+            )
+    except Exception as e:
+        logger.warning("Data integrity check failed: %s", e)
+
+    # 4. Seed master data (industry tags, use case tags, regulatory frameworks)
     from .db.base import async_session
     from .services.seed_service import seed_all
     async with async_session() as session:
         await seed_all(session)
-    # Start background audit scheduler
+
+    # 5. Start background services
     from .services.scheduler_service import start_scheduler, stop_scheduler
     start_scheduler()
-    # Start Google Drive auto-export
     from .services.gdrive_export_service import start_gdrive_export, stop_gdrive_export
     start_gdrive_export()
-    # Start trial expiration checker
     from .services.trial_service import start_trial_checker, stop_trial_checker
     start_trial_checker()
+
     yield
+
     # Shutdown
     stop_trial_checker()
     stop_gdrive_export()

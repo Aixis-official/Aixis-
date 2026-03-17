@@ -142,9 +142,9 @@ async def update_settings(
 async def create_backup(
     user: Annotated[User, Depends(require_admin)],
 ):
-    """Create a database backup (SQLite only)."""
+    """Create a database backup (SQLite + PostgreSQL)."""
     from ...services.backup_service import create_backup as do_backup
-    result = do_backup()
+    result = do_backup(reason="admin_manual")
     if "error" in result:
         raise HTTPException(400, result["error"])
     return result
