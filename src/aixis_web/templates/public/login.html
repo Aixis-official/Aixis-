@@ -222,7 +222,7 @@
                 if (meResp.ok) {
                     var meData = await meResp.json();
                     var role = (meData.role || '').toLowerCase();
-                    if (role === 'admin' || role === 'auditor') {
+                    if (role === 'admin' || role === 'analyst' || role === 'auditor') {
                         window.location.href = '/dashboard';
                     } else {
                         window.location.href = '/tools';
