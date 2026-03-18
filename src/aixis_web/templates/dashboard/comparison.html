@@ -62,7 +62,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const data = await aixisAPI('/tools/');
+        const data = await aixisAPI('/tools');
         const tools = data.items || data || [];
         const select = document.getElementById('tool-selector');
         tools.forEach(t => {

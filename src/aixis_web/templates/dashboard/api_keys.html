@@ -89,7 +89,7 @@
 <script>
 async function loadKeys() {
     try {
-        const keys = await aixisAPI('/api-keys/');
+        const keys = await aixisAPI('/api-keys');
         renderKeys(keys);
     } catch (e) {
         document.getElementById('keys-list').innerHTML =

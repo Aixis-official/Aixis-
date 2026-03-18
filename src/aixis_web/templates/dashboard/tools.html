@@ -313,7 +313,7 @@
         var el = document.querySelector('.config-status[data-slug="' + slug + '"]');
         if (!el) return;
         try {
-            var cfg = await aixisAPI('/tools/' + encodeURIComponent(slug) + '/target-config');
+            var cfg = await aixisAPI('/tools' + encodeURIComponent(slug) + '/target-config');
             if (cfg && cfg.config_yaml) {
                 el.innerHTML = '<span class="inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">v' + cfg.version + '</span>';
             } else {
@@ -388,14 +388,14 @@
             var existingSlug = document.getElementById('edit-slug').value;
             if (existingSlug) {
                 // Update
-                await aixisAPI('/tools/' + encodeURIComponent(existingSlug), {
+                await aixisAPI('/tools' + encodeURIComponent(existingSlug), {
                     method: 'PUT',
                     body: JSON.stringify(body)
                 });
                 showFormSuccess('ツールを更新しました。');
             } else {
                 // Create
-                await aixisAPI('/tools/', {
+                await aixisAPI('/tools', {
                     method: 'POST',
                     body: JSON.stringify(body)
                 });
@@ -499,7 +499,7 @@
         var textarea = document.getElementById('config-yaml');
         textarea.value = '';
         try {
-            var cfg = await aixisAPI('/tools/' + encodeURIComponent(slug) + '/target-config');
+            var cfg = await aixisAPI('/tools' + encodeURIComponent(slug) + '/target-config');
             if (cfg && cfg.config_yaml) {
                 textarea.value = cfg.config_yaml;
             }
@@ -521,7 +521,7 @@
         }
 
         try {
-            await aixisAPI('/tools/' + encodeURIComponent(editingSlug) + '/target-config', {
+            await aixisAPI('/tools' + encodeURIComponent(editingSlug) + '/target-config', {
                 method: 'PUT',
                 body: JSON.stringify({ config_yaml: yaml })
             });
@@ -584,7 +584,7 @@
                 if (cookies.length === 0) throw new Error('Cookieデータを認識できませんでした。JSONまたはChrome DevToolsからコピーした形式で入力してください。');
             }
             var storageState = { cookies: cookies, origins: [] };
-            await aixisAPI('/tools/' + encodeURIComponent(editingSlug), {
+            await aixisAPI('/tools' + encodeURIComponent(editingSlug), {
                 method: 'PUT',
                 body: JSON.stringify({ auth_storage_state: storageState })
             });
@@ -602,7 +602,7 @@
         if (!editingSlug) return;
         if (!confirm('認証Cookieをクリアしますか？')) return;
         try {
-            await aixisAPI('/tools/' + encodeURIComponent(editingSlug), {
+            await aixisAPI('/tools' + encodeURIComponent(editingSlug), {
                 method: 'PUT',
                 body: JSON.stringify({ auth_storage_state: null })
             });
