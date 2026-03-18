@@ -251,7 +251,7 @@ async def get_audit_progress(
     )
 
 
-@router.get("")
+@router.get("/")
 async def list_audits(
     db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
