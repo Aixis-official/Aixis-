@@ -65,6 +65,9 @@ from .audit_log import AuditLog
 # Password reset tokens
 from .password_reset import PasswordResetToken
 
+# Persistent app settings (survives Railway redeploys)
+from .app_setting import AppSetting
+
 __all__ = [
     # user
     "Organization",
@@ -129,4 +132,6 @@ __all__ = [
     "AuditLog",
     # password reset
     "PasswordResetToken",
+    # app settings
+    "AppSetting",
 ]

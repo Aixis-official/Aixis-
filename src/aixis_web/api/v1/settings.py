@@ -1,15 +1,23 @@
-"""Settings API — manage .env configuration from the dashboard."""
+"""Settings API — manage configuration from the dashboard.
+
+Settings are persisted to PostgreSQL (app_settings table) so they survive
+Railway container restarts and re-deploys. Also written to .env for local dev.
+"""
 
 import json
+import os
 from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
+from sqlalchemy import select
 
 from ...api.deps import require_admin
 from ...config import settings
+from ...db.base import get_db, AsyncSession
+from ...db.models.app_setting import AppSetting
 from ...db.models.user import User
 
 router = APIRouter()
@@ -103,12 +111,33 @@ def _write_env_key(key_name: str, value: str) -> None:
     _ENV_PATH.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
 
 
+async def _db_get(db: AsyncSession, key: str) -> str:
+    """Read a setting from PostgreSQL."""
+    result = await db.execute(select(AppSetting).where(AppSetting.key == key))
+    row = result.scalar_one_or_none()
+    return row.value if row else ""
+
+
+async def _db_set(db: AsyncSession, key: str, value: str) -> None:
+    """Write a setting to PostgreSQL (upsert)."""
+    result = await db.execute(select(AppSetting).where(AppSetting.key == key))
+    row = result.scalar_one_or_none()
+    if row:
+        row.value = value
+    else:
+        db.add(AppSetting(key=key, value=value))
+    await db.commit()
+
+
 @router.get("", response_model=SettingsResponse)
 async def get_settings(
     user: Annotated[User, Depends(require_admin)],
+    db: AsyncSession = Depends(get_db),
 ):
-    """Return current settings (API key masked)."""
-    raw_key = _read_env_key("AIXIS_ANTHROPIC_API_KEY")
+    """Return current settings (reads from DB first, falls back to .env)."""
+    raw_key = await _db_get(db, "AIXIS_ANTHROPIC_API_KEY")
+    if not raw_key:
+        raw_key = _read_env_key("AIXIS_ANTHROPIC_API_KEY")
     return SettingsResponse(
         has_api_key=bool(raw_key),
         anthropic_api_key_masked=_mask_key(raw_key),
@@ -122,15 +151,20 @@ async def get_settings(
 async def update_settings(
     body: SettingsUpdate,
     user: Annotated[User, Depends(require_admin)],
+    db: AsyncSession = Depends(get_db),
 ):
-    """Update settings (writes to .env file)."""
+    """Update settings (writes to PostgreSQL + .env + runtime)."""
     if body.anthropic_api_key is not None:
         key = body.anthropic_api_key.strip()
         if not key.startswith("sk-ant-") or len(key) < 20:
             raise HTTPException(400, "有効なAnthropicのAPIキーを入力してください（'sk-ant-' で始まる20文字以上）")
-        _write_env_key("AIXIS_ANTHROPIC_API_KEY", key)
-        # Also update the runtime setting so the next audit picks it up
-        import os
+        # Persist to PostgreSQL (survives redeploy)
+        await _db_set(db, "AIXIS_ANTHROPIC_API_KEY", key)
+        # Also write to .env (local dev) and update runtime
+        try:
+            _write_env_key("AIXIS_ANTHROPIC_API_KEY", key)
+        except Exception:
+            pass  # .env write may fail on Railway (read-only)
         os.environ["AIXIS_ANTHROPIC_API_KEY"] = key
         settings.anthropic_api_key = key
         return {"status": "ok", "message": "APIキーを保存しました"}

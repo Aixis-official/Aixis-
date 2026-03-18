@@ -148,7 +148,23 @@ async def lifespan(app: FastAPI):
     async with async_session() as session:
         await seed_all(session)
 
-    # 5. Start background services
+    # 5. Restore persisted settings from PostgreSQL
+    try:
+        from sqlalchemy import select as _select
+        from .db.models.app_setting import AppSetting
+        async with async_session() as session:
+            result = await session.execute(_select(AppSetting))
+            for row in result.scalars():
+                import os
+                os.environ[row.key] = row.value
+                # Also update runtime settings object
+                if row.key == "AIXIS_ANTHROPIC_API_KEY" and row.value:
+                    settings.anthropic_api_key = row.value
+                    logger.info("Restored API key from database")
+    except Exception as e:
+        logger.warning("Failed to restore settings from DB: %s", e)
+
+    # 6. Start background services
     from .services.scheduler_service import start_scheduler, stop_scheduler
     start_scheduler()
     from .services.gdrive_export_service import start_gdrive_export, stop_gdrive_export
