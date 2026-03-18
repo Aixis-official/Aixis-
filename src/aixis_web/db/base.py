@@ -8,8 +8,14 @@ from ..config import settings
 
 def _ensure_async_url(url: str) -> str:
     """Convert sync DB URLs to async driver URLs at the last moment."""
-    # Empty or whitespace-only URL → fall back to SQLite
     if not url or not url.strip():
+        import os
+        if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_SERVICE_ID"):
+            raise RuntimeError(
+                "DATABASE_URL is empty on Railway! "
+                "Ensure ${{Postgres.DATABASE_URL}} variable reference resolves correctly. "
+                "Check that PostgreSQL service is in the SAME project as the app."
+            )
         return "sqlite+aiosqlite:///./aixis.db"
     if url.startswith("postgresql://"):
         return url.replace("postgresql://", "postgresql+asyncpg://", 1)
