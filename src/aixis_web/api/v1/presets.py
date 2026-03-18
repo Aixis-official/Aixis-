@@ -39,7 +39,7 @@ class PresetResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-@router.get("/", response_model=list[PresetResponse])
+@router.get("", response_model=list[PresetResponse])
 async def list_presets(
     db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
@@ -48,7 +48,7 @@ async def list_presets(
     return result.scalars().all()
 
 
-@router.post("/", response_model=PresetResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=PresetResponse, status_code=status.HTTP_201_CREATED)
 async def create_preset(
     body: PresetCreate,
     db: Annotated[AsyncSession, Depends(get_db)],

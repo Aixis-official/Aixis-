@@ -215,7 +215,7 @@ def _send_emails_background(req: ContactRequest) -> None:
 # Endpoints
 # ---------------------------------------------------------------------------
 
-@router.post("/", response_model=ContactResponse)
+@router.post("", response_model=ContactResponse)
 async def submit_contact(
     req: ContactRequest,
     request: Request,

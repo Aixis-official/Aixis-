@@ -45,7 +45,7 @@ def _generate_session_code() -> str:
     return f"AX-{now.strftime('%Y%m%d')}-{short_id}"
 
 
-@router.post("/", response_model=AuditResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=AuditResponse, status_code=status.HTTP_201_CREATED)
 async def create_audit(
     body: AuditCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -251,7 +251,7 @@ async def get_audit_progress(
     )
 
 
-@router.get("/")
+@router.get("")
 async def list_audits(
     db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],

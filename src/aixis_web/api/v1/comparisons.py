@@ -26,7 +26,7 @@ from ..deps import require_analyst
 router = APIRouter()
 
 
-@router.post("/", response_model=ComparisonResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ComparisonResponse, status_code=status.HTTP_201_CREATED)
 async def create_comparison(
     body: ComparisonCreate,
     db: Annotated[AsyncSession, Depends(get_db)],

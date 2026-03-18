@@ -52,7 +52,7 @@ async def list_categories(db: Annotated[AsyncSession, Depends(get_db)]):
     return result.scalars().all()
 
 
-@router.get("/", response_model=ToolListResponse)
+@router.get("", response_model=ToolListResponse)
 async def list_tools(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User | None, Depends(get_current_user)],
@@ -130,7 +130,7 @@ async def get_tool(slug: str, db: Annotated[AsyncSession, Depends(get_db)]):
     return resp
 
 
-@router.post("/", response_model=ToolResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ToolResponse, status_code=status.HTTP_201_CREATED)
 async def create_tool(
     body: ToolCreate,
     db: Annotated[AsyncSession, Depends(get_db)],

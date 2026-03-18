@@ -18,7 +18,7 @@ from ..deps import require_analyst
 router = APIRouter()
 
 
-@router.post("/", response_model=ScheduleResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ScheduleResponse, status_code=status.HTTP_201_CREATED)
 async def create_schedule(
     body: ScheduleCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -55,7 +55,7 @@ async def create_schedule(
     return resp
 
 
-@router.get("/", response_model=list[ScheduleResponse])
+@router.get("", response_model=list[ScheduleResponse])
 async def list_schedules(
     db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],

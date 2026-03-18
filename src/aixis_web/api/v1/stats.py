@@ -25,7 +25,7 @@ class PlatformStats(BaseModel):
     new_this_month: int = 0
 
 
-@router.get("/", response_model=PlatformStats)
+@router.get("", response_model=PlatformStats)
 async def get_platform_stats(db: Annotated[AsyncSession, Depends(get_db)]):
     """Get public platform statistics. No auth required."""
     try:

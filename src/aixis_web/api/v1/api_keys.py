@@ -29,7 +29,7 @@ def _hash_key(raw_key: str) -> str:
     return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
 
 
-@router.post("/", response_model=ApiKeyCreatedResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ApiKeyCreatedResponse, status_code=status.HTTP_201_CREATED)
 async def create_api_key(
     body: ApiKeyCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -69,7 +69,7 @@ async def create_api_key(
     )
 
 
-@router.get("/", response_model=list[ApiKeyResponse])
+@router.get("", response_model=list[ApiKeyResponse])
 async def list_api_keys(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(require_auth)],

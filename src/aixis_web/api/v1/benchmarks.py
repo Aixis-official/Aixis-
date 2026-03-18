@@ -37,7 +37,7 @@ from ..deps import get_current_user, require_admin, require_analyst
 router = APIRouter()
 
 
-@router.get("/", response_model=list[BenchmarkSuiteResponse])
+@router.get("", response_model=list[BenchmarkSuiteResponse])
 async def list_suites(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User | None, Depends(get_current_user)] = None,

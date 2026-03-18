@@ -23,7 +23,7 @@ from ..deps import require_auth
 router = APIRouter()
 
 
-@router.post("/", response_model=WebhookResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=WebhookResponse, status_code=status.HTTP_201_CREATED)
 async def create_webhook(
     body: WebhookCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -54,7 +54,7 @@ async def create_webhook(
     return subscription
 
 
-@router.get("/", response_model=list[WebhookResponse])
+@router.get("", response_model=list[WebhookResponse])
 async def list_webhooks(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(require_auth)],

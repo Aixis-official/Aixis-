@@ -22,7 +22,7 @@ from ..deps import require_auth
 router = APIRouter()
 
 
-@router.get("/", response_model=NotificationListResponse)
+@router.get("", response_model=NotificationListResponse)
 async def list_notifications(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(require_auth)],
