@@ -134,11 +134,21 @@ AGENT_PROMPT = """\
 {{"action":"done","desc":"完了の理由"}}
 {{"action":"fail","desc":"失敗の理由"}}
 
-■ 重要なルール:
-- ★ テキスト入力と送信は必ず別のステップで行うこと。1ステップ目でtype、次のステップでclick（送信ボタン）。同じステップで入力と送信を同時にしない
-- ★ typeアクションの直後は、入力欄にテキストが正しく表示されているか確認してから送信ボタンをクリック
-- 「生成」「作成」「送信」「Submit」「Go」「Start」などのボタンが見え、かつ入力欄にテキストが入力済みならクリック
-- 確認ダイアログやモーダルが出たら「OK」「はい」「続行」をクリック
+■ 最重要ルール（必ず守ること）:
+- ★★★ ログインページ検出: 画面に以下が表示されている場合は、絶対に入力せず即座に fail を返すこと:
+  ログインフォーム、パスワード入力欄、「Sign in」「Log in」「ログイン」「サインイン」、
+  「パスワードをお忘れですか」「Forgot password」「Password Reset」「パスワードリセット」、
+  OAuth/SSO ボタン（Googleでログイン、Sign in with Google等）
+  → {{"action":"fail","desc":"AUTH_FAILURE: ログイン/認証画面が表示されています。有効な認証Cookieを設定してください。"}}
+  絶対にログインフォームにテキストを入力しないこと。メールアドレスやパスワードを入力しないこと。
+
+■ 操作ルール:
+- ★ テキスト入力と送信は必ず別ステップ。1ステップ目でtype、次ステップでclick（送信ボタン）
+- ★ typeの直後は入力欄にテキストが正しく表示されているか確認してから送信ボタンをクリック
+- 「生成」「作成」「送信」「Submit」「Go」「Start」などのボタンが見え、入力済みならクリック
+- 確認ダイアログやモーダルが出たら「OK」「はい」「続行」「閉じる」をクリック
+- Cookie同意バナーが出たら「Accept」「同意する」「OK」をクリックして閉じる
+- ポップアップ通知やトーストメッセージ、ツアーガイドは「×」や「スキップ」で閉じる
 - ローディング中（スピナー、プログレスバー、「生成中...」等）はwaitを選択
 - 結果（スライド、テキスト、画像、回答文等）が表示されていたらdoneを選択
 - ボタンが画面外にありそうならscroll_downを選択
@@ -147,6 +157,8 @@ AGENT_PROMPT = """\
 - 同じ操作を3回以上繰り返さないこと。効果がなければ別のアプローチを試す
 - scroll_downで見つからなければscroll_upで戻る。それでもダメならnavigateで開始URLに戻る
 - 前回のテスト結果画面が表示されている場合は、navigateで開始URLに戻る
+- ページ読み込みが遅い場合はwaitで10秒待つ
+- テキスト入力欄が見つからない場合はscroll_downしてから探す
 - JSONのみ回答（他のテキスト不要）
 """
 
@@ -302,6 +314,52 @@ class AIBrowserExecutor(TestExecutor):
             pages = self._context.pages
             if pages:
                 self._page = pages[-1]
+
+    async def check_auth_status(self) -> bool:
+        """Pre-check: is the current page a login/auth page?
+
+        Takes one screenshot and asks Haiku. Returns True if OK,
+        False if we're on a login page (auth cookies invalid/missing).
+        Cost: 1 Haiku call (~0.4 JPY).
+        """
+        if not self._page or not self._client:
+            return True  # Can't check, assume OK
+        try:
+            screenshot_bytes = await self._page.screenshot(type="jpeg", quality=50)
+            import base64
+            b64 = base64.b64encode(screenshot_bytes).decode()
+
+            response = self._client.messages.create(
+                model=self._model,
+                max_tokens=50,
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": b64}},
+                        {"type": "text", "text": 'この画面はログインページ、サインインページ、またはパスワードリセットページですか？\nJSON形式で回答: {"is_login": true} または {"is_login": false}'},
+                    ],
+                }],
+            )
+            # Record budget
+            if hasattr(response, 'usage'):
+                self._budget.record_call(response.usage.input_tokens, response.usage.output_tokens)
+
+            text = response.content[0].text.strip()
+            import json
+            try:
+                data = json.loads(text)
+                is_login = data.get("is_login", False)
+            except json.JSONDecodeError:
+                is_login = "true" in text.lower()
+
+            if is_login:
+                logger.warning("Auth pre-check: login page detected at %s", self._page.url)
+                return False
+            logger.info("Auth pre-check: page is NOT a login page, proceeding")
+            return True
+        except Exception as e:
+            logger.warning("Auth pre-check failed (non-critical): %s", e)
+            return True  # On error, proceed with tests
 
     def _workflow_cache_path(self) -> Path | None:
         """Path to cached workflow file for the current target tool."""
@@ -586,8 +644,13 @@ class AIBrowserExecutor(TestExecutor):
             elif action == "fail":
                 logger.warning("  Agent declares failure: %s", desc)
                 ss_path = await self._save_screenshot_safe()
+                # Detect auth failure from description keywords
+                desc_lower = (desc or "").lower()
+                auth_keywords = ["auth_failure", "ログイン", "認証", "パスワード", "sign in", "login", "サインイン"]
+                is_auth = any(kw in desc_lower for kw in auth_keywords)
+                error_prefix = "AUTH_FAILURE: " if is_auth else "AI判定: "
                 return ExecutionResult(
-                    error=f"AI判定: {desc}",
+                    error=f"{error_prefix}{desc}",
                     response_time_ms=(time.monotonic() - start_time) * 1000,
                     screenshot_path=ss_path,
                     page_url=self._page.url,

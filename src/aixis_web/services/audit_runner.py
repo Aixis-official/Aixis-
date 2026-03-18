@@ -283,7 +283,17 @@ def _run_pipeline_sync(
             reliability_data=reliability_data,
         )
 
-        final_status = "aborted" if was_aborted else "completed"
+        # Detect auth failure: all results are AUTH_FAILURE errors
+        all_auth_fail = (
+            results
+            and all(r.error and r.error.startswith("AUTH_FAILURE:") for r in results)
+        )
+        if all_auth_fail:
+            final_status = "auth_failed"
+        elif was_aborted:
+            final_status = "aborted"
+        else:
+            final_status = "completed"
         _update_running(session_id, status=final_status, phase="done")
         logger.info("Audit %s %s", session_id, final_status)
 

@@ -91,6 +91,7 @@ class ScoringEngine:
             "not initialized",
             "連続失敗",
             "最大ステップ数",
+            "AUTH_FAILURE:",
         ]
         return any(marker in result.error for marker in infra_markers)
 

@@ -208,20 +208,35 @@
 
                         <!-- Step-by-step instructions -->
                         <div class="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                            <p class="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-2 font-jp">Cookieの取得手順</p>
+                            <p class="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-2 font-jp">Cookieの取得手順（方法1: 推奨）</p>
                             <ol class="text-xs text-amber-700 dark:text-amber-400 space-y-1.5 font-jp list-decimal list-inside">
                                 <li>対象ツールのサイトにアクセスし、<strong>ログイン</strong>する</li>
                                 <li>ログイン後、<strong>F12キー</strong>（Mac: Cmd+Option+I）でDevToolsを開く</li>
-                                <li><strong>Console</strong> タブを開く</li>
-                                <li>下のコマンドをコピーして貼り付け、Enterを押す<br>
-                                    <span class="text-[10px] text-amber-600 dark:text-amber-500">※初回は「allow pasting」と入力してEnterを押してから再度貼り付け</span></li>
-                                <li>Enterの後<strong>3秒以内にページ側をクリック</strong>する（クリップボードにコピーされます）</li>
+                                <li><strong>Application</strong> タブ → 左の <strong>Cookies</strong> → <strong>対象ドメイン</strong>をクリック</li>
+                                <li>Cookie一覧が表示される → <strong>表の任意のセルをクリック → Ctrl+A（全選択）</strong></li>
+                                <li>右クリック → 「<strong>Copy</strong>」を選択（全行がコピーされます）</li>
                                 <li>下の入力欄に <strong>Ctrl+V / Cmd+V</strong> で貼り付けて「保存」</li>
                             </ol>
-                            <div class="mt-3 relative">
-                                <pre id="cookie-cmd" class="text-[10px] bg-gray-900 text-green-400 p-2 rounded font-mono overflow-x-auto select-all cursor-pointer" onclick="copyCookieCmd()" title="クリックでコピー">setTimeout(()=>cookieStore.getAll().then(c=>{const f=c.map(x=>({name:x.name,value:x.value,domain:x.domain||location.hostname,path:x.path||'/'}));navigator.clipboard.writeText(JSON.stringify(f)).then(()=>alert(f.length+'件コピー完了！貼り付けてください'))}),3000)</pre>
-                                <button type="button" onclick="copyCookieCmd()" class="absolute top-1 right-1 px-1.5 py-0.5 text-[10px] bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors font-jp">コピー</button>
-                            </div>
+                            <p class="text-[10px] text-amber-600 dark:text-amber-500 mt-2 font-jp">
+                                ※ この方法はHttpOnly Cookieも含むため最も確実です
+                            </p>
+
+                            <details class="mt-3">
+                                <summary class="text-xs text-amber-700 dark:text-amber-400 cursor-pointer font-jp">方法2: Consoleコマンド（HttpOnly Cookieは含まれません）</summary>
+                                <p class="text-[10px] text-amber-600 dark:text-amber-500 mt-1 mb-1 font-jp">
+                                    ※ この方法ではHttpOnly Cookieが取得できないため、ログインが維持されない場合があります
+                                </p>
+                                <ol class="text-[10px] text-amber-600 dark:text-amber-500 space-y-1 font-jp list-decimal list-inside mb-2">
+                                    <li>DevTools → <strong>Console</strong> タブを開く</li>
+                                    <li>初回は「allow pasting」と入力してEnter</li>
+                                    <li>下のコマンドを貼り付けてEnter</li>
+                                    <li>Enter後<strong>3秒以内にページ側をクリック</strong></li>
+                                </ol>
+                                <div class="relative">
+                                    <pre id="cookie-cmd" class="text-[10px] bg-gray-900 text-green-400 p-2 rounded font-mono overflow-x-auto select-all cursor-pointer" onclick="copyCookieCmd()" title="クリックでコピー">setTimeout(()=>cookieStore.getAll().then(c=>{const f=c.map(x=>({name:x.name,value:x.value,domain:x.domain||location.hostname,path:x.path||'/'}));navigator.clipboard.writeText(JSON.stringify(f)).then(()=>alert(f.length+'件コピー完了！貼り付けてください'))}),3000)</pre>
+                                    <button type="button" onclick="copyCookieCmd()" class="absolute top-1 right-1 px-1.5 py-0.5 text-[10px] bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors font-jp">コピー</button>
+                                </div>
+                            </details>
                         </div>
 
                         <div id="auth-cookie-status" class="hidden mb-3 px-3 py-2 rounded-lg text-xs font-jp"></div>
@@ -547,8 +562,27 @@
             return;
         }
         try {
-            var cookies = JSON.parse(raw);
-            if (!Array.isArray(cookies)) throw new Error('配列形式で入力してください');
+            var cookies;
+            // Try JSON first
+            try {
+                cookies = JSON.parse(raw);
+                if (!Array.isArray(cookies)) throw new Error('not array');
+            } catch (_) {
+                // Parse tab-separated format from Chrome Application > Cookies > Copy
+                // Format: Name\tValue\tDomain\tPath\t... (one cookie per line)
+                var lines = raw.split('\n').filter(function(l) { return l.trim(); });
+                cookies = [];
+                for (var i = 0; i < lines.length; i++) {
+                    var cols = lines[i].split('\t');
+                    if (cols.length >= 2) {
+                        var c = { name: cols[0].trim(), value: cols[1].trim() };
+                        if (cols.length >= 3 && cols[2].trim()) c.domain = cols[2].trim();
+                        if (cols.length >= 4 && cols[3].trim()) c.path = cols[3].trim();
+                        cookies.push(c);
+                    }
+                }
+                if (cookies.length === 0) throw new Error('Cookieデータを認識できませんでした。JSONまたはChrome DevToolsからコピーした形式で入力してください。');
+            }
             var storageState = { cookies: cookies, origins: [] };
             await aixisAPI('/tools/' + encodeURIComponent(editingSlug), {
                 method: 'PUT',

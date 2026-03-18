@@ -127,6 +127,26 @@ class Pipeline:
                     except Exception as e:
                         logger.warning("Failed to inject auth cookies: %s", e)
 
+                # Auth pre-check: detect login page before wasting budget
+                if is_ai and hasattr(executor, 'check_auth_status'):
+                    auth_ok = await executor.check_auth_status()
+                    if not auth_ok:
+                        console.print("[bold red]認証失敗: ログインページが検出されました[/bold red]")
+                        console.print("[yellow]ツール管理画面で認証Cookieを再設定してください[/yellow]")
+                        # Record one AUTH_FAILURE result
+                        auth_fail_result = TestResult(
+                            test_case_id=test_cases[0].id if test_cases else "auth-check",
+                            category=test_cases[0].category.value if test_cases else "unknown",
+                            prompt_sent="[認証プリチェック]",
+                            response_raw="",
+                            response_time_ms=0,
+                            error="AUTH_FAILURE: ログインページが検出されました。認証Cookieが無効または未設定です。",
+                            ai_steps_taken=1,
+                            ai_calls_used=1,
+                        )
+                        store.store_result(session_id, auth_fail_result)
+                        return store
+
                 with Progress(
                     SpinnerColumn(),
                     TextColumn("[progress.description]{task.description}"),
@@ -149,6 +169,24 @@ class Pipeline:
                             break
 
                         result_data = await executor.send_prompt(test_case.prompt)
+
+                        # Auth failure on first test → abort all remaining
+                        if idx == 0 and result_data.error and result_data.error.startswith("AUTH_FAILURE:"):
+                            console.print(f"[bold red]{result_data.error}[/bold red]")
+                            console.print("[yellow]残りのテストを中止します。認証Cookieを再設定してください。[/yellow]")
+                            test_result = TestResult(
+                                test_case_id=test_case.id,
+                                category=test_case.category.value,
+                                prompt_sent=test_case.prompt,
+                                response_raw=result_data.text or "",
+                                response_time_ms=result_data.response_time_ms,
+                                error=result_data.error,
+                                screenshot_path=result_data.screenshot_path,
+                                ai_steps_taken=result_data.ai_steps_taken,
+                                ai_calls_used=result_data.ai_calls_used,
+                            )
+                            store.store_result(session_id, test_result)
+                            break
 
                         # Accumulate AI metrics
                         total_ai_steps += result_data.ai_steps_taken
