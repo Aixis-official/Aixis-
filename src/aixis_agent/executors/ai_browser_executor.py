@@ -977,7 +977,7 @@ class AIBrowserExecutor(TestExecutor):
                             "type": "image",
                             "source": {
                                 "type": "base64",
-                                "media_type": "image/png",
+                                "media_type": "image/jpeg",
                                 "data": screenshot_b64,
                             },
                         },
@@ -1076,9 +1076,9 @@ class AIBrowserExecutor(TestExecutor):
             return ""
 
     async def _screenshot_b64(self) -> str:
-        """Take screenshot and return as base64 (in-memory only, no disk write)."""
+        """Take screenshot and return as base64 JPEG (smaller = fewer tokens)."""
         self._total_screenshots += 1
-        buf = await self._page.screenshot(type="png")
+        buf = await self._page.screenshot(type="jpeg", quality=40)
         return base64.standard_b64encode(buf).decode("utf-8")
 
     async def _save_screenshot(self) -> str:
