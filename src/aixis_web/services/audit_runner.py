@@ -774,13 +774,22 @@ def start_audit(
     if _preflight_yaml:
         try:
             _pf_data = _yaml.safe_load(_preflight_yaml)
-            if isinstance(_pf_data, dict) and _pf_data.get("executor_type") == "ai_browser":
-                import os as _os
-                if not _os.environ.get("AIXIS_ANTHROPIC_API_KEY", ""):
+            if isinstance(_pf_data, dict):
+                # Check: manual login required on headless server
+                if _pf_data.get("wait_for_manual_login") and _is_headless_environment():
                     return {
-                        "error": "AIブラウザ実行にはAnthropicのAPIキーが必要です。"
-                        "設定画面またはAIXIS_ANTHROPIC_API_KEY環境変数で設定してください。"
+                        "error": "この監査ターゲットは手動ログインが必要なため、"
+                        "サーバー上では実行できません。ローカル環境（CLI）から実行してください。"
+                        "（gamma.yaml の wait_for_manual_login: true が設定されています）"
                     }
+                # Check: AI browser needs API key
+                if _pf_data.get("executor_type") == "ai_browser":
+                    import os as _os
+                    if not _os.environ.get("AIXIS_ANTHROPIC_API_KEY", ""):
+                        return {
+                            "error": "AIブラウザ実行にはAnthropicのAPIキーが必要です。"
+                            "設定画面またはAIXIS_ANTHROPIC_API_KEY環境変数で設定してください。"
+                        }
         except Exception:
             pass
 
