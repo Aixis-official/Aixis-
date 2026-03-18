@@ -5,10 +5,22 @@ from sqlalchemy.orm import DeclarativeBase
 
 from ..config import settings
 
+
+def _ensure_async_url(url: str) -> str:
+    """Convert sync DB URLs to async driver URLs at the last moment."""
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    return url
+
+
+_db_url = _ensure_async_url(settings.database_url)
+
 # Configure connection pool — SQLite uses NullPool by default,
 # PostgreSQL/MySQL benefit from explicit pool limits.
 _engine_kwargs: dict = {"echo": False}
-if "sqlite" not in settings.database_url:
+if "sqlite" not in _db_url:
     _engine_kwargs.update({
         "pool_size": 20,
         "max_overflow": 40,
@@ -16,11 +28,11 @@ if "sqlite" not in settings.database_url:
         "pool_recycle": 3600,
     })
 
-engine = create_async_engine(settings.database_url, **_engine_kwargs)
+engine = create_async_engine(_db_url, **_engine_kwargs)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 # Enable SQLite WAL mode for better concurrent read performance and crash resilience
-if "sqlite" in settings.database_url:
+if "sqlite" in _db_url:
     from sqlalchemy import event
 
     @event.listens_for(engine.sync_engine, "connect")
