@@ -15,7 +15,21 @@ def _ensure_async_url(url: str) -> str:
     return url
 
 
+import logging as _logging
+_log = _logging.getLogger(__name__)
+
 _db_url = _ensure_async_url(settings.database_url)
+
+# Log the resolved URL (mask password for safety)
+_safe_url = _db_url
+if "@" in _safe_url:
+    # mask password: scheme://user:****@host/db
+    _pre_at = _safe_url.split("@")[0]
+    _post_at = _safe_url.split("@", 1)[1]
+    if ":" in _pre_at.split("//", 1)[-1]:
+        _scheme_user = _pre_at.rsplit(":", 1)[0]
+        _safe_url = f"{_scheme_user}:****@{_post_at}"
+_log.critical("DATABASE URL resolved to: %s", _safe_url)
 
 # Configure connection pool — SQLite uses NullPool by default,
 # PostgreSQL/MySQL benefit from explicit pool limits.
@@ -28,7 +42,11 @@ if "sqlite" not in _db_url:
         "pool_recycle": 3600,
     })
 
-engine = create_async_engine(_db_url, **_engine_kwargs)
+try:
+    engine = create_async_engine(_db_url, **_engine_kwargs)
+except Exception as _e:
+    _log.critical("Failed to create engine. Raw URL repr: %r", _db_url)
+    raise
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 # Enable SQLite WAL mode for better concurrent read performance and crash resilience
