@@ -806,6 +806,7 @@ def start_audit(
             pass
 
     # Resolve target config
+    _db_config_ok = False
     if target_config_yaml:
         import tempfile
         import yaml
@@ -815,20 +816,22 @@ def start_audit(
                 if _is_headless_environment():
                     config_data["headless"] = True
                 target_config_yaml = yaml.dump(config_data, allow_unicode=True, default_flow_style=False)
-        except Exception:
-            pass
-        tmp = tempfile.NamedTemporaryFile(
-            mode="w", suffix=".yaml", delete=False, encoding="utf-8"
-        )
-        tmp.write(target_config_yaml)
-        tmp.close()
-        target_config_path = Path(tmp.name)
-    elif target_config_name:
+            tmp = tempfile.NamedTemporaryFile(
+                mode="w", suffix=".yaml", delete=False, encoding="utf-8"
+            )
+            tmp.write(target_config_yaml)
+            tmp.close()
+            target_config_path = Path(tmp.name)
+            _db_config_ok = True
+        except Exception as e:
+            logger.warning("DB target config YAML parse failed: %s — falling back to file", e)
+
+    if not _db_config_ok and target_config_name:
         target_config_path = config_dir / "targets" / f"{target_config_name}.yaml"
         if not target_config_path.exists():
             return {"error": f"ターゲット設定ファイルが見つかりません: {target_config_name}"}
         target_config_path = _make_server_config(target_config_path)
-    else:
+    elif not _db_config_ok:
         tool_slug = _tool_name_to_slug(tool_name)
         file_config_path = config_dir / "targets" / f"{tool_slug}.yaml"
         if file_config_path.exists():
