@@ -723,7 +723,7 @@ def _make_server_config(config_path: Path) -> Path:
         if isinstance(data, dict):
             if _is_headless_environment():
                 data["headless"] = True
-                # Don't force wait_for_manual_login — respect YAML setting
+                data["wait_for_manual_login"] = False  # Skip on server — no one to login
             tmp = tempfile.NamedTemporaryFile(
                 mode="w", suffix=".yaml", delete=False, encoding="utf-8"
             )
@@ -775,13 +775,6 @@ def start_audit(
         try:
             _pf_data = _yaml.safe_load(_preflight_yaml)
             if isinstance(_pf_data, dict):
-                # Check: manual login required on headless server
-                if _pf_data.get("wait_for_manual_login") and _is_headless_environment():
-                    return {
-                        "error": "この監査ターゲットは手動ログインが必要なため、"
-                        "サーバー上では実行できません。ローカル環境（CLI）から実行してください。"
-                        "（gamma.yaml の wait_for_manual_login: true が設定されています）"
-                    }
                 # Check: AI browser needs API key
                 if _pf_data.get("executor_type") == "ai_browser":
                     import os as _os
@@ -802,6 +795,7 @@ def start_audit(
             if isinstance(config_data, dict):
                 if _is_headless_environment():
                     config_data["headless"] = True
+                    config_data["wait_for_manual_login"] = False
                 target_config_yaml = yaml.dump(config_data, allow_unicode=True, default_flow_style=False)
         except Exception:
             pass
