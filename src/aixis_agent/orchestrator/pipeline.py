@@ -145,7 +145,8 @@ class Pipeline:
                             metadata={"ai_steps_taken": 1, "ai_calls_used": 1},
                         )
                         store.store_result(session_id, auth_fail_result)
-                        return store
+                        store.complete_session(session_id, error="AUTH_FAILURE")
+                        return session_id
 
                 with Progress(
                     SpinnerColumn(),

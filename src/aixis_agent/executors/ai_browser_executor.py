@@ -110,57 +110,24 @@ class LearnedWorkflow:
 # Unified agent prompt
 # ---------------------------------------------------------------------------
 
-AGENT_PROMPT = """\
-あなたはWebアプリを操作するAIエージェントです。
-ツール名: {tool_name}
-ツール説明: {tool_description}
-開始URL: {reset_url}
-画面サイズ: 1280×800px
+# Static system prompt — cached by Anthropic's API (sent once, not per-turn)
+AGENT_SYSTEM_PROMPT = """\
+Webアプリ操作AIエージェント。スクリーンショットを見て次のアクション1つをJSON形式で返す。
+アクション: click(x,y,desc), type(text,desc), scroll_down(desc), scroll_up(desc), navigate(url,desc), wait(seconds,desc), done(desc), fail(desc)
+ルール:
+- ログイン/認証画面(Sign in,ログイン,パスワード,OAuth)→即fail("AUTH_FAILURE:...")。絶対に入力しない
+- type→次ステップでclick(送信ボタン)。入力と送信は別ステップ
+- ローディング中→wait。結果表示→done。エラー表示→done(監査結果として有用)
+- クレジット不足/レート制限→fail。ダイアログ/バナー/ポップアップ→閉じる
+- 同じ操作3回繰り返さない。scroll_downで見つからなければscroll_up→navigate(開始URL)
+- JSONのみ回答"""
 
-【現在のタスク】{task_description}
-
-【これまでの操作履歴】
-{action_history}
-
-画面のスクリーンショットを分析し、次に実行すべきアクション1つをJSON形式で回答してください。
-
-■ 利用可能なアクション:
-{{"action":"click","x":<int>,"y":<int>,"desc":"何をクリックするか"}}
-{{"action":"type","text":"入力するテキスト","desc":"どこに入力するか"}}
-{{"action":"scroll_down","desc":"スクロールの理由"}}
-{{"action":"scroll_up","desc":"スクロールの理由"}}
-{{"action":"navigate","url":"移動先URL","desc":"ナビゲーション理由"}}
-{{"action":"wait","seconds":<5-30>,"desc":"待機理由"}}
-{{"action":"done","desc":"完了の理由"}}
-{{"action":"fail","desc":"失敗の理由"}}
-
-■ 最重要ルール（必ず守ること）:
-- ★★★ ログインページ検出: 画面に以下が表示されている場合は、絶対に入力せず即座に fail を返すこと:
-  ログインフォーム、パスワード入力欄、「Sign in」「Log in」「ログイン」「サインイン」、
-  「パスワードをお忘れですか」「Forgot password」「Password Reset」「パスワードリセット」、
-  OAuth/SSO ボタン（Googleでログイン、Sign in with Google等）
-  → {{"action":"fail","desc":"AUTH_FAILURE: ログイン/認証画面が表示されています。有効な認証Cookieを設定してください。"}}
-  絶対にログインフォームにテキストを入力しないこと。メールアドレスやパスワードを入力しないこと。
-
-■ 操作ルール:
-- ★ テキスト入力と送信は必ず別ステップ。1ステップ目でtype、次ステップでclick（送信ボタン）
-- ★ typeの直後は入力欄にテキストが正しく表示されているか確認してから送信ボタンをクリック
-- 「生成」「作成」「送信」「Submit」「Go」「Start」などのボタンが見え、入力済みならクリック
-- 確認ダイアログやモーダルが出たら「OK」「はい」「続行」「閉じる」をクリック
-- Cookie同意バナーが出たら「Accept」「同意する」「OK」をクリックして閉じる
-- ポップアップ通知やトーストメッセージ、ツアーガイドは「×」や「スキップ」で閉じる
-- ローディング中（スピナー、プログレスバー、「生成中...」等）はwaitを選択
-- 結果（スライド、テキスト、画像、回答文等）が表示されていたらdoneを選択
-- ボタンが画面外にありそうならscroll_downを選択
-- エラーメッセージが表示されていてもdone（エラー自体が監査結果として有用）
-- クレジット不足やレート制限のエラーが出た場合のみfailを選択
-- 同じ操作を3回以上繰り返さないこと。効果がなければ別のアプローチを試す
-- scroll_downで見つからなければscroll_upで戻る。それでもダメならnavigateで開始URLに戻る
-- 前回のテスト結果画面が表示されている場合は、navigateで開始URLに戻る
-- ページ読み込みが遅い場合はwaitで10秒待つ
-- テキスト入力欄が見つからない場合はscroll_downしてから探す
-- JSONのみ回答（他のテキスト不要）
-"""
+# Dynamic per-call user prompt — changes each turn (tool info + task + history)
+AGENT_USER_PROMPT = """\
+ツール: {tool_name} | URL: {reset_url} | 画面: 1280×800
+タスク: {task_description}
+操作履歴: {action_history}
+次のアクション1つをJSONで:"""
 
 
 class AIBrowserExecutor(TestExecutor):
@@ -325,7 +292,7 @@ class AIBrowserExecutor(TestExecutor):
         if not self._page or not self._client:
             return True  # Can't check, assume OK
         try:
-            screenshot_bytes = await self._page.screenshot(type="jpeg", quality=50)
+            screenshot_bytes = await self._page.screenshot(type="jpeg", quality=40)
             import base64
             b64 = base64.b64encode(screenshot_bytes).decode()
 
@@ -492,12 +459,11 @@ class AIBrowserExecutor(TestExecutor):
 
             # Take screenshot & ask Haiku
             ss_b64 = await self._screenshot_b64()
-            agent_text = AGENT_PROMPT.format(
+            agent_text = AGENT_USER_PROMPT.format(
                 tool_name=self._config.name,
-                tool_description=self._config.tool_description or "",
                 reset_url=self._workflow.reset_url or self._config.url,
                 task_description=task_desc,
-                action_history="\n".join(action_history[-5:]) or "(なし)",
+                action_history="; ".join(action_history[-3:]) or "なし",
             )
 
             resp_text, ti, to = await self._ask_haiku_async(agent_text, ss_b64)
@@ -578,7 +544,7 @@ class AIBrowserExecutor(TestExecutor):
                     )
                     step_start_time = time.monotonic()
 
-                if await self._interruptible_sleep(2):
+                if await self._interruptible_sleep(0.8):
                     return self._make_result(start_time, error="監査が中止されました",
                                              calls=total_calls, ti=total_ti, to=total_to)
 
@@ -586,7 +552,7 @@ class AIBrowserExecutor(TestExecutor):
                 await self._page.mouse.wheel(0, -400)
                 logger.info("  Scrolled up")
 
-                if await self._interruptible_sleep(2):
+                if await self._interruptible_sleep(0.8):
                     return self._make_result(start_time, error="監査が中止されました",
                                              calls=total_calls, ti=total_ti, to=total_to)
 
@@ -606,7 +572,7 @@ class AIBrowserExecutor(TestExecutor):
                         logger.warning("  Navigation failed: %s", e)
                         action_history[-1] += f" (FAILED: {e})"
 
-                if await self._interruptible_sleep(3):
+                if await self._interruptible_sleep(1):
                     return self._make_result(start_time, error="監査が中止されました",
                                              calls=total_calls, ti=total_ti, to=total_to)
 
@@ -728,14 +694,14 @@ class AIBrowserExecutor(TestExecutor):
                 logger.info("Replay: DOM input not found, using learned coords (%d, %d)", input_x, input_y)
 
             await self._page.mouse.click(input_x, input_y)
-            await asyncio.sleep(0.8)
+            await asyncio.sleep(0.4)
             await self._page.keyboard.press("Meta+a")
             await self._page.keyboard.press("Backspace")
-            await asyncio.sleep(0.3)
+            await asyncio.sleep(0.2)
 
             # Use paste for all prompts (faster, no timing issues with keyboard.type)
             await self._paste_text(prompt)
-            await asyncio.sleep(1.5)  # Wait for UI to process pasted text
+            await asyncio.sleep(0.8)  # Wait for UI to process pasted text
 
             # Verify input was entered by checking if there's text in the focused element
             input_check = await self._page.evaluate("""() => {
@@ -969,7 +935,8 @@ class AIBrowserExecutor(TestExecutor):
         try:
             response = self._client.messages.create(
                 model=self._model,
-                max_tokens=256,
+                max_tokens=200,
+                system=AGENT_SYSTEM_PROMPT,
                 messages=[{
                     "role": "user",
                     "content": [
