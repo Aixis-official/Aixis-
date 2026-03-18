@@ -93,6 +93,10 @@ class Tool(Base):
     seo_keywords_jp = Column(JSON)  # list of strings
     content_updated_at = Column(DateTime(timezone=True))
 
+    # auth: Playwright storage_state JSON for authenticated sessions
+    # Format: {"cookies": [...], "origins": [...]} (Playwright storage_state format)
+    auth_storage_state = Column(JSON)
+
     # status
     is_public = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)

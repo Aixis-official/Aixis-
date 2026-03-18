@@ -125,6 +125,7 @@ async def start_audit(
             target_config_name=target_config_name or tool.slug,
             profile_id=body.profile_id or tool.profile_id or "",
             categories=body.categories,
+            auth_storage_state=tool.auth_storage_state,
         )
     except Exception as exc:
         logger.exception("Audit runner crashed for %s", tool.slug)

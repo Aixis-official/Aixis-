@@ -41,6 +41,7 @@ class Pipeline:
         dry_run: bool = False,
         max_concurrency: int = 1,
         profile: dict | None = None,
+        auth_storage_state: dict | None = None,
     ):
         self.target_config_path = target_config_path
         self.patterns_dir = patterns_dir
@@ -49,6 +50,7 @@ class Pipeline:
         self.dry_run = dry_run
         self.max_concurrency = max_concurrency
         self.profile = profile
+        self.auth_storage_state = auth_storage_state
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.target_config = load_target_config(target_config_path)
@@ -111,6 +113,19 @@ class Pipeline:
 
             try:
                 await executor.initialize(self.target_config)
+
+                # Inject saved auth cookies if available
+                if self.auth_storage_state and hasattr(executor, '_context') and executor._context:
+                    try:
+                        cookies = self.auth_storage_state.get("cookies", [])
+                        if cookies:
+                            await executor._context.add_cookies(cookies)
+                            logger.info("Injected %d auth cookies into browser context", len(cookies))
+                            # Reload to apply cookies
+                            if hasattr(executor, '_page') and executor._page:
+                                await executor._page.reload(wait_until="domcontentloaded")
+                    except Exception as e:
+                        logger.warning("Failed to inject auth cookies: %s", e)
 
                 with Progress(
                     SpinnerColumn(),

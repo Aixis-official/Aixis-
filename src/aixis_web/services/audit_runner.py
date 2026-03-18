@@ -98,6 +98,7 @@ def _run_pipeline_sync(
     profile: dict | None,
     scoring_rules_path: Path | None,
     db_url: str,
+    auth_storage_state: dict | None = None,
 ) -> None:
     """Synchronous function that runs inside a background thread.
 
@@ -125,6 +126,7 @@ def _run_pipeline_sync(
             dry_run=False,
             max_concurrency=1,
             profile=profile,
+            auth_storage_state=auth_storage_state,
         )
 
         # Create abort event for this session
@@ -747,6 +749,7 @@ def start_audit(
     target_config_name: str | None = None,
     profile_id: str | None = None,
     categories: list[str] | None = None,
+    auth_storage_state: dict | None = None,
 ) -> dict[str, Any]:
     """Start an audit in a background thread."""
     with _lock:
@@ -865,6 +868,7 @@ def start_audit(
             profile,
             scoring_rules_path,
             settings.database_url,
+            auth_storage_state,
         ),
         daemon=True,
         name=f"audit-{session_id}",

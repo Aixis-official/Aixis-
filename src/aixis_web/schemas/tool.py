@@ -88,6 +88,7 @@ class ToolUpdate(BaseModel):
     seo_title_jp: str | None = None
     seo_description_jp: str | None = None
     seo_keywords_jp: list[str] | None = None
+    auth_storage_state: dict | None = None
 
 
 class CategoryResponse(BaseModel):
