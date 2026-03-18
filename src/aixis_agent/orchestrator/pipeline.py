@@ -150,7 +150,6 @@ class Pipeline:
                                 # Reload to apply cookies
                                 if hasattr(executor, '_page') and executor._page:
                                     await executor._page.reload(wait_until="domcontentloaded")
-                                    import asyncio
                                     await asyncio.sleep(2)  # Wait for redirects after cookie-based auth
                             else:
                                 logger.warning("No valid cookies found in auth_storage_state (%d raw entries)", len(cookies))
