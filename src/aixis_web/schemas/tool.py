@@ -148,6 +148,7 @@ class ToolResponse(BaseModel):
     seo_description_jp: str | None = None
     seo_keywords_jp: list[str] | None = None
     content_updated_at: datetime | None = None
+    auth_storage_state: dict | None = None
 
     model_config = {"from_attributes": True}
 
