@@ -15,7 +15,7 @@ router = APIRouter()
 BASE_DIR = Path(__file__).resolve().parents[4]
 
 
-@router.get("/")
+@router.get("")
 async def list_profiles(
     _user: Annotated[User, Depends(require_analyst)],
     q: str | None = Query(None, description="Search query"),
