@@ -16,7 +16,8 @@ RUN pip install --no-cache-dir .
 # Install Playwright browsers (for audit engine)
 RUN playwright install chromium --with-deps || true
 
-# Create data directory for SQLite
+# NOTE: Use PostgreSQL in production (Railway addon).
+# SQLite data is LOST on every deploy because containers are ephemeral.
 RUN mkdir -p /data
 
 ENV PYTHONPATH=/app/src

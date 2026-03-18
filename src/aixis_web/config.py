@@ -1,5 +1,6 @@
 """Application configuration using pydantic-settings."""
 import logging
+import os
 import secrets
 
 from pydantic_settings import BaseSettings
@@ -10,6 +11,25 @@ _DEFAULT_SECRET = "CHANGE-ME-IN-PRODUCTION"
 _DEFAULT_ADMIN_PW = "changeme123"  # Only used for checking if password was changed
 
 
+def _resolve_database_url() -> str:
+    """Resolve database URL from environment with Railway compatibility.
+
+    Priority: DATABASE_URL > AIXIS_DATABASE_URL > default SQLite
+    Automatically converts postgresql:// to postgresql+asyncpg:// for async.
+    """
+    url = os.environ.get("DATABASE_URL") or os.environ.get("AIXIS_DATABASE_URL", "")
+    if not url:
+        return "sqlite+aiosqlite:///./aixis.db"
+
+    # Railway PostgreSQL provides postgresql:// — convert for asyncpg
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+
+    return url
+
+
 class Settings(BaseSettings):
     # Application
     app_name: str = "Aixis AI監査プラットフォーム"
@@ -17,7 +37,7 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # Database
-    database_url: str = "sqlite+aiosqlite:///./aixis.db"
+    database_url: str = _resolve_database_url()
 
     # Redis
     redis_url: str = "redis://localhost:6379"
@@ -123,6 +143,16 @@ def validate_settings():
             "SECURITY: admin_password is set to the default value. "
             "Set ADMIN_PASSWORD environment variable to a secure password."
         )
+
+    if "sqlite" in settings.database_url and not settings.debug:
+        logger.critical(
+            "DATABASE: SQLite is being used in production! "
+            "Data WILL BE LOST on container restart/redeploy. "
+            "Add a PostgreSQL addon in Railway and set DATABASE_URL. "
+            "Current DATABASE_URL: %s",
+            settings.database_url,
+        )
+        warnings.append("SQLite in production — data loss risk")
 
     return warnings
 

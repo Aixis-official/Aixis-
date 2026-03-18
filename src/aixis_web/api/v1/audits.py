@@ -116,15 +116,25 @@ async def start_audit(
     await db.refresh(audit_session)
 
     # Launch background pipeline (pass tool slug for file-based config fallback)
-    result = runner_start(
-        session_id=agent_session_id,
-        db_session_id=audit_session.id,
-        tool_name=tool.name_jp or tool.name,
-        target_config_yaml=target_config_yaml,
-        target_config_name=target_config_name or tool.slug,
-        profile_id=body.profile_id or tool.profile_id or "",
-        categories=body.categories,
-    )
+    try:
+        result = runner_start(
+            session_id=agent_session_id,
+            db_session_id=audit_session.id,
+            tool_name=tool.name_jp or tool.name,
+            target_config_yaml=target_config_yaml,
+            target_config_name=target_config_name or tool.slug,
+            profile_id=body.profile_id or tool.profile_id or "",
+            categories=body.categories,
+        )
+    except Exception as exc:
+        logger.exception("Audit runner crashed for %s", tool.slug)
+        audit_session.status = "failed"
+        audit_session.error_message = str(exc)
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"監査エンジンの初期化に失敗しました: {exc}",
+        )
 
     if "error" in result:
         audit_session.status = "failed"
@@ -133,7 +143,7 @@ async def start_audit(
         logger.error("Audit start failed for %s: %s", tool.slug, result["error"])
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="監査の開始に失敗しました。管理者にお問い合わせください。",
+            detail=result["error"],
         )
 
     return AuditStartResponse(
