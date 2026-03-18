@@ -723,7 +723,7 @@ def _make_server_config(config_path: Path) -> Path:
         if isinstance(data, dict):
             if _is_headless_environment():
                 data["headless"] = True
-                data["wait_for_manual_login"] = False  # Skip on server — no one to login
+                # Keep wait_for_manual_login from YAML — dashboard shows login UI
             tmp = tempfile.NamedTemporaryFile(
                 mode="w", suffix=".yaml", delete=False, encoding="utf-8"
             )
@@ -775,14 +775,20 @@ def start_audit(
         try:
             _pf_data = _yaml.safe_load(_preflight_yaml)
             if isinstance(_pf_data, dict):
-                # Check: AI browser needs API key
+                # Check: AI browser needs API key (check env + settings)
                 if _pf_data.get("executor_type") == "ai_browser":
                     import os as _os
-                    if not _os.environ.get("AIXIS_ANTHROPIC_API_KEY", ""):
+                    _api_key = (
+                        _os.environ.get("AIXIS_ANTHROPIC_API_KEY", "")
+                        or settings.anthropic_api_key
+                    )
+                    if not _api_key:
                         return {
                             "error": "AIブラウザ実行にはAnthropicのAPIキーが必要です。"
-                            "設定画面またはAIXIS_ANTHROPIC_API_KEY環境変数で設定してください。"
+                            "ダッシュボードの設定画面でAPIキーを入力し「保存」してください。"
                         }
+                    # Ensure the key is available to the pipeline thread
+                    _os.environ["AIXIS_ANTHROPIC_API_KEY"] = _api_key
         except Exception:
             pass
 
@@ -795,7 +801,6 @@ def start_audit(
             if isinstance(config_data, dict):
                 if _is_headless_environment():
                     config_data["headless"] = True
-                    config_data["wait_for_manual_login"] = False
                 target_config_yaml = yaml.dump(config_data, allow_unicode=True, default_flow_style=False)
         except Exception:
             pass

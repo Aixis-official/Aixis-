@@ -83,15 +83,16 @@
                         </svg>
                     </div>
                     <div class="flex-1">
-                        <h3 class="text-base font-semibold text-amber-800 dark:text-amber-300 font-jp mb-2">ログインを完了してください</h3>
-                        <p class="text-sm text-amber-700 dark:text-amber-400 font-jp mb-1">ブラウザが開かれています。対象ツールにログインしてください。</p>
-                        <p class="text-xs text-amber-600 dark:text-amber-500 font-jp mb-4">ログインが完了したら、下のボタンをクリックして自動監査を開始します。</p>
+                        <h3 class="text-base font-semibold text-amber-800 dark:text-amber-300 font-jp mb-2">手動ログインが必要です</h3>
+                        <p class="text-sm text-amber-700 dark:text-amber-400 font-jp mb-1">サーバー上でヘッドレスブラウザが対象サイトを開いています。</p>
+                        <p class="text-sm text-amber-700 dark:text-amber-400 font-jp mb-1">ログイン不要なテストはそのまま「監査を続行」で実行できます。</p>
+                        <p class="text-xs text-amber-600 dark:text-amber-500 font-jp mb-4">※ Google OAuth等のログインが必要なツールは、ログインなしで到達可能な範囲でテストされます。</p>
                         <button onclick="continueAudit()" id="continue-button"
                                 class="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 rounded-lg transition-colors duration-150 shadow-sm font-jp">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
                             </svg>
-                            ログイン完了 — 監査を続行
+                            監査を続行
                         </button>
                     </div>
                 </div>
