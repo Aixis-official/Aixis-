@@ -8,6 +8,9 @@ from ..config import settings
 
 def _ensure_async_url(url: str) -> str:
     """Convert sync DB URLs to async driver URLs at the last moment."""
+    # Empty or whitespace-only URL → fall back to SQLite
+    if not url or not url.strip():
+        return "sqlite+aiosqlite:///./aixis.db"
     if url.startswith("postgresql://"):
         return url.replace("postgresql://", "postgresql+asyncpg://", 1)
     if url.startswith("postgres://"):
