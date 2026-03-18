@@ -119,13 +119,43 @@ class Pipeline:
                     try:
                         cookies = self.auth_storage_state.get("cookies", [])
                         if cookies:
-                            await executor._context.add_cookies(cookies)
-                            logger.info("Injected %d auth cookies into browser context", len(cookies))
-                            # Reload to apply cookies
-                            if hasattr(executor, '_page') and executor._page:
-                                await executor._page.reload(wait_until="domcontentloaded")
+                            # Normalize cookies for Playwright: require name, value, and domain/url
+                            target_domain = self.target_config.url.split("//")[-1].split("/")[0] if self.target_config.url else ""
+                            normalized = []
+                            for c in cookies:
+                                if not c.get("name") or not c.get("value"):
+                                    continue
+                                nc = {"name": c["name"], "value": c["value"]}
+                                # Domain: use cookie's domain, or fall back to target URL domain
+                                domain = c.get("domain", "").strip()
+                                if domain:
+                                    nc["domain"] = domain if domain.startswith(".") else domain
+                                else:
+                                    nc["url"] = self.target_config.url
+                                if c.get("path"):
+                                    nc["path"] = c["path"]
+                                if c.get("secure") is not None:
+                                    nc["secure"] = bool(c["secure"])
+                                if c.get("httpOnly") is not None:
+                                    nc["httpOnly"] = bool(c["httpOnly"])
+                                if c.get("sameSite"):
+                                    ss = str(c["sameSite"]).capitalize()
+                                    if ss in ("Strict", "Lax", "None"):
+                                        nc["sameSite"] = ss
+                                normalized.append(nc)
+
+                            if normalized:
+                                await executor._context.add_cookies(normalized)
+                                logger.info("Injected %d auth cookies (of %d total)", len(normalized), len(cookies))
+                                # Reload to apply cookies
+                                if hasattr(executor, '_page') and executor._page:
+                                    await executor._page.reload(wait_until="domcontentloaded")
+                                    import asyncio
+                                    await asyncio.sleep(2)  # Wait for redirects after cookie-based auth
+                            else:
+                                logger.warning("No valid cookies found in auth_storage_state (%d raw entries)", len(cookies))
                     except Exception as e:
-                        logger.warning("Failed to inject auth cookies: %s", e)
+                        logger.warning("Failed to inject auth cookies: %s — %s", type(e).__name__, e)
 
                 # Auth pre-check: detect login page before wasting budget
                 if is_ai and hasattr(executor, 'check_auth_status'):

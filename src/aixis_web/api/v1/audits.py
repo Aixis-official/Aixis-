@@ -291,9 +291,19 @@ async def list_audits(
 
     response_items = []
     for item in items:
-        data = AuditResponse.model_validate(item)
-        data.tool_name = tool_names.get(item.tool_id)
-        response_items.append(data)
+        try:
+            data = AuditResponse.model_validate(item)
+            data.tool_name = tool_names.get(item.tool_id)
+            response_items.append(data)
+        except Exception as e:
+            logger.warning("Failed to validate audit %s: %s", getattr(item, 'id', '?'), e)
+            response_items.append(AuditResponse(
+                id=str(getattr(item, 'id', '')),
+                session_code=str(getattr(item, 'session_code', '')),
+                tool_id=str(getattr(item, 'tool_id', '')),
+                status=str(getattr(item, 'status', 'unknown')),
+                tool_name=tool_names.get(getattr(item, 'tool_id', '')),
+            ))
 
     return AuditListResponse(items=response_items, total=total)
 
