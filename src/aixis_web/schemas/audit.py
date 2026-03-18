@@ -63,15 +63,15 @@ class AuditResponse(BaseModel):
     id: str
     session_code: str
     tool_id: str
-    profile_id: str
+    profile_id: str | None = None
     status: str
-    total_planned: int
-    total_executed: int
+    total_planned: int = 0
+    total_executed: int = 0
     error_message: str | None = None
     initiated_by: str | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None
-    created_at: datetime
+    created_at: datetime | None = None
     tool_name: str | None = None
 
     model_config = {"from_attributes": True}
