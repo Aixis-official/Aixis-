@@ -693,8 +693,27 @@ def _tool_name_to_slug(name: str) -> str:
     return slug or "unknown"
 
 
-def _make_temp_config_with_manual_login(config_path: Path) -> Path:
-    """Read a YAML config file and create a temp copy with wait_for_manual_login=true, headless=false."""
+def _is_headless_environment() -> bool:
+    """Detect if running in a headless server environment (Railway, Docker, CI)."""
+    import os
+    # Railway sets RAILWAY_ENVIRONMENT; also check for no DISPLAY on Linux
+    if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_SERVICE_ID"):
+        return True
+    if os.environ.get("CI"):
+        return True
+    # Linux without display
+    import sys
+    if sys.platform == "linux" and not os.environ.get("DISPLAY"):
+        return True
+    return False
+
+
+def _make_server_config(config_path: Path) -> Path:
+    """Create a temp config suitable for server-side execution.
+
+    On headless servers: force headless=True, keep wait_for_manual_login from YAML.
+    On local (with display): keep original settings.
+    """
     import tempfile
     import yaml
 
@@ -702,8 +721,9 @@ def _make_temp_config_with_manual_login(config_path: Path) -> Path:
         with open(config_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         if isinstance(data, dict):
-            data["wait_for_manual_login"] = True
-            data["headless"] = False
+            if _is_headless_environment():
+                data["headless"] = True
+                # Don't force wait_for_manual_login — respect YAML setting
             tmp = tempfile.NamedTemporaryFile(
                 mode="w", suffix=".yaml", delete=False, encoding="utf-8"
             )
@@ -771,8 +791,8 @@ def start_audit(
         try:
             config_data = yaml.safe_load(target_config_yaml)
             if isinstance(config_data, dict):
-                config_data["wait_for_manual_login"] = True
-                config_data["headless"] = False
+                if _is_headless_environment():
+                    config_data["headless"] = True
                 target_config_yaml = yaml.dump(config_data, allow_unicode=True, default_flow_style=False)
         except Exception:
             pass
@@ -786,13 +806,13 @@ def start_audit(
         target_config_path = config_dir / "targets" / f"{target_config_name}.yaml"
         if not target_config_path.exists():
             return {"error": f"ターゲット設定ファイルが見つかりません: {target_config_name}"}
-        target_config_path = _make_temp_config_with_manual_login(target_config_path)
+        target_config_path = _make_server_config(target_config_path)
     else:
         tool_slug = _tool_name_to_slug(tool_name)
         file_config_path = config_dir / "targets" / f"{tool_slug}.yaml"
         if file_config_path.exists():
             logger.info("Using file-based target config: %s", file_config_path)
-            target_config_path = _make_temp_config_with_manual_login(file_config_path)
+            target_config_path = _make_server_config(file_config_path)
         else:
             return {"error": "ターゲット設定が指定されていません。ツール管理画面でターゲット設定を登録するか、config/targets/ にYAMLファイルを配置してください。"}
 
