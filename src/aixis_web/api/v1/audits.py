@@ -297,13 +297,16 @@ async def list_audits(
             response_items.append(data)
         except Exception as e:
             logger.warning("Failed to validate audit %s: %s", getattr(item, 'id', '?'), e)
-            response_items.append(AuditResponse(
-                id=str(getattr(item, 'id', '')),
-                session_code=str(getattr(item, 'session_code', '')),
-                tool_id=str(getattr(item, 'tool_id', '')),
-                status=str(getattr(item, 'status', 'unknown')),
-                tool_name=tool_names.get(getattr(item, 'tool_id', '')),
-            ))
+            try:
+                response_items.append(AuditResponse(
+                    id=str(getattr(item, 'id', '') or 'unknown'),
+                    session_code=str(getattr(item, 'session_code', '') or 'N/A'),
+                    tool_id=str(getattr(item, 'tool_id', '') or ''),
+                    status=str(getattr(item, 'status', '') or 'unknown'),
+                    tool_name=tool_names.get(getattr(item, 'tool_id', '')),
+                ))
+            except Exception:
+                logger.error("Skipping unparseable audit row: %s", getattr(item, 'id', '?'))
 
     return AuditListResponse(items=response_items, total=total)
 
@@ -567,7 +570,7 @@ async def retry_audit(
     await db.commit()
     await db.refresh(new_session)
 
-    # Launch background pipeline
+    # Launch background pipeline (include auth cookies for login-required tools)
     result = runner_start(
         session_id=agent_session_id,
         db_session_id=new_session.id,
@@ -575,6 +578,7 @@ async def retry_audit(
         target_config_yaml=target_config_yaml,
         target_config_name=tool.slug,
         profile_id=original.profile_id,
+        auth_storage_state=tool.auth_storage_state,
     )
 
     if "error" in result:
@@ -675,9 +679,12 @@ async def list_deleted_audits(
 
     response_items = []
     for item in items:
-        data = AuditResponse.model_validate(item)
-        data.tool_name = tool_names.get(item.tool_id)
-        response_items.append(data)
+        try:
+            data = AuditResponse.model_validate(item)
+            data.tool_name = tool_names.get(item.tool_id)
+            response_items.append(data)
+        except Exception as e:
+            logger.warning("Skipping deleted audit %s: %s", getattr(item, 'id', '?'), e)
 
     return AuditListResponse(items=response_items, total=total)
 

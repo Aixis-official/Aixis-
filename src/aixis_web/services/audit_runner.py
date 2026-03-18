@@ -99,6 +99,7 @@ def _run_pipeline_sync(
     scoring_rules_path: Path | None,
     db_url: str,
     auth_storage_state: dict | None = None,
+    budget_overrides: dict | None = None,
 ) -> None:
     """Synchronous function that runs inside a background thread.
 
@@ -127,6 +128,7 @@ def _run_pipeline_sync(
             max_concurrency=1,
             profile=profile,
             auth_storage_state=auth_storage_state,
+            budget_overrides=budget_overrides,
         )
 
         # Create abort event for this session
@@ -868,6 +870,13 @@ def start_audit(
             "current_category": "",
         }
 
+    # Build budget overrides from web app settings
+    _budget_overrides = {
+        "max_calls": settings.ai_budget_max_calls,
+        "max_calls_per_case": settings.ai_budget_max_calls_per_case,
+        "max_cost_jpy": settings.ai_budget_max_cost_jpy,
+    }
+
     # Start background thread
     thread = threading.Thread(
         target=_run_pipeline_sync,
@@ -882,6 +891,7 @@ def start_audit(
             scoring_rules_path,
             settings.database_url,
             auth_storage_state,
+            _budget_overrides,
         ),
         daemon=True,
         name=f"audit-{session_id}",

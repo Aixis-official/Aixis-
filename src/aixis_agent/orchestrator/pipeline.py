@@ -42,6 +42,7 @@ class Pipeline:
         max_concurrency: int = 1,
         profile: dict | None = None,
         auth_storage_state: dict | None = None,
+        budget_overrides: dict | None = None,
     ):
         self.target_config_path = target_config_path
         self.patterns_dir = patterns_dir
@@ -51,6 +52,7 @@ class Pipeline:
         self.max_concurrency = max_concurrency
         self.profile = profile
         self.auth_storage_state = auth_storage_state
+        self.budget_overrides = budget_overrides or {}
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.target_config = load_target_config(target_config_path)
@@ -305,13 +307,18 @@ class Pipeline:
                     "AIXIS_ANTHROPIC_API_KEY 環境変数が必要です (ai_browser executor)"
                 )
 
-            # Convert JPY cost cap to USD (approx 1 USD = 150 JPY)
-            max_cost_jpy = self.target_config.ai_budget_max_cost_jpy
+            # Budget: use web app settings (overrides) if available, else YAML values
+            max_calls = self.budget_overrides.get("max_calls", self.target_config.ai_budget_max_calls)
+            max_calls_per_case = self.budget_overrides.get("max_calls_per_case", self.target_config.ai_budget_max_calls_per_case)
+            max_cost_jpy = self.budget_overrides.get("max_cost_jpy", self.target_config.ai_budget_max_cost_jpy)
             max_cost_usd = max_cost_jpy / 150.0 if max_cost_jpy > 0 else 0.0
 
+            logger.info("Budget: max_calls=%d, per_case=%d, cost=%d JPY ($%.3f)",
+                        max_calls, max_calls_per_case, max_cost_jpy, max_cost_usd)
+
             budget = BudgetTracker(
-                max_calls_total=self.target_config.ai_budget_max_calls,
-                max_calls_per_case=self.target_config.ai_budget_max_calls_per_case,
+                max_calls_total=max_calls,
+                max_calls_per_case=max_calls_per_case,
                 max_cost_usd=max_cost_usd,
             )
             executor = AIBrowserExecutor(

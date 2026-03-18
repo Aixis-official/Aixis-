@@ -376,8 +376,8 @@ class AIBrowserExecutor(TestExecutor):
         if self._first_test_done and self._workflow.valid:
             return await self._replay_then_agent(prompt, start_time)
         elif self._first_test_done and not self._workflow.valid:
-            # Discovery failed on first test; run non-discovery loop with reduced steps
-            return await self._full_agent_loop(prompt, start_time, is_discovery=False, max_steps=10)
+            # Discovery failed — use DOM-first strategy (minimal API usage)
+            return await self._dom_first_loop(prompt, start_time)
         else:
             result = await self._full_agent_loop(prompt, start_time, is_discovery=True, max_steps=20)
             # Mark first test done regardless of success — prevents all subsequent
@@ -645,6 +645,158 @@ class AIBrowserExecutor(TestExecutor):
             screenshot_path=ss_path,
             page_url=self._page.url,
             ai_steps_taken=max_steps,
+            ai_calls_used=total_calls,
+            ai_tokens_input=total_ti,
+            ai_tokens_output=total_to,
+        )
+
+    # ------------------------------------------------------------------
+    # DOM-First strategy (when discovery failed — minimal API usage)
+    # ------------------------------------------------------------------
+
+    async def _dom_first_loop(self, prompt: str, start_time: float) -> ExecutionResult:
+        """DOM-first approach: automate input/submit via DOM, use API only for result check.
+
+        When discovery fails, instead of running expensive full agent loops,
+        this method uses DOM analysis to find inputs/buttons (free) and only
+        calls the API once to verify the result.
+        """
+        total_calls = 0
+        total_ti = 0
+        total_to = 0
+
+        # 1. Navigate to start URL (no API)
+        reset_url = self._workflow.reset_url or self._config.url
+        try:
+            await self._page.goto(reset_url, wait_until="domcontentloaded", timeout=60_000)
+            await asyncio.sleep(2)
+        except Exception as e:
+            return self._make_result(start_time, error=f"ページ読み込み失敗: {e}")
+
+        if self.is_aborted:
+            return self._make_result(start_time, error="監査が中止されました")
+
+        # 2. Find input field via DOM (no API)
+        input_info = await self._page.evaluate("""() => {
+            const selectors = [
+                'textarea:not([disabled]):not([readonly])',
+                '[contenteditable="true"]',
+                '[role="textbox"]',
+                'input[type="text"]:not([disabled]):not([readonly])',
+            ];
+            for (const sel of selectors) {
+                const els = document.querySelectorAll(sel);
+                for (const el of els) {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.width > 50 && rect.height > 10 && rect.top > 0 && rect.top < window.innerHeight) {
+                        return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, tag: el.tagName };
+                    }
+                }
+            }
+            return { found: false };
+        }""")
+
+        if not input_info or not input_info.get("found"):
+            # DOM can't find input — use minimal agent loop (3 steps) to locate it
+            logger.info("DOM-first: input not found, falling back to agent (3 steps)")
+            return await self._full_agent_loop(prompt, start_time, is_discovery=False, max_steps=5)
+
+        # 3. Type prompt (no API)
+        logger.info("DOM-first: found input at (%d, %d), typing prompt", input_info["x"], input_info["y"])
+        await self._page.mouse.click(int(input_info["x"]), int(input_info["y"]))
+        await asyncio.sleep(0.3)
+        await self._page.keyboard.press("Meta+a")
+        await self._page.keyboard.press("Backspace")
+        await asyncio.sleep(0.2)
+        await self._paste_text(prompt)
+        await asyncio.sleep(0.5)
+
+        # 4. Find and click submit button via DOM (no API)
+        submit_info = await self._page.evaluate("""() => {
+            const texts = ['送信', '生成', '作成', '概要', '実行', '開始', 'submit', 'send', 'generate', 'create', 'go', 'start'];
+            const buttons = [...document.querySelectorAll('button:not([disabled]), [role="button"]:not([disabled]), input[type="submit"]')];
+            // First: button with matching text
+            for (const btn of buttons) {
+                const text = (btn.innerText || btn.value || btn.getAttribute('aria-label') || '').toLowerCase().trim();
+                if (texts.some(t => text.includes(t))) {
+                    const rect = btn.getBoundingClientRect();
+                    if (rect.width > 20 && rect.height > 10 && rect.top > 0) {
+                        return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, text: text.slice(0, 20) };
+                    }
+                }
+            }
+            // Fallback: any visible button
+            for (const btn of buttons) {
+                const rect = btn.getBoundingClientRect();
+                if (rect.width > 30 && rect.height > 20 && rect.top > 0 && rect.top < window.innerHeight) {
+                    return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, text: 'fallback' };
+                }
+            }
+            return { found: false };
+        }""")
+
+        if submit_info and submit_info.get("found"):
+            logger.info("DOM-first: clicking submit '%s' at (%d, %d)",
+                        submit_info.get("text", "?"), submit_info["x"], submit_info["y"])
+            await self._page.mouse.click(int(submit_info["x"]), int(submit_info["y"]))
+        else:
+            # No button found — try Enter key
+            logger.info("DOM-first: no submit button found, pressing Enter")
+            await self._page.keyboard.press("Enter")
+
+        # 5. Wait for response (poll DOM, no API)
+        await asyncio.sleep(3)
+        initial_len = await self._page.evaluate("() => document.body ? document.body.innerText.length : 0")
+
+        for poll in range(15):  # Poll for up to 45 seconds
+            if self.is_aborted:
+                break
+            await asyncio.sleep(3)
+            current_len = await self._page.evaluate("() => document.body ? document.body.innerText.length : 0")
+            url_changed = self._page.url != reset_url
+            if url_changed or (current_len > initial_len + 100):
+                logger.info("DOM-first: response detected after %ds (len: %d→%d, url_changed=%s)",
+                            (poll + 1) * 3 + 3, initial_len, current_len, url_changed)
+                await asyncio.sleep(2)  # Extra wait for rendering
+                break
+
+        # 6. Extract result (no API needed for basic extraction)
+        response_text = await self._extract_page_text()
+        ss_path = await self._save_screenshot_safe()
+
+        # 7. ONE API call to verify quality (optional, skip if budget exhausted)
+        error_msg = None
+        if not self._budget.is_exhausted:
+            try:
+                ss_b64 = await self._screenshot_b64()
+                verify_prompt = (
+                    f"画面を確認。プロンプト「{prompt[:50]}」に対する応答は表示されていますか？\n"
+                    'JSON: {"has_response": true/false, "summary": "応答の要約20字"}'
+                )
+                resp_text, ti, to = await self._ask_haiku_async(verify_prompt, ss_b64)
+                total_calls += 1
+                total_ti += ti
+                total_to += to
+                self._budget.record_call(ti, to)
+
+                # Parse verification result
+                try:
+                    import json as _json
+                    verify = _json.loads(resp_text)
+                    if not verify.get("has_response", False):
+                        error_msg = f"応答未検出: {verify.get('summary', '不明')}"
+                except Exception:
+                    pass  # Verification parse failed, treat as success
+            except Exception as e:
+                logger.warning("DOM-first verify failed: %s", e)
+
+        return ExecutionResult(
+            text=response_text,
+            error=error_msg,
+            response_time_ms=(time.monotonic() - start_time) * 1000,
+            screenshot_path=ss_path,
+            page_url=self._page.url,
+            ai_steps_taken=1,
             ai_calls_used=total_calls,
             ai_tokens_input=total_ti,
             ai_tokens_output=total_to,
