@@ -375,10 +375,16 @@ class AIBrowserExecutor(TestExecutor):
 
         if self._first_test_done and self._workflow.valid:
             return await self._replay_then_agent(prompt, start_time)
+        elif self._first_test_done and not self._workflow.valid:
+            # Discovery failed on first test; run non-discovery loop with reduced steps
+            return await self._full_agent_loop(prompt, start_time, is_discovery=False, max_steps=10)
         else:
-            result = await self._full_agent_loop(prompt, start_time, is_discovery=True)
+            result = await self._full_agent_loop(prompt, start_time, is_discovery=True, max_steps=20)
+            # Mark first test done regardless of success — prevents all subsequent
+            # tests from retrying expensive discovery
+            self._first_test_done = True
             # After successful discovery, save the workflow for future audits
-            if self._workflow.valid and self._first_test_done:
+            if self._workflow.valid:
                 self._save_workflow_cache()
             return result
 
@@ -608,15 +614,18 @@ class AIBrowserExecutor(TestExecutor):
                 )
 
             elif action == "fail":
-                logger.warning("  Agent declares failure: %s", desc)
+                fail_desc = desc or "タスク完了不可（理由不明）"
+                logger.warning("  Agent declares failure: %s", fail_desc)
                 ss_path = await self._save_screenshot_safe()
+                response_text = await self._extract_page_text()
                 # Detect auth failure from description keywords
-                desc_lower = (desc or "").lower()
+                desc_lower = fail_desc.lower()
                 auth_keywords = ["auth_failure", "ログイン", "認証", "パスワード", "sign in", "login", "サインイン"]
                 is_auth = any(kw in desc_lower for kw in auth_keywords)
-                error_prefix = "AUTH_FAILURE: " if is_auth else "AI判定: "
+                error_prefix = "AUTH_FAILURE: " if is_auth else ""
                 return ExecutionResult(
-                    error=f"{error_prefix}{desc}",
+                    text=response_text,
+                    error=f"{error_prefix}{fail_desc}",
                     response_time_ms=(time.monotonic() - start_time) * 1000,
                     screenshot_path=ss_path,
                     page_url=self._page.url,
@@ -626,9 +635,11 @@ class AIBrowserExecutor(TestExecutor):
                     ai_tokens_output=total_to,
                 )
 
-        # Max steps reached
+        # Max steps reached — extract any partial output
         ss_path = await self._save_screenshot_safe()
+        response_text = await self._extract_page_text()
         return ExecutionResult(
+            text=response_text,
             error=f"最大ステップ数 ({max_steps}) に到達",
             response_time_ms=(time.monotonic() - start_time) * 1000,
             screenshot_path=ss_path,
