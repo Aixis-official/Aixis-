@@ -251,7 +251,7 @@ async def get_audit_progress(
     )
 
 
-@router.get("/", response_model=AuditListResponse)
+@router.get("/")
 async def list_audits(
     db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
@@ -260,55 +260,61 @@ async def list_audits(
     tool_id: str | None = None,
     audit_status: str | None = Query(None, alias="status"),
 ):
-    """List audit sessions (analyst+ only)."""
-    query = select(AuditSession).where(AuditSession.deleted_at.is_(None))
-    count_query = select(func.count()).select_from(AuditSession).where(AuditSession.deleted_at.is_(None))
+    """List audit sessions (analyst+ only). Returns raw dict to avoid serialization errors."""
+    try:
+        query = select(AuditSession).where(AuditSession.deleted_at.is_(None))
+        count_query = select(func.count()).select_from(AuditSession).where(AuditSession.deleted_at.is_(None))
 
-    if tool_id:
-        query = query.where(AuditSession.tool_id == tool_id)
-        count_query = count_query.where(AuditSession.tool_id == tool_id)
-    if audit_status:
-        query = query.where(AuditSession.status == audit_status)
-        count_query = count_query.where(AuditSession.status == audit_status)
+        if tool_id:
+            query = query.where(AuditSession.tool_id == tool_id)
+            count_query = count_query.where(AuditSession.tool_id == tool_id)
+        if audit_status:
+            query = query.where(AuditSession.status == audit_status)
+            count_query = count_query.where(AuditSession.status == audit_status)
 
-    total_result = await db.execute(count_query)
-    total = total_result.scalar() or 0
+        total_result = await db.execute(count_query)
+        total = total_result.scalar() or 0
 
-    offset = (page - 1) * page_size
-    query = query.order_by(AuditSession.created_at.desc()).offset(offset).limit(page_size)
-    result = await db.execute(query)
-    items = result.scalars().all()
+        offset = (page - 1) * page_size
+        query = query.order_by(AuditSession.created_at.desc()).offset(offset).limit(page_size)
+        result = await db.execute(query)
+        items = result.scalars().all()
 
-    # Resolve tool names
-    tool_ids = list({item.tool_id for item in items if item.tool_id})
-    tool_names = {}
-    if tool_ids:
-        tools_result = await db.execute(
-            select(Tool).where(Tool.id.in_(tool_ids))
-        )
-        for t in tools_result.scalars().all():
-            tool_names[t.id] = t.name_jp or t.name
+        # Resolve tool names
+        tool_ids = list({item.tool_id for item in items if item.tool_id})
+        tool_names = {}
+        if tool_ids:
+            tools_result = await db.execute(
+                select(Tool).where(Tool.id.in_(tool_ids))
+            )
+            for t in tools_result.scalars().all():
+                tool_names[t.id] = t.name_jp or t.name
 
-    response_items = []
-    for item in items:
-        try:
-            data = AuditResponse.model_validate(item)
-            data.tool_name = tool_names.get(item.tool_id)
-            response_items.append(data)
-        except Exception as e:
-            logger.warning("Failed to validate audit %s: %s", getattr(item, 'id', '?'), e)
+        response_items = []
+        for item in items:
             try:
-                response_items.append(AuditResponse(
-                    id=str(getattr(item, 'id', '') or 'unknown'),
-                    session_code=str(getattr(item, 'session_code', '') or 'N/A'),
-                    tool_id=str(getattr(item, 'tool_id', '') or ''),
-                    status=str(getattr(item, 'status', '') or 'unknown'),
-                    tool_name=tool_names.get(getattr(item, 'tool_id', '')),
-                ))
-            except Exception:
-                logger.error("Skipping unparseable audit row: %s", getattr(item, 'id', '?'))
+                response_items.append({
+                    "id": str(item.id),
+                    "session_code": str(item.session_code or ""),
+                    "tool_id": str(item.tool_id or ""),
+                    "tool_name": tool_names.get(item.tool_id),
+                    "profile_id": str(item.profile_id or ""),
+                    "status": str(item.status or "unknown"),
+                    "total_planned": item.total_planned or 0,
+                    "total_executed": item.total_executed or 0,
+                    "error_message": item.error_message,
+                    "initiated_by": item.initiated_by,
+                    "started_at": item.started_at.isoformat() if item.started_at else None,
+                    "completed_at": item.completed_at.isoformat() if item.completed_at else None,
+                    "created_at": item.created_at.isoformat() if item.created_at else None,
+                })
+            except Exception as e:
+                logger.warning("Skipping audit row %s: %s", getattr(item, 'id', '?'), e)
 
-    return AuditListResponse(items=response_items, total=total)
+        return {"items": response_items, "total": total}
+    except Exception as e:
+        logger.exception("list_audits failed: %s", e)
+        return {"items": [], "total": 0}
 
 
 @router.get("/{session_id}", response_model=AuditDetailResponse)
