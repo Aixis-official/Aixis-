@@ -78,11 +78,11 @@ class ToolRiskGovernance(Base):
     governance_summary_en = Column(Text)
 
     # --- Metadata ---
-    assessed_at = Column(DateTime)
+    assessed_at = Column(DateTime(timezone=True))
     assessed_by = Column(String(36), ForeignKey("users.id"))
     source = Column(String(20), default="manual")  # manual|auto|hybrid
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     tool = relationship("Tool", back_populates="risk_governance")
 

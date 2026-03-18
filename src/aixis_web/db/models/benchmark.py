@@ -35,9 +35,9 @@ class BenchmarkSuite(Base):
     category_id = Column(String(36), ForeignKey("tool_categories.id"), nullable=True)
     test_case_count = Column(Integer, default=0)
     is_published = Column(Boolean, default=False)
-    published_at = Column(DateTime, nullable=True)
+    published_at = Column(DateTime(timezone=True), nullable=True)
     created_by = Column(String(36), ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class BenchmarkTestCase(Base):
@@ -67,8 +67,8 @@ class BenchmarkRun(Base):
     score = Column(Float, default=0.0)  # 0-100 percentage
     axis_scores = Column(JSON, default=dict)
     details = Column(JSON, default=dict)
-    started_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    completed_at = Column(DateTime, nullable=True)
+    started_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    completed_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class LeaderboardEntry(Base):
@@ -82,4 +82,4 @@ class LeaderboardEntry(Base):
     best_run_id = Column(String(36), ForeignKey("benchmark_runs.id"), nullable=True)
     best_score = Column(Float, default=0.0)
     rank = Column(Integer, default=0)
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

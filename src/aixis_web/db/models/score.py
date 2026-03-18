@@ -43,7 +43,7 @@ class AxisScoreRecord(Base):
     details = Column(JSON, default=list)
     strengths = Column(JSON, default=list)
     risks = Column(JSON, default=list)
-    scored_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    scored_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     scored_by = Column(String(36), ForeignKey("users.id"))
 
     session = relationship("AuditSession", back_populates="axis_scores")
@@ -67,7 +67,7 @@ class ToolPublishedScore(Base):
     overall_grade = Column(String(2))  # S|A|B|C|D|F
     source_session_id = Column(String(36), ForeignKey("audit_sessions.id"))
     version = Column(Integer, default=1)
-    published_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    published_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     published_by = Column(String(36), ForeignKey("users.id"))
 
     tool = relationship("Tool", back_populates="scores")
@@ -86,7 +86,7 @@ class ScoreHistory(Base):
     score = Column(Float, nullable=False)
     overall_score = Column(Float, nullable=True)
     overall_grade = Column(String(2), nullable=True)
-    recorded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    recorded_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     source_session_id = Column(String(36), ForeignKey("audit_sessions.id"))
 
     __table_args__ = (
@@ -113,7 +113,7 @@ class ManualChecklistRecord(Base):
     evidence = Column(Text)
     evidence_url = Column(String(500))
     evaluated_by = Column(String(36), ForeignKey("users.id"))
-    evaluated_at = Column(DateTime)
+    evaluated_at = Column(DateTime(timezone=True))
 
     session = relationship("AuditSession", back_populates="checklist_entries")
 

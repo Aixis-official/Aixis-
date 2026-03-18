@@ -20,7 +20,7 @@ class AuditLog(Base):
     entity_id = Column(String(36), nullable=False)
     action = Column(String(30), nullable=False)  # "soft_delete", "restore", "finalize", etc.
     performed_by = Column(String(36), ForeignKey("users.id"), nullable=True)
-    performed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    performed_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     changes = Column(JSON, default=dict)  # Context data (old/new values, etc.)
 
     __table_args__ = (

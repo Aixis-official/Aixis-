@@ -17,5 +17,5 @@ class RevokedToken(Base):
 
     id = Column(String(36), primary_key=True, default=new_uuid)
     jti = Column(String(64), unique=True, nullable=False, index=True)
-    expires_at = Column(DateTime, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

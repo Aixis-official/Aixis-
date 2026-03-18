@@ -22,8 +22,8 @@ class VendorProfile(Base):
     company_url = Column(String(500), default="")
     contact_email = Column(String(200), default="")
     verified = Column(Boolean, default=False)
-    verified_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    verified_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class ToolSubmission(Base):
@@ -42,8 +42,8 @@ class ToolSubmission(Base):
     reviewer_notes = Column(Text, nullable=True)
     reviewed_by = Column(String(36), ForeignKey("users.id"), nullable=True)
     approved_tool_id = Column(String(36), ForeignKey("tools.id"), nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class ScoreDispute(Base):
@@ -58,5 +58,5 @@ class ScoreDispute(Base):
     status = Column(String(20), default="open")  # open|under_review|resolved|rejected
     resolution_notes = Column(Text, nullable=True)
     resolved_by = Column(String(36), ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    resolved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    resolved_at = Column(DateTime(timezone=True), nullable=True)

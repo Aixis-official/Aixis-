@@ -21,8 +21,8 @@ class AuditSchedule(Base):
     categories = Column(JSON, default=list)
     cron_expression = Column(String(100), nullable=False)  # e.g., "0 3 * * 0"
     is_active = Column(Boolean, default=True)
-    last_run_at = Column(DateTime, nullable=True)
-    next_run_at = Column(DateTime, nullable=True)
+    last_run_at = Column(DateTime(timezone=True), nullable=True)
+    next_run_at = Column(DateTime(timezone=True), nullable=True)
     run_count = Column(Integer, default=0)
     created_by = Column(String(36), ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

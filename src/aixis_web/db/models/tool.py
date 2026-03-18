@@ -91,15 +91,15 @@ class Tool(Base):
     seo_title_jp = Column(String(200))
     seo_description_jp = Column(String(500))
     seo_keywords_jp = Column(JSON)  # list of strings
-    content_updated_at = Column(DateTime)
+    content_updated_at = Column(DateTime(timezone=True))
 
     # status
     is_public = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
 
     # timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # relationships
     category = relationship("ToolCategory", back_populates="tools")
@@ -121,7 +121,7 @@ class ToolTargetConfig(Base):
     config_yaml = Column(Text, nullable=False)
     version = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
-    validated_at = Column(DateTime)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    validated_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     tool = relationship("Tool", back_populates="target_configs")

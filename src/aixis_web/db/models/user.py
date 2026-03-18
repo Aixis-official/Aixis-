@@ -20,7 +20,7 @@ class Organization(Base):
     name_jp = Column(String(200))
     subscription_tier = Column(String(20), default="free")
     max_users = Column(Integer, default=5)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class User(Base):
@@ -35,19 +35,19 @@ class User(Base):
     organization_id = Column(String(36), ForeignKey("organizations.id"))
     preferred_language = Column(String(5), default="ja")  # ja, en
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Trial & subscription management
     account_status = Column(String(20), default="active")  # pending|active|suspended|expired
     subscription_tier = Column(String(20), default="trial")  # trial|standard|professional|enterprise
-    trial_start = Column(DateTime, nullable=True)
-    trial_end = Column(DateTime, nullable=True)
+    trial_start = Column(DateTime(timezone=True), nullable=True)
+    trial_end = Column(DateTime(timezone=True), nullable=True)
     trial_reminder_sent = Column(Boolean, default=False)
 
     # Invite flow
     invite_token_hash = Column(String(128), nullable=True, unique=True)
-    invite_token_expires_at = Column(DateTime, nullable=True)
-    invite_sent_at = Column(DateTime, nullable=True)
+    invite_token_expires_at = Column(DateTime(timezone=True), nullable=True)
+    invite_sent_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class AuditReportRecord(Base):
@@ -60,4 +60,4 @@ class AuditReportRecord(Base):
     file_path = Column(String(500))
     file_size_bytes = Column(Integer)
     is_public = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

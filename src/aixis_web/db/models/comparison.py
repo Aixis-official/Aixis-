@@ -31,7 +31,7 @@ class ComparisonGroup(Base):
     category_id = Column(String(36), ForeignKey("tool_categories.id"))
     description_jp = Column(Text)
     created_by = Column(String(36), ForeignKey("users.id"))
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     members = relationship("ComparisonMember", back_populates="group")
 

@@ -26,5 +26,5 @@ class AuditPreset(Base):
     budget_max_cost_jpy = Column(Integer, default=20)
     is_default = Column(Boolean, default=False)
     created_by = Column(String(36), ForeignKey("users.id"))
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

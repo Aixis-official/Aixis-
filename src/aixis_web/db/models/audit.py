@@ -27,12 +27,12 @@ class AuditSession(Base):
     total_executed = Column(Integer, default=0)
     error_message = Column(Text)
     initiated_by = Column(String(36), ForeignKey("users.id"))
-    started_at = Column(DateTime)
-    completed_at = Column(DateTime)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    started_at = Column(DateTime(timezone=True))
+    completed_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Soft-delete support (audit data must never be permanently lost)
-    deleted_at = Column(DateTime, nullable=True, default=None)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
     deleted_by = Column(String(36), ForeignKey("users.id"), nullable=True, default=None)
 
     # AI agent volume tracking
@@ -100,7 +100,7 @@ class DBTestResult(Base):
     error = Column(Text)
     screenshot_path = Column(String(500))
     page_url = Column(String(500))
-    executed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    executed_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     metadata_json = Column(JSON, default=dict)
     # AI agent per-test metrics
     ai_steps_taken = Column(Integer, default=0)

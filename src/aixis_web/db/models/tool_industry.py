@@ -45,7 +45,7 @@ class ToolIndustryMapping(Base):
     fit_level = Column(String(20), default="recommended")  # recommended|compatible|limited
     use_case_summary_jp = Column(Text)
     use_case_summary_en = Column(Text)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     industry = relationship("IndustryTag", back_populates="tool_mappings")
     tool = relationship("Tool", back_populates="industry_mappings")
@@ -84,7 +84,7 @@ class ToolUseCaseMapping(Base):
     )
     relevance = Column(String(20), default="primary")  # primary|secondary
     description_jp = Column(Text)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     use_case = relationship("UseCaseTag", back_populates="tool_mappings")
     tool = relationship("Tool", back_populates="use_case_mappings")

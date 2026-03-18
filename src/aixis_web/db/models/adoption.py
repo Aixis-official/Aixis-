@@ -59,9 +59,9 @@ class IndustryAdoptionPattern(Base):
 
     # Confidence and freshness
     confidence = Column(Float, default=0.5)  # 0.0-1.0
-    last_verified_at = Column(DateTime)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    last_verified_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         UniqueConstraint("tool_id", "industry_id", name="uq_adoption_tool_industry"),
@@ -84,4 +84,4 @@ class AdoptionSurveyResponse(Base):
     use_case_tags = Column(JSON)  # list of use_case_tag slugs
     satisfaction_score = Column(Integer)  # 1-5
     anonymous_hash = Column(String(64))  # SHA256 of IP+UA for dedup
-    submitted_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    submitted_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
