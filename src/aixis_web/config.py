@@ -3,6 +3,7 @@ import logging
 import os
 import secrets
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,16 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = _resolve_database_url()
+
+    @model_validator(mode="after")
+    def _fix_database_url(self) -> "Settings":
+        """Convert postgresql:// to postgresql+asyncpg:// for async driver."""
+        url = self.database_url
+        if url.startswith("postgresql://"):
+            self.database_url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgres://"):
+            self.database_url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        return self
 
     # Redis
     redis_url: str = "redis://localhost:6379"
