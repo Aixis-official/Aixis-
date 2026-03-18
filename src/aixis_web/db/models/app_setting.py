@@ -15,7 +15,7 @@ class AppSetting(Base):
     key = Column(String(255), primary_key=True)
     value = Column(Text, nullable=False, default="")
     updated_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )

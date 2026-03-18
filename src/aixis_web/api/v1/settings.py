@@ -113,20 +113,27 @@ def _write_env_key(key_name: str, value: str) -> None:
 
 async def _db_get(db: AsyncSession, key: str) -> str:
     """Read a setting from PostgreSQL."""
-    result = await db.execute(select(AppSetting).where(AppSetting.key == key))
-    row = result.scalar_one_or_none()
-    return row.value if row else ""
+    try:
+        result = await db.execute(select(AppSetting).where(AppSetting.key == key))
+        row = result.scalar_one_or_none()
+        return row.value if row else ""
+    except Exception:
+        return ""
 
 
 async def _db_set(db: AsyncSession, key: str, value: str) -> None:
     """Write a setting to PostgreSQL (upsert)."""
-    result = await db.execute(select(AppSetting).where(AppSetting.key == key))
-    row = result.scalar_one_or_none()
-    if row:
-        row.value = value
-    else:
-        db.add(AppSetting(key=key, value=value))
-    await db.commit()
+    try:
+        result = await db.execute(select(AppSetting).where(AppSetting.key == key))
+        row = result.scalar_one_or_none()
+        if row:
+            row.value = value
+        else:
+            db.add(AppSetting(key=key, value=value))
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
 
 
 @router.get("", response_model=SettingsResponse)
