@@ -161,6 +161,12 @@ async def lifespan(app: FastAPI):
                 if row.key == "AIXIS_ANTHROPIC_API_KEY" and row.value:
                     settings.anthropic_api_key = row.value
                     logger.info("Restored API key from database")
+                elif row.key == "AIXIS_AI_BUDGET_MAX_COST_JPY" and row.value:
+                    settings.ai_budget_max_cost_jpy = int(row.value)
+                    logger.info("Restored cost limit: %s JPY", row.value)
+                elif row.key == "AIXIS_AI_BUDGET_MAX_CALLS" and row.value:
+                    settings.ai_budget_max_calls = int(row.value)
+                    logger.info("Restored call limit: %s", row.value)
     except Exception as e:
         logger.warning("Failed to restore settings from DB: %s", e)
 

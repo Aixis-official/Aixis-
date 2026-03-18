@@ -58,19 +58,25 @@
             1回の監査あたりのAPI使用上限（Haiku Vision使用、ハイブリッド方式）
         </p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
             <div class="bg-gray-50/50 rounded-lg p-4">
-                <div class="text-sm text-gray-500 font-jp">コスト上限</div>
-                <div class="text-2xl font-bold text-gray-900 mt-1" id="cost-limit">--</div>
+                <label class="text-sm text-gray-500 font-jp block mb-1">コスト上限（円）</label>
+                <input type="number" id="cost-limit-input" min="1" max="500" value="40"
+                    class="w-full px-3 py-2 text-lg font-bold text-gray-900 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
             <div class="bg-gray-50/50 rounded-lg p-4">
-                <div class="text-sm text-gray-500 font-jp">API呼び出し上限</div>
-                <div class="text-2xl font-bold text-gray-900 mt-1" id="call-limit">--</div>
+                <label class="text-sm text-gray-500 font-jp block mb-1">API呼び出し上限（回）</label>
+                <input type="number" id="call-limit-input" min="10" max="1000" value="100"
+                    class="w-full px-3 py-2 text-lg font-bold text-gray-900 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             </div>
             <div class="bg-gray-50/50 rounded-lg p-4">
                 <div class="text-sm text-gray-500 font-jp">使用モデル</div>
-                <div class="text-lg font-bold text-gray-900 mt-1" id="model-name">--</div>
+                <div class="text-lg font-bold text-gray-900 mt-2" id="model-name">--</div>
             </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="saveBudgetSettings()" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors font-jp">予算設定を保存</button>
+            <span id="budget-msg" class="text-sm font-jp hidden"></span>
         </div>
 
         <p class="text-xs text-gray-400 mt-3 font-jp">
@@ -202,8 +208,8 @@
             const data = await aixisAPI('/settings');
 
             document.getElementById('api-key-input').value = data.anthropic_api_key_masked || '';
-            document.getElementById('cost-limit').textContent = data.cost_limit_jpy + '円';
-            document.getElementById('call-limit').textContent = data.call_limit + '回';
+            document.getElementById('cost-limit-input').value = data.cost_limit_jpy || 40;
+            document.getElementById('call-limit-input').value = data.call_limit || 100;
             document.getElementById('model-name').textContent = data.model;
 
             if (data.has_api_key) {
@@ -234,6 +240,40 @@
             loadSettings();
         } catch (e) {
             showAlert(e.detail || '保存に失敗しました: ' + e.message, 'err');
+        }
+    }
+
+    async function saveBudgetSettings() {
+        const costLimit = parseInt(document.getElementById('cost-limit-input').value);
+        const callLimit = parseInt(document.getElementById('call-limit-input').value);
+        const msgEl = document.getElementById('budget-msg');
+
+        if (isNaN(costLimit) || costLimit < 1 || costLimit > 500) {
+            msgEl.textContent = 'コスト上限は1〜500円で指定してください';
+            msgEl.className = 'text-sm font-jp text-red-600';
+            msgEl.classList.remove('hidden');
+            return;
+        }
+        if (isNaN(callLimit) || callLimit < 10 || callLimit > 1000) {
+            msgEl.textContent = 'API呼び出し上限は10〜1000回で指定してください';
+            msgEl.className = 'text-sm font-jp text-red-600';
+            msgEl.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            await aixisAPI('/settings', {
+                method: 'PUT',
+                body: JSON.stringify({ cost_limit_jpy: costLimit, call_limit: callLimit }),
+            });
+            msgEl.textContent = '予算設定を保存しました';
+            msgEl.className = 'text-sm font-jp text-emerald-600';
+            msgEl.classList.remove('hidden');
+            setTimeout(() => msgEl.classList.add('hidden'), 3000);
+        } catch (e) {
+            msgEl.textContent = '保存に失敗しました: ' + e.message;
+            msgEl.className = 'text-sm font-jp text-red-600';
+            msgEl.classList.remove('hidden');
         }
     }
 

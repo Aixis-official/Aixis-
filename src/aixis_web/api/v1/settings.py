@@ -36,6 +36,8 @@ class SettingsResponse(BaseModel):
 
 class SettingsUpdate(BaseModel):
     anthropic_api_key: str | None = None
+    cost_limit_jpy: int | None = None
+    call_limit: int | None = None
 
 
 def _mask_key(key: str) -> str:
@@ -145,12 +147,18 @@ async def get_settings(
     raw_key = await _db_get(db, "AIXIS_ANTHROPIC_API_KEY")
     if not raw_key:
         raw_key = _read_env_key("AIXIS_ANTHROPIC_API_KEY")
+    # Read cost/call limits from DB (overrides defaults)
+    db_cost = await _db_get(db, "AIXIS_AI_BUDGET_MAX_COST_JPY")
+    db_calls = await _db_get(db, "AIXIS_AI_BUDGET_MAX_CALLS")
+    cost_limit = int(db_cost) if db_cost else settings.ai_budget_max_cost_jpy
+    call_limit = int(db_calls) if db_calls else settings.ai_budget_max_calls
+
     return SettingsResponse(
         has_api_key=bool(raw_key),
         anthropic_api_key_masked=_mask_key(raw_key),
         model=settings.ai_agent_model,
-        cost_limit_jpy=settings.ai_budget_max_cost_jpy,
-        call_limit=settings.ai_budget_max_calls,
+        cost_limit_jpy=cost_limit,
+        call_limit=call_limit,
     )
 
 
@@ -175,6 +183,24 @@ async def update_settings(
         os.environ["AIXIS_ANTHROPIC_API_KEY"] = key
         settings.anthropic_api_key = key
         return {"status": "ok", "message": "APIキーを保存しました"}
+
+    messages = []
+    if body.cost_limit_jpy is not None:
+        if body.cost_limit_jpy < 1 or body.cost_limit_jpy > 500:
+            raise HTTPException(400, "コスト上限は1〜500円の範囲で設定してください")
+        await _db_set(db, "AIXIS_AI_BUDGET_MAX_COST_JPY", str(body.cost_limit_jpy))
+        settings.ai_budget_max_cost_jpy = body.cost_limit_jpy
+        messages.append(f"コスト上限を{body.cost_limit_jpy}円に変更")
+
+    if body.call_limit is not None:
+        if body.call_limit < 10 or body.call_limit > 1000:
+            raise HTTPException(400, "API呼び出し上限は10〜1000回の範囲で設定してください")
+        await _db_set(db, "AIXIS_AI_BUDGET_MAX_CALLS", str(body.call_limit))
+        settings.ai_budget_max_calls = body.call_limit
+        messages.append(f"API呼び出し上限を{body.call_limit}回に変更")
+
+    if messages:
+        return {"status": "ok", "message": "、".join(messages)}
 
     return {"status": "ok", "message": "変更なし"}
 

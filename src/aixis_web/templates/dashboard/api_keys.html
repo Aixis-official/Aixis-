@@ -87,22 +87,9 @@
 </div>
 
 <script>
-const API_BASE = '/api/v1/api-keys';
-
-function getAuthHeaders() {
-    const token = document.cookie.split(';').find(c => c.trim().startsWith('aixis_token='));
-    const headers = { 'Content-Type': 'application/json' };
-    if (token) {
-        headers['Authorization'] = 'Bearer ' + token.split('=')[1];
-    }
-    return headers;
-}
-
 async function loadKeys() {
     try {
-        const res = await fetch(API_BASE, { headers: getAuthHeaders() });
-        if (!res.ok) throw new Error('Failed to load');
-        const keys = await res.json();
+        const keys = await aixisAPI('/api-keys/');
         renderKeys(keys);
     } catch (e) {
         document.getElementById('keys-list').innerHTML =
@@ -172,13 +159,10 @@ async function createKey(e) {
     const scopes = Array.from(document.querySelectorAll('.scope-cb:checked')).map(cb => cb.value);
 
     try {
-        const res = await fetch(API_BASE, {
+        const data = await aixisAPI('/api-keys/', {
             method: 'POST',
-            headers: getAuthHeaders(),
             body: JSON.stringify({ name, scopes }),
         });
-        if (!res.ok) throw new Error('Failed to create');
-        const data = await res.json();
 
         hideCreateForm();
         document.getElementById('raw-key-display').textContent = data.raw_key;
@@ -203,11 +187,7 @@ function copyKey() {
 async function deactivateKey(keyId) {
     if (!confirm('このAPIキーを無効化しますか？この操作は取り消せません。')) return;
     try {
-        const res = await fetch(`${API_BASE}/${keyId}`, {
-            method: 'DELETE',
-            headers: getAuthHeaders(),
-        });
-        if (!res.ok) throw new Error('Failed to delete');
+        await aixisAPI('/api-keys/' + keyId, { method: 'DELETE' });
         loadKeys();
     } catch (e) {
         alert('APIキーの無効化に失敗しました');
