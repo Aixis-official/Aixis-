@@ -149,11 +149,11 @@ class Pipeline:
 
                             if normalized:
                                 await executor._context.add_cookies(normalized)
-                                print(f"[AUTH DEBUG] Injected {len(normalized)} auth cookies (of {len(cookies)} total)", flush=True)
-                                # Reload to apply cookies
+                                print(f"[AUTH DEBUG] Injected {len(normalized)} cookies, navigating to {self.target_config.url}", flush=True)
+                                # Navigate to START URL (not reload — page is on signin after redirect)
                                 if hasattr(executor, '_page') and executor._page:
-                                    await executor._page.reload(wait_until="domcontentloaded")
-                                    await asyncio.sleep(2)  # Wait for redirects after cookie-based auth
+                                    await executor._page.goto(self.target_config.url, wait_until="domcontentloaded", timeout=60_000)
+                                    await asyncio.sleep(3)
                             else:
                                 logger.warning("No valid cookies found in auth_storage_state (%d raw entries)", len(cookies))
                     except Exception as e:
