@@ -568,8 +568,8 @@
                 cookies = JSON.parse(raw);
                 if (!Array.isArray(cookies)) throw new Error('not array');
             } catch (_) {
-                // Parse tab-separated format from Chrome Application > Cookies > Copy
-                // Format: Name\tValue\tDomain\tPath\t... (one cookie per line)
+                // Parse tab-separated format from Chrome Application > Cookies
+                // Chrome columns: Name Value Domain Path Expires/Max-Age Size HttpOnly Secure SameSite ...
                 var lines = raw.split('\n').filter(function(l) { return l.trim(); });
                 cookies = [];
                 for (var i = 0; i < lines.length; i++) {
@@ -578,6 +578,18 @@
                         var c = { name: cols[0].trim(), value: cols[1].trim() };
                         if (cols.length >= 3 && cols[2].trim()) c.domain = cols[2].trim();
                         if (cols.length >= 4 && cols[3].trim()) c.path = cols[3].trim();
+                        // cols[4] = Expires (skip), cols[5] = Size (skip)
+                        if (cols.length >= 7) {
+                            var httpOnly = cols[6].trim().toLowerCase();
+                            if (httpOnly === '✓' || httpOnly === 'true' || httpOnly === '1') c.httpOnly = true;
+                        }
+                        if (cols.length >= 8) {
+                            var secure = cols[7].trim().toLowerCase();
+                            if (secure === '✓' || secure === 'true' || secure === '1') c.secure = true;
+                        }
+                        if (cols.length >= 9 && cols[8].trim()) {
+                            c.sameSite = cols[8].trim();
+                        }
                         cookies.push(c);
                     }
                 }

@@ -116,6 +116,12 @@ async def start_audit(
     await db.refresh(audit_session)
 
     # Launch background pipeline (pass tool slug for file-based config fallback)
+    auth_state = tool.auth_storage_state
+    cookie_count = len(auth_state.get("cookies", [])) if isinstance(auth_state, dict) else 0
+    logger.info(
+        "Starting audit for %s — auth_storage_state type=%s, cookie_count=%d",
+        tool.slug, type(auth_state).__name__, cookie_count,
+    )
     try:
         result = runner_start(
             session_id=agent_session_id,
@@ -125,7 +131,7 @@ async def start_audit(
             target_config_name=target_config_name or tool.slug,
             profile_id=body.profile_id or tool.profile_id or "",
             categories=body.categories,
-            auth_storage_state=tool.auth_storage_state,
+            auth_storage_state=auth_state,
         )
     except Exception as exc:
         logger.exception("Audit runner crashed for %s", tool.slug)
