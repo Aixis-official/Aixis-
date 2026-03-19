@@ -158,6 +158,9 @@ class AIBrowserExecutor(TestExecutor):
         # Abort signal: set externally to stop execution mid-audit
         self._abort_event: threading.Event = threading.Event()
 
+        # Auth state: stored for re-injection before each test
+        self._auth_storage_state: dict | None = None
+
         # Hybrid state
         self._workflow: LearnedWorkflow = LearnedWorkflow()
         self._first_test_done: bool = False
@@ -658,7 +661,23 @@ class AIBrowserExecutor(TestExecutor):
         total_ti = 0
         total_to = 0
 
-        # 1. Navigate to start URL (no API)
+        # 1. Re-inject localStorage before navigation (prevents session loss between tests)
+        if self._auth_storage_state:
+            try:
+                origins = self._auth_storage_state.get("origins", [])
+                for origin_data in origins:
+                    ls_items = origin_data.get("localStorage", [])
+                    if ls_items:
+                        for item in ls_items:
+                            if item.get("name") and item.get("value") is not None:
+                                await self._page.evaluate(
+                                    "([k,v]) => { try { localStorage.setItem(k, v) } catch(e) {} }",
+                                    [item["name"], item["value"]]
+                                )
+            except Exception:
+                pass  # Non-critical
+
+        # 1b. Navigate to start URL (no API)
         reset_url = self._workflow.reset_url or self._config.url
         try:
             await self._page.goto(reset_url, wait_until="domcontentloaded", timeout=60_000)
@@ -669,11 +688,29 @@ class AIBrowserExecutor(TestExecutor):
         if self.is_aborted:
             return self._make_result(start_time, error="監査が中止されました")
 
-        # 1.5. Detect login/signin page — skip immediately (no API waste)
+        # 1c. Detect login/signin page — try re-injecting localStorage and retrying once
         current_url = self._page.url.lower()
         signin_patterns = ['/signin', '/sign-in', '/login', '/auth', '/oauth', '/sso']
+        if any(p in current_url for p in signin_patterns) and self._auth_storage_state:
+            # Re-inject localStorage on the signin domain and retry navigation
+            try:
+                origins = self._auth_storage_state.get("origins", [])
+                for origin_data in origins:
+                    ls_items = origin_data.get("localStorage", [])
+                    for item in ls_items:
+                        if item.get("name") and item.get("value") is not None:
+                            await self._page.evaluate(
+                                "([k,v]) => { try { localStorage.setItem(k, v) } catch(e) {} }",
+                                [item["name"], item["value"]]
+                            )
+                await self._page.goto(reset_url, wait_until="domcontentloaded", timeout=60_000)
+                await asyncio.sleep(3)
+            except Exception:
+                pass
+            # Check again
+            current_url = self._page.url.lower()
+
         if any(p in current_url for p in signin_patterns):
-            print(f"[DOM-FIRST] Signin page detected: {self._page.url} — skipping test", flush=True)
             return self._make_result(start_time, error="認証エラー: ログインページにリダイレクトされました。認証Cookie/localStorageを再設定してください。")
 
         # 2. Find input field via DOM — retry with wait for SPA rendering

@@ -170,6 +170,11 @@ class Pipeline:
                         if ls_count:
                             print(f"[AUTH DEBUG] Injected {ls_count} localStorage items", flush=True)
 
+                        # Store auth state on executor for per-test re-injection
+                        if hasattr(executor, '_auth_storage_state'):
+                            executor._auth_storage_state = self.auth_storage_state
+                            print(f"[AUTH DEBUG] Stored auth state on executor for per-test re-injection", flush=True)
+
                         # Navigate to start URL with auth state applied
                         if hasattr(executor, '_page') and executor._page:
                             print(f"[AUTH DEBUG] Navigating to {self.target_config.url}", flush=True)
