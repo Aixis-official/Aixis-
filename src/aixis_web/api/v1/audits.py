@@ -127,9 +127,9 @@ async def start_audit(
     # Launch background pipeline (pass tool slug for file-based config fallback)
     auth_state = tool.auth_storage_state
     cookie_count = len(auth_state.get("cookies", [])) if isinstance(auth_state, dict) else 0
-    logger.info(
-        "Starting audit for %s — auth_storage_state type=%s, cookie_count=%d",
-        tool.slug, type(auth_state).__name__, cookie_count,
+    print(
+        f"Starting audit for {tool.slug} — auth_storage_state type={type(auth_state).__name__}, cookie_count={cookie_count}",
+        flush=True,
     )
     try:
         result = runner_start(
