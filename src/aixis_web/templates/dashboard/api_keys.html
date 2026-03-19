@@ -159,7 +159,7 @@ async function createKey(e) {
     const scopes = Array.from(document.querySelectorAll('.scope-cb:checked')).map(cb => cb.value);
 
     try {
-        const data = await aixisAPI('/api-keys/', {
+        const data = await aixisAPI('/api-keys', {
             method: 'POST',
             body: JSON.stringify({ name, scopes }),
         });

@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load tools count
     try {
-        const data = await aixisAPI('/tools/?page_size=1');
+        const data = await aixisAPI('/tools?page_size=1');
         document.getElementById('stat-tools').textContent = data.total ?? '--';
     } catch (e) {
         console.error('Failed to load tools count:', e);
