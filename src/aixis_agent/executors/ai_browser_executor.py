@@ -709,8 +709,20 @@ class AIBrowserExecutor(TestExecutor):
                 break
 
         if not input_info or not input_info.get("found"):
+            # Debug: log what's actually on the page
+            page_debug = await self._page.evaluate("""() => {
+                const url = location.href;
+                const title = document.title;
+                const all = document.querySelectorAll('textarea, input, [contenteditable], [role="textbox"], [data-placeholder], .ProseMirror, .ql-editor');
+                const items = [...all].slice(0, 10).map(el => {
+                    const r = el.getBoundingClientRect();
+                    return el.tagName + '.' + (el.className||'').toString().slice(0,30) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '@' + Math.round(r.top);
+                });
+                const iframes = document.querySelectorAll('iframe');
+                return { url, title, elements: items, iframeCount: iframes.length, bodyLen: document.body?.innerText?.length || 0 };
+            }""")
+            print(f"[DOM-FIRST] Input not found! Page: {page_debug}", flush=True)
             # DOM can't find input after retries — use agent to locate it
-            print(f"[DOM-FIRST] Input not found after retries, falling back to agent (15 steps)", flush=True)
             return await self._full_agent_loop(prompt, start_time, is_discovery=False, max_steps=15)
 
         # 3. Type prompt (no API)
