@@ -669,6 +669,13 @@ class AIBrowserExecutor(TestExecutor):
         if self.is_aborted:
             return self._make_result(start_time, error="監査が中止されました")
 
+        # 1.5. Detect login/signin page — skip immediately (no API waste)
+        current_url = self._page.url.lower()
+        signin_patterns = ['/signin', '/sign-in', '/login', '/auth', '/oauth', '/sso']
+        if any(p in current_url for p in signin_patterns):
+            print(f"[DOM-FIRST] Signin page detected: {self._page.url} — skipping test", flush=True)
+            return self._make_result(start_time, error="認証エラー: ログインページにリダイレクトされました。認証Cookie/localStorageを再設定してください。")
+
         # 2. Find input field via DOM — retry with wait for SPA rendering
         input_info = None
         for attempt in range(4):  # Try up to 4 times (0, 2, 4, 6 seconds wait)
