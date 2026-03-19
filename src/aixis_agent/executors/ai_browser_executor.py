@@ -373,20 +373,13 @@ class AIBrowserExecutor(TestExecutor):
         self._prompt_count += 1
         start_time = time.monotonic()
 
-        if self._first_test_done and self._workflow.valid:
+        if self._workflow.valid:
+            # Have a valid learned workflow — use efficient replay
             return await self._replay_then_agent(prompt, start_time)
-        elif self._first_test_done and not self._workflow.valid:
-            # Discovery failed — use DOM-first strategy (minimal API usage)
-            return await self._dom_first_loop(prompt, start_time)
         else:
-            result = await self._full_agent_loop(prompt, start_time, is_discovery=True, max_steps=20)
-            # Mark first test done regardless of success — prevents all subsequent
-            # tests from retrying expensive discovery
-            self._first_test_done = True
-            # After successful discovery, save the workflow for future audits
-            if self._workflow.valid:
-                self._save_workflow_cache()
-            return result
+            # DOM-First for ALL tests — no expensive discovery phase
+            # API is only used when DOM can't find elements or for result verification
+            return await self._dom_first_loop(prompt, start_time)
 
     async def cleanup(self) -> None:
         if self._context:
@@ -722,8 +715,33 @@ class AIBrowserExecutor(TestExecutor):
                 return { url, title, elements: items, iframeCount: iframes.length, bodyLen: document.body?.innerText?.length || 0 };
             }""")
             print(f"[DOM-FIRST] Input not found! Page: {page_debug}", flush=True)
-            # DOM can't find input after retries — use agent to locate it
-            return await self._full_agent_loop(prompt, start_time, is_discovery=False, max_steps=15)
+
+            # Use ONE API call to identify the input location (not 15-step agent loop)
+            if not self._budget.is_exhausted:
+                try:
+                    ss_b64 = await self._screenshot_b64()
+                    locate_prompt = (
+                        "画面のスクリーンショットを見て、テキスト入力欄の位置を特定してください。"
+                        "プロンプトや質問を入力するテキストエリア/入力欄のX,Y座標を返してください。"
+                        'JSON: {"x": 数値, "y": 数値, "found": true/false, "description": "入力欄の説明"}'
+                    )
+                    resp_text, ti, to = await self._ask_haiku_async(locate_prompt, ss_b64)
+                    self._budget.record_call(ti, to)
+                    import json as _json
+                    locate_result = _json.loads(resp_text)
+                    if locate_result.get("found") and locate_result.get("x") and locate_result.get("y"):
+                        input_info = {
+                            "x": int(locate_result["x"]),
+                            "y": int(locate_result["y"]),
+                            "found": True,
+                            "sel": "ai-located"
+                        }
+                        print(f"[DOM-FIRST] AI located input at ({input_info['x']}, {input_info['y']}): {locate_result.get('description', '?')}", flush=True)
+                except Exception as e:
+                    print(f"[DOM-FIRST] AI locate failed: {e}", flush=True)
+
+            if not input_info or not input_info.get("found"):
+                return self._make_result(start_time, error="入力欄が見つかりませんでした（DOM解析+AI特定の両方で失敗）")
 
         # 3. Type prompt (no API)
         print(f"[DOM-FIRST] Found input ({input_info.get('sel','?')}) at ({input_info['x']}, {input_info['y']}), typing prompt", flush=True)
