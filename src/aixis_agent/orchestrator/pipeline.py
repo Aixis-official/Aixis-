@@ -149,15 +149,34 @@ class Pipeline:
 
                             if normalized:
                                 await executor._context.add_cookies(normalized)
-                                print(f"[AUTH DEBUG] Injected {len(normalized)} cookies, navigating to {self.target_config.url}", flush=True)
-                                # Navigate to START URL (not reload — page is on signin after redirect)
-                                if hasattr(executor, '_page') and executor._page:
-                                    await executor._page.goto(self.target_config.url, wait_until="domcontentloaded", timeout=60_000)
-                                    await asyncio.sleep(3)
-                            else:
-                                logger.warning("No valid cookies found in auth_storage_state (%d raw entries)", len(cookies))
+                                print(f"[AUTH DEBUG] Injected {len(normalized)} cookies", flush=True)
+
+                        # Inject localStorage from origins array
+                        origins = self.auth_storage_state.get("origins", [])
+                        ls_count = 0
+                        for origin_data in origins:
+                            ls_items = origin_data.get("localStorage", [])
+                            if ls_items and hasattr(executor, '_page') and executor._page:
+                                origin_url = origin_data.get("origin", self.target_config.url)
+                                # Navigate to origin first so localStorage is set on correct domain
+                                await executor._page.goto(origin_url, wait_until="domcontentloaded", timeout=60_000)
+                                for item in ls_items:
+                                    if item.get("name") and item.get("value") is not None:
+                                        await executor._page.evaluate(
+                                            "([k,v]) => localStorage.setItem(k, v)",
+                                            [item["name"], item["value"]]
+                                        )
+                                        ls_count += 1
+                        if ls_count:
+                            print(f"[AUTH DEBUG] Injected {ls_count} localStorage items", flush=True)
+
+                        # Navigate to start URL with auth state applied
+                        if hasattr(executor, '_page') and executor._page:
+                            print(f"[AUTH DEBUG] Navigating to {self.target_config.url}", flush=True)
+                            await executor._page.goto(self.target_config.url, wait_until="domcontentloaded", timeout=60_000)
+                            await asyncio.sleep(3)
                     except Exception as e:
-                        print(f"[AUTH DEBUG] Failed to inject auth cookies: {type(e).__name__} — {e}", flush=True)
+                        print(f"[AUTH DEBUG] Failed to inject auth: {type(e).__name__} — {e}", flush=True)
 
                 # Auth pre-check: detect login page before wasting budget
                 if is_ai and hasattr(executor, 'check_auth_status'):

@@ -562,23 +562,55 @@
             return;
         }
         try {
-            var cookies;
+            var storageState = null;
             // Try JSON first
             try {
-                cookies = JSON.parse(raw);
-                if (!Array.isArray(cookies)) throw new Error('not array');
-            } catch (_) {
+                var parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    // Array of cookies: [{name, value, ...}, ...]
+                    storageState = { cookies: parsed, origins: [] };
+                } else if (parsed && typeof parsed === 'object') {
+                    if (parsed.cookies || parsed.origins) {
+                        // Full storage state format: {cookies: [...], origins: [...]}
+                        // Merge with existing cookies from DB if new data only has origins
+                        var existingState = null;
+                        try {
+                            var toolData = await aixisAPI('/tools/' + encodeURIComponent(editingSlug) + '?detail=true');
+                            existingState = toolData.auth_storage_state;
+                        } catch(_){}
+                        var newCookies = parsed.cookies || [];
+                        var newOrigins = parsed.origins || [];
+                        var existCookies = (existingState && existingState.cookies) ? existingState.cookies : [];
+                        var existOrigins = (existingState && existingState.origins) ? existingState.origins : [];
+                        // Merge: use new cookies if provided, otherwise keep existing
+                        storageState = {
+                            cookies: newCookies.length > 0 ? newCookies : existCookies,
+                            origins: newOrigins.length > 0 ? newOrigins : existOrigins
+                        };
+                        // If both have origins, merge by origin URL
+                        if (newOrigins.length > 0 && existOrigins.length > 0) {
+                            var originMap = {};
+                            existOrigins.forEach(function(o) { originMap[o.origin] = o; });
+                            newOrigins.forEach(function(o) { originMap[o.origin] = o; });
+                            storageState.origins = Object.values(originMap);
+                        }
+                    } else {
+                        throw new Error('not recognized');
+                    }
+                } else {
+                    throw new Error('not recognized');
+                }
+            } catch (jsonErr) {
+                if (storageState) throw jsonErr; // re-throw if partial parse
                 // Parse tab-separated format from Chrome Application > Cookies
-                // Chrome columns: Name Value Domain Path Expires/Max-Age Size HttpOnly Secure SameSite ...
                 var lines = raw.split('\n').filter(function(l) { return l.trim(); });
-                cookies = [];
+                var cookies = [];
                 for (var i = 0; i < lines.length; i++) {
                     var cols = lines[i].split('\t');
                     if (cols.length >= 2) {
                         var c = { name: cols[0].trim(), value: cols[1].trim() };
                         if (cols.length >= 3 && cols[2].trim()) c.domain = cols[2].trim();
                         if (cols.length >= 4 && cols[3].trim()) c.path = cols[3].trim();
-                        // cols[4] = Expires (skip), cols[5] = Size (skip)
                         if (cols.length >= 7) {
                             var httpOnly = cols[6].trim().toLowerCase();
                             if (httpOnly === '✓' || httpOnly === 'true' || httpOnly === '1') c.httpOnly = true;
@@ -587,21 +619,27 @@
                             var secure = cols[7].trim().toLowerCase();
                             if (secure === '✓' || secure === 'true' || secure === '1') c.secure = true;
                         }
-                        if (cols.length >= 9 && cols[8].trim()) {
-                            c.sameSite = cols[8].trim();
-                        }
+                        if (cols.length >= 9 && cols[8].trim()) c.sameSite = cols[8].trim();
                         cookies.push(c);
                     }
                 }
-                if (cookies.length === 0) throw new Error('Cookieデータを認識できませんでした。JSONまたはChrome DevToolsからコピーした形式で入力してください。');
+                if (cookies.length === 0) throw new Error('データを認識できませんでした。JSON、Chrome DevToolsコピー、またはlocalStorage形式で入力してください。');
+                storageState = { cookies: cookies, origins: [] };
             }
-            var storageState = { cookies: cookies, origins: [] };
+            var cookieCount = storageState.cookies ? storageState.cookies.length : 0;
+            var lsCount = 0;
+            (storageState.origins || []).forEach(function(o) { lsCount += (o.localStorage || []).length; });
             await aixisAPI('/tools/' + encodeURIComponent(editingSlug), {
                 method: 'PUT',
                 body: JSON.stringify({ auth_storage_state: storageState })
             });
             statusEl.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300';
-            statusEl.textContent = cookies.length + '件のCookieを保存しました。次回の監査から自動的にログイン状態でテストされます。';
+            var msg = '';
+            if (cookieCount > 0 && lsCount > 0) msg = 'Cookie ' + cookieCount + '件 + localStorage ' + lsCount + '件を保存しました。';
+            else if (cookieCount > 0) msg = cookieCount + '件のCookieを保存しました。';
+            else if (lsCount > 0) msg = 'localStorage ' + lsCount + '件を保存しました（既存Cookieとマージ済み）。';
+            msg += ' 次回の監査から自動的にログイン状態でテストされます。';
+            statusEl.textContent = msg;
             statusEl.classList.remove('hidden');
         } catch (err) {
             statusEl.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300';
