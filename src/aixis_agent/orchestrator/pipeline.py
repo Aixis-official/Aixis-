@@ -117,6 +117,7 @@ class Pipeline:
                 await executor.initialize(self.target_config)
 
                 # Inject saved auth cookies if available
+                print(f"[AUTH DEBUG] auth_storage_state={type(self.auth_storage_state).__name__}, has_context={hasattr(executor, '_context')}, context_truthy={bool(getattr(executor, '_context', None))}", flush=True)
                 if self.auth_storage_state and hasattr(executor, '_context') and executor._context:
                     try:
                         cookies = self.auth_storage_state.get("cookies", [])
@@ -148,7 +149,7 @@ class Pipeline:
 
                             if normalized:
                                 await executor._context.add_cookies(normalized)
-                                logger.info("Injected %d auth cookies (of %d total)", len(normalized), len(cookies))
+                                print(f"[AUTH DEBUG] Injected {len(normalized)} auth cookies (of {len(cookies)} total)", flush=True)
                                 # Reload to apply cookies
                                 if hasattr(executor, '_page') and executor._page:
                                     await executor._page.reload(wait_until="domcontentloaded")
@@ -156,7 +157,7 @@ class Pipeline:
                             else:
                                 logger.warning("No valid cookies found in auth_storage_state (%d raw entries)", len(cookies))
                     except Exception as e:
-                        logger.warning("Failed to inject auth cookies: %s — %s", type(e).__name__, e)
+                        print(f"[AUTH DEBUG] Failed to inject auth cookies: {type(e).__name__} — {e}", flush=True)
 
                 # Auth pre-check: detect login page before wasting budget
                 if is_ai and hasattr(executor, 'check_auth_status'):
