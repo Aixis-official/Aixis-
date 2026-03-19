@@ -816,13 +816,24 @@ class AIBrowserExecutor(TestExecutor):
             # If DOM + single AI call both failed, fall back to full agent loop
             # (only on first test to learn the workflow; subsequent tests reuse it)
             if (not input_info or not input_info.get("found")) and not self._first_test_done:
+                # Mark first test done NOW to prevent ALL subsequent tests
+                # from also falling back to the expensive agent loop
+                self._first_test_done = True
                 if not self._budget.is_exhausted:
                     print(f"[DOM-FIRST] Falling back to full agent loop for first test", flush=True)
                     logger.info("DOM-first failed, falling back to full agent loop (discovery mode)")
+                    # Use more steps for discovery (Gamma etc. need type→click→wait→click→wait→done)
+                    discovery_steps = max(self._config.ai_budget_max_calls_per_case or 15, 20)
+                    # Build task description with tool context for better accuracy
+                    tool_desc = self._config.tool_description or ""
+                    discovery_task = f"テキスト入力欄に「{prompt[:50]}」と入力し、送信して結果を取得してください。"
+                    if tool_desc:
+                        discovery_task = f"ツール説明: {tool_desc.strip()}\n\nタスク: {discovery_task}"
                     return await self._full_agent_loop(
                         prompt, start_time,
                         is_discovery=True,
-                        max_steps=self._config.ai_budget_max_calls_per_case or 12,
+                        task_desc=discovery_task,
+                        max_steps=discovery_steps,
                     )
 
             if not input_info or not input_info.get("found"):

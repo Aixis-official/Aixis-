@@ -19,11 +19,13 @@ tool_description: >
   画面にはテキスト入力欄と「概要を作成」ボタンがあり、
   概要生成後に「続けて作成する」ボタンでスライドが生成されます。
 
-# AIバジェット（効率化済み: Discovery1回限定 + 失敗後は軽量ループ）
-# Discovery: ~20呼出, 後続テスト: ~10呼出×10テスト = ~120呼出 → 40円以内
-ai_budget_max_calls: 150
-ai_budget_max_calls_per_case: 12
-ai_budget_max_cost_jpy: 40  # 40円を超えたらAPI使用を強制停止
+# AIバジェット
+# Discovery(初回): ~20呼出でワークフロー学習
+# 後続テスト: ワークフロー再生(API 0回) + 検証(~1回) = ~1呼出/テスト
+# 合計: 20 + 1×300 = ~320呼出 → 50円以内
+ai_budget_max_calls: 400
+ai_budget_max_calls_per_case: 20
+ai_budget_max_cost_jpy: 80  # 80円を超えたらAPI使用を強制停止
 
 # ブラウザ設定
 headless: false
