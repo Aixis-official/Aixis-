@@ -96,7 +96,7 @@ def _send_reminders(conn, now, reminder_cutoff):
             "AND trial_end IS NOT NULL "
             "AND trial_end <= :cutoff "
             "AND trial_end > :now "
-            "AND (trial_reminder_sent IS NULL OR trial_reminder_sent = 0)"
+            "AND (trial_reminder_sent IS NULL OR trial_reminder_sent = false)"
         ),
         {"cutoff": reminder_cutoff.isoformat(), "now": now.isoformat()},
     ).fetchall()
