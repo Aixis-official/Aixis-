@@ -676,33 +676,45 @@ class AIBrowserExecutor(TestExecutor):
         if self.is_aborted:
             return self._make_result(start_time, error="監査が中止されました")
 
-        # 2. Find input field via DOM (no API)
-        input_info = await self._page.evaluate("""() => {
-            const selectors = [
-                'textarea:not([disabled]):not([readonly])',
-                '[contenteditable="true"]',
-                '[role="textbox"]',
-                'input[type="text"]:not([disabled]):not([readonly])',
-            ];
-            for (const sel of selectors) {
-                const els = document.querySelectorAll(sel);
-                for (const el of els) {
-                    const rect = el.getBoundingClientRect();
-                    if (rect.width > 50 && rect.height > 10 && rect.top > 0 && rect.top < window.innerHeight) {
-                        return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, tag: el.tagName };
+        # 2. Find input field via DOM — retry with wait for SPA rendering
+        input_info = None
+        for attempt in range(4):  # Try up to 4 times (0, 2, 4, 6 seconds wait)
+            if attempt > 0:
+                await asyncio.sleep(2)
+            input_info = await self._page.evaluate("""() => {
+                const selectors = [
+                    'textarea:not([disabled]):not([readonly])',
+                    '[contenteditable="true"]',
+                    '[role="textbox"]',
+                    'input[type="text"]:not([disabled]):not([readonly])',
+                    '[data-placeholder]',
+                    '.ProseMirror',
+                    '.ql-editor',
+                    '[class*="input"][class*="text"]',
+                    '[class*="prompt"]',
+                    '[class*="editor"]',
+                ];
+                for (const sel of selectors) {
+                    const els = document.querySelectorAll(sel);
+                    for (const el of els) {
+                        const rect = el.getBoundingClientRect();
+                        if (rect.width > 50 && rect.height > 10 && rect.top > 0 && rect.top < window.innerHeight) {
+                            return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, tag: el.tagName, sel: sel };
+                        }
                     }
                 }
-            }
-            return { found: false };
-        }""")
+                return { found: false };
+            }""")
+            if input_info and input_info.get("found"):
+                break
 
         if not input_info or not input_info.get("found"):
-            # DOM can't find input — use minimal agent loop (3 steps) to locate it
-            logger.info("DOM-first: input not found, falling back to agent (3 steps)")
-            return await self._full_agent_loop(prompt, start_time, is_discovery=False, max_steps=5)
+            # DOM can't find input after retries — use agent to locate it
+            print(f"[DOM-FIRST] Input not found after retries, falling back to agent (15 steps)", flush=True)
+            return await self._full_agent_loop(prompt, start_time, is_discovery=False, max_steps=15)
 
         # 3. Type prompt (no API)
-        logger.info("DOM-first: found input at (%d, %d), typing prompt", input_info["x"], input_info["y"])
+        print(f"[DOM-FIRST] Found input ({input_info.get('sel','?')}) at ({input_info['x']}, {input_info['y']}), typing prompt", flush=True)
         await self._page.mouse.click(int(input_info["x"]), int(input_info["y"]))
         await asyncio.sleep(0.3)
         await self._page.keyboard.press("Meta+a")
@@ -713,35 +725,48 @@ class AIBrowserExecutor(TestExecutor):
 
         # 4. Find and click submit button via DOM (no API)
         submit_info = await self._page.evaluate("""() => {
-            const texts = ['送信', '生成', '作成', '概要', '実行', '開始', 'submit', 'send', 'generate', 'create', 'go', 'start'];
-            const buttons = [...document.querySelectorAll('button:not([disabled]), [role="button"]:not([disabled]), input[type="submit"]')];
-            // First: button with matching text
-            for (const btn of buttons) {
+            const texts = ['送信', '生成', '作成', '概要を作成', '実行', '開始', '続けて作成', 'submit', 'send', 'generate', 'create', 'go', 'start', 'run'];
+            const allClickable = [...document.querySelectorAll('button:not([disabled]), [role="button"]:not([disabled]), input[type="submit"], a[class*="btn"], [class*="submit"], [class*="generate"], [data-testid*="submit"], [data-testid*="generate"]')];
+            // First: element with matching text
+            for (const btn of allClickable) {
                 const text = (btn.innerText || btn.value || btn.getAttribute('aria-label') || '').toLowerCase().trim();
                 if (texts.some(t => text.includes(t))) {
                     const rect = btn.getBoundingClientRect();
                     if (rect.width > 20 && rect.height > 10 && rect.top > 0) {
-                        return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, text: text.slice(0, 20) };
+                        return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, text: text.slice(0, 30) };
                     }
                 }
             }
-            // Fallback: any visible button
-            for (const btn of buttons) {
+            // Second: SVG arrow/send icon buttons (common pattern)
+            const iconBtns = [...document.querySelectorAll('button svg, [role="button"] svg')];
+            for (const svg of iconBtns) {
+                const btn = svg.closest('button, [role="button"]');
+                if (btn && !btn.disabled) {
+                    const rect = btn.getBoundingClientRect();
+                    if (rect.width > 20 && rect.width < 100 && rect.height > 20 && rect.top > 0) {
+                        return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, text: 'icon-btn' };
+                    }
+                }
+            }
+            // Fallback: primary-colored button
+            for (const btn of allClickable) {
                 const rect = btn.getBoundingClientRect();
-                if (rect.width > 30 && rect.height > 20 && rect.top > 0 && rect.top < window.innerHeight) {
-                    return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, text: 'fallback' };
+                const style = window.getComputedStyle(btn);
+                const bg = style.backgroundColor;
+                const isPrimary = bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent' && bg !== 'rgb(255, 255, 255)';
+                if (isPrimary && rect.width > 30 && rect.height > 20 && rect.top > 0 && rect.top < window.innerHeight) {
+                    return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, text: 'primary-btn' };
                 }
             }
             return { found: false };
         }""")
 
         if submit_info and submit_info.get("found"):
-            logger.info("DOM-first: clicking submit '%s' at (%d, %d)",
-                        submit_info.get("text", "?"), submit_info["x"], submit_info["y"])
+            print(f"[DOM-FIRST] Clicking submit '{submit_info.get('text', '?')}' at ({submit_info['x']}, {submit_info['y']})", flush=True)
             await self._page.mouse.click(int(submit_info["x"]), int(submit_info["y"]))
         else:
             # No button found — try Enter key
-            logger.info("DOM-first: no submit button found, pressing Enter")
+            print("[DOM-FIRST] No submit button found, pressing Enter", flush=True)
             await self._page.keyboard.press("Enter")
 
         # 5. Wait for response (poll DOM, no API)
