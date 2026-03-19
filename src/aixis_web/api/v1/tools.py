@@ -274,6 +274,17 @@ async def save_target_config(
 
     Creates a new version. Previous active configs are deactivated.
     """
+    # Validate YAML before saving
+    import yaml as _yaml
+    try:
+        parsed = _yaml.safe_load(body.config_yaml)
+        if not isinstance(parsed, dict):
+            raise HTTPException(status_code=400, detail="YAML形式が不正です。辞書形式である必要があります。")
+        if "start_url" not in parsed:
+            raise HTTPException(status_code=400, detail="start_url が必須です。有効なターゲット設定YAMLを入力してください。")
+    except _yaml.YAMLError as e:
+        raise HTTPException(status_code=400, detail=f"YAML解析エラー: {e}")
+
     result = await db.execute(select(Tool).where(Tool.slug == slug))
     tool = result.scalar_one_or_none()
     if not tool:

@@ -95,7 +95,16 @@ async def start_audit(
         )
         config = config_result.scalar_one_or_none()
         if config:
-            target_config_yaml = config.config_yaml
+            # Validate that config_yaml is actual YAML, not stale/corrupt data
+            import yaml as _yaml
+            try:
+                parsed = _yaml.safe_load(config.config_yaml)
+                if isinstance(parsed, dict) and "start_url" in parsed:
+                    target_config_yaml = config.config_yaml
+                else:
+                    logger.warning("DB target config is not valid audit YAML — skipping")
+            except Exception:
+                logger.warning("DB target config YAML corrupt — skipping, will use file fallback")
 
     # No longer error if no config — runner will try config/targets/{slug}.yaml fallback
 

@@ -138,7 +138,7 @@ def _expire_trials(conn, now):
         try:
             conn.execute(
                 text(
-                    "UPDATE users SET is_active = 0, account_status = 'expired' "
+                    "UPDATE users SET is_active = false, account_status = 'expired' "
                     "WHERE id = :id"
                 ),
                 {"id": user_id},
