@@ -63,7 +63,7 @@ def _check_due_schedules():
                 "SELECT s.id, s.tool_id, s.profile_id, s.categories, s.cron_expression, "
                 "t.name as tool_name "
                 "FROM audit_schedules s JOIN tools t ON s.tool_id = t.id "
-                "WHERE s.is_active = 1 AND s.next_run_at <= :now"
+                "WHERE s.is_active = true AND s.next_run_at <= :now"
             ),
             {"now": now.isoformat()},
         ).fetchall()

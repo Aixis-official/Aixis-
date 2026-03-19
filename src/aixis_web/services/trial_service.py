@@ -109,7 +109,7 @@ def _send_reminders(conn, now, reminder_cutoff):
             send_trial_reminder_email(name, email, days_remaining)
 
             conn.execute(
-                text("UPDATE users SET trial_reminder_sent = 1 WHERE id = :id"),
+                text("UPDATE users SET trial_reminder_sent = true WHERE id = :id"),
                 {"id": user_id},
             )
             logger.info("Trial reminder sent to %s (%d days remaining)", email, days_remaining)
