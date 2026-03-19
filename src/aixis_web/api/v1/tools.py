@@ -186,6 +186,26 @@ async def update_tool(
         )
 
     update_data = body.model_dump(exclude_unset=True)
+
+    # Server-side merge for auth_storage_state: never lose cookies or localStorage
+    if "auth_storage_state" in update_data and update_data["auth_storage_state"] is not None:
+        new_state = update_data["auth_storage_state"]
+        existing_state = tool.auth_storage_state if isinstance(tool.auth_storage_state, dict) else {}
+        new_cookies = new_state.get("cookies", [])
+        new_origins = new_state.get("origins", [])
+        exist_cookies = existing_state.get("cookies", [])
+        exist_origins = existing_state.get("origins", [])
+        # Merge cookies: keep existing if new is empty, otherwise use new
+        merged_cookies = new_cookies if new_cookies else exist_cookies
+        # Merge origins by origin URL (additive)
+        origin_map = {}
+        for o in exist_origins:
+            origin_map[o.get("origin", "")] = o
+        for o in new_origins:
+            origin_map[o.get("origin", "")] = o
+        merged_origins = list(origin_map.values()) if origin_map else []
+        update_data["auth_storage_state"] = {"cookies": merged_cookies, "origins": merged_origins}
+
     for key, value in update_data.items():
         setattr(tool, key, value)
 
