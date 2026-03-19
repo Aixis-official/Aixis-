@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     ai_agent_model: str = "claude-haiku-4-5-20251001"
     ai_budget_max_calls: int = 400   # Discovery ~20 + replay verify ~1/test × ~300 tests
     ai_budget_max_calls_per_case: int = 20
-    ai_budget_max_cost_jpy: int = 80  # 1監査あたりのコスト上限（円）
+    ai_budget_max_cost_jpy: int = 40  # 1監査あたりのコスト上限（円）
 
     # SMTP settings
     smtp_host: str = ""

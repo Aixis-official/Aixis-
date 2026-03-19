@@ -20,12 +20,12 @@ tool_description: >
   概要生成後に「続けて作成する」ボタンでスライドが生成されます。
 
 # AIバジェット
-# Discovery(初回): ~20呼出でワークフロー学習
+# Discovery(初回のみ): ~20呼出でワークフロー学習
 # 後続テスト: ワークフロー再生(API 0回) + 検証(~1回) = ~1呼出/テスト
-# 合計: 20 + 1×300 = ~320呼出 → 50円以内
+# 合計: 20 + 1×300 ≈ 320呼出 → 40円以内
 ai_budget_max_calls: 400
 ai_budget_max_calls_per_case: 20
-ai_budget_max_cost_jpy: 80  # 80円を超えたらAPI使用を強制停止
+ai_budget_max_cost_jpy: 40  # 40円を超えたらAPI使用を強制停止
 
 # ブラウザ設定
 headless: false
