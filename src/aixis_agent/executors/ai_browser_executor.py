@@ -384,7 +384,11 @@ class AIBrowserExecutor(TestExecutor):
         else:
             # DOM-First for ALL tests — no expensive discovery phase
             # API is only used when DOM can't find elements or for result verification
-            return await self._dom_first_loop(prompt, start_time)
+            result = await self._dom_first_loop(prompt, start_time)
+            # If DOM-first triggered discovery and learned a workflow, save it
+            if self._workflow.valid:
+                self._save_workflow_cache()
+            return result
 
     async def cleanup(self) -> None:
         if self._context:
@@ -425,7 +429,7 @@ class AIBrowserExecutor(TestExecutor):
                     timeout=60_000,
                 )
                 if await self._interruptible_sleep(3):
-                    return self._make_result(start_time, error="監査が中止されました",
+                    return await self._make_result(start_time, error="監査が中止されました",
                                              calls=total_calls, ti=total_ti, to=total_to)
             except Exception as e:
                 logger.warning("Failed to navigate to reset URL: %s", e)
@@ -433,12 +437,12 @@ class AIBrowserExecutor(TestExecutor):
         for step_idx in range(max_steps):
             # Check abort & budget
             if self.is_aborted:
-                return self._make_result(start_time, error="監査が中止されました",
+                return await self._make_result(start_time, error="監査が中止されました",
                                          calls=total_calls, ti=total_ti, to=total_to)
             if self._budget.is_exhausted:
                 reason = self._budget.exhaustion_reason
                 logger.warning("Budget exhausted: %s", reason)
-                return self._make_result(start_time, error=f"予算上限: {reason}",
+                return await self._make_result(start_time, error=f"予算上限: {reason}",
                                          calls=total_calls, ti=total_ti, to=total_to)
 
             # --- Loop detection ---
@@ -483,7 +487,7 @@ class AIBrowserExecutor(TestExecutor):
                 logger.warning("Step %d: unparseable response: %s", step_idx, resp_text[:100])
                 action_history.append(f"Step {step_idx}: parse error, waiting 3s")
                 if await self._interruptible_sleep(3):
-                    return self._make_result(start_time, error="監査が中止されました",
+                    return await self._make_result(start_time, error="監査が中止されました",
                                              calls=total_calls, ti=total_ti, to=total_to)
                 continue
 
@@ -513,7 +517,7 @@ class AIBrowserExecutor(TestExecutor):
                     step_start_time = time.monotonic()
 
                 if await self._interruptible_sleep(2):
-                    return self._make_result(start_time, error="監査が中止されました",
+                    return await self._make_result(start_time, error="監査が中止されました",
                                              calls=total_calls, ti=total_ti, to=total_to)
 
             elif action == "type":
@@ -534,7 +538,7 @@ class AIBrowserExecutor(TestExecutor):
                 logger.info("  Typed %d chars", len(text))
 
                 if await self._interruptible_sleep(1):
-                    return self._make_result(start_time, error="監査が中止されました",
+                    return await self._make_result(start_time, error="監査が中止されました",
                                              calls=total_calls, ti=total_ti, to=total_to)
 
             elif action == "scroll_down":
@@ -549,7 +553,7 @@ class AIBrowserExecutor(TestExecutor):
                     step_start_time = time.monotonic()
 
                 if await self._interruptible_sleep(0.8):
-                    return self._make_result(start_time, error="監査が中止されました",
+                    return await self._make_result(start_time, error="監査が中止されました",
                                              calls=total_calls, ti=total_ti, to=total_to)
 
             elif action == "scroll_up":
@@ -557,7 +561,7 @@ class AIBrowserExecutor(TestExecutor):
                 logger.info("  Scrolled up")
 
                 if await self._interruptible_sleep(0.8):
-                    return self._make_result(start_time, error="監査が中止されました",
+                    return await self._make_result(start_time, error="監査が中止されました",
                                              calls=total_calls, ti=total_ti, to=total_to)
 
             elif action == "navigate":
@@ -577,14 +581,14 @@ class AIBrowserExecutor(TestExecutor):
                         action_history[-1] += f" (FAILED: {e})"
 
                 if await self._interruptible_sleep(1):
-                    return self._make_result(start_time, error="監査が中止されました",
+                    return await self._make_result(start_time, error="監査が中止されました",
                                              calls=total_calls, ti=total_ti, to=total_to)
 
             elif action == "wait":
                 wait_s = min(int(data.get("seconds", 10)), 30)
                 logger.info("  Waiting %ds", wait_s)
                 if await self._interruptible_sleep(wait_s):
-                    return self._make_result(start_time, error="監査が中止されました",
+                    return await self._make_result(start_time, error="監査が中止されました",
                                              calls=total_calls, ti=total_ti, to=total_to)
 
             elif action == "done":
@@ -685,10 +689,10 @@ class AIBrowserExecutor(TestExecutor):
             await self._page.goto(reset_url, wait_until="domcontentloaded", timeout=60_000)
             await asyncio.sleep(2)
         except Exception as e:
-            return self._make_result(start_time, error=f"ページ読み込み失敗: {e}")
+            return await self._make_result(start_time, error=f"ページ読み込み失敗: {e}")
 
         if self.is_aborted:
-            return self._make_result(start_time, error="監査が中止されました")
+            return await self._make_result(start_time, error="監査が中止されました")
 
         # 1c. Detect login/signin page — try re-injecting localStorage and retrying once
         current_url = self._page.url.lower()
@@ -718,7 +722,7 @@ class AIBrowserExecutor(TestExecutor):
                 # 3回連続認証失敗 → 監査を自動停止（残り全テストスキップ）
                 print(f"[AUTH] 3回連続認証失敗 — 監査を自動停止します", flush=True)
                 self._abort_event.set()
-            return self._make_result(start_time, error="認証エラー: ログインページにリダイレクトされました。認証Cookie/localStorageを再設定してください。")
+            return await self._make_result(start_time, error="認証エラー: ログインページにリダイレクトされました。認証Cookie/localStorageを再設定してください。")
         else:
             # Auth succeeded — reset counter
             self._consecutive_auth_failures = 0
@@ -769,8 +773,12 @@ class AIBrowserExecutor(TestExecutor):
                 return { url, title, elements: items, iframeCount: iframes.length, bodyLen: document.body?.innerText?.length || 0 };
             }""")
             print(f"[DOM-FIRST] Input not found! Page: {page_debug}", flush=True)
+            logger.warning("DOM-first: input not found. URL=%s, title=%s, elements=%d, iframes=%d",
+                           page_debug.get("url", "?"), page_debug.get("title", "?"),
+                           len(page_debug.get("elements", [])), page_debug.get("iframeCount", 0))
 
-            # Use ONE API call to identify the input location (not 15-step agent loop)
+            # Use ONE API call to identify the input location
+            ai_locate_error = None
             if not self._budget.is_exhausted:
                 try:
                     ss_b64 = await self._screenshot_b64()
@@ -780,6 +788,9 @@ class AIBrowserExecutor(TestExecutor):
                         'JSON: {"x": 数値, "y": 数値, "found": true/false, "description": "入力欄の説明"}'
                     )
                     resp_text, ti, to = await self._ask_haiku_async(locate_prompt, ss_b64)
+                    total_calls += 1
+                    total_ti += ti
+                    total_to += to
                     self._budget.record_call(ti, to)
                     import json as _json
                     locate_result = _json.loads(resp_text)
@@ -791,11 +802,38 @@ class AIBrowserExecutor(TestExecutor):
                             "sel": "ai-located"
                         }
                         print(f"[DOM-FIRST] AI located input at ({input_info['x']}, {input_info['y']}): {locate_result.get('description', '?')}", flush=True)
+                    else:
+                        ai_locate_error = f"AI応答: found=false, desc={locate_result.get('description', '不明')}"
+                        print(f"[DOM-FIRST] AI could not locate input: {ai_locate_error}", flush=True)
                 except Exception as e:
-                    print(f"[DOM-FIRST] AI locate failed: {e}", flush=True)
+                    ai_locate_error = f"{type(e).__name__}: {e}"
+                    print(f"[DOM-FIRST] AI locate failed: {ai_locate_error}", flush=True)
+                    logger.error("DOM-first AI locate error: %s", ai_locate_error)
+            else:
+                ai_locate_error = f"予算到達 (calls={self._budget.calls_used}/{self._budget.max_calls_total})"
+                print(f"[DOM-FIRST] Skipping AI locate: {ai_locate_error}", flush=True)
+
+            # If DOM + single AI call both failed, fall back to full agent loop
+            # (only on first test to learn the workflow; subsequent tests reuse it)
+            if (not input_info or not input_info.get("found")) and not self._first_test_done:
+                if not self._budget.is_exhausted:
+                    print(f"[DOM-FIRST] Falling back to full agent loop for first test", flush=True)
+                    logger.info("DOM-first failed, falling back to full agent loop (discovery mode)")
+                    return await self._full_agent_loop(
+                        prompt, start_time,
+                        is_discovery=True,
+                        max_steps=self._config.ai_budget_max_calls_per_case or 12,
+                    )
 
             if not input_info or not input_info.get("found"):
-                return self._make_result(start_time, error="入力欄が見つかりませんでした（DOM解析+AI特定の両方で失敗）")
+                page_url = page_debug.get("url", "不明")
+                page_title = page_debug.get("title", "不明")
+                error_detail = f"入力欄が見つかりませんでした（URL: {page_url}, タイトル: {page_title}"
+                if ai_locate_error:
+                    error_detail += f", AI: {ai_locate_error}"
+                error_detail += "）"
+                return await self._make_result(start_time, error=error_detail,
+                                               calls=total_calls, ti=total_ti, to=total_to)
 
         # 3. Type prompt (no API)
         print(f"[DOM-FIRST] Found input ({input_info.get('sel','?')}) at ({input_info['x']}, {input_info['y']}), typing prompt", flush=True)
@@ -929,10 +967,10 @@ class AIBrowserExecutor(TestExecutor):
                 wf.reset_url, wait_until="domcontentloaded", timeout=60_000
             )
             if await self._interruptible_sleep(3):
-                return self._make_result(start_time, error="監査が中止されました")
+                return await self._make_result(start_time, error="監査が中止されました")
 
             if self.is_aborted:
-                return self._make_result(start_time, error="監査が中止されました")
+                return await self._make_result(start_time, error="監査が中止されました")
 
             # Dynamically find the input area via DOM (more reliable than fixed coords)
             input_rect = await self._page.evaluate("""() => {
@@ -1000,10 +1038,10 @@ class AIBrowserExecutor(TestExecutor):
             # Execute learned post-submit steps
             for step in wf.post_submit_steps:
                 if await self._interruptible_sleep(step.delay_before):
-                    return self._make_result(start_time, error="監査が中止されました")
+                    return await self._make_result(start_time, error="監査が中止されました")
 
                 if self.is_aborted:
-                    return self._make_result(start_time, error="監査が中止されました")
+                    return await self._make_result(start_time, error="監査が中止されました")
 
                 if step.action == "click":
                     await self._page.mouse.click(step.x, step.y)
@@ -1016,7 +1054,7 @@ class AIBrowserExecutor(TestExecutor):
                         return ExecutionResult(error="監査が中止されました")
 
                 if await self._interruptible_sleep(2):
-                    return self._make_result(start_time, error="監査が中止されました")
+                    return await self._make_result(start_time, error="監査が中止されました")
 
             # -----------------------------------------------------------
             # SMART VERIFICATION: Minimize API calls while ensuring quality.
@@ -1039,12 +1077,12 @@ class AIBrowserExecutor(TestExecutor):
 
             logger.info("Replay: polling for generation (max %.0fs)", max_wait)
             if await self._interruptible_sleep(min_wait):
-                return self._make_result(start_time, error="監査が中止されました")
+                return await self._make_result(start_time, error="監査が中止されました")
             elapsed_wait += min_wait
 
             while elapsed_wait < max_wait:
                 if self.is_aborted:
-                    return self._make_result(start_time, error="監査が中止されました")
+                    return await self._make_result(start_time, error="監査が中止されました")
 
                 # Check if page changed
                 current_url = self._page.url
@@ -1064,7 +1102,7 @@ class AIBrowserExecutor(TestExecutor):
                     break
 
                 if await self._interruptible_sleep(poll_interval):
-                    return self._make_result(start_time, error="監査が中止されました")
+                    return await self._make_result(start_time, error="監査が中止されました")
                 elapsed_wait += poll_interval
 
             page_text = await self._extract_page_text()
@@ -1348,15 +1386,19 @@ class AIBrowserExecutor(TestExecutor):
         except Exception:
             return None
 
-    def _make_result(
+    async def _make_result(
         self, start_time: float, *, error: str | None = None,
         text: str | None = None,
         calls: int = 0, ti: int = 0, to: int = 0,
     ) -> ExecutionResult:
         elapsed = (time.monotonic() - start_time) * 1000
+        # Always save screenshot on errors for diagnostic purposes
+        ss_path = None
+        if error and self._page:
+            ss_path = await self._save_screenshot_safe()
         return ExecutionResult(
             text=text, error=error, response_time_ms=elapsed,
-            screenshot_path=None,
+            screenshot_path=ss_path,
             page_url=self._page.url if self._page else None,
             ai_steps_taken=calls, ai_calls_used=calls,
             ai_tokens_input=ti, ai_tokens_output=to,

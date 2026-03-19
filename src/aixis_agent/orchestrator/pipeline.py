@@ -188,6 +188,11 @@ class Pipeline:
                 # Auth pre-check: detect login page before wasting budget
                 if is_ai and hasattr(executor, 'check_auth_status'):
                     auth_ok = await executor.check_auth_status()
+                    # Track pre-check API call in aggregate stats
+                    if hasattr(executor, '_budget'):
+                        total_ai_calls += executor._budget.calls_used
+                        total_ai_tokens_in += executor._budget.tokens_input
+                        total_ai_tokens_out += executor._budget.tokens_output
                     if not auth_ok:
                         console.print("[bold red]認証失敗: ログインページが検出されました[/bold red]")
                         console.print("[yellow]ツール管理画面で認証Cookieを再設定してください[/yellow]")
