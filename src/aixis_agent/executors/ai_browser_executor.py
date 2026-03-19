@@ -160,6 +160,8 @@ class AIBrowserExecutor(TestExecutor):
 
         # Auth state: stored for re-injection before each test
         self._auth_storage_state: dict | None = None
+        # Track consecutive auth failures to auto-stop
+        self._consecutive_auth_failures: int = 0
 
         # Hybrid state
         self._workflow: LearnedWorkflow = LearnedWorkflow()
@@ -711,7 +713,15 @@ class AIBrowserExecutor(TestExecutor):
             current_url = self._page.url.lower()
 
         if any(p in current_url for p in signin_patterns):
+            self._consecutive_auth_failures += 1
+            if self._consecutive_auth_failures >= 3:
+                # 3回連続認証失敗 → 監査を自動停止（残り全テストスキップ）
+                print(f"[AUTH] 3回連続認証失敗 — 監査を自動停止します", flush=True)
+                self._abort_event.set()
             return self._make_result(start_time, error="認証エラー: ログインページにリダイレクトされました。認証Cookie/localStorageを再設定してください。")
+        else:
+            # Auth succeeded — reset counter
+            self._consecutive_auth_failures = 0
 
         # 2. Find input field via DOM — retry with wait for SPA rendering
         input_info = None

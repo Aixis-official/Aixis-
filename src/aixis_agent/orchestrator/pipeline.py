@@ -121,6 +121,8 @@ class Pipeline:
                 if self.auth_storage_state and hasattr(executor, '_context') and executor._context:
                     try:
                         cookies = self.auth_storage_state.get("cookies", [])
+                        origins = self.auth_storage_state.get("origins", [])
+                        print(f"[AUTH DEBUG] Storage state: {len(cookies)} cookies, {len(origins)} origins", flush=True)
                         if cookies:
                             # Normalize cookies for Playwright: require name, value, and domain/url
                             target_domain = self.target_config.url.split("//")[-1].split("/")[0] if self.target_config.url else ""
