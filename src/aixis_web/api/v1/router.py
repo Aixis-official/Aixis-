@@ -21,6 +21,7 @@ from .industries import router as industries_router
 from .risk_governance import router as risk_governance_router
 from .stats import router as stats_router
 from .clients import router as clients_router
+from .agent import router as agent_router
 
 api_router = APIRouter()
 
@@ -50,3 +51,4 @@ api_router.include_router(industries_router, prefix="/industries", tags=["業界
 api_router.include_router(risk_governance_router, prefix="/risk-governance", tags=["リスク・ガバナンス"])
 api_router.include_router(stats_router, prefix="/stats", tags=["stats"])
 api_router.include_router(clients_router, prefix="/clients", tags=["クライアント管理"])
+api_router.include_router(agent_router, prefix="/agent", tags=["ローカルエージェント"])
