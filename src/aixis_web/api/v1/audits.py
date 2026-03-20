@@ -648,31 +648,24 @@ async def browser_type(
 
     try:
         async def smart_type(page):
-            # Strategy 1: Fill the currently focused element
-            # This respects which field the user clicked on
+            # Clear the focused field first, then type character-by-character.
+            # Using press_sequentially (not fill!) to trigger proper React/Vue
+            # keyboard events — fill() sets DOM value but skips framework state.
             try:
                 focused = page.locator(':focus')
                 if await focused.count() > 0:
                     tag = await focused.evaluate("el => el.tagName")
                     if tag in ("INPUT", "TEXTAREA", "SELECT"):
-                        await focused.fill(text)
+                        # Clear existing content
+                        await focused.evaluate("el => { el.value = ''; el.dispatchEvent(new Event('input', {bubbles:true})); }")
+                        # Type character by character (triggers React onChange)
+                        await focused.press_sequentially(text, delay=20)
                         return
             except Exception:
                 pass
 
-            # Strategy 2: CDP Input.insertText (types into focused element at low level)
-            try:
-                cdp = await page.context.new_cdp_session(page)
-                try:
-                    await cdp.send("Input.insertText", {"text": text})
-                finally:
-                    await cdp.detach()
-                return
-            except Exception:
-                pass
-
-            # Strategy 3: Playwright keyboard.type (last resort)
-            await page.keyboard.type(text, delay=30)
+            # Fallback: keyboard.type into whatever has focus
+            await page.keyboard.type(text, delay=20)
 
         _run_in_browser(session_id, lambda p: smart_type(p))
         return {"status": "typed", "length": len(text)}
