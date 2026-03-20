@@ -684,11 +684,20 @@ class AIBrowserExecutor(TestExecutor):
             except Exception:
                 pass  # Non-critical
 
-        # 1b. Navigate to start URL (no API)
+        # 1b. Navigate to start URL — wait for full SPA render
         reset_url = self._workflow.reset_url or self._config.url
         try:
             await self._page.goto(reset_url, wait_until="domcontentloaded", timeout=60_000)
+            # Wait for SPA to finish loading (network idle = no pending XHR/fetch)
+            try:
+                await self._page.wait_for_load_state("networkidle", timeout=15_000)
+            except Exception:
+                pass  # Timeout is OK — some SPAs have persistent connections
+            # Wait for any client-side redirects to settle
             await asyncio.sleep(2)
+            final_url = self._page.url
+            if final_url != reset_url:
+                print(f"[NAV] Redirected: {reset_url} → {final_url}", flush=True)
         except Exception as e:
             return await self._make_result(start_time, error=f"ページ読み込み失敗: {e}")
 
@@ -728,27 +737,24 @@ class AIBrowserExecutor(TestExecutor):
             # Auth succeeded — reset counter
             self._consecutive_auth_failures = 0
 
-        # 2. Find input field via DOM — use Playwright native wait_for_selector
-        # Build selector list: config input_selector first, then generic fallbacks
-        all_selectors = []
+        # 2. Find input field via DOM
+        # Use config input_selector if set, otherwise generic fallbacks
         if self._config.input_selector:
-            all_selectors.extend([s.strip() for s in self._config.input_selector.split(",") if s.strip()])
-        all_selectors.extend([
-            'textarea:not([disabled]):not([readonly])',
-            '[contenteditable="true"]',
-            '[contenteditable]',
-            '[role="textbox"]',
-            'input[type="text"]:not([disabled]):not([readonly])',
-            '.ProseMirror',
-            '.ql-editor',
-        ])
+            # Config selectors (already comma-separated CSS)
+            combined_selector = self._config.input_selector
+        else:
+            combined_selector = (
+                'textarea:not([disabled]):not([readonly]), '
+                '[contenteditable="true"], [role="textbox"], '
+                'input[type="text"]:not([disabled]):not([readonly]), '
+                '.ProseMirror, .ql-editor'
+            )
 
         input_info = None
 
-        # Single combined wait: all selectors joined as one CSS selector, 30s total
-        combined_selector = ", ".join(all_selectors)
+        # Playwright native wait — 15s (if page loaded but SPA still rendering)
         try:
-            el = await self._page.wait_for_selector(combined_selector, timeout=30_000, state="visible")
+            el = await self._page.wait_for_selector(combined_selector, timeout=15_000, state="visible")
             if el:
                 box = await el.bounding_box()
                 if box and box["width"] > 50 and box["height"] > 10:
@@ -761,24 +767,25 @@ class AIBrowserExecutor(TestExecutor):
                     }
                     print(f"[DOM] Found input at ({input_info['x']:.0f}, {input_info['y']:.0f})", flush=True)
         except Exception:
-            pass  # Timeout — no matching element within 30s
+            pass  # Timeout — element not found within 15s
 
-        # Quick JS fallback (catches elements with wrong visibility state)
+        # JS fallback (catches elements missed by wait_for_selector)
         if not input_info or not input_info.get("found"):
+            fallback_selectors = combined_selector.split(",")
             input_info = await self._page.evaluate("""(selectors) => {
                 for (const sel of selectors) {
                     try {
-                        const els = document.querySelectorAll(sel);
+                        const els = document.querySelectorAll(sel.trim());
                         for (const el of els) {
                             const rect = el.getBoundingClientRect();
                             if (rect.width > 50 && rect.height > 10 && rect.top > 0 && rect.top < window.innerHeight) {
-                                return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, tag: el.tagName, sel: sel };
+                                return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, tag: el.tagName, sel: sel.trim() };
                             }
                         }
                     } catch(e) {}
                 }
                 return { found: false };
-            }""", all_selectors)
+            }""", fallback_selectors)
 
         if not input_info or not input_info.get("found"):
             # Debug: log what's actually on the page
@@ -1002,34 +1009,42 @@ class AIBrowserExecutor(TestExecutor):
         wf = self._workflow
 
         try:
-            # Navigate back to start
+            # Navigate back to start — wait for full load
             await self._page.goto(
                 wf.reset_url, wait_until="domcontentloaded", timeout=60_000
             )
-            if await self._interruptible_sleep(3):
+            try:
+                await self._page.wait_for_load_state("networkidle", timeout=15_000)
+            except Exception:
+                pass
+            if await self._interruptible_sleep(2):
                 return await self._make_result(start_time, error="監査が中止されました")
 
             if self.is_aborted:
                 return await self._make_result(start_time, error="監査が中止されました")
 
-            # Dynamically find the input area via DOM (more reliable than fixed coords)
-            config_input_selectors = []
-            if self._config.input_selector:
-                config_input_selectors = [s.strip() for s in self._config.input_selector.split(",") if s.strip()]
-            input_rect = await self._page.evaluate("""(configSelectors) => {
-                // Priority: config selectors > textarea > contenteditable > text input
-                const selectors = [
-                    ...configSelectors,
-                    'textarea:not([disabled])',
-                    '[contenteditable="true"]',
-                    '[contenteditable]',
-                    'input[type="text"]:not([disabled])',
-                    '[role="textbox"]',
-                    '.ProseMirror',
-                ];
-                for (const sel of selectors) {
+            # Find input via Playwright wait (handles SPA rendering)
+            replay_selector = self._config.input_selector or (
+                'textarea:not([disabled]), [contenteditable="true"], '
+                'input[type="text"]:not([disabled]), [role="textbox"], .ProseMirror'
+            )
+            input_rect = {"found": False}
+            try:
+                el = await self._page.wait_for_selector(replay_selector, timeout=15_000, state="visible")
+                if el:
+                    box = await el.bounding_box()
+                    if box and box["width"] > 50 and box["height"] > 10:
+                        input_rect = {"x": box["x"] + box["width"] / 2, "y": box["y"] + box["height"] / 2, "found": True}
+            except Exception:
+                pass
+
+            # JS fallback
+            if not input_rect.get("found"):
+                input_rect = await self._page.evaluate("""(selector) => {
+                const sels = selector.split(',');
+                for (const sel of sels) {
                     try {
-                    const el = document.querySelector(sel);
+                    const el = document.querySelector(sel.trim());
                     if (el) {
                         const rect = el.getBoundingClientRect();
                         if (rect.width > 50 && rect.height > 10) {
@@ -1039,7 +1054,7 @@ class AIBrowserExecutor(TestExecutor):
                     } catch(e) {}
                 }
                 return { found: false };
-            }""", config_input_selectors)
+            }""", replay_selector)
 
             if input_rect and input_rect.get("found"):
                 input_x = int(input_rect["x"])
