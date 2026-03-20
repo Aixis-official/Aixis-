@@ -13,6 +13,11 @@ name: "gamma"
 url: "https://gamma.app/create/generate"
 executor_type: "ai_browser"
 
+# CSS selectors — Gammaのtiptap ProseMirrorエディタ
+input_selector: ".tiptap.ProseMirror, .ProseMirror, [contenteditable='true']"
+submit_selector: "button:has-text('概要を作成'), button:has-text('Generate outline')"
+input_method: "type"  # contenteditable要素なのでtype方式
+
 # ツール情報（AIエージェントのコンテキストに使用）
 tool_description: >
   Gammaはテキストプロンプトからスライドデッキを自動生成するAIツールです。

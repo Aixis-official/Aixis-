@@ -728,14 +728,22 @@ class AIBrowserExecutor(TestExecutor):
             self._consecutive_auth_failures = 0
 
         # 2. Find input field via DOM — retry with wait for SPA rendering
+        # Build selector list: config input_selector first (highest priority), then generic fallbacks
+        config_input_selectors = []
+        if self._config.input_selector:
+            # Support comma-separated selectors from config
+            config_input_selectors = [s.strip() for s in self._config.input_selector.split(",") if s.strip()]
+
         input_info = None
-        for attempt in range(4):  # Try up to 4 times (0, 2, 4, 6 seconds wait)
+        for attempt in range(6):  # Try up to 6 times (0, 2, 4, 6, 8, 10 seconds wait)
             if attempt > 0:
                 await asyncio.sleep(2)
-            input_info = await self._page.evaluate("""() => {
+            input_info = await self._page.evaluate("""(configSelectors) => {
                 const selectors = [
+                    ...configSelectors,
                     'textarea:not([disabled]):not([readonly])',
                     '[contenteditable="true"]',
+                    '[contenteditable]',
                     '[role="textbox"]',
                     'input[type="text"]:not([disabled]):not([readonly])',
                     '[data-placeholder]',
@@ -746,36 +754,50 @@ class AIBrowserExecutor(TestExecutor):
                     '[class*="editor"]',
                 ];
                 for (const sel of selectors) {
-                    const els = document.querySelectorAll(sel);
-                    for (const el of els) {
-                        const rect = el.getBoundingClientRect();
-                        if (rect.width > 50 && rect.height > 10 && rect.top > 0 && rect.top < window.innerHeight) {
-                            return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, tag: el.tagName, sel: sel };
+                    try {
+                        const els = document.querySelectorAll(sel);
+                        for (const el of els) {
+                            const rect = el.getBoundingClientRect();
+                            if (rect.width > 50 && rect.height > 10 && rect.top > 0 && rect.top < window.innerHeight) {
+                                return { x: rect.x + rect.width/2, y: rect.y + rect.height/2, found: true, tag: el.tagName, sel: sel };
+                            }
                         }
-                    }
+                    } catch(e) {}
                 }
                 return { found: false };
-            }""")
+            }""", config_input_selectors)
             if input_info and input_info.get("found"):
                 break
 
         if not input_info or not input_info.get("found"):
-            # Debug: log what's actually on the page
+            # Debug: log what's actually on the page (including auth state clues)
             page_debug = await self._page.evaluate("""() => {
                 const url = location.href;
                 const title = document.title;
                 const all = document.querySelectorAll('textarea, input, [contenteditable], [role="textbox"], [data-placeholder], .ProseMirror, .ql-editor');
-                const items = [...all].slice(0, 10).map(el => {
+                const items = [...all].slice(0, 15).map(el => {
                     const r = el.getBoundingClientRect();
-                    return el.tagName + '.' + (el.className||'').toString().slice(0,30) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '@' + Math.round(r.top);
+                    return el.tagName + '.' + (el.className||'').toString().slice(0,40) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '@' + Math.round(r.top);
                 });
                 const iframes = document.querySelectorAll('iframe');
-                return { url, title, elements: items, iframeCount: iframes.length, bodyLen: document.body?.innerText?.length || 0 };
+                // Check for common auth/login indicators in page content
+                const bodyText = (document.body?.innerText || '').slice(0, 500);
+                const hasSignIn = /sign.?in|log.?in|ログイン|サインイン|create.?account|sign.?up/i.test(bodyText);
+                return { url, title, elements: items, iframeCount: iframes.length, bodyLen: document.body?.innerText?.length || 0, hasSignIn, bodyPreview: bodyText.slice(0, 200) };
             }""")
             print(f"[DOM-FIRST] Input not found! Page: {page_debug}", flush=True)
-            logger.warning("DOM-first: input not found. URL=%s, title=%s, elements=%d, iframes=%d",
+            logger.warning("DOM-first: input not found. URL=%s, title=%s, elements=%d, iframes=%d, hasSignIn=%s",
                            page_debug.get("url", "?"), page_debug.get("title", "?"),
-                           len(page_debug.get("elements", [])), page_debug.get("iframeCount", 0))
+                           len(page_debug.get("elements", [])), page_debug.get("iframeCount", 0),
+                           page_debug.get("hasSignIn", "?"))
+
+            # Content-based auth check: page loaded but no input + sign-in text detected
+            if page_debug.get("hasSignIn") and len(page_debug.get("elements", [])) == 0:
+                self._consecutive_auth_failures += 1
+                if self._consecutive_auth_failures >= 3:
+                    print(f"[AUTH] ページにログイン要素を検出 — 監査を自動停止", flush=True)
+                    self._abort_event.set()
+                return await self._make_result(start_time, error="認証エラー: ページにログイン/サインイン要素が検出されました。再ログインが必要です。")
 
             # Use ONE API call to identify the input location
             ai_locate_error = None
@@ -984,15 +1006,22 @@ class AIBrowserExecutor(TestExecutor):
                 return await self._make_result(start_time, error="監査が中止されました")
 
             # Dynamically find the input area via DOM (more reliable than fixed coords)
-            input_rect = await self._page.evaluate("""() => {
-                // Priority: textarea > contenteditable > text input
+            config_input_selectors = []
+            if self._config.input_selector:
+                config_input_selectors = [s.strip() for s in self._config.input_selector.split(",") if s.strip()]
+            input_rect = await self._page.evaluate("""(configSelectors) => {
+                // Priority: config selectors > textarea > contenteditable > text input
                 const selectors = [
+                    ...configSelectors,
                     'textarea:not([disabled])',
                     '[contenteditable="true"]',
+                    '[contenteditable]',
                     'input[type="text"]:not([disabled])',
                     '[role="textbox"]',
+                    '.ProseMirror',
                 ];
                 for (const sel of selectors) {
+                    try {
                     const el = document.querySelector(sel);
                     if (el) {
                         const rect = el.getBoundingClientRect();
@@ -1000,9 +1029,10 @@ class AIBrowserExecutor(TestExecutor):
                             return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, found: true };
                         }
                     }
+                    } catch(e) {}
                 }
                 return { found: false };
-            }""")
+            }""", config_input_selectors)
 
             if input_rect and input_rect.get("found"):
                 input_x = int(input_rect["x"])
