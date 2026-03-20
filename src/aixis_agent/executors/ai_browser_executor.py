@@ -745,26 +745,25 @@ class AIBrowserExecutor(TestExecutor):
 
         input_info = None
 
-        # Phase 1: Playwright native wait (efficient, no polling) — 30 seconds
-        for sel in all_selectors:
-            try:
-                el = await self._page.wait_for_selector(sel, timeout=30_000, state="visible")
-                if el:
-                    box = await el.bounding_box()
-                    if box and box["width"] > 50 and box["height"] > 10:
-                        input_info = {
-                            "x": box["x"] + box["width"] / 2,
-                            "y": box["y"] + box["height"] / 2,
-                            "found": True,
-                            "tag": await el.evaluate("el => el.tagName"),
-                            "sel": sel,
-                        }
-                        print(f"[DOM] Found input via wait_for_selector: {sel} at ({input_info['x']:.0f}, {input_info['y']:.0f})", flush=True)
-                        break
-            except Exception:
-                continue  # Selector timed out, try next
+        # Single combined wait: all selectors joined as one CSS selector, 30s total
+        combined_selector = ", ".join(all_selectors)
+        try:
+            el = await self._page.wait_for_selector(combined_selector, timeout=30_000, state="visible")
+            if el:
+                box = await el.bounding_box()
+                if box and box["width"] > 50 and box["height"] > 10:
+                    input_info = {
+                        "x": box["x"] + box["width"] / 2,
+                        "y": box["y"] + box["height"] / 2,
+                        "found": True,
+                        "tag": await el.evaluate("el => el.tagName"),
+                        "sel": combined_selector[:60],
+                    }
+                    print(f"[DOM] Found input at ({input_info['x']:.0f}, {input_info['y']:.0f})", flush=True)
+        except Exception:
+            pass  # Timeout — no matching element within 30s
 
-        # Phase 2: Quick JS scan fallback (catches dynamic elements the wait might miss)
+        # Quick JS fallback (catches elements with wrong visibility state)
         if not input_info or not input_info.get("found"):
             input_info = await self._page.evaluate("""(selectors) => {
                 for (const sel of selectors) {
