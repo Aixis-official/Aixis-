@@ -80,9 +80,9 @@ def resume_after_login(session_id: str) -> bool:
 
 
 def get_browser_page(session_id: str):
-    """Get the Playwright page from a running audit's executor.
+    """Get the Playwright page and event loop from a running audit's executor.
 
-    Returns the Page object or None if not available.
+    Returns (page, loop) tuple. Either may be None if not available.
     Searches by both session_id and db_session_id.
     """
     with _lock:
@@ -94,14 +94,28 @@ def get_browser_page(session_id: str):
                     info = i
                     break
         if not info:
-            return None
+            return None, None
         pipeline = info.get("pipeline")
         if not pipeline:
-            return None
+            return None, None
+        loop = getattr(pipeline, "_loop", None)
         executor = getattr(pipeline, "_executor", None)
         if not executor:
-            return None
-        return getattr(executor, "_page", None)
+            return None, loop
+
+        # Check for popup pages (e.g., Google OAuth window)
+        # Use the most recently opened page in the context
+        context = getattr(executor, "_context", None)
+        if context:
+            try:
+                pages = context.pages
+                if pages and len(pages) > 1:
+                    # Return the last (newest) page — likely the popup
+                    return pages[-1], loop
+            except Exception:
+                pass
+
+        return getattr(executor, "_page", None), loop
 
 
 # ---------------------------------------------------------------------------

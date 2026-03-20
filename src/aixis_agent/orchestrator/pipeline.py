@@ -59,11 +59,14 @@ class Pipeline:
 
         # Exposed for external access (e.g., dashboard screenshot capture)
         self._executor = None
+        self._loop = None  # Event loop for cross-thread access
 
     async def run(self, session_id: str | None = None, resume: bool = False,
                   login_event=None, abort_event=None,
                   progress_callback=None) -> str:
         """Execute the full pipeline. Returns the session ID."""
+        import asyncio
+        self._loop = asyncio.get_event_loop()
         session_id = session_id or f"session-{uuid.uuid4().hex[:8]}"
         db_path = self.output_dir / f"{session_id}.db"
         store = SessionStore(db_path)

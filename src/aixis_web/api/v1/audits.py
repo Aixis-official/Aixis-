@@ -486,6 +486,26 @@ async def continue_audit(
     return {"status": "resumed", "session_id": session_id, "message": "ログイン完了。自動監査を再開しました。"}
 
 
+def _run_in_browser(session_id: str, coro_fn):
+    """Helper: run an async Playwright coroutine in the executor's event loop.
+
+    The Playwright page runs in a background thread with its own event loop.
+    This helper safely dispatches async calls to that loop from FastAPI's thread.
+    """
+    import asyncio
+    from ...services.audit_runner import get_browser_page
+
+    page, loop = get_browser_page(session_id)
+    if not page:
+        raise HTTPException(404, "ブラウザが見つかりません。監査が実行中でない可能性があります。")
+    if not loop or not loop.is_running():
+        raise HTTPException(500, "ブラウザのイベントループが利用できません。")
+
+    coro = coro_fn(page)
+    future = asyncio.run_coroutine_threadsafe(coro, loop)
+    return future.result(timeout=15), page
+
+
 @router.get("/{session_id}/browser/screenshot")
 async def get_browser_screenshot(
     session_id: str,
@@ -493,34 +513,39 @@ async def get_browser_screenshot(
 ):
     """Get a live screenshot of the running browser (for login interaction)."""
     import base64
-    from ...services.audit_runner import get_browser_page
-
-    page = get_browser_page(session_id)
-    if not page:
-        raise HTTPException(404, "ブラウザが見つかりません。監査が実行中でない可能性があります。")
 
     try:
-        # Run screenshot in the executor's event loop context
-        # page.screenshot() is async but we're in a different thread
-        import asyncio
-        loop = None
-        try:
-            loop = page._impl_obj._dispatcher_fiber._loop
-        except Exception:
-            pass
-
-        if loop and loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(
-                page.screenshot(type="jpeg", quality=50), loop
-            )
-            screenshot_bytes = future.result(timeout=10)
-        else:
-            screenshot_bytes = await page.screenshot(type="jpeg", quality=50)
-
+        screenshot_bytes, page = _run_in_browser(
+            session_id,
+            lambda p: p.screenshot(type="jpeg", quality=50)
+        )
         b64 = base64.b64encode(screenshot_bytes).decode()
-        return {"screenshot": b64, "format": "jpeg", "url": page.url}
+        # Get URL safely
+        url = "unknown"
+        try:
+            from ...services.audit_runner import get_browser_page as _gbp
+            import asyncio
+            _, loop = _gbp(session_id)
+            if loop and loop.is_running():
+                url = asyncio.run_coroutine_threadsafe(
+                    asyncio.coroutine(lambda: page.url)() if False else _eval_url(page),
+                    loop
+                ).result(timeout=5)
+        except Exception:
+            try:
+                url = page.url
+            except Exception:
+                pass
+        return {"screenshot": b64, "format": "jpeg", "url": url}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"スクリーンショット取得失敗: {e}")
+
+
+async def _eval_url(page):
+    """Get page URL safely in async context."""
+    return page.url
 
 
 @router.post("/{session_id}/browser/click")
@@ -530,32 +555,17 @@ async def browser_click(
     _user: Annotated[User, Depends(require_analyst)],
 ):
     """Send a click action to the running browser (for login interaction)."""
-    from ...services.audit_runner import get_browser_page
-
-    page = get_browser_page(session_id)
-    if not page:
-        raise HTTPException(404, "ブラウザが見つかりません。")
-
     x = body.get("x", 0)
     y = body.get("y", 0)
 
     try:
-        import asyncio
-        loop = None
-        try:
-            loop = page._impl_obj._dispatcher_fiber._loop
-        except Exception:
-            pass
-
-        if loop and loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(
-                page.mouse.click(int(x), int(y)), loop
-            )
-            future.result(timeout=10)
-        else:
-            await page.mouse.click(int(x), int(y))
-
+        _run_in_browser(
+            session_id,
+            lambda p: p.mouse.click(int(x), int(y))
+        )
         return {"status": "clicked", "x": x, "y": y}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"クリック失敗: {e}")
 
@@ -567,31 +577,16 @@ async def browser_type(
     _user: Annotated[User, Depends(require_analyst)],
 ):
     """Send keyboard input to the running browser (for login interaction)."""
-    from ...services.audit_runner import get_browser_page
-
-    page = get_browser_page(session_id)
-    if not page:
-        raise HTTPException(404, "ブラウザが見つかりません。")
-
     text = body.get("text", "")
 
     try:
-        import asyncio
-        loop = None
-        try:
-            loop = page._impl_obj._dispatcher_fiber._loop
-        except Exception:
-            pass
-
-        if loop and loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(
-                page.keyboard.type(text, delay=50), loop
-            )
-            future.result(timeout=30)
-        else:
-            await page.keyboard.type(text, delay=50)
-
+        _run_in_browser(
+            session_id,
+            lambda p: p.keyboard.type(text, delay=50)
+        )
         return {"status": "typed", "length": len(text)}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"入力失敗: {e}")
 
