@@ -514,6 +514,8 @@
         }
     }
 
+    var lastClickX = null, lastClickY = null;
+
     window.onScreenshotClick = async function(event) {
         var img = event.target;
         var rect = img.getBoundingClientRect();
@@ -540,6 +542,8 @@
                 body: JSON.stringify({ x: x, y: y })
             });
             console.log('Click sent:', x, y, resp);
+            lastClickX = x;
+            lastClickY = y;
             if (coordsDisplay) coordsDisplay.textContent = 'Clicked: (' + x + ', ' + y + ') via ' + (resp.method || '?') + ' | ' + (resp.debug || '');
             // Refresh screenshot after click (wait a bit for page to react)
             setTimeout(refreshBrowserScreenshot, 800);
@@ -564,7 +568,7 @@
         try {
             await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/browser/type', {
                 method: 'POST',
-                body: JSON.stringify({ text: text })
+                body: JSON.stringify({ text: text, click_x: lastClickX, click_y: lastClickY })
             });
             input.value = '';
             if (typeStatus) typeStatus.textContent = 'Typed OK (' + text.length + ' chars)';

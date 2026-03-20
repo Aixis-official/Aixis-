@@ -642,29 +642,28 @@ async def browser_type(
 ):
     """Send keyboard input to the running browser.
 
-    Types into the currently FOCUSED element (the one the user last clicked).
+    Accepts optional click_x/click_y to re-click and focus before typing.
     """
     text = body.get("text", "")
+    click_x = body.get("click_x")
+    click_y = body.get("click_y")
 
     try:
         async def smart_type(page):
-            # Clear the focused field first, then type character-by-character.
-            # Using press_sequentially (not fill!) to trigger proper React/Vue
-            # keyboard events — fill() sets DOM value but skips framework state.
-            try:
-                focused = page.locator(':focus')
-                if await focused.count() > 0:
-                    tag = await focused.evaluate("el => el.tagName")
-                    if tag in ("INPUT", "TEXTAREA", "SELECT"):
-                        # Clear existing content
-                        await focused.evaluate("el => { el.value = ''; el.dispatchEvent(new Event('input', {bubbles:true})); }")
-                        # Type character by character (triggers React onChange)
-                        await focused.press_sequentially(text, delay=20)
-                        return
-            except Exception:
-                pass
+            import asyncio as _aio
 
-            # Fallback: keyboard.type into whatever has focus
+            # Re-click at the last click position to ensure focus
+            if click_x is not None and click_y is not None:
+                await page.mouse.click(int(click_x), int(click_y))
+                await _aio.sleep(0.2)
+
+            # Select all + delete to clear existing content
+            await page.keyboard.press("Control+a")
+            await _aio.sleep(0.05)
+            await page.keyboard.press("Backspace")
+            await _aio.sleep(0.05)
+
+            # Type character by character (triggers React/Vue onChange properly)
             await page.keyboard.type(text, delay=20)
 
         _run_in_browser(session_id, lambda p: smart_type(p))
