@@ -554,15 +554,39 @@ async def browser_click(
     body: dict,
     _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Send a click action to the running browser (for login interaction)."""
-    x = body.get("x", 0)
-    y = body.get("y", 0)
+    """Send a click action to the running browser (for login interaction).
+
+    Uses both Playwright mouse API and JavaScript click dispatch for reliability
+    (Google OAuth pages sometimes block synthetic Playwright mouse events).
+    """
+    x = int(body.get("x", 0))
+    y = int(body.get("y", 0))
 
     try:
-        _run_in_browser(
-            session_id,
-            lambda p: p.mouse.click(int(x), int(y))
-        )
+        # Step 1: Move mouse to position (triggers hover effects)
+        _run_in_browser(session_id, lambda p: p.mouse.move(x, y))
+
+        # Step 2: Use JS to find element at coordinates, focus and click it
+        async def js_click(page):
+            await page.evaluate("""({x, y}) => {
+                const el = document.elementFromPoint(x, y);
+                if (el) {
+                    // Dispatch proper mouse events
+                    const events = ['mousedown', 'mouseup', 'click'];
+                    for (const type of events) {
+                        el.dispatchEvent(new MouseEvent(type, {
+                            bubbles: true, cancelable: true, view: window,
+                            clientX: x, clientY: y
+                        }));
+                    }
+                    // Also focus the element (important for input fields)
+                    if (el.focus) el.focus();
+                }
+            }""", {"x": x, "y": y})
+            # Also do a real Playwright click as backup
+            await page.mouse.click(x, y)
+
+        _run_in_browser(session_id, lambda p: js_click(p))
         return {"status": "clicked", "x": x, "y": y}
     except HTTPException:
         raise
@@ -580,10 +604,31 @@ async def browser_type(
     text = body.get("text", "")
 
     try:
-        _run_in_browser(
-            session_id,
-            lambda p: p.keyboard.type(text, delay=50)
-        )
+        # Use JS to insert text into the active element + Playwright keyboard as backup
+        async def js_type(page):
+            # First try JS value injection (works even when Playwright keyboard is blocked)
+            await page.evaluate("""(text) => {
+                const el = document.activeElement;
+                if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+                    // For standard input/textarea: set value and dispatch events
+                    const nativeSetter = Object.getOwnPropertyDescriptor(
+                        window.HTMLInputElement.prototype, 'value'
+                    )?.set || Object.getOwnPropertyDescriptor(
+                        window.HTMLTextAreaElement.prototype, 'value'
+                    )?.set;
+                    if (nativeSetter) nativeSetter.call(el, text);
+                    else el.value = text;
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                    // For contenteditable or no active element: use keyboard
+                    // (will be handled by Playwright keyboard.type below)
+                }
+            }""", text)
+            # Also type via Playwright keyboard (handles contenteditable, non-React inputs)
+            await page.keyboard.type(text, delay=30)
+
+        _run_in_browser(session_id, lambda p: js_type(p))
         return {"status": "typed", "length": len(text)}
     except HTTPException:
         raise
