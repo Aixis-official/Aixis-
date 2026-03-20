@@ -562,78 +562,44 @@ async def browser_click(
     x = int(body.get("x", 0))
     y = int(body.get("y", 0))
 
+    method = "none"
     try:
         async def smart_click(page):
-            import asyncio as _aio
+            nonlocal method
 
-            # Step 1: Identify what element is at the click coordinates
-            el_info = await page.evaluate("""({x, y}) => {
+            # Get visible text at click coordinates
+            el_text = await page.evaluate("""({x, y}) => {
                 const el = document.elementFromPoint(x, y);
-                if (!el) return null;
-                // Walk up to find the nearest clickable ancestor
-                let target = el;
-                for (let i = 0; i < 5; i++) {
-                    if (!target) break;
-                    const tag = target.tagName;
-                    if (tag === 'BUTTON' || tag === 'A' || target.getAttribute('role') === 'button'
-                        || target.type === 'submit' || target.id) {
-                        break;
-                    }
-                    target = target.parentElement;
+                if (!el) return '';
+                let t = el;
+                for (let i = 0; i < 8; i++) {
+                    if (!t) break;
+                    const txt = (t.innerText || '').trim();
+                    if (txt && txt.length < 50) return txt.split('\\n')[0].trim();
+                    t = t.parentElement;
                 }
-                if (!target) target = el;
-                return {
-                    tag: target.tagName,
-                    id: target.id || '',
-                    text: (target.innerText || '').slice(0, 30).trim(),
-                    role: target.getAttribute('role') || '',
-                    type: target.type || '',
-                };
+                return '';
             }""", {"x": x, "y": y})
 
-            clicked = False
+            # Try strategies in order of reliability
+            strategies = []
+            if el_text:
+                strategies.append(("role_button", lambda: page.get_by_role("button", name=el_text).click(timeout=3000)))
+                strategies.append(("role_link", lambda: page.get_by_role("link", name=el_text).click(timeout=3000)))
+                strategies.append(("get_by_text", lambda: page.get_by_text(el_text, exact=True).click(timeout=3000)))
+            strategies.append(("mouse", lambda: page.mouse.click(x, y)))
 
-            # Step 2: Try Playwright locator click (most reliable for buttons)
-            if el_info:
-                selectors_to_try = []
-                if el_info.get("id"):
-                    selectors_to_try.append(f"#{el_info['id']}")
-                text = el_info.get("text", "")
-                if text and (el_info.get("tag") in ("BUTTON", "A", "DIV") or el_info.get("role") == "button"):
-                    selectors_to_try.append(f"button:has-text('{text}')")
-                    selectors_to_try.append(f"[role='button']:has-text('{text}')")
-                    selectors_to_try.append(f"text='{text}'")
-
-                for sel in selectors_to_try:
-                    try:
-                        loc = page.locator(sel).first
-                        if await loc.count() > 0:
-                            await loc.click(timeout=3000)
-                            clicked = True
-                            break
-                    except Exception:
-                        continue
-
-            # Step 3: Fallback to CDP click
-            if not clicked:
+            for name, fn in strategies:
                 try:
-                    cdp = await page.context.new_cdp_session(page)
-                    try:
-                        await cdp.send("Input.dispatchMouseEvent", {
-                            "type": "mousePressed", "x": x, "y": y,
-                            "button": "left", "clickCount": 1,
-                        })
-                        await cdp.send("Input.dispatchMouseEvent", {
-                            "type": "mouseReleased", "x": x, "y": y,
-                            "button": "left", "clickCount": 1,
-                        })
-                    finally:
-                        await cdp.detach()
+                    await fn()
+                    method = name
+                    return
                 except Exception:
-                    await page.mouse.click(x, y)
+                    continue
+            method = "all_failed"
 
         _run_in_browser(session_id, lambda p: smart_click(p))
-        return {"status": "clicked", "x": x, "y": y}
+        return {"status": "clicked", "x": x, "y": y, "method": method}
     except HTTPException:
         raise
     except Exception as e:
