@@ -549,11 +549,6 @@
     };
 
     // Auto-start browser viewer when in waiting_login state
-    var _origUpdateUI = updateUI;
-    if (typeof updateUI === 'function') {
-        // Monkey-patch to detect waiting_login state changes
-    }
-    // Check periodically if we should start the viewer
     setInterval(function() {
         var section = document.getElementById('waiting-login-section');
         if (section && !section.classList.contains('hidden') && !browserViewerActive) {
