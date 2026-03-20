@@ -233,8 +233,8 @@ class AIBrowserExecutor(TestExecutor):
         except Exception:
             pass
 
-    async def initialize(self, target_config: TargetConfig) -> None:
-        """Launch browser and navigate to target tool."""
+    async def initialize(self, target_config: TargetConfig, auth_storage_state: dict | None = None) -> None:
+        """Launch browser, inject auth cookies, then navigate to target tool."""
         self._config = target_config
         self._screenshots_dir.mkdir(parents=True, exist_ok=True)
         self._workflow.reset_url = target_config.url
@@ -282,11 +282,44 @@ class AIBrowserExecutor(TestExecutor):
         self._context.set_default_navigation_timeout(300_000)
         self._context.set_default_timeout(60_000)
 
+        # Inject auth cookies BEFORE navigating (so the page loads authenticated)
+        if auth_storage_state:
+            cookies = auth_storage_state.get("cookies", [])
+            if cookies:
+                target_domain = target_config.url.split("//")[-1].split("/")[0]
+                normalized = []
+                for c in cookies:
+                    if not c.get("name") or not c.get("value"):
+                        continue
+                    nc = {"name": c["name"], "value": c["value"]}
+                    domain = c.get("domain", "").strip()
+                    if domain:
+                        nc["domain"] = domain if domain.startswith(".") else domain
+                    else:
+                        nc["url"] = target_config.url
+                    if c.get("path"):
+                        nc["path"] = c["path"]
+                    if c.get("secure") is not None:
+                        nc["secure"] = bool(c["secure"])
+                    if c.get("httpOnly") is not None:
+                        nc["httpOnly"] = bool(c["httpOnly"])
+                    if c.get("sameSite"):
+                        ss = str(c["sameSite"]).capitalize()
+                        if ss in ("Strict", "Lax", "None"):
+                            nc["sameSite"] = ss
+                    normalized.append(nc)
+                if normalized:
+                    await self._context.add_cookies(normalized)
+                    print(f"[AUTH] Injected {len(normalized)} cookies BEFORE navigation", flush=True)
+
+            # Store for per-test re-injection
+            self._auth_storage_state = auth_storage_state
+
         await self._page.goto(
             target_config.url, wait_until="domcontentloaded", timeout=60_000
         )
 
-        # Manual login wait
+        # Manual login wait (only needed if cookies didn't work)
         if target_config.wait_for_manual_login and self._login_event:
             logger.info("Waiting for manual login at %s", target_config.url)
             while not self._login_event.is_set():

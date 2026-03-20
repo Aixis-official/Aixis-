@@ -121,7 +121,7 @@ class Pipeline:
             total_ai_tokens_out = 0
 
             try:
-                await executor.initialize(self.target_config)
+                await executor.initialize(self.target_config, auth_storage_state=self.auth_storage_state)
 
                 # Inject saved auth cookies if available
                 print(f"[AUTH DEBUG] auth_storage_state={type(self.auth_storage_state).__name__}, has_context={hasattr(executor, '_context')}, context_truthy={bool(getattr(executor, '_context', None))}", flush=True)
