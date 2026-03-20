@@ -515,28 +515,22 @@ async def get_browser_screenshot(
     import base64
 
     try:
-        screenshot_bytes, page = _run_in_browser(
-            session_id,
-            lambda p: p.screenshot(type="jpeg", quality=50)
-        )
+        # Capture screenshot + viewport size in a single call
+        async def capture(page):
+            ss = await page.screenshot(type="jpeg", quality=50)
+            vp = page.viewport_size or {"width": 1280, "height": 800}
+            url = page.url
+            return ss, vp, url
+
+        (screenshot_bytes, viewport, url), page = _run_in_browser(session_id, capture)
         b64 = base64.b64encode(screenshot_bytes).decode()
-        # Get URL safely
-        url = "unknown"
-        try:
-            from ...services.audit_runner import get_browser_page as _gbp
-            import asyncio
-            _, loop = _gbp(session_id)
-            if loop and loop.is_running():
-                url = asyncio.run_coroutine_threadsafe(
-                    asyncio.coroutine(lambda: page.url)() if False else _eval_url(page),
-                    loop
-                ).result(timeout=5)
-        except Exception:
-            try:
-                url = page.url
-            except Exception:
-                pass
-        return {"screenshot": b64, "format": "jpeg", "url": url}
+        return {
+            "screenshot": b64,
+            "format": "jpeg",
+            "url": url,
+            "viewport_width": viewport.get("width", 1280),
+            "viewport_height": viewport.get("height", 800),
+        }
     except HTTPException:
         raise
     except Exception as e:

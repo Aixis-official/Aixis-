@@ -476,6 +476,8 @@
     // --- Browser screenshot viewer for login interaction ---
     var screenshotInterval = null;
     var browserViewerActive = false;
+    var browserViewportWidth = 1280;
+    var browserViewportHeight = 800;
 
     async function refreshBrowserScreenshot() {
         try {
@@ -488,6 +490,9 @@
                 if (resp.url) {
                     document.getElementById('browser-url').textContent = resp.url;
                 }
+                // Update viewport dimensions from server
+                if (resp.viewport_width) browserViewportWidth = resp.viewport_width;
+                if (resp.viewport_height) browserViewportHeight = resp.viewport_height;
             }
         } catch (e) {
             // Browser not ready yet, keep showing loading
@@ -512,9 +517,9 @@
     window.onScreenshotClick = async function(event) {
         var img = event.target;
         var rect = img.getBoundingClientRect();
-        // Scale click coordinates to actual browser viewport (1280x800)
-        var scaleX = 1280 / rect.width;
-        var scaleY = 800 / rect.height;
+        // Scale click coordinates to actual browser viewport (dynamic size)
+        var scaleX = browserViewportWidth / rect.width;
+        var scaleY = browserViewportHeight / rect.height;
         var x = Math.round((event.clientX - rect.left) * scaleX);
         var y = Math.round((event.clientY - rect.top) * scaleY);
 
