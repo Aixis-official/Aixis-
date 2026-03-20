@@ -84,9 +84,38 @@
                     </div>
                     <div class="flex-1">
                         <h3 class="text-base font-semibold text-amber-800 dark:text-amber-300 font-jp mb-2">ログインを完了してください</h3>
-                        <p class="text-sm text-amber-700 dark:text-amber-400 font-jp mb-1">ブラウザが開かれています。対象ツールにログインしてください。</p>
-                        <p class="text-sm text-amber-700 dark:text-amber-400 font-jp mb-1">ログインが完了したら、下のボタンをクリックして自動監査を開始します。</p>
-                        <p class="text-xs text-amber-600 dark:text-amber-500 font-jp mb-4">※ 認証Cookieが設定済みの場合は自動的にログイン状態でテストされます。</p>
+                        <p class="text-sm text-amber-700 dark:text-amber-400 font-jp mb-1">下の画面でツールにログインしてください。画面をクリックして操作できます。</p>
+                        <p class="text-sm text-amber-700 dark:text-amber-400 font-jp mb-1">ログインが完了したら「監査を続行」ボタンで自動テストを開始します。</p>
+                        <p class="text-xs text-amber-600 dark:text-amber-500 font-jp mb-4">※ 画像は2秒ごとに更新されます。クリックするとブラウザに操作が送信されます。</p>
+
+                        <!-- Live browser screenshot viewer -->
+                        <div id="browser-viewer" class="mb-4 relative bg-gray-900 rounded-lg overflow-hidden" style="max-width: 960px;">
+                            <img id="browser-screenshot" src="" alt="ブラウザ画面"
+                                 class="w-full cursor-pointer select-none" draggable="false"
+                                 style="display: none; image-rendering: auto;"
+                                 onclick="onScreenshotClick(event)" />
+                            <div id="browser-loading" class="flex items-center justify-center py-20 text-gray-400">
+                                <svg class="animate-spin h-6 w-6 mr-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                ブラウザ画面を読み込み中...
+                            </div>
+                            <div id="click-indicator" class="absolute pointer-events-none bg-blue-500 rounded-full opacity-0 transition-opacity duration-300"
+                                 style="width: 20px; height: 20px; transform: translate(-50%, -50%);"></div>
+                            <div class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                <span id="browser-url" class="font-mono">...</span>
+                            </div>
+                        </div>
+
+                        <!-- Keyboard input -->
+                        <div class="flex gap-2 mb-4" style="max-width: 960px;">
+                            <input id="browser-text-input" type="text" placeholder="テキスト入力（Enterで送信）"
+                                   class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                   onkeydown="if(event.key==='Enter'){sendBrowserText(); event.preventDefault();}" />
+                            <button onclick="sendBrowserText()"
+                                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg">
+                                送信
+                            </button>
+                        </div>
+
                         <button onclick="continueAudit()" id="continue-button"
                                 class="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 rounded-lg transition-colors duration-150 shadow-sm font-jp">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -437,6 +466,102 @@
             btn.innerHTML = '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg><span class="font-jp">ログイン完了 — 監査を続行</span>';
         }
     };
+
+    // --- Browser screenshot viewer for login interaction ---
+    var screenshotInterval = null;
+    var browserViewerActive = false;
+
+    async function refreshBrowserScreenshot() {
+        try {
+            var resp = await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/browser/screenshot');
+            if (resp.screenshot) {
+                var img = document.getElementById('browser-screenshot');
+                img.src = 'data:image/jpeg;base64,' + resp.screenshot;
+                img.style.display = 'block';
+                document.getElementById('browser-loading').style.display = 'none';
+                if (resp.url) {
+                    document.getElementById('browser-url').textContent = resp.url;
+                }
+            }
+        } catch (e) {
+            // Browser not ready yet, keep showing loading
+        }
+    }
+
+    function startBrowserViewer() {
+        if (browserViewerActive) return;
+        browserViewerActive = true;
+        refreshBrowserScreenshot();
+        screenshotInterval = setInterval(refreshBrowserScreenshot, 2000);
+    }
+
+    function stopBrowserViewer() {
+        browserViewerActive = false;
+        if (screenshotInterval) {
+            clearInterval(screenshotInterval);
+            screenshotInterval = null;
+        }
+    }
+
+    window.onScreenshotClick = async function(event) {
+        var img = event.target;
+        var rect = img.getBoundingClientRect();
+        // Scale click coordinates to actual browser viewport (1280x800)
+        var scaleX = 1280 / rect.width;
+        var scaleY = 800 / rect.height;
+        var x = Math.round((event.clientX - rect.left) * scaleX);
+        var y = Math.round((event.clientY - rect.top) * scaleY);
+
+        // Show click indicator
+        var indicator = document.getElementById('click-indicator');
+        indicator.style.left = event.clientX - rect.left + 'px';
+        indicator.style.top = event.clientY - rect.top + 'px';
+        indicator.style.opacity = '0.7';
+        setTimeout(function() { indicator.style.opacity = '0'; }, 300);
+
+        try {
+            await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/browser/click', {
+                method: 'POST',
+                body: JSON.stringify({ x: x, y: y })
+            });
+            // Refresh screenshot after click
+            setTimeout(refreshBrowserScreenshot, 500);
+        } catch (e) {
+            console.error('Click failed:', e);
+        }
+    };
+
+    window.sendBrowserText = async function() {
+        var input = document.getElementById('browser-text-input');
+        var text = input.value;
+        if (!text) return;
+
+        try {
+            await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/browser/type', {
+                method: 'POST',
+                body: JSON.stringify({ text: text })
+            });
+            input.value = '';
+            setTimeout(refreshBrowserScreenshot, 500);
+        } catch (e) {
+            console.error('Type failed:', e);
+        }
+    };
+
+    // Auto-start browser viewer when in waiting_login state
+    var _origUpdateUI = updateUI;
+    if (typeof updateUI === 'function') {
+        // Monkey-patch to detect waiting_login state changes
+    }
+    // Check periodically if we should start the viewer
+    setInterval(function() {
+        var section = document.getElementById('waiting-login-section');
+        if (section && !section.classList.contains('hidden') && !browserViewerActive) {
+            startBrowserViewer();
+        } else if (section && section.classList.contains('hidden') && browserViewerActive) {
+            stopBrowserViewer();
+        }
+    }, 1000);
 
     window.abortAudit = async function() {
         if (!confirm('この監査を中止しますか？API使用が即座に停止されます。')) return;

@@ -486,6 +486,116 @@ async def continue_audit(
     return {"status": "resumed", "session_id": session_id, "message": "ログイン完了。自動監査を再開しました。"}
 
 
+@router.get("/{session_id}/browser/screenshot")
+async def get_browser_screenshot(
+    session_id: str,
+    _user: Annotated[User, Depends(require_analyst)],
+):
+    """Get a live screenshot of the running browser (for login interaction)."""
+    import base64
+    from ...services.audit_runner import get_browser_page
+
+    page = get_browser_page(session_id)
+    if not page:
+        raise HTTPException(404, "ブラウザが見つかりません。監査が実行中でない可能性があります。")
+
+    try:
+        # Run screenshot in the executor's event loop context
+        # page.screenshot() is async but we're in a different thread
+        import asyncio
+        loop = None
+        try:
+            loop = page._impl_obj._dispatcher_fiber._loop
+        except Exception:
+            pass
+
+        if loop and loop.is_running():
+            future = asyncio.run_coroutine_threadsafe(
+                page.screenshot(type="jpeg", quality=50), loop
+            )
+            screenshot_bytes = future.result(timeout=10)
+        else:
+            screenshot_bytes = await page.screenshot(type="jpeg", quality=50)
+
+        b64 = base64.b64encode(screenshot_bytes).decode()
+        return {"screenshot": b64, "format": "jpeg", "url": page.url}
+    except Exception as e:
+        raise HTTPException(500, f"スクリーンショット取得失敗: {e}")
+
+
+@router.post("/{session_id}/browser/click")
+async def browser_click(
+    session_id: str,
+    body: dict,
+    _user: Annotated[User, Depends(require_analyst)],
+):
+    """Send a click action to the running browser (for login interaction)."""
+    from ...services.audit_runner import get_browser_page
+
+    page = get_browser_page(session_id)
+    if not page:
+        raise HTTPException(404, "ブラウザが見つかりません。")
+
+    x = body.get("x", 0)
+    y = body.get("y", 0)
+
+    try:
+        import asyncio
+        loop = None
+        try:
+            loop = page._impl_obj._dispatcher_fiber._loop
+        except Exception:
+            pass
+
+        if loop and loop.is_running():
+            future = asyncio.run_coroutine_threadsafe(
+                page.mouse.click(int(x), int(y)), loop
+            )
+            future.result(timeout=10)
+        else:
+            await page.mouse.click(int(x), int(y))
+
+        return {"status": "clicked", "x": x, "y": y}
+    except Exception as e:
+        raise HTTPException(500, f"クリック失敗: {e}")
+
+
+@router.post("/{session_id}/browser/type")
+async def browser_type(
+    session_id: str,
+    body: dict,
+    _user: Annotated[User, Depends(require_analyst)],
+):
+    """Send keyboard input to the running browser (for login interaction)."""
+    from ...services.audit_runner import get_browser_page
+
+    page = get_browser_page(session_id)
+    if not page:
+        raise HTTPException(404, "ブラウザが見つかりません。")
+
+    text = body.get("text", "")
+
+    try:
+        import asyncio
+        loop = None
+        try:
+            loop = page._impl_obj._dispatcher_fiber._loop
+        except Exception:
+            pass
+
+        if loop and loop.is_running():
+            future = asyncio.run_coroutine_threadsafe(
+                page.keyboard.type(text, delay=50), loop
+            )
+            future.result(timeout=30)
+        else:
+            await page.keyboard.type(text, delay=50)
+
+        return {"status": "typed", "length": len(text)}
+    except Exception as e:
+        raise HTTPException(500, f"入力失敗: {e}")
+
+
 @router.post("/{session_id}/abort")
 async def abort_audit(
     session_id: str,

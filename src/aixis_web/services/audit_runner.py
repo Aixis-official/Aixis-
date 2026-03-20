@@ -79,6 +79,31 @@ def resume_after_login(session_id: str) -> bool:
     return False
 
 
+def get_browser_page(session_id: str):
+    """Get the Playwright page from a running audit's executor.
+
+    Returns the Page object or None if not available.
+    Searches by both session_id and db_session_id.
+    """
+    with _lock:
+        info = _running_audits.get(session_id)
+        if not info:
+            # Search by db_session_id
+            for sid, i in _running_audits.items():
+                if i.get("db_session_id") == session_id:
+                    info = i
+                    break
+        if not info:
+            return None
+        pipeline = info.get("pipeline")
+        if not pipeline:
+            return None
+        executor = getattr(pipeline, "_executor", None)
+        if not executor:
+            return None
+        return getattr(executor, "_page", None)
+
+
 # ---------------------------------------------------------------------------
 # Agent imports (lazy to avoid import errors when agent deps aren't installed)
 # ---------------------------------------------------------------------------
@@ -130,6 +155,11 @@ def _run_pipeline_sync(
             auth_storage_state=auth_storage_state,
             budget_overrides=budget_overrides,
         )
+
+        # Store pipeline reference for external access (screenshot/click from dashboard)
+        with _lock:
+            if session_id in _running_audits:
+                _running_audits[session_id]["pipeline"] = pipeline
 
         # Create abort event for this session
         abort_event = threading.Event()

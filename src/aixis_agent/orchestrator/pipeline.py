@@ -57,6 +57,9 @@ class Pipeline:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.target_config = load_target_config(target_config_path)
 
+        # Exposed for external access (e.g., dashboard screenshot capture)
+        self._executor = None
+
     async def run(self, session_id: str | None = None, resume: bool = False,
                   login_event=None, abort_event=None,
                   progress_callback=None) -> str:
@@ -106,6 +109,7 @@ class Pipeline:
 
             screenshots_dir = self.output_dir / session_id / "screenshots"
             executor = self._create_executor(screenshots_dir, login_event, abort_event)
+            self._executor = executor  # Expose for external screenshot/click access
 
             # Track aggregate AI metrics
             total_ai_steps = 0
