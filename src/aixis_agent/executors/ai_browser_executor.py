@@ -728,32 +728,45 @@ class AIBrowserExecutor(TestExecutor):
             # Auth succeeded — reset counter
             self._consecutive_auth_failures = 0
 
-        # 2. Find input field via DOM — retry with wait for SPA rendering
-        # Build selector list: config input_selector first (highest priority), then generic fallbacks
-        config_input_selectors = []
+        # 2. Find input field via DOM — use Playwright native wait_for_selector
+        # Build selector list: config input_selector first, then generic fallbacks
+        all_selectors = []
         if self._config.input_selector:
-            # Support comma-separated selectors from config
-            config_input_selectors = [s.strip() for s in self._config.input_selector.split(",") if s.strip()]
+            all_selectors.extend([s.strip() for s in self._config.input_selector.split(",") if s.strip()])
+        all_selectors.extend([
+            'textarea:not([disabled]):not([readonly])',
+            '[contenteditable="true"]',
+            '[contenteditable]',
+            '[role="textbox"]',
+            'input[type="text"]:not([disabled]):not([readonly])',
+            '.ProseMirror',
+            '.ql-editor',
+        ])
 
         input_info = None
-        for attempt in range(6):  # Try up to 6 times (0, 2, 4, 6, 8, 10 seconds wait)
-            if attempt > 0:
-                await asyncio.sleep(2)
-            input_info = await self._page.evaluate("""(configSelectors) => {
-                const selectors = [
-                    ...configSelectors,
-                    'textarea:not([disabled]):not([readonly])',
-                    '[contenteditable="true"]',
-                    '[contenteditable]',
-                    '[role="textbox"]',
-                    'input[type="text"]:not([disabled]):not([readonly])',
-                    '[data-placeholder]',
-                    '.ProseMirror',
-                    '.ql-editor',
-                    '[class*="input"][class*="text"]',
-                    '[class*="prompt"]',
-                    '[class*="editor"]',
-                ];
+
+        # Phase 1: Playwright native wait (efficient, no polling) — 30 seconds
+        for sel in all_selectors:
+            try:
+                el = await self._page.wait_for_selector(sel, timeout=30_000, state="visible")
+                if el:
+                    box = await el.bounding_box()
+                    if box and box["width"] > 50 and box["height"] > 10:
+                        input_info = {
+                            "x": box["x"] + box["width"] / 2,
+                            "y": box["y"] + box["height"] / 2,
+                            "found": True,
+                            "tag": await el.evaluate("el => el.tagName"),
+                            "sel": sel,
+                        }
+                        print(f"[DOM] Found input via wait_for_selector: {sel} at ({input_info['x']:.0f}, {input_info['y']:.0f})", flush=True)
+                        break
+            except Exception:
+                continue  # Selector timed out, try next
+
+        # Phase 2: Quick JS scan fallback (catches dynamic elements the wait might miss)
+        if not input_info or not input_info.get("found"):
+            input_info = await self._page.evaluate("""(selectors) => {
                 for (const sel of selectors) {
                     try {
                         const els = document.querySelectorAll(sel);
@@ -766,9 +779,7 @@ class AIBrowserExecutor(TestExecutor):
                     } catch(e) {}
                 }
                 return { found: false };
-            }""", config_input_selectors)
-            if input_info and input_info.get("found"):
-                break
+            }""", all_selectors)
 
         if not input_info or not input_info.get("found"):
             # Debug: log what's actually on the page
