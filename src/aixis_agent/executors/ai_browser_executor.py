@@ -246,16 +246,13 @@ class AIBrowserExecutor(TestExecutor):
 
         self._cleanup_stale_locks(user_data_dir)
 
-        self._context = await self._playwright.chromium.launch_persistent_context(
+        # Use system Chrome if available (Google OAuth trusts real Chrome over Chromium)
+        # Falls back to Playwright's bundled Chromium if Chrome is not installed
+        launch_kwargs = dict(
             user_data_dir=str(user_data_dir),
             headless=target_config.headless,
             locale=target_config.locale,
             viewport={"width": 1280, "height": 800},
-            user_agent=(
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/131.0.0.0 Safari/537.36"
-            ),
             args=[
                 "--disable-blink-features=AutomationControlled",
                 "--no-first-run",
@@ -263,6 +260,20 @@ class AIBrowserExecutor(TestExecutor):
             ],
             ignore_default_args=["--enable-automation"],
         )
+        try:
+            self._context = await self._playwright.chromium.launch_persistent_context(
+                channel="chrome", **launch_kwargs
+            )
+            print("[BROWSER] Using system Chrome", flush=True)
+        except Exception:
+            # Chrome not installed — use bundled Chromium with stealth user-agent
+            launch_kwargs["user_agent"] = (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/131.0.0.0 Safari/537.36"
+            )
+            self._context = await self._playwright.chromium.launch_persistent_context(**launch_kwargs)
+            print("[BROWSER] Using bundled Chromium (Chrome not found)", flush=True)
         self._page = (
             self._context.pages[0]
             if self._context.pages

@@ -642,33 +642,26 @@ async def browser_type(
 ):
     """Send keyboard input to the running browser.
 
-    Strategy:
-    1. Try Playwright locator.fill() on visible input (most reliable)
-    2. Fall back to CDP Input.insertText (bypasses bot detection)
-    3. Last resort: keyboard.type()
+    Types into the currently FOCUSED element (the one the user last clicked).
     """
     text = body.get("text", "")
 
     try:
         async def smart_type(page):
-            # Strategy 1: Find visible input/textarea and fill it directly
-            # This uses Playwright's high-level API which handles React, Google, etc.
+            # Strategy 1: Fill the currently focused element
+            # This respects which field the user clicked on
             try:
-                input_loc = page.locator(
-                    'input[type="email"]:visible, '
-                    'input[type="text"]:visible, '
-                    'input[type="password"]:visible, '
-                    'textarea:visible'
-                ).first
-                if await input_loc.count() > 0:
-                    await input_loc.fill(text)
-                    return
+                focused = page.locator(':focus')
+                if await focused.count() > 0:
+                    tag = await focused.evaluate("el => el.tagName")
+                    if tag in ("INPUT", "TEXTAREA", "SELECT"):
+                        await focused.fill(text)
+                        return
             except Exception:
                 pass
 
-            # Strategy 2: CDP Input.insertText (low-level, bypasses bot detection)
+            # Strategy 2: CDP Input.insertText (types into focused element at low level)
             try:
-                # First click on the input to focus it
                 cdp = await page.context.new_cdp_session(page)
                 try:
                     await cdp.send("Input.insertText", {"text": text})
