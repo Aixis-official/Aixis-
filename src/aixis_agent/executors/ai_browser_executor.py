@@ -167,6 +167,7 @@ class AIBrowserExecutor(TestExecutor):
         self._workflow: LearnedWorkflow = LearnedWorkflow()
         self._first_test_done: bool = False
         self._consecutive_failures: int = 0
+        self._consecutive_input_failures: int = 0  # input not found streak
 
     def set_login_event(self, event: threading.Event) -> None:
         self._login_event = event
@@ -718,9 +719,9 @@ class AIBrowserExecutor(TestExecutor):
 
         if any(p in current_url for p in signin_patterns):
             self._consecutive_auth_failures += 1
-            if self._consecutive_auth_failures >= 3:
-                # 3回連続認証失敗 → 監査を自動停止（残り全テストスキップ）
-                print(f"[AUTH] 3回連続認証失敗 — 監査を自動停止します", flush=True)
+            if self._consecutive_auth_failures >= 2:
+                # 2回連続認証失敗 → 監査を自動停止（残り全テストスキップ）
+                print(f"[AUTH] {self._consecutive_auth_failures}回連続認証失敗 — 監査を自動停止します", flush=True)
                 self._abort_event.set()
             return await self._make_result(start_time, error="認証エラー: ログインページにリダイレクトされました。認証Cookie/localStorageを再設定してください。")
         else:
@@ -770,7 +771,7 @@ class AIBrowserExecutor(TestExecutor):
                 break
 
         if not input_info or not input_info.get("found"):
-            # Debug: log what's actually on the page (including auth state clues)
+            # Debug: log what's actually on the page
             page_debug = await self._page.evaluate("""() => {
                 const url = location.href;
                 const title = document.title;
@@ -779,94 +780,95 @@ class AIBrowserExecutor(TestExecutor):
                     const r = el.getBoundingClientRect();
                     return el.tagName + '.' + (el.className||'').toString().slice(0,40) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '@' + Math.round(r.top);
                 });
-                const iframes = document.querySelectorAll('iframe');
-                // Check for common auth/login indicators in page content
                 const bodyText = (document.body?.innerText || '').slice(0, 500);
-                const hasSignIn = /sign.?in|log.?in|ログイン|サインイン|create.?account|sign.?up/i.test(bodyText);
-                return { url, title, elements: items, iframeCount: iframes.length, bodyLen: document.body?.innerText?.length || 0, hasSignIn, bodyPreview: bodyText.slice(0, 200) };
+                const hasSignIn = /sign.?in|log.?in|ログイン|サインイン|create.?account|sign.?up|get.?started/i.test(bodyText);
+                return { url, title, elements: items, bodyLen: document.body?.innerText?.length || 0, hasSignIn, bodyPreview: bodyText.slice(0, 200) };
             }""")
             print(f"[DOM-FIRST] Input not found! Page: {page_debug}", flush=True)
-            logger.warning("DOM-first: input not found. URL=%s, title=%s, elements=%d, iframes=%d, hasSignIn=%s",
-                           page_debug.get("url", "?"), page_debug.get("title", "?"),
-                           len(page_debug.get("elements", [])), page_debug.get("iframeCount", 0),
-                           page_debug.get("hasSignIn", "?"))
 
-            # Content-based auth check: page loaded but no input + sign-in text detected
-            if page_debug.get("hasSignIn") and len(page_debug.get("elements", [])) == 0:
+            # --- Consecutive input failure tracking ---
+            self._consecutive_input_failures += 1
+            page_url = page_debug.get("url", "不明")
+            page_title = page_debug.get("title", "不明")
+
+            # Content-based auth check: sign-in text detected on page
+            if page_debug.get("hasSignIn"):
                 self._consecutive_auth_failures += 1
-                if self._consecutive_auth_failures >= 3:
-                    print(f"[AUTH] ページにログイン要素を検出 — 監査を自動停止", flush=True)
+                if self._consecutive_auth_failures >= 2:
+                    print(f"[AUTH] ページにログイン要素を検出×{self._consecutive_auth_failures}回 — 監査を自動停止", flush=True)
                     self._abort_event.set()
-                return await self._make_result(start_time, error="認証エラー: ページにログイン/サインイン要素が検出されました。再ログインが必要です。")
+                return await self._make_result(start_time, error=f"認証エラー: ページにログイン/サインイン要素が検出されました（{page_url}）。再ログインが必要です。")
 
-            # Use ONE API call to identify the input location
-            ai_locate_error = None
-            if not self._budget.is_exhausted:
+            # --- FIRST TEST ONLY: Use AI to diagnose & try to find input ---
+            if not self._first_test_done and not self._budget.is_exhausted:
+                self._first_test_done = True  # Mark NOW to prevent repeat on 2nd+ tests
+
+                # ONE screenshot + AI call to diagnose the page state
                 try:
                     ss_b64 = await self._screenshot_b64()
-                    locate_prompt = (
-                        "画面のスクリーンショットを見て、テキスト入力欄の位置を特定してください。"
-                        "プロンプトや質問を入力するテキストエリア/入力欄のX,Y座標を返してください。"
-                        'JSON: {"x": 数値, "y": 数値, "found": true/false, "description": "入力欄の説明"}'
+                    diagnose_prompt = (
+                        "画面のスクリーンショットを見て判断してください:\n"
+                        "1. ログイン/サインイン画面ですか？\n"
+                        "2. テキスト入力欄は見えますか？見える場合はX,Y座標を返してください\n"
+                        "3. ページの状態を簡潔に説明してください\n"
+                        'JSON: {"is_login": true/false, "input_found": true/false, "x": 数値, "y": 数値, "page_state": "説明"}'
                     )
-                    resp_text, ti, to = await self._ask_haiku_async(locate_prompt, ss_b64)
+                    resp_text, ti, to = await self._ask_haiku_async(diagnose_prompt, ss_b64)
                     total_calls += 1
                     total_ti += ti
                     total_to += to
                     self._budget.record_call(ti, to)
-                    import json as _json
-                    locate_result = _json.loads(resp_text)
-                    if locate_result.get("found") and locate_result.get("x") and locate_result.get("y"):
+
+                    diagnose = json.loads(resp_text)
+                    print(f"[DOM-FIRST] AI diagnosis: {diagnose}", flush=True)
+
+                    if diagnose.get("is_login"):
+                        # Auth problem — abort immediately
+                        print(f"[AUTH] AI confirmed login page — 監査を自動停止", flush=True)
+                        self._abort_event.set()
+                        return await self._make_result(start_time,
+                            error=f"認証エラー: AIがログインページを検出しました。再ログインしてください。（{diagnose.get('page_state', '')}）",
+                            calls=total_calls, ti=total_ti, to=total_to)
+
+                    if diagnose.get("input_found") and diagnose.get("x") and diagnose.get("y"):
                         input_info = {
-                            "x": int(locate_result["x"]),
-                            "y": int(locate_result["y"]),
+                            "x": int(diagnose["x"]),
+                            "y": int(diagnose["y"]),
                             "found": True,
                             "sel": "ai-located"
                         }
-                        print(f"[DOM-FIRST] AI located input at ({input_info['x']}, {input_info['y']}): {locate_result.get('description', '?')}", flush=True)
+                        self._consecutive_input_failures = 0
+                        print(f"[DOM-FIRST] AI located input at ({input_info['x']}, {input_info['y']})", flush=True)
+                        # Fall through to typing below
                     else:
-                        ai_locate_error = f"AI応答: found=false, desc={locate_result.get('description', '不明')}"
-                        print(f"[DOM-FIRST] AI could not locate input: {ai_locate_error}", flush=True)
+                        # AI couldn't find input either — try full agent loop as last resort
+                        print(f"[DOM-FIRST] AI couldn't find input. Trying full agent loop.", flush=True)
+                        discovery_steps = max(self._config.ai_budget_max_calls_per_case or 15, 20)
+                        tool_desc = self._config.tool_description or ""
+                        discovery_task = f"テキスト入力欄に「{prompt[:50]}」と入力し、送信して結果を取得してください。"
+                        if tool_desc:
+                            discovery_task = f"ツール説明: {tool_desc.strip()}\n\nタスク: {discovery_task}"
+                        return await self._full_agent_loop(
+                            prompt, start_time,
+                            is_discovery=True,
+                            task_desc=discovery_task,
+                            max_steps=discovery_steps,
+                        )
                 except Exception as e:
-                    ai_locate_error = f"{type(e).__name__}: {e}"
-                    print(f"[DOM-FIRST] AI locate failed: {ai_locate_error}", flush=True)
-                    logger.error("DOM-first AI locate error: %s", ai_locate_error)
-            else:
-                ai_locate_error = f"予算到達 (calls={self._budget.calls_used}/{self._budget.max_calls_total})"
-                print(f"[DOM-FIRST] Skipping AI locate: {ai_locate_error}", flush=True)
+                    print(f"[DOM-FIRST] AI diagnosis failed: {e}", flush=True)
 
-            # If DOM + single AI call both failed, fall back to full agent loop
-            # (only on first test to learn the workflow; subsequent tests reuse it)
-            if (not input_info or not input_info.get("found")) and not self._first_test_done:
-                # Mark first test done NOW to prevent ALL subsequent tests
-                # from also falling back to the expensive agent loop
-                self._first_test_done = True
-                if not self._budget.is_exhausted:
-                    print(f"[DOM-FIRST] Falling back to full agent loop for first test", flush=True)
-                    logger.info("DOM-first failed, falling back to full agent loop (discovery mode)")
-                    # Use more steps for discovery (Gamma etc. need type→click→wait→click→wait→done)
-                    discovery_steps = max(self._config.ai_budget_max_calls_per_case or 15, 20)
-                    # Build task description with tool context for better accuracy
-                    tool_desc = self._config.tool_description or ""
-                    discovery_task = f"テキスト入力欄に「{prompt[:50]}」と入力し、送信して結果を取得してください。"
-                    if tool_desc:
-                        discovery_task = f"ツール説明: {tool_desc.strip()}\n\nタスク: {discovery_task}"
-                    return await self._full_agent_loop(
-                        prompt, start_time,
-                        is_discovery=True,
-                        task_desc=discovery_task,
-                        max_steps=discovery_steps,
-                    )
-
+            # --- 2nd+ tests: No API, just report failure ---
             if not input_info or not input_info.get("found"):
-                page_url = page_debug.get("url", "不明")
-                page_title = page_debug.get("title", "不明")
-                error_detail = f"入力欄が見つかりませんでした（URL: {page_url}, タイトル: {page_title}"
-                if ai_locate_error:
-                    error_detail += f", AI: {ai_locate_error}"
-                error_detail += "）"
+                # Auto-abort after 3 consecutive input failures (same root cause)
+                if self._consecutive_input_failures >= 3:
+                    print(f"[DOM-FIRST] 入力欄不検出×{self._consecutive_input_failures}回連続 — 監査を自動停止", flush=True)
+                    self._abort_event.set()
+                error_detail = f"入力欄が見つかりませんでした（URL: {page_url}, タイトル: {page_title}, 連続{self._consecutive_input_failures}回）"
                 return await self._make_result(start_time, error=error_detail,
                                                calls=total_calls, ti=total_ti, to=total_to)
+
+        # Input found — reset failure counter
+        self._consecutive_input_failures = 0
 
         # 3. Type prompt (no API)
         print(f"[DOM-FIRST] Found input ({input_info.get('sel','?')}) at ({input_info['x']}, {input_info['y']}), typing prompt", flush=True)
