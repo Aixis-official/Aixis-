@@ -841,19 +841,14 @@ class AIBrowserExecutor(TestExecutor):
                         print(f"[DOM-FIRST] AI located input at ({input_info['x']}, {input_info['y']})", flush=True)
                         # Fall through to typing below
                     else:
-                        # AI couldn't find input either — try full agent loop as last resort
-                        print(f"[DOM-FIRST] AI couldn't find input. Trying full agent loop.", flush=True)
-                        discovery_steps = max(self._config.ai_budget_max_calls_per_case or 15, 20)
-                        tool_desc = self._config.tool_description or ""
-                        discovery_task = f"テキスト入力欄に「{prompt[:50]}」と入力し、送信して結果を取得してください。"
-                        if tool_desc:
-                            discovery_task = f"ツール説明: {tool_desc.strip()}\n\nタスク: {discovery_task}"
-                        return await self._full_agent_loop(
-                            prompt, start_time,
-                            is_discovery=True,
-                            task_desc=discovery_task,
-                            max_steps=discovery_steps,
-                        )
+                        # AI couldn't find input either — page is in an unexpected state.
+                        # Don't waste budget on agent loop (same page = same result).
+                        page_state = diagnose.get("page_state", "不明")
+                        print(f"[DOM-FIRST] AI couldn't find input. Page state: {page_state}. Aborting.", flush=True)
+                        self._abort_event.set()
+                        return await self._make_result(start_time,
+                            error=f"入力欄が見つかりません（DOM+AI両方失敗）。ページ状態: {page_state}。ブラウザの再ログインが必要な可能性があります。",
+                            calls=total_calls, ti=total_ti, to=total_to)
                 except Exception as e:
                     print(f"[DOM-FIRST] AI diagnosis failed: {e}", flush=True)
 
