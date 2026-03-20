@@ -563,22 +563,76 @@ async def browser_click(
     y = int(body.get("y", 0))
 
     try:
-        async def cdp_click(page):
-            # Use CDP for reliable click (bypasses Google's bot detection)
-            cdp = await page.context.new_cdp_session(page)
-            try:
-                await cdp.send("Input.dispatchMouseEvent", {
-                    "type": "mousePressed", "x": x, "y": y,
-                    "button": "left", "clickCount": 1,
-                })
-                await cdp.send("Input.dispatchMouseEvent", {
-                    "type": "mouseReleased", "x": x, "y": y,
-                    "button": "left", "clickCount": 1,
-                })
-            finally:
-                await cdp.detach()
+        async def smart_click(page):
+            import asyncio as _aio
 
-        _run_in_browser(session_id, lambda p: cdp_click(p))
+            # Step 1: Identify what element is at the click coordinates
+            el_info = await page.evaluate("""({x, y}) => {
+                const el = document.elementFromPoint(x, y);
+                if (!el) return null;
+                // Walk up to find the nearest clickable ancestor
+                let target = el;
+                for (let i = 0; i < 5; i++) {
+                    if (!target) break;
+                    const tag = target.tagName;
+                    if (tag === 'BUTTON' || tag === 'A' || target.getAttribute('role') === 'button'
+                        || target.type === 'submit' || target.id) {
+                        break;
+                    }
+                    target = target.parentElement;
+                }
+                if (!target) target = el;
+                return {
+                    tag: target.tagName,
+                    id: target.id || '',
+                    text: (target.innerText || '').slice(0, 30).trim(),
+                    role: target.getAttribute('role') || '',
+                    type: target.type || '',
+                };
+            }""", {"x": x, "y": y})
+
+            clicked = False
+
+            # Step 2: Try Playwright locator click (most reliable for buttons)
+            if el_info:
+                selectors_to_try = []
+                if el_info.get("id"):
+                    selectors_to_try.append(f"#{el_info['id']}")
+                text = el_info.get("text", "")
+                if text and (el_info.get("tag") in ("BUTTON", "A", "DIV") or el_info.get("role") == "button"):
+                    selectors_to_try.append(f"button:has-text('{text}')")
+                    selectors_to_try.append(f"[role='button']:has-text('{text}')")
+                    selectors_to_try.append(f"text='{text}'")
+
+                for sel in selectors_to_try:
+                    try:
+                        loc = page.locator(sel).first
+                        if await loc.count() > 0:
+                            await loc.click(timeout=3000)
+                            clicked = True
+                            break
+                    except Exception:
+                        continue
+
+            # Step 3: Fallback to CDP click
+            if not clicked:
+                try:
+                    cdp = await page.context.new_cdp_session(page)
+                    try:
+                        await cdp.send("Input.dispatchMouseEvent", {
+                            "type": "mousePressed", "x": x, "y": y,
+                            "button": "left", "clickCount": 1,
+                        })
+                        await cdp.send("Input.dispatchMouseEvent", {
+                            "type": "mouseReleased", "x": x, "y": y,
+                            "button": "left", "clickCount": 1,
+                        })
+                    finally:
+                        await cdp.detach()
+                except Exception:
+                    await page.mouse.click(x, y)
+
+        _run_in_browser(session_id, lambda p: smart_click(p))
         return {"status": "clicked", "x": x, "y": y}
     except HTTPException:
         raise
