@@ -535,7 +535,7 @@
                 body: JSON.stringify({ x: x, y: y })
             });
             console.log('Click sent:', x, y, resp);
-            if (coordsDisplay) coordsDisplay.textContent = 'Clicked: (' + x + ', ' + y + ') via ' + (resp.method || '?');
+            if (coordsDisplay) coordsDisplay.textContent = 'Clicked: (' + x + ', ' + y + ') via ' + (resp.method || '?') + ' | ' + (resp.debug || '');
             // Refresh screenshot after click (wait a bit for page to react)
             setTimeout(refreshBrowserScreenshot, 800);
             setTimeout(refreshBrowserScreenshot, 2000);

@@ -563,43 +563,77 @@ async def browser_click(
     y = int(body.get("y", 0))
 
     method = "none"
+    debug_info = ""
     try:
         async def smart_click(page):
-            nonlocal method
+            nonlocal method, debug_info
 
-            # Get visible text at click coordinates
-            el_text = await page.evaluate("""({x, y}) => {
+            # Get element info at click coordinates
+            el_info = await page.evaluate("""({x, y}) => {
                 const el = document.elementFromPoint(x, y);
-                if (!el) return '';
+                if (!el) return {text: '', tag: '', id: ''};
+                // Walk up to collect info
+                let texts = [], ids = [], tags = [];
                 let t = el;
-                for (let i = 0; i < 8; i++) {
-                    if (!t) break;
-                    const txt = (t.innerText || '').trim();
-                    if (txt && txt.length < 50) return txt.split('\\n')[0].trim();
+                for (let i = 0; i < 10 && t; i++) {
+                    const txt = (t.textContent || '').trim();
+                    if (txt && txt.length < 30) texts.push(txt);
+                    if (t.id) ids.push(t.id);
+                    tags.push(t.tagName);
                     t = t.parentElement;
                 }
-                return '';
+                return {
+                    text: texts[0] || '',
+                    allTexts: texts.slice(0, 3),
+                    ids: ids.slice(0, 3),
+                    tags: tags.slice(0, 5),
+                    directTag: el.tagName,
+                };
             }""", {"x": x, "y": y})
 
-            # Try strategies in order of reliability
+            el_text = el_info.get("text", "") if el_info else ""
+            el_ids = el_info.get("ids", []) if el_info else []
+            debug_info = f"text={el_text!r}, ids={el_ids}, tags={el_info.get('tags', [])[:3]}"
+
+            # Build strategies: most specific first
             strategies = []
+
+            # Google OAuth specific: click by known IDs
+            for eid in el_ids:
+                strategies.append((f"id:{eid}", lambda _id=eid: page.locator(f"#{_id}").click(timeout=3000)))
+
+            # Click by visible text using various methods
             if el_text:
-                strategies.append(("role_button", lambda: page.get_by_role("button", name=el_text).click(timeout=3000)))
-                strategies.append(("role_link", lambda: page.get_by_role("link", name=el_text).click(timeout=3000)))
-                strategies.append(("get_by_text", lambda: page.get_by_text(el_text, exact=True).click(timeout=3000)))
+                strategies.append(("role_button", lambda t=el_text: page.get_by_role("button", name=t).click(timeout=3000)))
+                strategies.append(("locator_text", lambda t=el_text: page.locator(f"text={t}").click(timeout=3000)))
+
+            # Direct coordinate click via Playwright
             strategies.append(("mouse", lambda: page.mouse.click(x, y)))
 
+            # CDP as absolute last resort
+            async def cdp_click():
+                cdp = await page.context.new_cdp_session(page)
+                try:
+                    await cdp.send("Input.dispatchMouseEvent", {"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1})
+                    await cdp.send("Input.dispatchMouseEvent", {"type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1})
+                finally:
+                    await cdp.detach()
+            strategies.append(("cdp", cdp_click))
+
+            errors = []
             for name, fn in strategies:
                 try:
                     await fn()
                     method = name
                     return
-                except Exception:
+                except Exception as e:
+                    errors.append(f"{name}:{type(e).__name__}")
                     continue
             method = "all_failed"
+            debug_info += f" errors={errors}"
 
         _run_in_browser(session_id, lambda p: smart_click(p))
-        return {"status": "clicked", "x": x, "y": y, "method": method}
+        return {"status": "clicked", "x": x, "y": y, "method": method, "debug": debug_info}
     except HTTPException:
         raise
     except Exception as e:
