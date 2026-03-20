@@ -554,39 +554,31 @@ async def browser_click(
     body: dict,
     _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Send a click action to the running browser (for login interaction).
+    """Send a click action to the running browser.
 
-    Uses both Playwright mouse API and JavaScript click dispatch for reliability
-    (Google OAuth pages sometimes block synthetic Playwright mouse events).
+    Uses CDP (Chrome DevTools Protocol) for reliable input that bypasses
+    Google OAuth's bot detection of synthetic Playwright mouse events.
     """
     x = int(body.get("x", 0))
     y = int(body.get("y", 0))
 
     try:
-        # Step 1: Move mouse to position (triggers hover effects)
-        _run_in_browser(session_id, lambda p: p.mouse.move(x, y))
+        async def cdp_click(page):
+            # Use CDP for reliable click (bypasses Google's bot detection)
+            cdp = await page.context.new_cdp_session(page)
+            try:
+                await cdp.send("Input.dispatchMouseEvent", {
+                    "type": "mousePressed", "x": x, "y": y,
+                    "button": "left", "clickCount": 1,
+                })
+                await cdp.send("Input.dispatchMouseEvent", {
+                    "type": "mouseReleased", "x": x, "y": y,
+                    "button": "left", "clickCount": 1,
+                })
+            finally:
+                await cdp.detach()
 
-        # Step 2: Use JS to find element at coordinates, focus and click it
-        async def js_click(page):
-            await page.evaluate("""({x, y}) => {
-                const el = document.elementFromPoint(x, y);
-                if (el) {
-                    // Dispatch proper mouse events
-                    const events = ['mousedown', 'mouseup', 'click'];
-                    for (const type of events) {
-                        el.dispatchEvent(new MouseEvent(type, {
-                            bubbles: true, cancelable: true, view: window,
-                            clientX: x, clientY: y
-                        }));
-                    }
-                    // Also focus the element (important for input fields)
-                    if (el.focus) el.focus();
-                }
-            }""", {"x": x, "y": y})
-            # Also do a real Playwright click as backup
-            await page.mouse.click(x, y)
-
-        _run_in_browser(session_id, lambda p: js_click(p))
+        _run_in_browser(session_id, lambda p: cdp_click(p))
         return {"status": "clicked", "x": x, "y": y}
     except HTTPException:
         raise
@@ -600,35 +592,48 @@ async def browser_type(
     body: dict,
     _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Send keyboard input to the running browser (for login interaction)."""
+    """Send keyboard input to the running browser.
+
+    Strategy:
+    1. Try Playwright locator.fill() on visible input (most reliable)
+    2. Fall back to CDP Input.insertText (bypasses bot detection)
+    3. Last resort: keyboard.type()
+    """
     text = body.get("text", "")
 
     try:
-        # Use JS to insert text into the active element + Playwright keyboard as backup
-        async def js_type(page):
-            # First try JS value injection (works even when Playwright keyboard is blocked)
-            await page.evaluate("""(text) => {
-                const el = document.activeElement;
-                if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
-                    // For standard input/textarea: set value and dispatch events
-                    const nativeSetter = Object.getOwnPropertyDescriptor(
-                        window.HTMLInputElement.prototype, 'value'
-                    )?.set || Object.getOwnPropertyDescriptor(
-                        window.HTMLTextAreaElement.prototype, 'value'
-                    )?.set;
-                    if (nativeSetter) nativeSetter.call(el, text);
-                    else el.value = text;
-                    el.dispatchEvent(new Event('input', { bubbles: true }));
-                    el.dispatchEvent(new Event('change', { bubbles: true }));
-                } else {
-                    // For contenteditable or no active element: use keyboard
-                    // (will be handled by Playwright keyboard.type below)
-                }
-            }""", text)
-            # Also type via Playwright keyboard (handles contenteditable, non-React inputs)
+        async def smart_type(page):
+            # Strategy 1: Find visible input/textarea and fill it directly
+            # This uses Playwright's high-level API which handles React, Google, etc.
+            try:
+                input_loc = page.locator(
+                    'input[type="email"]:visible, '
+                    'input[type="text"]:visible, '
+                    'input[type="password"]:visible, '
+                    'textarea:visible'
+                ).first
+                if await input_loc.count() > 0:
+                    await input_loc.fill(text)
+                    return
+            except Exception:
+                pass
+
+            # Strategy 2: CDP Input.insertText (low-level, bypasses bot detection)
+            try:
+                # First click on the input to focus it
+                cdp = await page.context.new_cdp_session(page)
+                try:
+                    await cdp.send("Input.insertText", {"text": text})
+                finally:
+                    await cdp.detach()
+                return
+            except Exception:
+                pass
+
+            # Strategy 3: Playwright keyboard.type (last resort)
             await page.keyboard.type(text, delay=30)
 
-        _run_in_browser(session_id, lambda p: js_type(p))
+        _run_in_browser(session_id, lambda p: smart_type(p))
         return {"status": "typed", "length": len(text)}
     except HTTPException:
         raise
