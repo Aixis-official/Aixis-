@@ -73,62 +73,36 @@
             </div>
         </div>
 
-        <!-- Waiting for manual login -->
+        <!-- Waiting for login / Chrome extension recording -->
         <div id="waiting-login-section" class="hidden">
-            <div class="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-300 dark:border-amber-700/60 rounded-xl p-6">
+            <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-xl p-6">
                 <div class="flex items-start gap-4">
                     <div class="flex-shrink-0 mt-0.5">
-                        <svg class="w-8 h-8 text-amber-500 dark:text-amber-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                        <svg class="w-8 h-8 text-indigo-500 dark:text-indigo-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
                         </svg>
                     </div>
                     <div class="flex-1">
-                        <h3 class="text-base font-semibold text-amber-800 dark:text-amber-300 font-jp mb-2">ログインを完了してください</h3>
-                        <p class="text-sm text-amber-700 dark:text-amber-400 font-jp mb-1">下の画面でツールにログインしてください。画面をクリックして操作できます。</p>
-                        <p class="text-sm text-amber-700 dark:text-amber-400 font-jp mb-1">ログインが完了したら「監査を続行」ボタンで自動テストを開始します。</p>
-                        <p class="text-xs text-amber-600 dark:text-amber-500 font-jp mb-4">※ 画像は2秒ごとに更新されます。クリックするとブラウザに操作が送信されます。</p>
+                        <h3 class="text-base font-semibold text-indigo-800 dark:text-indigo-300 font-jp mb-2">Chrome拡張で記録中</h3>
+                        <p class="text-sm text-indigo-700 dark:text-indigo-400 font-jp mb-1">テスターがChrome拡張を使用してAIツールのテストを記録しています。</p>
+                        <p class="text-sm text-indigo-700 dark:text-indigo-400 font-jp">記録が完了すると、LLMスコアリングが自動的に開始されます。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                        <!-- Live browser screenshot viewer -->
-                        <div id="browser-viewer" class="mb-4 relative bg-gray-900 rounded-lg overflow-hidden" style="max-width: 960px;">
-                            <img id="browser-screenshot" src="" alt="ブラウザ画面"
-                                 class="w-full cursor-pointer select-none" draggable="false"
-                                 style="display: none; image-rendering: auto;"
-                                 onclick="onScreenshotClick(event)" />
-                            <div id="browser-loading" class="flex items-center justify-center py-20 text-gray-400">
-                                <svg class="animate-spin h-6 w-6 mr-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                ブラウザ画面を読み込み中...
-                            </div>
-                            <div id="click-indicator" class="absolute pointer-events-none bg-blue-500 rounded-full opacity-0 transition-opacity duration-300"
-                                 style="width: 20px; height: 20px; transform: translate(-50%, -50%);"></div>
-                            <div class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                                <span id="browser-url" class="font-mono">...</span>
-                            </div>
-                        </div>
-
-                        <!-- Debug info -->
-                        <div class="flex items-center gap-4 mb-2 text-xs text-gray-500" style="max-width: 960px;">
-                            <span id="click-coords">クリックで座標が表示されます</span>
-                            <span id="type-status"></span>
-                        </div>
-
-                        <!-- Keyboard input -->
-                        <div class="flex gap-2 mb-4" style="max-width: 960px;">
-                            <input id="browser-text-input" type="text" placeholder="テキスト入力（Enterで送信）"
-                                   class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                                   onkeydown="if(event.key==='Enter'){sendBrowserText(); event.preventDefault();}" />
-                            <button onclick="sendBrowserText()"
-                                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg">
-                                送信
-                            </button>
-                        </div>
-
-                        <button onclick="continueAudit()" id="continue-button"
-                                class="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 rounded-lg transition-colors duration-150 shadow-sm font-jp">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
-                            </svg>
-                            監査を続行
-                        </button>
+        <!-- Scoring in progress -->
+        <div id="scoring-section" class="hidden">
+            <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/50 rounded-xl p-6">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <svg class="w-8 h-8 text-purple-500 dark:text-purple-400 animate-spin" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-base font-semibold text-purple-800 dark:text-purple-300 font-jp mb-2">LLMスコアリング中...</h3>
+                        <p class="text-sm text-purple-700 dark:text-purple-400 font-jp">LLMスコアリングを実行中です。完了までお待ちください。</p>
                     </div>
                 </div>
             </div>
@@ -323,7 +297,7 @@
     var pollingInterval = null;
     var auditStartedAt = null;
     var elapsedTimer = null;
-    var retrying = false;
+
     var loadingInProgress = false;
 
     async function loadAudit() {
@@ -455,140 +429,6 @@
         }
     }
 
-    window.continueAudit = async function() {
-        var btn = document.getElementById('continue-button');
-        btn.disabled = true;
-        btn.innerHTML = '<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><span class="font-jp">再開中...</span>';
-
-        try {
-            await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/continue', {
-                method: 'POST'
-            });
-            // Reload the page to show running state
-            loadAudit();
-        } catch (e) {
-            alert('再開に失敗しました: ' + (e.message || '不明なエラー'));
-            btn.disabled = false;
-            btn.innerHTML = '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg><span class="font-jp">ログイン完了 — 監査を続行</span>';
-        }
-    };
-
-    // --- Browser screenshot viewer for login interaction ---
-    var screenshotInterval = null;
-    var browserViewerActive = false;
-    var browserViewportWidth = 1280;
-    var browserViewportHeight = 800;
-
-    async function refreshBrowserScreenshot() {
-        try {
-            var resp = await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/browser/screenshot');
-            if (resp.screenshot) {
-                var img = document.getElementById('browser-screenshot');
-                img.src = 'data:image/jpeg;base64,' + resp.screenshot;
-                img.style.display = 'block';
-                document.getElementById('browser-loading').style.display = 'none';
-                if (resp.url) {
-                    document.getElementById('browser-url').textContent = resp.url;
-                }
-                // Update viewport dimensions from server
-                if (resp.viewport_width) browserViewportWidth = resp.viewport_width;
-                if (resp.viewport_height) browserViewportHeight = resp.viewport_height;
-            }
-        } catch (e) {
-            // Browser not ready yet, keep showing loading
-        }
-    }
-
-    function startBrowserViewer() {
-        if (browserViewerActive) return;
-        browserViewerActive = true;
-        refreshBrowserScreenshot();
-        screenshotInterval = setInterval(refreshBrowserScreenshot, 2000);
-    }
-
-    function stopBrowserViewer() {
-        browserViewerActive = false;
-        if (screenshotInterval) {
-            clearInterval(screenshotInterval);
-            screenshotInterval = null;
-        }
-    }
-
-    var lastClickX = null, lastClickY = null;
-
-    window.onScreenshotClick = async function(event) {
-        var img = event.target;
-        var rect = img.getBoundingClientRect();
-        // Scale click coordinates to actual browser viewport (dynamic size)
-        var scaleX = browserViewportWidth / rect.width;
-        var scaleY = browserViewportHeight / rect.height;
-        var x = Math.round((event.clientX - rect.left) * scaleX);
-        var y = Math.round((event.clientY - rect.top) * scaleY);
-
-        // Show click indicator
-        var indicator = document.getElementById('click-indicator');
-        indicator.style.left = event.clientX - rect.left + 'px';
-        indicator.style.top = event.clientY - rect.top + 'px';
-        indicator.style.opacity = '0.7';
-        setTimeout(function() { indicator.style.opacity = '0'; }, 300);
-
-        // Show coordinates being sent
-        var coordsDisplay = document.getElementById('click-coords');
-        if (coordsDisplay) coordsDisplay.textContent = 'Clicking: (' + x + ', ' + y + ')...';
-
-        try {
-            var resp = await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/browser/click', {
-                method: 'POST',
-                body: JSON.stringify({ x: x, y: y })
-            });
-            console.log('Click sent:', x, y, resp);
-            lastClickX = x;
-            lastClickY = y;
-            if (coordsDisplay) coordsDisplay.textContent = 'Clicked: (' + x + ', ' + y + ') via ' + (resp.method || '?') + ' | ' + (resp.debug || '');
-            // Refresh screenshot after click (wait a bit for page to react)
-            setTimeout(refreshBrowserScreenshot, 800);
-            setTimeout(refreshBrowserScreenshot, 2000);
-        } catch (e) {
-            console.error('Click failed:', e);
-            if (coordsDisplay) coordsDisplay.textContent = 'Click FAILED: ' + (e.message || e);
-            indicator.style.backgroundColor = 'red';
-            indicator.style.opacity = '0.7';
-            setTimeout(function() { indicator.style.opacity = '0'; indicator.style.backgroundColor = ''; }, 1000);
-        }
-    };
-
-    window.sendBrowserText = async function() {
-        var input = document.getElementById('browser-text-input');
-        var text = input.value;
-        if (!text) return;
-
-        var typeStatus = document.getElementById('type-status');
-        if (typeStatus) typeStatus.textContent = 'Typing: "' + text.slice(0,20) + '"...';
-
-        try {
-            await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/browser/type', {
-                method: 'POST',
-                body: JSON.stringify({ text: text, click_x: lastClickX, click_y: lastClickY })
-            });
-            input.value = '';
-            if (typeStatus) typeStatus.textContent = 'Typed OK (' + text.length + ' chars)';
-            setTimeout(refreshBrowserScreenshot, 500);
-        } catch (e) {
-            console.error('Type failed:', e);
-            if (typeStatus) typeStatus.textContent = 'Type FAILED: ' + (e.message || e);
-        }
-    };
-
-    // Auto-start browser viewer when in waiting_login state
-    setInterval(function() {
-        var section = document.getElementById('waiting-login-section');
-        if (section && !section.classList.contains('hidden') && !browserViewerActive) {
-            startBrowserViewer();
-        } else if (section && section.classList.contains('hidden') && browserViewerActive) {
-            stopBrowserViewer();
-        }
-    }, 1000);
-
     window.abortAudit = async function() {
         if (!confirm('この監査を中止しますか？API使用が即座に停止されます。')) return;
         var btn = document.getElementById('abort-button');
@@ -614,25 +454,8 @@
         }
     };
 
-    window.retryAudit = async function() {
-        if (retrying) return;
-        retrying = true;
-        var btn = document.getElementById('retry-button');
-        btn.disabled = true;
-        btn.innerHTML = '<svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><span class="font-jp">再試行中...</span>';
-
-        try {
-            var result = await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/retry', {
-                method: 'POST'
-            });
-            // Redirect to the new session's detail page
-            window.location.href = '/dashboard/audits/' + encodeURIComponent(result.db_session_id);
-        } catch (e) {
-            alert('再試行に失敗しました: ' + (e.message || '不明なエラー'));
-            retrying = false;
-            btn.disabled = false;
-            btn.innerHTML = '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 19.644l3.181-3.182" /></svg><span class="font-jp">再試行</span>';
-        }
+    window.retryAudit = function() {
+        alert('再試行機能はChrome拡張に移行されました。Chrome拡張から新しい監査セッションを開始してください。');
     };
 
     function renderAudit(data) {
@@ -658,14 +481,17 @@
             btns += '<span class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-500 dark:text-red-400 font-jp"><svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>中止中...</span>';
         }
         if (data.status === 'waiting_login') {
-            btns += '<span class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-amber-600 dark:text-amber-400 font-jp"><svg class="animate-pulse w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" /></svg>ログイン待ち</span>';
+            btns += '<span class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 font-jp"><svg class="animate-pulse w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3" /></svg>Chrome拡張で記録中</span>';
             btns += '<button onclick="abortAudit()" id="abort-button" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors font-jp">中止</button>';
+        }
+        if (data.status === 'scoring') {
+            btns += '<span class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 font-jp"><svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>LLMスコアリング中</span>';
         }
         if (data.status === 'failed' || data.status === 'aborted') {
             btns += '<button onclick="retryAudit()" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 rounded-lg transition-colors font-jp"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 19.644l3.181-3.182" /></svg>再試行</button>';
         }
         // Status edit button (for non-running sessions)
-        if (!['running', 'waiting_login'].includes(data.status)) {
+        if (!['running', 'waiting_login', 'scoring'].includes(data.status)) {
             btns += '<div class="relative" id="status-edit-wrapper">' +
                 '<button onclick="toggleStatusMenu()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors font-jp">' +
                     '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z"/></svg>' +
@@ -698,7 +524,7 @@
             document.getElementById('failed-section').classList.add('hidden');
         }
 
-        // Waiting login section
+        // Waiting login / Chrome extension recording section
         if (data.status === 'waiting_login') {
             document.getElementById('waiting-login-section').classList.remove('hidden');
             document.getElementById('progress-section').classList.add('hidden');
@@ -709,6 +535,19 @@
             startElapsedTimer(data.started_at);
         } else {
             document.getElementById('waiting-login-section').classList.add('hidden');
+        }
+
+        // Scoring section
+        if (data.status === 'scoring') {
+            document.getElementById('scoring-section').classList.remove('hidden');
+            document.getElementById('progress-section').classList.add('hidden');
+            // Poll to check when scoring completes
+            if (!pollingInterval) {
+                pollingInterval = setInterval(loadAudit, 3000);
+            }
+            startElapsedTimer(data.started_at);
+        } else {
+            document.getElementById('scoring-section').classList.add('hidden');
         }
 
         // Progress section (show for running, pending, aborting)
@@ -772,6 +611,10 @@
 
     function renderVolumeMetrics(vm, totalPlanned, totalExecuted) {
         var isAI = vm.executor_type === 'ai_browser';
+        var execLabel = 'Chrome拡張';
+        if (vm.executor_type === 'ai_browser') execLabel = 'AIブラウザ（レガシー）';
+        else if (vm.executor_type === 'playwright') execLabel = 'Playwright（レガシー）';
+
         // Always show if we have data; hide only if completely empty
         if (!isAI && vm.ai_total_api_calls === 0 && totalExecuted === 0) return;
 
@@ -779,7 +622,7 @@
         var cards = document.getElementById('volume-cards');
 
         var items = [
-            { label: '実行方式', value: isAI ? 'AIブラウザ' : 'Playwright', icon: '🤖' },
+            { label: '実行方式', value: execLabel, icon: '🤖' },
             { label: 'テスト完遂率', value: vm.completeness_ratio + '%', icon: '📊' },
             { label: '実行テスト', value: totalExecuted + ' / ' + totalPlanned + ' 件', icon: '🧪' },
         ];

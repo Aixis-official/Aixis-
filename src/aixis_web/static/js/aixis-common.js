@@ -261,9 +261,10 @@ function createScoreBar(score, maxScore = 5.0) {
 function createStatusBadge(status) {
   const labels = {
     pending: '待機中',
-    running: '実行中',
+    running: '記録中',
+    scoring: 'スコアリング中',
     aborting: '中止中...',
-    waiting_login: 'ログイン待ち',
+    waiting_login: '記録中',
     awaiting_manual: '手動評価待ち',
     completed: '完了',
     failed: '失敗',
