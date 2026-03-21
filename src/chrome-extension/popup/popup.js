@@ -271,17 +271,15 @@ function showProtocolTest(stateData) {
 
 async function nextTest() {
   const btn = $("#nextTestBtn");
+  const skipBtn = $("#skipTestBtn");
   btn.disabled = true;
+  skipBtn.disabled = true;
   btn.textContent = "📸 記録中...";
   try {
-    const result = await sendBg({
-      type: "NEXT_TEST",
-      observation: {},
-    });
+    const result = await sendBg({ type: "NEXT_TEST", observation: {} });
 
-    // Flash success indicator
-    btn.textContent = "✓ 記録完了";
-    await new Promise(r => setTimeout(r, 600));
+    btn.textContent = "✓ 完了";
+    await new Promise(r => setTimeout(r, 500));
 
     if (result.done) {
       await endSession();
@@ -292,17 +290,16 @@ async function nextTest() {
     showError(err.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = "次へ";
+    skipBtn.disabled = false;
+    btn.textContent = "記録して次へ";
   }
 }
 
 async function skipTest() {
   const btn = $("#skipTestBtn");
   btn.disabled = true;
-  btn.textContent = "スキップ中...";
   try {
     const result = await sendBg({ type: "SKIP_TEST", reason: "テスターがスキップ" });
-
     if (result.done) {
       await endSession();
     } else {
@@ -312,7 +309,6 @@ async function skipTest() {
     showError(err.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = "スキップ";
   }
 }
 
