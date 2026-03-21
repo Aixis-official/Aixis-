@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -107,6 +108,15 @@ class AgentResultsUpload(BaseModel):
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+@router.get("/local-script")
+async def download_local_agent_script():
+    """Download the local agent script."""
+    script_path = Path(__file__).resolve().parents[3] / "scripts" / "aixis_local_agent.py"
+    if not script_path.exists():
+        raise HTTPException(404, "ローカルエージェントスクリプトが見つかりません")
+    return FileResponse(script_path, media_type="text/x-python", filename="aixis_local_agent.py")
+
 
 @router.post("/sessions", response_model=AgentSessionResponse)
 async def create_agent_session(
