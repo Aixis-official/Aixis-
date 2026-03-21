@@ -13,7 +13,8 @@ COPY . .
 
 RUN pip install --no-cache-dir .
 
-# Install Playwright browsers (for audit engine)
+# Install Playwright browsers (Firefox preferred — Google OAuth blocks Chromium automation)
+RUN playwright install firefox --with-deps || true
 RUN playwright install chromium --with-deps || true
 
 # NOTE: Use PostgreSQL in production (Railway addon).

@@ -246,34 +246,30 @@ class AIBrowserExecutor(TestExecutor):
 
         self._cleanup_stale_locks(user_data_dir)
 
-        # Use system Chrome if available (Google OAuth trusts real Chrome over Chromium)
-        # Falls back to Playwright's bundled Chromium if Chrome is not installed
-        launch_kwargs = dict(
-            user_data_dir=str(user_data_dir),
-            headless=target_config.headless,
-            locale=target_config.locale,
-            viewport={"width": 1280, "height": 800},
-            args=[
-                "--disable-blink-features=AutomationControlled",
-                "--no-first-run",
-                "--no-default-browser-check",
-            ],
-            ignore_default_args=["--enable-automation"],
-        )
+        # Use Firefox — Google OAuth blocks Chromium automation but not Firefox
+        # Firefox persistent context uses a profile directory (like Chrome's user-data-dir)
         try:
+            self._context = await self._playwright.firefox.launch_persistent_context(
+                user_data_dir=str(user_data_dir),
+                headless=target_config.headless,
+                locale=target_config.locale,
+                viewport={"width": 1280, "height": 800},
+            )
+            print("[BROWSER] Using Firefox (Google OAuth compatible)", flush=True)
+        except Exception as e:
+            print(f"[BROWSER] Firefox failed ({e}), falling back to Chromium", flush=True)
             self._context = await self._playwright.chromium.launch_persistent_context(
-                channel="chrome", **launch_kwargs
+                user_data_dir=str(user_data_dir),
+                headless=target_config.headless,
+                locale=target_config.locale,
+                viewport={"width": 1280, "height": 800},
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-first-run",
+                    "--no-default-browser-check",
+                ],
+                ignore_default_args=["--enable-automation"],
             )
-            print("[BROWSER] Using system Chrome", flush=True)
-        except Exception:
-            # Chrome not installed — use bundled Chromium with stealth user-agent
-            launch_kwargs["user_agent"] = (
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/131.0.0.0 Safari/537.36"
-            )
-            self._context = await self._playwright.chromium.launch_persistent_context(**launch_kwargs)
-            print("[BROWSER] Using bundled Chromium (Chrome not found)", flush=True)
         self._page = (
             self._context.pages[0]
             if self._context.pages
