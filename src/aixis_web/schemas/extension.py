@@ -8,6 +8,7 @@ class ExtensionSessionCreate(BaseModel):
     profile_id: str = ""
     recording_mode: str = "protocol"  # "protocol" | "freeform"
     categories: list[str] | None = None
+    max_cases: int = Field(30, ge=1, le=100)  # Max test cases (manual testing)
 
 
 class TestCaseOut(BaseModel):

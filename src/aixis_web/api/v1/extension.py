@@ -106,6 +106,11 @@ async def create_extension_session(
             from aixis_agent.orchestrator.pipeline import sort_by_priority
             cases = sort_by_priority(cases)
 
+            # Cap test cases for manual testing (human testers can't do 500+)
+            max_cases = body.max_cases or 30
+            if len(cases) > max_cases:
+                cases = cases[:max_cases]
+
             total_planned = len(cases)
 
         except Exception as e:
@@ -315,10 +320,8 @@ async def upload_observation(
         "metadata": json.dumps(body.metadata, ensure_ascii=False) if body.metadata else "{}",
     })
 
-    # Get the auto-increment ID
-    id_result = await db.execute(text("SELECT last_insert_rowid()"))
-    row = id_result.fetchone()
-    obs_id = row[0] if row else sequence_number
+    # Use sequence number as observation ID (compatible with both SQLite and PostgreSQL)
+    obs_id = sequence_number
 
     # Update session progress
     await db.execute(text("""

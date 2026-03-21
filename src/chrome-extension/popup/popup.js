@@ -270,11 +270,18 @@ function showProtocolTest(stateData) {
 }
 
 async function nextTest() {
+  const btn = $("#nextTestBtn");
+  btn.disabled = true;
+  btn.textContent = "📸 記録中...";
   try {
     const result = await sendBg({
       type: "NEXT_TEST",
-      observation: {}, // Content script may have buffered data
+      observation: {},
     });
+
+    // Flash success indicator
+    btn.textContent = "✓ 記録完了";
+    await new Promise(r => setTimeout(r, 600));
 
     if (result.done) {
       await endSession();
@@ -283,10 +290,16 @@ async function nextTest() {
     }
   } catch (err) {
     showError(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "次へ";
   }
 }
 
 async function skipTest() {
+  const btn = $("#skipTestBtn");
+  btn.disabled = true;
+  btn.textContent = "スキップ中...";
   try {
     const result = await sendBg({ type: "SKIP_TEST", reason: "テスターがスキップ" });
 
@@ -297,6 +310,9 @@ async function skipTest() {
     }
   } catch (err) {
     showError(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "スキップ";
   }
 }
 
