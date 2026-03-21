@@ -73,8 +73,9 @@ async def create_extension_session(
     if not tool_row:
         raise HTTPException(404, f"ツールが見つかりません: {body.tool_id}")
 
-    # Generate test cases for protocol mode
+    # Generate test cases in memory first (don't insert yet — FK requires session)
     test_cases_out: list[TestCaseOut] = []
+    cases = []
     total_planned = 0
 
     if body.recording_mode == "protocol":
@@ -107,87 +108,64 @@ async def create_extension_session(
 
             total_planned = len(cases)
 
-            # Store test cases in DB
-            for case in cases:
-                cat_val = case.category.value if hasattr(case.category, "value") else str(case.category)
-                await db.execute(text("""
-                    INSERT INTO db_test_cases
-                    (id, session_id, category, prompt, metadata_json,
-                     expected_behaviors, failure_indicators, tags)
-                    VALUES (:id, :session_id, :category, :prompt, :metadata,
-                            :expected, :failures, :tags)
-                    ON CONFLICT (id) DO NOTHING
-                """), {
-                    "id": case.id,
-                    "session_id": session_id,
-                    "category": cat_val,
-                    "prompt": case.prompt,
-                    "metadata": json.dumps(case.metadata, ensure_ascii=False),
-                    "expected": json.dumps(case.expected_behaviors, ensure_ascii=False),
-                    "failures": json.dumps(case.failure_indicators, ensure_ascii=False),
-                    "tags": json.dumps(case.tags, ensure_ascii=False),
-                })
-
-                test_cases_out.append(TestCaseOut(
-                    id=case.id,
-                    category=cat_val,
-                    prompt=case.prompt,
-                    expected_behaviors=case.expected_behaviors,
-                    failure_indicators=case.failure_indicators,
-                    tags=case.tags,
-                    metadata=case.metadata,
-                ))
-
         except Exception as e:
             logger.warning("Test case generation failed: %s", e)
-            # Session still gets created, just without pre-generated cases
 
-    # Create session
-    try:
-        await db.execute(text("""
-            INSERT INTO audit_sessions
-            (id, session_code, tool_id, profile_id, status, initiated_by,
-             created_at, executor_type, total_planned)
-            VALUES (:id, :code, :tool_id, :profile_id, :status, :initiated_by,
-                    :now, :executor_type, :total_planned)
-        """), {
-            "id": session_id,
-            "code": session_code,
-            "tool_id": body.tool_id,
-            "profile_id": body.profile_id or None,
-            "status": "running",
-            "initiated_by": user.id,
-            "now": now,
-            "executor_type": "extension",
-            "total_planned": total_planned,
-        })
-        await db.commit()
-    except Exception as e:
-        logger.error("Session insert failed: %s", e)
-        await db.rollback()
-        # Retry without executor_type in case column doesn't exist yet
+    # 1. Create session FIRST (test cases have FK to audit_sessions)
+    await db.execute(text("""
+        INSERT INTO audit_sessions
+        (id, session_code, tool_id, profile_id, status, initiated_by,
+         created_at, executor_type, total_planned)
+        VALUES (:id, :code, :tool_id, :profile_id, :status, :initiated_by,
+                :now, :executor_type, :total_planned)
+    """), {
+        "id": session_id,
+        "code": session_code,
+        "tool_id": body.tool_id,
+        "profile_id": body.profile_id or None,
+        "status": "running",
+        "initiated_by": user.id,
+        "now": now,
+        "executor_type": "extension",
+        "total_planned": total_planned,
+    })
+
+    # 2. Insert test cases AFTER session exists
+    for case in cases:
+        cat_val = case.category.value if hasattr(case.category, "value") else str(case.category)
         try:
             await db.execute(text("""
-                INSERT INTO audit_sessions
-                (id, session_code, tool_id, profile_id, status, initiated_by,
-                 created_at, total_planned)
-                VALUES (:id, :code, :tool_id, :profile_id, :status, :initiated_by,
-                        :now, :total_planned)
+                INSERT INTO db_test_cases
+                (id, session_id, category, prompt, metadata_json,
+                 expected_behaviors, failure_indicators, tags)
+                VALUES (:id, :session_id, :category, :prompt, :metadata,
+                        :expected, :failures, :tags)
+                ON CONFLICT (id) DO NOTHING
             """), {
-                "id": session_id,
-                "code": session_code,
-                "tool_id": body.tool_id,
-                "profile_id": body.profile_id or None,
-                "status": "running",
-                "initiated_by": user.id,
-                "now": now,
-                "total_planned": total_planned,
+                "id": case.id,
+                "session_id": session_id,
+                "category": cat_val,
+                "prompt": case.prompt,
+                "metadata": json.dumps(case.metadata, ensure_ascii=False),
+                "expected": json.dumps(case.expected_behaviors, ensure_ascii=False),
+                "failures": json.dumps(case.failure_indicators, ensure_ascii=False),
+                "tags": json.dumps(case.tags, ensure_ascii=False),
             })
-            await db.commit()
-        except Exception as e2:
-            logger.error("Session insert fallback also failed: %s", e2)
-            await db.rollback()
-            raise HTTPException(500, f"セッション作成に失敗しました: {e2}")
+        except Exception as e:
+            logger.warning("Failed to insert test case %s: %s", case.id, e)
+            continue
+
+        test_cases_out.append(TestCaseOut(
+            id=case.id,
+            category=cat_val,
+            prompt=case.prompt,
+            expected_behaviors=case.expected_behaviors,
+            failure_indicators=case.failure_indicators,
+            tags=case.tags,
+            metadata=case.metadata,
+        ))
+
+    await db.commit()
 
     logger.info(
         "Extension session created: %s (tool=%s, mode=%s, cases=%d, user=%s)",
