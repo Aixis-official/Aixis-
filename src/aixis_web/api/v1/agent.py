@@ -113,7 +113,7 @@ class AgentResultsUpload(BaseModel):
 @router.get("/local-script")
 async def download_local_agent_script():
     """Download the local agent script."""
-    script_path = Path(__file__).resolve().parents[3] / "scripts" / "aixis_local_agent.py"
+    script_path = Path(__file__).resolve().parents[4] / "scripts" / "aixis_local_agent.py"
     if not script_path.exists():
         raise HTTPException(404, "ローカルエージェントスクリプトが見つかりません")
     return FileResponse(script_path, media_type="text/x-python", filename="aixis_local_agent.py")
