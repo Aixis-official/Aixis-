@@ -307,6 +307,113 @@ input:focus, select:focus {
 
 .error-msg.visible { display: block; }
 
+/* Tool picker (searchable list) */
+.tool-picker {
+  margin-bottom: 12px;
+}
+
+.tool-search {
+  width: 100%;
+  padding: 7px 10px 7px 28px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px 6px 0 0;
+  font-size: 12px;
+  background: #fff url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="%2394a3b8" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>') 8px center no-repeat;
+  margin-bottom: 0;
+}
+
+.tool-search:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.tool-list {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  background: #fff;
+}
+
+.tool-list-item {
+  padding: 7px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.1s;
+}
+
+.tool-list-item:last-child { border-bottom: none; }
+.tool-list-item:hover { background: #f8fafc; }
+
+.tool-list-item.selected {
+  background: #eff6ff;
+  border-left: 2px solid #3b82f6;
+  padding-left: 8px;
+}
+
+.tool-list-item .tool-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-list-item .tool-meta {
+  font-size: 10px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.tool-list-item .tool-check {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  flex-shrink: 0;
+}
+
+.tool-list-item.selected .tool-check {
+  border-color: #3b82f6;
+  background: #3b82f6;
+  position: relative;
+}
+
+.tool-list-item.selected .tool-check::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  width: 4px;
+  height: 6px;
+  border: solid #fff;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+.tool-list-empty {
+  padding: 16px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.tool-count {
+  font-size: 10px;
+  color: #94a3b8;
+  padding: 4px 10px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+
 /* Link */
 .dashboard-link {
   display: block;

@@ -515,15 +515,27 @@ async def list_tools_for_extension(
     user: User = Depends(require_agent_key),
 ):
     """Return tools available for auditing."""
-    result = await db.execute(text("""
-        SELECT t.id, t.name, t.name_jp, t.vendor,
-               COALESCE(tc.name_jp, '') as category_name_jp
-        FROM tools t
-        LEFT JOIN tool_categories tc ON t.category_id = tc.id
-        WHERE t.is_active = 1 OR t.is_active = true
-        ORDER BY t.name_jp
-    """))
-    rows = result.fetchall()
+    try:
+        result = await db.execute(text("""
+            SELECT t.id, t.name, t.name_jp, t.vendor,
+                   COALESCE(tc.name_jp, '') as category_name_jp
+            FROM tools t
+            LEFT JOIN tool_categories tc ON t.category_id = tc.id
+            WHERE t.is_active = 1 OR t.is_active = true
+            ORDER BY t.name_jp
+        """))
+        rows = result.fetchall()
+    except Exception as e:
+        logger.error("Failed to query tools: %s", e)
+        # Fallback: try without category join
+        try:
+            result = await db.execute(text(
+                "SELECT id, name, name_jp, vendor, '' FROM tools WHERE is_active = 1 ORDER BY name_jp"
+            ))
+            rows = result.fetchall()
+        except Exception as e2:
+            logger.error("Fallback tool query also failed: %s", e2)
+            raise HTTPException(500, f"ツール一覧の取得に失敗しました: {e2}")
 
     return [
         ToolListItem(

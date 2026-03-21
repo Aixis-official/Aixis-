@@ -29,9 +29,13 @@
   <!-- Section 2: Session setup -->
   <div class="section" id="setupSection">
     <label>対象ツール</label>
-    <select id="toolSelect">
-      <option value="">読み込み中...</option>
-    </select>
+    <div class="tool-picker" id="toolPicker">
+      <input type="text" id="toolSearch" class="tool-search" placeholder="ツール名・ベンダーで検索...">
+      <div class="tool-list" id="toolList">
+        <div class="tool-list-empty">読み込み中...</div>
+      </div>
+      <input type="hidden" id="toolSelectValue" value="">
+    </div>
 
     <label>記録モード</label>
     <div class="radio-group">

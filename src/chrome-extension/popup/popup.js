@@ -36,9 +36,21 @@ function setBadge(text, className) {
 }
 
 function showError(msg) {
-  errorMsg.textContent = msg;
+  // Provide helpful hints for common errors
+  let displayMsg = msg;
+  if (msg.includes("401") || msg.includes("Unauthorized")) {
+    displayMsg = "認証エラー: APIキーが無効です。正しいキーを設定してください。";
+  } else if (msg.includes("403") || msg.includes("agent:write")) {
+    displayMsg = "権限エラー: APIキーに agent:write スコープが必要です。ダッシュボードで再発行してください。";
+  } else if (msg.includes("500") || msg.includes("Internal server")) {
+    displayMsg = "サーバーエラー: プラットフォームに接続できません。URLとAPIキーを確認してください。";
+  } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+    displayMsg = "ネットワークエラー: プラットフォームURLに接続できません。URLを確認してください。";
+  }
+
+  errorMsg.textContent = displayMsg;
   errorMsg.classList.add("visible");
-  setTimeout(() => errorMsg.classList.remove("visible"), 5000);
+  setTimeout(() => errorMsg.classList.remove("visible"), 8000);
 }
 
 // ---------------------------------------------------------------------------
@@ -78,40 +90,105 @@ async function saveSettings() {
     return;
   }
 
+  if (!apiKey.startsWith("axk_")) {
+    showError("APIキーの形式が正しくありません（axk_... で始まる必要があります）");
+    return;
+  }
+
   await sendBg({ type: "SAVE_SETTINGS", apiKey, platformUrl });
   await loadToolList();
   showSection("setup");
 }
 
 // ---------------------------------------------------------------------------
-// Setup
+// Tool picker (searchable list)
 // ---------------------------------------------------------------------------
 
-async function loadToolList() {
-  const toolSelect = $("#toolSelect");
-  try {
-    const tools = await sendBg({ type: "FETCH_TOOLS" });
-    toolSelect.innerHTML = "";
+let allTools = [];
+let selectedToolId = "";
 
-    if (tools.length === 0) {
-      toolSelect.innerHTML = '<option value="">ツールが登録されていません</option>';
+async function loadToolList() {
+  const toolList = $("#toolList");
+  const toolSearch = $("#toolSearch");
+  try {
+    allTools = await sendBg({ type: "FETCH_TOOLS" });
+
+    if (!allTools || allTools.length === 0) {
+      toolList.innerHTML = '<div class="tool-list-empty">ツールが登録されていません。<br>ダッシュボードのツール管理から追加してください。</div>';
       return;
     }
 
-    for (const tool of tools) {
-      const opt = document.createElement("option");
-      opt.value = tool.id;
-      opt.textContent = tool.name_jp || tool.name;
-      toolSelect.appendChild(opt);
-    }
+    toolSearch.value = "";
+    renderToolList(allTools);
   } catch (err) {
-    toolSelect.innerHTML = '<option value="">読み込みエラー</option>';
+    toolList.innerHTML = '<div class="tool-list-empty" style="color: #991b1b;">ツール一覧の取得に失敗しました</div>';
     showError(err.message);
   }
 }
 
+function renderToolList(tools) {
+  const toolList = $("#toolList");
+
+  if (tools.length === 0) {
+    toolList.innerHTML = '<div class="tool-list-empty">一致するツールがありません</div>';
+    return;
+  }
+
+  toolList.innerHTML = tools.map(t => {
+    const isSelected = t.id === selectedToolId;
+    const name = t.name_jp || t.name;
+    const meta = [t.vendor, t.category_name_jp].filter(Boolean).join(" · ");
+    return `<div class="tool-list-item${isSelected ? ' selected' : ''}" data-tool-id="${t.id}">
+      <div class="tool-check"></div>
+      <div class="tool-name">${escapeHtml(name)}</div>
+      ${meta ? `<div class="tool-meta">${escapeHtml(meta)}</div>` : ''}
+    </div>`;
+  }).join("");
+
+  // Add count footer
+  if (allTools.length > 5) {
+    toolList.innerHTML += `<div class="tool-count">${tools.length} / ${allTools.length} 件表示</div>`;
+  }
+
+  // Click handlers
+  toolList.querySelectorAll(".tool-list-item").forEach(item => {
+    item.addEventListener("click", () => {
+      selectedToolId = item.dataset.toolId;
+      $("#toolSelectValue").value = selectedToolId;
+      renderToolList(getFilteredTools());
+    });
+  });
+}
+
+function getFilteredTools() {
+  const q = ($("#toolSearch").value || "").toLowerCase().trim();
+  if (!q) return allTools;
+  return allTools.filter(t =>
+    (t.name || "").toLowerCase().includes(q) ||
+    (t.name_jp || "").toLowerCase().includes(q) ||
+    (t.vendor || "").toLowerCase().includes(q) ||
+    (t.category_name_jp || "").toLowerCase().includes(q)
+  );
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Search input handler
+$("#toolSearch").addEventListener("input", () => {
+  renderToolList(getFilteredTools());
+});
+
+// ---------------------------------------------------------------------------
+// Session start
+// ---------------------------------------------------------------------------
+
 async function startSession() {
-  const toolId = $("#toolSelect").value;
+  const toolId = selectedToolId || $("#toolSelectValue").value;
   if (!toolId) {
     showError("ツールを選択してください");
     return;
@@ -286,6 +363,7 @@ async function endSession() {
 
 async function newSession() {
   await sendBg({ type: "RESET_SESSION" });
+  selectedToolId = "";
   setBadge("待機中", "badge-idle");
   await loadToolList();
   showSection("setup");
