@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <h1>Aixis Audit</h1>
+    <span class="badge badge-idle" id="statusBadge">待機中</span>
+  </div>
+
+  <!-- Error display -->
+  <div class="error-msg" id="errorMsg"></div>
+
+  <!-- Section 1: Settings -->
+  <div class="section active" id="settingsSection">
+    <label>APIキー</label>
+    <input type="password" id="apiKeyInput" placeholder="axk_...">
+
+    <label>プラットフォームURL</label>
+    <input type="text" id="platformUrlInput" placeholder="https://platform.aixis.jp">
+
+    <button class="btn btn-primary" id="saveSettingsBtn">保存して続行</button>
+  </div>
+
+  <!-- Section 2: Session setup -->
+  <div class="section" id="setupSection">
+    <label>対象ツール</label>
+    <select id="toolSelect">
+      <option value="">読み込み中...</option>
+    </select>
+
+    <label>記録モード</label>
+    <div class="radio-group">
+      <label>
+        <input type="radio" name="mode" value="protocol" checked>
+        プロトコル
+      </label>
+      <label>
+        <input type="radio" name="mode" value="freeform">
+        フリーフォーム
+      </label>
+    </div>
+
+    <button class="btn btn-primary" id="startSessionBtn">セッション開始</button>
+    <button class="btn btn-secondary btn-sm" id="changeSettingsBtn" style="margin-top: 8px;">設定変更</button>
+  </div>
+
+  <!-- Section 3: Protocol recording -->
+  <div class="section" id="protocolSection">
+    <div class="progress-bar">
+      <div class="fill" id="progressFill" style="width: 0%"></div>
+    </div>
+    <div class="progress-text" id="progressText">0 / 0</div>
+
+    <div class="test-card" id="testCard">
+      <div class="category" id="testCategory"></div>
+      <div class="prompt" id="testPrompt"></div>
+      <button class="copy-btn" id="copyPromptBtn">プロンプトをコピー</button>
+      <div class="expected" id="testExpected"></div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" id="nextTestBtn">次へ</button>
+      <button class="btn btn-secondary" id="skipTestBtn">スキップ</button>
+    </div>
+
+    <button class="btn btn-danger btn-sm" id="endProtocolBtn" style="margin-top: 8px;">セッション終了</button>
+  </div>
+
+  <!-- Section 4: Freeform recording -->
+  <div class="section" id="freeformSection">
+    <div class="recording-status">
+      <div class="count" id="freeformCount">0</div>
+      <div class="label">記録された操作</div>
+    </div>
+
+    <button class="btn btn-danger" id="stopFreeformBtn">記録停止 & セッション完了</button>
+  </div>
+
+  <!-- Section 5: Complete -->
+  <div class="section" id="completeSection">
+    <div class="summary-stats">
+      <div class="stat-card">
+        <div class="value" id="summaryTotal">0</div>
+        <div class="label">テスト実行数</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" id="summaryStatus">-</div>
+        <div class="label">ステータス</div>
+      </div>
+    </div>
+
+    <a class="dashboard-link" id="dashboardLink" href="#" target="_blank">
+      ダッシュボードで結果を確認
+    </a>
+
+    <button class="btn btn-primary" id="newSessionBtn" style="margin-top: 12px;">新しいセッション</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

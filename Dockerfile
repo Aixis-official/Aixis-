@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# System deps for Playwright + WeasyPrint
+# System deps for WeasyPrint
 RUN apt-get update && apt-get install -y \
     libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-xlib-2.0-0 \
     libffi-dev shared-mime-info \
@@ -12,10 +12,6 @@ RUN apt-get update && apt-get install -y \
 COPY . .
 
 RUN pip install --no-cache-dir .
-
-# Install Playwright browsers (Firefox preferred — Google OAuth blocks Chromium automation)
-RUN playwright install firefox --with-deps || true
-RUN playwright install chromium --with-deps || true
 
 # NOTE: Use PostgreSQL in production (Railway addon).
 # SQLite data is LOST on every deploy because containers are ephemeral.

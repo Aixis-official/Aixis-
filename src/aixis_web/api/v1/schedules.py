@@ -136,74 +136,14 @@ async def delete_schedule(
 @router.post("/{schedule_id}/trigger", response_model=dict)
 async def trigger_schedule(
     schedule_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Manually trigger a scheduled audit now."""
-    import uuid
+    """Manually trigger a scheduled audit — migrated to Chrome extension."""
+    from fastapi.responses import JSONResponse
 
-    from ...services.audit_runner import start_audit
-
-    result = await db.execute(
-        select(AuditSchedule).where(AuditSchedule.id == schedule_id)
-    )
-    schedule = result.scalar_one_or_none()
-    if not schedule:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="スケジュールが見つかりません"
-        )
-
-    # Get tool
-    tool_result = await db.execute(select(Tool).where(Tool.id == schedule.tool_id))
-    tool = tool_result.scalar_one_or_none()
-    if not tool:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="ツールが見つかりません"
-        )
-
-    now = datetime.now(timezone.utc)
-    session_id = f"sched-manual-{uuid.uuid4().hex[:8]}"
-    db_session_id = str(uuid.uuid4())
-    session_code = f"AX-{now.strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
-
-    # Create audit session via raw SQL to match the pattern
-    from sqlalchemy import text
-
-    await db.execute(
-        text(
-            """
-        INSERT INTO audit_sessions (id, session_code, tool_id, profile_id, status, total_planned, total_executed, created_at)
-        VALUES (:id, :code, :tool_id, :profile_id, 'pending', 0, 0, :now)
-    """
-        ),
-        {
-            "id": db_session_id,
-            "code": session_code,
-            "tool_id": schedule.tool_id,
-            "profile_id": schedule.profile_id or "",
-            "now": now.isoformat(),
+    return JSONResponse(
+        status_code=501,
+        content={
+            "detail": "この機能はChrome拡張に移行しました。/api/v1/extension/ エンドポイントをご利用ください。"
         },
     )
-    await db.commit()
-
-    categories = schedule.categories if schedule.categories else None
-
-    audit_result = start_audit(
-        session_id=session_id,
-        db_session_id=db_session_id,
-        tool_name=tool.name,
-        target_config_name=None,
-        profile_id=schedule.profile_id or None,
-        categories=categories,
-    )
-
-    # Update schedule last_run
-    schedule.last_run_at = now
-    schedule.run_count += 1
-    await db.commit()
-
-    return {
-        "message": "スケジュール監査を手動トリガーしました",
-        "session_id": session_id,
-        "db_session_id": db_session_id,
-    }

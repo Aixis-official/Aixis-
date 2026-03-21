@@ -37,6 +37,7 @@ _CSRF_EXEMPT_PREFIXES = (
     "/api/v1/auth/forgot-password",
     "/api/v1/auth/reset-password",
     "/api/v1/clients/invite/",  # Public invite completion (no session to hijack)
+    "/api/v1/extension/",  # Chrome extension uses API key auth, no CSRF needed
 )
 
 

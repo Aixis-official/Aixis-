@@ -95,7 +95,7 @@ class OverallGrade(str, Enum):
 
 
 class ExecutorType(str, Enum):
-    PLAYWRIGHT = "playwright"
+    EXTENSION = "extension"
     API = "api"
 
 
@@ -104,6 +104,7 @@ class ScoreSource(str, Enum):
     AUTO = "auto"
     MANUAL = "manual"
     HYBRID = "hybrid"
+    LLM = "llm"
 
 
 class AuditStatus(str, Enum):

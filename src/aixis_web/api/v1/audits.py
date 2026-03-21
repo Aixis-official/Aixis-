@@ -1,5 +1,4 @@
 """Audit session endpoints."""
-import asyncio as _asyncio
 import csv
 import io
 import json as _json
@@ -8,28 +7,26 @@ import uuid
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 logger = logging.getLogger(__name__)
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import Response, StreamingResponse
+from starlette.responses import Response
 
 from ...db.base import get_db
-from ...db.models.audit import AuditSession, DBTestCase, DBTestResult
+from ...db.models.audit import AuditSession, DBTestResult
 from ...db.models.score import AxisScoreRecord, ManualChecklistRecord
-from ...db.models.tool import Tool, ToolTargetConfig
+from ...db.models.tool import Tool
 from ...db.models.user import User
 from ...schemas.audit import (
     AuditCreate,
     AuditDetailResponse,
     AuditListResponse,
-    AuditProgressResponse,
     AuditResponse,
     AuditStartRequest,
-    AuditStartResponse,
     ManualScoreSubmit,
     VolumeMetrics,
 )
@@ -65,205 +62,33 @@ async def create_audit(
     return session
 
 
-@router.post("/start", response_model=AuditStartResponse)
+_NOT_IMPLEMENTED_MSG = "この機能はChrome拡張に移行しました。/api/v1/extension/ エンドポイントをご利用ください。"
+
+
+@router.post("/start")
 async def start_audit(
     body: AuditStartRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[User, Depends(require_analyst)],
+    _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Start a new audit: create session and launch the agent pipeline."""
-    from ...services.audit_runner import start_audit as runner_start
-
-    # Validate tool exists
-    result = await db.execute(select(Tool).where(Tool.id == body.tool_id))
-    tool = result.scalar_one_or_none()
-    if not tool:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="ツールが見つかりません",
-        )
-
-    # Get target config YAML from DB (optional — runner will fallback to file-based)
-    target_config_yaml = None
-    target_config_name = body.target_config_name
-    if not target_config_name:
-        config_result = await db.execute(
-            select(ToolTargetConfig)
-            .where(ToolTargetConfig.tool_id == tool.id, ToolTargetConfig.is_active.is_(True))
-            .order_by(ToolTargetConfig.version.desc())
-            .limit(1)
-        )
-        config = config_result.scalar_one_or_none()
-        if config:
-            # Validate that config_yaml is actual YAML, not stale/corrupt data
-            import yaml as _yaml
-            try:
-                parsed = _yaml.safe_load(config.config_yaml)
-                if isinstance(parsed, dict) and "start_url" in parsed:
-                    target_config_yaml = config.config_yaml
-                else:
-                    logger.warning("DB target config is not valid audit YAML — skipping")
-            except Exception:
-                logger.warning("DB target config YAML corrupt — skipping, will use file fallback")
-
-    # No longer error if no config — runner will try config/targets/{slug}.yaml fallback
-
-    # Create audit session in web DB
-    session_code = _generate_session_code()
-    agent_session_id = f"session-{uuid.uuid4().hex[:8]}"
-
-    audit_session = AuditSession(
-        session_code=session_code,
-        tool_id=tool.id,
-        profile_id=body.profile_id or tool.profile_id or "",
-        status="running",
-        initiated_by=user.id,
-        started_at=datetime.now(timezone.utc),
-    )
-    db.add(audit_session)
-    await db.commit()
-    await db.refresh(audit_session)
-
-    # Launch background pipeline (pass tool slug for file-based config fallback)
-    auth_state = tool.auth_storage_state
-    cookie_count = len(auth_state.get("cookies", [])) if isinstance(auth_state, dict) else 0
-    print(
-        f"Starting audit for {tool.slug} — auth_storage_state type={type(auth_state).__name__}, cookie_count={cookie_count}",
-        flush=True,
-    )
-    try:
-        result = runner_start(
-            session_id=agent_session_id,
-            db_session_id=audit_session.id,
-            tool_name=tool.name_jp or tool.name,
-            target_config_yaml=target_config_yaml,
-            target_config_name=target_config_name or tool.slug,
-            profile_id=body.profile_id or tool.profile_id or "",
-            categories=body.categories,
-            auth_storage_state=auth_state,
-        )
-    except Exception as exc:
-        logger.exception("Audit runner crashed for %s", tool.slug)
-        audit_session.status = "failed"
-        audit_session.error_message = str(exc)
-        await db.commit()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"監査エンジンの初期化に失敗しました: {exc}",
-        )
-
-    if "error" in result:
-        audit_session.status = "failed"
-        audit_session.error_message = result["error"]
-        await db.commit()
-        logger.error("Audit start failed for %s: %s", tool.slug, result["error"])
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result["error"],
-        )
-
-    return AuditStartResponse(
-        session_id=agent_session_id,
-        db_session_id=audit_session.id,
-        status="running",
-        message=f"監査を開始しました: {tool.name_jp or tool.name} ({session_code})",
-    )
+    """Start a new audit — migrated to Chrome extension."""
+    return JSONResponse(status_code=501, content={"detail": _NOT_IMPLEMENTED_MSG})
 
 
-@router.get("/running", response_model=list[AuditProgressResponse])
+@router.get("/running")
 async def list_running_audits(
     _user: Annotated[User, Depends(require_analyst)],
-    db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """List all currently running audit sessions."""
-    from ...services.audit_runner import list_running_audits as runner_list
-
-    running = runner_list()
-    responses = []
-
-    for r in running:
-        # Get DB info
-        db_status = ""
-        total_planned = 0
-        total_executed = 0
-        db_session_id = r.get("db_session_id", "")
-
-        if db_session_id:
-            result = await db.execute(
-                select(AuditSession).where(AuditSession.id == db_session_id)
-            )
-            session = result.scalar_one_or_none()
-            if session:
-                db_status = session.status
-                total_planned = session.total_planned
-                total_executed = session.total_executed
-
-        # Use in-memory progress (real-time) over DB values (batched)
-        mem_completed = r.get("completed", 0)
-        mem_total = r.get("total", 0)
-
-        responses.append(AuditProgressResponse(
-            session_id=r.get("session_id", ""),
-            db_session_id=db_session_id,
-            status=r.get("status", "unknown"),
-            phase=r.get("phase", ""),
-            tool_name=r.get("tool_name", ""),
-            error=r.get("error"),
-            started_at=r.get("started_at"),
-            total_planned=total_planned,
-            total_executed=total_executed,
-            db_status=db_status,
-            completed=mem_completed,
-            total=mem_total,
-            current_category=r.get("current_category", ""),
-        ))
-
-    return responses
+    """List running audits — migrated to Chrome extension."""
+    return JSONResponse(status_code=501, content={"detail": _NOT_IMPLEMENTED_MSG})
 
 
-@router.get("/progress/{session_id}", response_model=AuditProgressResponse)
+@router.get("/progress/{session_id}")
 async def get_audit_progress(
     session_id: str,
     _user: Annotated[User, Depends(require_analyst)],
-    db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Get real-time progress of a running audit."""
-    from ...services.audit_runner import get_running_audit
-
-    running = get_running_audit(session_id)
-
-    # Also check DB for the audit session
-    db_session_id = running.get("db_session_id", "") if running else ""
-
-    # Try to find by session_id in DB (check session_code or search)
-    db_session = None
-    if db_session_id:
-        result = await db.execute(
-            select(AuditSession).where(AuditSession.id == db_session_id)
-        )
-        db_session = result.scalar_one_or_none()
-
-    if not running and not db_session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="監査セッションが見つかりません",
-        )
-
-    return AuditProgressResponse(
-        session_id=session_id,
-        db_session_id=db_session_id,
-        status=running.get("status", db_session.status if db_session else "unknown") if running else (db_session.status if db_session else "unknown"),
-        phase=running.get("phase", "") if running else "done",
-        tool_name=running.get("tool_name", "") if running else "",
-        error=running.get("error") if running else (db_session.error_message if db_session else None),
-        started_at=running.get("started_at") if running else (db_session.started_at.isoformat() if db_session and db_session.started_at else None),
-        total_planned=db_session.total_planned if db_session else 0,
-        total_executed=db_session.total_executed if db_session else 0,
-        db_status=db_session.status if db_session else "",
-        completed=running.get("completed", 0) if running else (db_session.total_executed if db_session else 0),
-        total=running.get("total", 0) if running else (db_session.total_planned if db_session else 0),
-        current_category=running.get("current_category", "") if running else "",
-    )
+    """Get real-time audit progress — migrated to Chrome extension."""
+    return JSONResponse(status_code=501, content={"detail": _NOT_IMPLEMENTED_MSG})
 
 
 @router.get("")
@@ -449,61 +274,10 @@ async def get_audit(
 @router.post("/{session_id}/continue")
 async def continue_audit(
     session_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Signal that manual login is complete; resume automated testing."""
-    from ...services.audit_runner import resume_after_login
-
-    # Update DB status from waiting_login to running
-    result = await db.execute(
-        select(AuditSession).where(AuditSession.id == session_id)
-    )
-    session = result.scalar_one_or_none()
-    if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="監査セッションが見つかりません",
-        )
-
-    if session.status != "waiting_login":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"現在のステータス '{session.status}' ではこの操作を実行できません",
-        )
-
-    # Signal the background thread to resume
-    resumed = resume_after_login(session_id)
-    if not resumed:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="実行中の監査が見つかりません。監査が既に終了している可能性があります。",
-        )
-
-    session.status = "running"
-    await db.commit()
-
-    return {"status": "resumed", "session_id": session_id, "message": "ログイン完了。自動監査を再開しました。"}
-
-
-def _run_in_browser(session_id: str, coro_fn):
-    """Helper: run an async Playwright coroutine in the executor's event loop.
-
-    The Playwright page runs in a background thread with its own event loop.
-    This helper safely dispatches async calls to that loop from FastAPI's thread.
-    """
-    import asyncio
-    from ...services.audit_runner import get_browser_page
-
-    page, loop = get_browser_page(session_id)
-    if not page:
-        raise HTTPException(404, "ブラウザが見つかりません。監査が実行中でない可能性があります。")
-    if not loop or not loop.is_running():
-        raise HTTPException(500, "ブラウザのイベントループが利用できません。")
-
-    coro = coro_fn(page)
-    future = asyncio.run_coroutine_threadsafe(coro, loop)
-    return future.result(timeout=15), page
+    """Resume after login — migrated to Chrome extension."""
+    return JSONResponse(status_code=501, content={"detail": _NOT_IMPLEMENTED_MSG})
 
 
 @router.get("/{session_id}/browser/screenshot")
@@ -511,35 +285,8 @@ async def get_browser_screenshot(
     session_id: str,
     _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Get a live screenshot of the running browser (for login interaction)."""
-    import base64
-
-    try:
-        # Capture screenshot + viewport size in a single call
-        async def capture(page):
-            ss = await page.screenshot(type="jpeg", quality=50)
-            vp = page.viewport_size or {"width": 1280, "height": 800}
-            url = page.url
-            return ss, vp, url
-
-        (screenshot_bytes, viewport, url), page = _run_in_browser(session_id, capture)
-        b64 = base64.b64encode(screenshot_bytes).decode()
-        return {
-            "screenshot": b64,
-            "format": "jpeg",
-            "url": url,
-            "viewport_width": viewport.get("width", 1280),
-            "viewport_height": viewport.get("height", 800),
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(500, f"スクリーンショット取得失敗: {e}")
-
-
-async def _eval_url(page):
-    """Get page URL safely in async context."""
-    return page.url
+    """Browser screenshot — migrated to Chrome extension."""
+    return JSONResponse(status_code=501, content={"detail": _NOT_IMPLEMENTED_MSG})
 
 
 @router.post("/{session_id}/browser/click")
@@ -548,90 +295,8 @@ async def browser_click(
     body: dict,
     _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Send a click action to the running browser.
-
-    Uses CDP (Chrome DevTools Protocol) for reliable input that bypasses
-    Google OAuth's bot detection of synthetic Playwright mouse events.
-    """
-    x = int(body.get("x", 0))
-    y = int(body.get("y", 0))
-
-    method = "none"
-    debug_info = ""
-    try:
-        async def smart_click(page):
-            nonlocal method, debug_info
-
-            # Get element info at click coordinates
-            el_info = await page.evaluate("""({x, y}) => {
-                const el = document.elementFromPoint(x, y);
-                if (!el) return {text: '', tag: '', id: ''};
-                // Walk up to collect info
-                let texts = [], ids = [], tags = [];
-                let t = el;
-                for (let i = 0; i < 10 && t; i++) {
-                    const txt = (t.textContent || '').trim();
-                    if (txt && txt.length < 30) texts.push(txt);
-                    if (t.id) ids.push(t.id);
-                    tags.push(t.tagName);
-                    t = t.parentElement;
-                }
-                return {
-                    text: texts[0] || '',
-                    allTexts: texts.slice(0, 3),
-                    ids: ids.slice(0, 3),
-                    tags: tags.slice(0, 5),
-                    directTag: el.tagName,
-                };
-            }""", {"x": x, "y": y})
-
-            el_text = el_info.get("text", "") if el_info else ""
-            el_ids = el_info.get("ids", []) if el_info else []
-            debug_info = f"text={el_text!r}, ids={el_ids}, tags={el_info.get('tags', [])[:3]}"
-
-            # Build strategies: most specific first
-            strategies = []
-
-            # Google OAuth specific: click by known IDs
-            for eid in el_ids:
-                strategies.append((f"id:{eid}", lambda _id=eid: page.locator(f"#{_id}").click(timeout=3000)))
-
-            # Click by visible text using various methods
-            if el_text:
-                strategies.append(("role_button", lambda t=el_text: page.get_by_role("button", name=t).click(timeout=3000)))
-                strategies.append(("locator_text", lambda t=el_text: page.locator(f"text={t}").click(timeout=3000)))
-
-            # Direct coordinate click via Playwright
-            strategies.append(("mouse", lambda: page.mouse.click(x, y)))
-
-            # CDP as absolute last resort
-            async def cdp_click():
-                cdp = await page.context.new_cdp_session(page)
-                try:
-                    await cdp.send("Input.dispatchMouseEvent", {"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1})
-                    await cdp.send("Input.dispatchMouseEvent", {"type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1})
-                finally:
-                    await cdp.detach()
-            strategies.append(("cdp", cdp_click))
-
-            errors = []
-            for name, fn in strategies:
-                try:
-                    await fn()
-                    method = name
-                    return
-                except Exception as e:
-                    errors.append(f"{name}:{type(e).__name__}")
-                    continue
-            method = "all_failed"
-            debug_info += f" errors={errors}"
-
-        _run_in_browser(session_id, lambda p: smart_click(p))
-        return {"status": "clicked", "x": x, "y": y, "method": method, "debug": debug_info}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(500, f"クリック失敗: {e}")
+    """Browser click — migrated to Chrome extension."""
+    return JSONResponse(status_code=501, content={"detail": _NOT_IMPLEMENTED_MSG})
 
 
 @router.post("/{session_id}/browser/type")
@@ -640,172 +305,26 @@ async def browser_type(
     body: dict,
     _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Send keyboard input to the running browser.
-
-    Accepts optional click_x/click_y to re-click and focus before typing.
-    """
-    text = body.get("text", "")
-    click_x = body.get("click_x")
-    click_y = body.get("click_y")
-
-    try:
-        async def smart_type(page):
-            import asyncio as _aio
-
-            # Re-click at the last click position to ensure focus
-            if click_x is not None and click_y is not None:
-                await page.mouse.click(int(click_x), int(click_y))
-                await _aio.sleep(0.2)
-
-            # Select all + delete to clear existing content
-            await page.keyboard.press("Control+a")
-            await _aio.sleep(0.05)
-            await page.keyboard.press("Backspace")
-            await _aio.sleep(0.05)
-
-            # Type character by character (triggers React/Vue onChange properly)
-            await page.keyboard.type(text, delay=20)
-
-        _run_in_browser(session_id, lambda p: smart_type(p))
-        return {"status": "typed", "length": len(text)}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(500, f"入力失敗: {e}")
+    """Browser type — migrated to Chrome extension."""
+    return JSONResponse(status_code=501, content={"detail": _NOT_IMPLEMENTED_MSG})
 
 
 @router.post("/{session_id}/abort")
 async def abort_audit(
     session_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Abort a running audit. Stops API usage immediately."""
-    from ...services.audit_runner import abort_audit as runner_abort
-
-    result = await db.execute(
-        select(AuditSession).where(AuditSession.id == session_id)
-    )
-    session = result.scalar_one_or_none()
-    if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="監査セッションが見つかりません",
-        )
-
-    if session.status not in ("running", "waiting_login"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"ステータス '{session.status}' の監査は中止できません",
-        )
-
-    aborted = runner_abort(session_id)
-    if not aborted:
-        # Process is already dead — just update the DB status directly
-        session.status = "aborted"
-        session.error_message = "プロセスが応答しないため強制中止しました"
-        await db.commit()
-        return {"status": "aborted", "session_id": session_id, "message": "プロセスが見つからないため、ステータスを中止に更新しました。"}
-
-    session.status = "aborted"
-    session.error_message = "ユーザーにより中止されました"
-    await db.commit()
-
-    return {"status": "aborted", "session_id": session_id, "message": "監査を中止しました。API使用を停止します。"}
+    """Abort audit — migrated to Chrome extension."""
+    return JSONResponse(status_code=501, content={"detail": _NOT_IMPLEMENTED_MSG})
 
 
-@router.post("/{session_id}/retry", response_model=AuditStartResponse)
+@router.post("/{session_id}/retry")
 async def retry_audit(
     session_id: str,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[User, Depends(require_analyst)],
+    _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Retry a failed audit session with the same parameters."""
-    from ...services.audit_runner import start_audit as runner_start
-
-    # Find the original session
-    result = await db.execute(
-        select(AuditSession).where(AuditSession.id == session_id)
-    )
-    original = result.scalar_one_or_none()
-    if not original:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="監査セッションが見つかりません",
-        )
-
-    if original.status not in ("failed", "aborted"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"ステータスが '{original.status}' のセッションは再試行できません。失敗または中止済みのセッションのみ再試行可能です。",
-        )
-
-    # Get the tool
-    tool_result = await db.execute(select(Tool).where(Tool.id == original.tool_id))
-    tool = tool_result.scalar_one_or_none()
-    if not tool:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="対象ツールが見つかりません",
-        )
-
-    # Get target config (DB or fallback to file-based via slug)
-    target_config_yaml = None
-    config_result = await db.execute(
-        select(ToolTargetConfig)
-        .where(ToolTargetConfig.tool_id == tool.id, ToolTargetConfig.is_active.is_(True))
-        .order_by(ToolTargetConfig.version.desc())
-        .limit(1)
-    )
-    config = config_result.scalar_one_or_none()
-    if config:
-        target_config_yaml = config.config_yaml
-
-    # No longer error if no config — runner will try file-based fallback
-
-    # Create new audit session
-    session_code = _generate_session_code()
-    agent_session_id = f"session-{uuid.uuid4().hex[:8]}"
-
-    new_session = AuditSession(
-        session_code=session_code,
-        tool_id=tool.id,
-        profile_id=original.profile_id,
-        status="running",
-        initiated_by=user.id,
-        started_at=datetime.now(timezone.utc),
-    )
-    db.add(new_session)
-    await db.commit()
-    await db.refresh(new_session)
-
-    # Launch background pipeline (include auth cookies for login-required tools)
-    result = runner_start(
-        session_id=agent_session_id,
-        db_session_id=new_session.id,
-        tool_name=tool.name_jp or tool.name,
-        target_config_yaml=target_config_yaml,
-        target_config_name=tool.slug,
-        profile_id=original.profile_id,
-        auth_storage_state=tool.auth_storage_state,
-    )
-
-    if "error" in result:
-        new_session.status = "failed"
-        new_session.error_message = result["error"]
-        await db.commit()
-        logger.error("Audit retry failed for %s: %s", tool.slug, result["error"])
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="監査の再試行に失敗しました。管理者にお問い合わせください。",
-        )
-
-    return AuditStartResponse(
-        session_id=agent_session_id,
-        db_session_id=new_session.id,
-        status="running",
-        message=f"監査を再試行しました: {tool.name_jp or tool.name} ({session_code})",
-    )
+    """Retry audit — migrated to Chrome extension."""
+    return JSONResponse(status_code=501, content={"detail": _NOT_IMPLEMENTED_MSG})
 
 
 @router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -829,16 +348,10 @@ async def delete_audit(
         )
 
     if session.status in ("running", "waiting_login"):
-        from ...services.audit_runner import get_running_audit, list_running_audits
-        actually_running = any(
-            r.get("db_session_id") == session_id
-            for r in list_running_audits()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="実行中のセッションは削除できません。先に中止してください。",
         )
-        if actually_running:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="実行中のセッションは削除できません。先に中止してください。",
-            )
 
     # Soft-delete: mark as deleted instead of destroying data
     session.deleted_at = datetime.now(timezone.utc)
@@ -961,18 +474,8 @@ async def update_audit_status(
         )
 
     if session.status in ("running", "waiting_login"):
-        # Check if the process is actually still running
-        from ...services.audit_runner import list_running_audits
-        actually_running = any(
-            r.get("db_session_id") == session_id
-            for r in list_running_audits()
-        )
-        if actually_running:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="実行中のセッションのステータスは手動変更できません。",
-            )
-        # Process is dead — allow status change of stale session
+        # Server-side runner removed; allow status correction of stale sessions
+        pass
 
     allowed_statuses = {"pending", "completed", "failed", "cancelled", "aborted", "awaiting_manual"}
     new_status = body.status
@@ -1064,63 +567,9 @@ async def finalize_audit(
 async def stream_audit_progress(
     session_id: str,
     _user: Annotated[User, Depends(require_analyst)],
-    db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """SSE stream of audit progress for real-time UI updates."""
-    from ...services.audit_runner import get_running_audit
-
-    # Also check by db_session_id
-    async def event_generator():
-        terminal_statuses = {"completed", "failed", "aborted", "cancelled", "done"}
-        for _ in range(600):  # Max ~20 minutes
-            info = get_running_audit(session_id)
-            if not info:
-                # Check by db_session_id
-                from ...services.audit_runner import list_running_audits as _list
-                for r in _list():
-                    if r.get("db_session_id") == session_id:
-                        info = r
-                        break
-
-            if info:
-                data = _json.dumps({
-                    "phase": info.get("phase", ""),
-                    "completed": info.get("completed", 0),
-                    "total": info.get("total", 0),
-                    "current_category": info.get("current_category", ""),
-                    "status": info.get("status", ""),
-                    "error": info.get("error"),
-                }, ensure_ascii=False)
-                yield f"data: {data}\n\n"
-
-                if info.get("status") in terminal_statuses or info.get("phase") == "done":
-                    yield f"data: {_json.dumps({'status': 'stream_end'})}\n\n"
-                    return
-            else:
-                # No running audit found — check DB status
-                result = await db.execute(
-                    select(AuditSession).where(AuditSession.id == session_id)
-                )
-                session = result.scalar_one_or_none()
-                if session and session.status in terminal_statuses:
-                    data = _json.dumps({
-                        "phase": "done",
-                        "completed": session.total_executed or 0,
-                        "total": session.total_planned or 0,
-                        "status": session.status,
-                    }, ensure_ascii=False)
-                    yield f"data: {data}\n\ndata: {_json.dumps({'status': 'stream_end'})}\n\n"
-                    return
-
-            await _asyncio.sleep(2)
-
-        yield f"data: {_json.dumps({'status': 'stream_timeout'})}\n\n"
-
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
+    """SSE audit progress stream — migrated to Chrome extension."""
+    return JSONResponse(status_code=501, content={"detail": _NOT_IMPLEMENTED_MSG})
 
 
 # ---------------------------------------------------------------------------

@@ -1,19 +1,18 @@
-"""CLI entry point for the Aixis destructive testing agent.
+"""CLI entry point for the Aixis audit platform.
 
 コマンド体系:
-  aixis 検証 <ツール名> --種別 <プロファイル>    ← メインの検証コマンド
-  aixis 検証 gamma --種別 スライド作成AI         ← 例: Gammaの検証
-  aixis プレビュー gamma --種別 スライド作成AI   ← 実行前の確認
+  aixis プレビュー gamma --種別 スライド作成AI   ← テストケース確認
   aixis レポート <セッションID>                  ← レポート生成
   aixis 一覧                                     ← セッション一覧
   aixis 種別一覧                                 ← 全プロファイル表示
   aixis 種別検索 <キーワード>                    ← プロファイル検索
 
 英語コマンドも併用可能:
-  verify / preview / report / list / profiles / search
+  preview / report / list / profiles / search
+
+Note: テスト実行はChrome拡張で行います。
 """
 
-import asyncio
 from pathlib import Path
 from typing import Optional
 
@@ -24,12 +23,13 @@ from rich.table import Table
 
 app = typer.Typer(
     name="aixis",
-    help="Aixis 破壊的テスト自動化エージェント\n\n"
+    help="Aixis AI監査プラットフォーム CLI\n\n"
          "使い方:\n"
-         "  aixis 検証 gamma --種別 スライド作成AI\n"
+         "  aixis プレビュー gamma --種別 スライド作成AI\n"
          "  aixis レポート <セッションID>\n"
          "  aixis 種別一覧\n"
-         "  aixis 種別検索 医療",
+         "  aixis 種別検索 医療\n\n"
+         "Note: テスト実行はChrome拡張で行います。",
     no_args_is_help=True,
 )
 console = Console()
@@ -57,35 +57,6 @@ def _resolve_profile(name: str):
     console.print("\n利用可能な種別は [cyan]aixis 種別一覧[/cyan] で確認できます。")
     console.print("キーワード検索: [cyan]aixis 種別検索 <キーワード>[/cyan]")
     raise typer.Exit(1)
-
-
-def _resolve_target_path(tool_name: str) -> Path:
-    """ツール名からターゲット設定ファイルのパスを解決。"""
-    for name in [tool_name, tool_name.lower(), tool_name.lower().replace(" ", "_"), tool_name.lower().replace(" ", "-")]:
-        for p in [Path(name), DEFAULT_CONFIG_DIR / "targets" / f"{name}.yaml"]:
-            if p.exists():
-                return p
-    return DEFAULT_CONFIG_DIR / "targets" / f"{tool_name}.yaml"
-
-
-def _print_welcome(tool_name: str, profile: dict, case_count: int, categories: list[str]) -> None:
-    """検証開始時のウェルカムメッセージ。"""
-    CATEGORY_NAMES = {
-        "dialect": "方言", "long_input": "長文", "contradictory": "矛盾",
-        "ambiguous": "曖昧", "keigo_mixing": "敬語混合", "unicode_edge": "Unicode",
-        "business_jp": "商習慣", "multi_step": "複合指示", "broken_grammar": "文法破壊",
-    }
-    cat_display = ", ".join(CATEGORY_NAMES.get(c, c) for c in categories)
-
-    console.print()
-    console.print(Panel(
-        f"[bold]対象ツール:[/bold] {tool_name}\n"
-        f"[bold]検証種別:[/bold] {profile.get('name_jp', profile['id'])}\n"
-        f"[bold]テストケース数:[/bold] {case_count}件\n"
-        f"[bold]検証カテゴリ:[/bold] {cat_display}",
-        title="[bold blue]Aixis 破壊的テスト[/bold blue]",
-        border_style="blue",
-    ))
 
 
 def _print_preview(cases: list, profile: dict) -> None:
@@ -141,73 +112,11 @@ def _print_preview(cases: list, profile: dict) -> None:
         preview = tc.prompt[:100] + "..." if len(tc.prompt) > 100 else tc.prompt
         console.print(f"  [dim][{tc.category.value}][/dim] {preview}")
 
-    console.print(f"\n[dim]実行するには: aixis 検証 <ツール名> --種別 {profile.get('name_jp', profile['id'])}[/dim]")
+    console.print(f"\n[dim]Chrome拡張でこのプロファイルを使用してテストを実行してください。[/dim]")
 
 
 # ===================================================================
-#  メインコマンド: 検証
-# ===================================================================
-
-@app.command("検証", help="AIツールの破壊的テストを実行する")
-@app.command("verify", hidden=True)
-def verify(
-    tool: str = typer.Argument(..., help="検証対象ツール名 (例: gamma)"),
-    種別: str = typer.Option(..., "--種別", "--profile", "-p", help="ツール種別 (例: スライド作成AI)"),
-    dry_run: bool = typer.Option(False, "--プレビュー", "--dry-run", "-d", help="実行せずにテスト内容を確認"),
-    output_dir: Path = typer.Option(DEFAULT_OUTPUT_DIR, "--出力先", "--output", "-o"),
-    session_id: Optional[str] = typer.Option(None, "--セッション", "--session"),
-) -> None:
-    """
-    AIツールの破壊的テストを実行します。
-
-    使い方:
-      aixis 検証 gamma --種別 スライド作成AI
-      aixis 検証 gamma --種別 スライド作成AI --プレビュー
-    """
-    from .orchestrator.pipeline import Pipeline
-    from .profiles.registry import get_categories_for_profile
-
-    profile = _resolve_profile(種別)
-    categories = get_categories_for_profile(profile)
-
-    target_path = _resolve_target_path(tool)
-    if not target_path.exists():
-        console.print(f"[red]ターゲット設定が見つかりません: {target_path}[/red]")
-        console.print(f"  [dim]config/targets/{tool}.yaml を作成してください[/dim]")
-        console.print(f"  [dim]テンプレート: config/targets/example_target.yaml[/dim]")
-        raise typer.Exit(1)
-
-    from .patterns.generator import generate_all
-    preview_cases = generate_all(DEFAULT_CONFIG_DIR / "patterns", categories)
-    _print_welcome(tool, profile, len(preview_cases), categories)
-
-    if dry_run:
-        _print_preview(preview_cases, profile)
-        return
-
-    pipeline = Pipeline(
-        target_config_path=target_path,
-        patterns_dir=DEFAULT_CONFIG_DIR / "patterns",
-        output_dir=output_dir,
-        categories=categories,
-        dry_run=False,
-        profile=profile,
-    )
-
-    result_session_id = asyncio.run(pipeline.run(session_id=session_id))
-
-    console.print()
-    console.print(Panel(
-        f"セッションID: [cyan]{result_session_id}[/cyan]\n\n"
-        f"レポート生成:\n"
-        f"  [bold green]aixis レポート {result_session_id}[/bold green]",
-        title="[bold green]検証完了[/bold green]",
-        border_style="green",
-    ))
-
-
-# ===================================================================
-#  プレビュー（ショートカット）
+#  プレビュー
 # ===================================================================
 
 @app.command("プレビュー", help="検証内容を実行せずに確認する")
@@ -218,13 +127,28 @@ def preview(
 ) -> None:
     """テスト内容のプレビュー。"""
     from .profiles.registry import get_categories_for_profile
+    from .patterns.generator import generate_all
 
     profile = _resolve_profile(種別)
     categories = get_categories_for_profile(profile)
-
-    from .patterns.generator import generate_all
     cases = generate_all(DEFAULT_CONFIG_DIR / "patterns", categories)
-    _print_welcome(tool, profile, len(cases), categories)
+
+    CATEGORY_NAMES = {
+        "dialect": "方言", "long_input": "長文", "contradictory": "矛盾",
+        "ambiguous": "曖昧", "keigo_mixing": "敬語混合", "unicode_edge": "Unicode",
+        "business_jp": "商習慣", "multi_step": "複合指示", "broken_grammar": "文法破壊",
+    }
+    cat_display = ", ".join(CATEGORY_NAMES.get(c, c) for c in categories)
+
+    console.print()
+    console.print(Panel(
+        f"[bold]対象ツール:[/bold] {tool}\n"
+        f"[bold]検証種別:[/bold] {profile.get('name_jp', profile['id'])}\n"
+        f"[bold]テストケース数:[/bold] {len(cases)}件\n"
+        f"[bold]検証カテゴリ:[/bold] {cat_display}",
+        title="[bold blue]Aixis テストケース プレビュー[/bold blue]",
+        border_style="blue",
+    ))
     _print_preview(cases, profile)
 
 

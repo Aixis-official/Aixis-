@@ -1,0 +1,36 @@
+/* Aixis recording indicator — injected into observed pages */
+
+#aixis-recording-indicator {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  border-radius: 6px;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+#aixis-recording-indicator .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: aixis-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes aixis-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+#aixis-recording-indicator.idle {
+  opacity: 0;
+}

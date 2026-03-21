@@ -2,7 +2,6 @@
 
 import logging
 import threading
-import uuid
 from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
@@ -78,58 +77,27 @@ def _check_due_schedules():
 
 
 def _trigger_scheduled_audit(conn, row, now):
-    """Trigger a single scheduled audit."""
-    import json
-
+    """Trigger a single scheduled audit (now a no-op with logging)."""
     from sqlalchemy import text
 
-    from ..services.audit_runner import start_audit
-
     schedule_id, tool_id, profile_id, categories_json, cron_expr, tool_name = row
-    categories = (
-        json.loads(categories_json)
-        if isinstance(categories_json, str)
-        else (categories_json or [])
+
+    # Server-side audit runner has been removed; audits now run via Chrome extension.
+    logger.error(
+        "Scheduled audit %s for tool %s skipped: server-side audit runner has been "
+        "removed. Audits now run via Chrome extension. Disable this schedule or "
+        "migrate to the extension-based workflow.",
+        schedule_id,
+        tool_name,
     )
 
-    session_id = f"sched-{uuid.uuid4().hex[:8]}"
-    # Create audit session in DB
-    db_session_id = str(uuid.uuid4())
-    session_code = f"AX-{now.strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
-
-    conn.execute(
-        text(
-            """
-        INSERT INTO audit_sessions (id, session_code, tool_id, profile_id, status, total_planned, total_executed, created_at)
-        VALUES (:id, :code, :tool_id, :profile_id, 'pending', 0, 0, :now)
-    """
-        ),
-        {
-            "id": db_session_id,
-            "code": session_code,
-            "tool_id": tool_id,
-            "profile_id": profile_id or "",
-            "now": now.isoformat(),
-        },
-    )
-
-    # Start audit
-    start_audit(
-        session_id=session_id,
-        db_session_id=db_session_id,
-        tool_name=tool_name,
-        target_config_name=None,
-        profile_id=profile_id or None,
-        categories=categories or None,
-    )
-
-    # Update schedule
+    # Still update next_run so the scheduler doesn't re-trigger every cycle
     next_run = _calculate_next_run(cron_expr, now)
     conn.execute(
         text(
             """
         UPDATE audit_schedules
-        SET last_run_at = :now, next_run_at = :next, run_count = run_count + 1
+        SET last_run_at = :now, next_run_at = :next
         WHERE id = :id
     """
         ),
@@ -139,8 +107,6 @@ def _trigger_scheduled_audit(conn, row, now):
             "id": schedule_id,
         },
     )
-
-    logger.info("Triggered scheduled audit %s for tool %s", session_id, tool_name)
 
 
 def _calculate_next_run(
