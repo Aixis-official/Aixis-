@@ -143,24 +143,51 @@ async def create_extension_session(
             # Session still gets created, just without pre-generated cases
 
     # Create session
-    await db.execute(text("""
-        INSERT INTO audit_sessions
-        (id, session_code, tool_id, profile_id, status, initiated_by,
-         created_at, executor_type, total_planned)
-        VALUES (:id, :code, :tool_id, :profile_id, :status, :initiated_by,
-                :now, :executor_type, :total_planned)
-    """), {
-        "id": session_id,
-        "code": session_code,
-        "tool_id": body.tool_id,
-        "profile_id": body.profile_id or None,
-        "status": "running",
-        "initiated_by": user.id,
-        "now": now,
-        "executor_type": "extension",
-        "total_planned": total_planned,
-    })
-    await db.commit()
+    try:
+        await db.execute(text("""
+            INSERT INTO audit_sessions
+            (id, session_code, tool_id, profile_id, status, initiated_by,
+             created_at, executor_type, total_planned)
+            VALUES (:id, :code, :tool_id, :profile_id, :status, :initiated_by,
+                    :now, :executor_type, :total_planned)
+        """), {
+            "id": session_id,
+            "code": session_code,
+            "tool_id": body.tool_id,
+            "profile_id": body.profile_id or None,
+            "status": "running",
+            "initiated_by": user.id,
+            "now": now,
+            "executor_type": "extension",
+            "total_planned": total_planned,
+        })
+        await db.commit()
+    except Exception as e:
+        logger.error("Session insert failed: %s", e)
+        await db.rollback()
+        # Retry without executor_type in case column doesn't exist yet
+        try:
+            await db.execute(text("""
+                INSERT INTO audit_sessions
+                (id, session_code, tool_id, profile_id, status, initiated_by,
+                 created_at, total_planned)
+                VALUES (:id, :code, :tool_id, :profile_id, :status, :initiated_by,
+                        :now, :total_planned)
+            """), {
+                "id": session_id,
+                "code": session_code,
+                "tool_id": body.tool_id,
+                "profile_id": body.profile_id or None,
+                "status": "running",
+                "initiated_by": user.id,
+                "now": now,
+                "total_planned": total_planned,
+            })
+            await db.commit()
+        except Exception as e2:
+            logger.error("Session insert fallback also failed: %s", e2)
+            await db.rollback()
+            raise HTTPException(500, f"セッション作成に失敗しました: {e2}")
 
     logger.info(
         "Extension session created: %s (tool=%s, mode=%s, cases=%d, user=%s)",
