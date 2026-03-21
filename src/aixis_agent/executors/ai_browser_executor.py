@@ -282,6 +282,18 @@ class AIBrowserExecutor(TestExecutor):
         self._context.set_default_navigation_timeout(300_000)
         self._context.set_default_timeout(60_000)
 
+        # Apply stealth patches to avoid bot detection (Google OAuth, Gamma login, etc.)
+        try:
+            from playwright_stealth import stealth_async
+            for p in self._context.pages:
+                await stealth_async(p)
+            self._context.on("page", lambda p: asyncio.ensure_future(stealth_async(p)))
+            print("[BROWSER] Stealth mode applied", flush=True)
+        except ImportError:
+            print("[BROWSER] playwright-stealth not installed, skipping stealth", flush=True)
+        except Exception as e:
+            print(f"[BROWSER] Stealth setup warning: {e}", flush=True)
+
         # Inject auth cookies BEFORE navigating (so the page loads authenticated)
         if auth_storage_state:
             cookies = auth_storage_state.get("cookies", [])
@@ -304,13 +316,34 @@ class AIBrowserExecutor(TestExecutor):
                     if c.get("httpOnly") is not None:
                         nc["httpOnly"] = bool(c["httpOnly"])
                     if c.get("sameSite"):
-                        ss = str(c["sameSite"]).capitalize()
-                        if ss in ("Strict", "Lax", "None"):
-                            nc["sameSite"] = ss
+                        ss = str(c["sameSite"]).lower()
+                        # Cookie-Editor uses "no_restriction" for SameSite=None
+                        sameSite_map = {"strict": "Strict", "lax": "Lax", "none": "None", "no_restriction": "None"}
+                        if ss in sameSite_map:
+                            nc["sameSite"] = sameSite_map[ss]
                     normalized.append(nc)
                 if normalized:
                     await self._context.add_cookies(normalized)
                     print(f"[AUTH] Injected {len(normalized)} cookies BEFORE navigation", flush=True)
+
+            # Also inject localStorage if available
+            origins = auth_storage_state.get("origins", [])
+            if origins and self._page:
+                ls_count = 0
+                for origin_data in origins:
+                    ls_items = origin_data.get("localStorage", [])
+                    if ls_items:
+                        origin_url = origin_data.get("origin", target_config.url)
+                        await self._page.goto(origin_url, wait_until="domcontentloaded", timeout=30_000)
+                        for item in ls_items:
+                            if item.get("name") and item.get("value") is not None:
+                                await self._page.evaluate(
+                                    "([k,v]) => localStorage.setItem(k, v)",
+                                    [item["name"], item["value"]]
+                                )
+                                ls_count += 1
+                if ls_count:
+                    print(f"[AUTH] Injected {ls_count} localStorage items BEFORE navigation", flush=True)
 
             # Store for per-test re-injection
             self._auth_storage_state = auth_storage_state
@@ -318,10 +351,18 @@ class AIBrowserExecutor(TestExecutor):
         await self._page.goto(
             target_config.url, wait_until="domcontentloaded", timeout=60_000
         )
+        await asyncio.sleep(2)  # Wait for SPA to process auth state
 
-        # Manual login wait (only needed if cookies didn't work)
-        if target_config.wait_for_manual_login and self._login_event:
-            logger.info("Waiting for manual login at %s", target_config.url)
+        # Check if auth cookies already worked (page didn't redirect to signin)
+        current_url = self._page.url.lower()
+        signin_patterns = ['/signin', '/sign-in', '/login', '/auth']
+        auth_already_worked = not any(p in current_url for p in signin_patterns)
+        if auth_already_worked and auth_storage_state:
+            print(f"[AUTH] Cookies worked! Page loaded at {self._page.url} — skipping manual login", flush=True)
+
+        # Manual login wait (only if cookies didn't work)
+        if target_config.wait_for_manual_login and self._login_event and not auth_already_worked:
+            logger.info("Waiting for manual login at %s (cookies didn't bypass auth)", target_config.url)
             while not self._login_event.is_set():
                 if self.is_aborted:
                     logger.info("Aborted during login wait")

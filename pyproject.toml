@@ -8,6 +8,7 @@ dependencies = [
     # Core audit engine
     "anthropic>=0.42",
     "playwright>=1.49",
+    "playwright-stealth>=1.0.6",
     "pydantic[email]>=2.10",
     "pydantic-settings>=2.6",
     "pyyaml>=6.0",
