@@ -386,6 +386,36 @@ async function newSession() {
 }
 
 // ---------------------------------------------------------------------------
+// Manual screenshot capture
+// ---------------------------------------------------------------------------
+
+async function captureManualScreenshot(btn) {
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "📸 撮影中...";
+  btn.classList.add("capturing");
+
+  try {
+    const result = await sendBg({
+      type: "MANUAL_SCREENSHOT",
+      label: "",
+    });
+
+    btn.textContent = "✓ 記録しました";
+    setTimeout(() => {
+      btn.textContent = origText;
+      btn.classList.remove("capturing");
+      btn.disabled = false;
+    }, 1200);
+  } catch (err) {
+    showError(err.message);
+    btn.textContent = origText;
+    btn.classList.remove("capturing");
+    btn.disabled = false;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Event listeners
 // ---------------------------------------------------------------------------
 
@@ -398,6 +428,8 @@ $("#copyPromptBtn").addEventListener("click", copyPrompt);
 $("#endProtocolBtn").addEventListener("click", endSession);
 $("#stopFreeformBtn").addEventListener("click", stopFreeform);
 $("#newSessionBtn").addEventListener("click", newSession);
+$("#manualCaptureBtn1").addEventListener("click", (e) => captureManualScreenshot(e.target));
+$("#manualCaptureBtn2").addEventListener("click", (e) => captureManualScreenshot(e.target));
 
 // ---------------------------------------------------------------------------
 // Initialize

@@ -74,6 +74,10 @@ async function handleMessage(message, sender) {
     case "INTERACTION_COMPLETE":
       return await handleInteraction(message, sender);
 
+    // --- Manual screenshot ---
+    case "MANUAL_SCREENSHOT":
+      return await captureManualScreenshot(message);
+
     // --- Settings ---
     case "SAVE_SETTINGS":
       await chrome.storage.local.set({
@@ -328,6 +332,59 @@ async function handleInteraction(message, sender) {
     return { ok: true, observationId: result.observation_id };
   } catch (err) {
     console.error("Observation upload failed:", err);
+    return { error: err.message };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Manual screenshot capture (UI/settings/error screens)
+// ---------------------------------------------------------------------------
+
+async function captureManualScreenshot({ label }) {
+  if (!state.currentSession) {
+    return { error: "アクティブなセッションがありません" };
+  }
+
+  // Capture current visible tab
+  let screenshotBase64 = null;
+  let pageUrl = null;
+  let pageTitle = null;
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab) {
+      pageUrl = tab.url;
+      pageTitle = tab.title;
+      const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "png" });
+      screenshotBase64 = dataUrl.replace(/^data:image\/png;base64,/, "");
+    }
+  } catch (err) {
+    console.warn("Manual screenshot failed:", err);
+    return { error: "スクリーンショットの取得に失敗しました" };
+  }
+
+  // Upload as a manual observation (not tied to a specific test case)
+  const obsData = {
+    test_case_id: null,
+    prompt_text: label || "手動スクリーンショット",
+    response_text: null,
+    response_time_ms: 0,
+    page_url: pageUrl,
+    screenshot_base64: screenshotBase64,
+    metadata: {
+      capture_type: "manual_screenshot",
+      label: label || "",
+      page_title: pageTitle || "",
+      timestamp: new Date().toISOString(),
+    },
+  };
+
+  try {
+    const result = await AixisAPI.uploadObservation(state.currentSession.id, obsData);
+    state.observationCount++;
+    persistState();
+    return { ok: true, observationId: result.observation_id };
+  } catch (err) {
+    console.error("Manual screenshot upload failed:", err);
     return { error: err.message };
   }
 }
