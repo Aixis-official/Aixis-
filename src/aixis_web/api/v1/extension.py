@@ -56,7 +56,7 @@ async def create_extension_session(
     In freeform mode, creates session without pre-generated test cases.
     """
     session_id = str(uuid.uuid4())
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
 
     # Generate session code
     hash_input = f"{now.isoformat()}-{session_id}"
@@ -244,7 +244,7 @@ async def upload_observation(
     if session_row[2] not in ("running", "pending"):
         raise HTTPException(400, f"セッションは現在 {session_row[2]} 状態です。観察データを追加できません。")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     current_executed = session_row[3] or 0
     sequence_number = current_executed + 1
 
@@ -367,7 +367,7 @@ async def complete_session(
     total_executed = session_row[4] or 0
     completeness = int(total_executed / total_planned * 100) if total_planned > 0 else 100
 
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
 
     # Update session to "scoring" status
     await db.execute(text("""
