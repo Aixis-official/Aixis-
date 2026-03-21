@@ -5,7 +5,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 
 # Allowed scopes for public API keys
-ALLOWED_SCOPES = {"read:tools", "read:scores", "read:rankings"}
+ALLOWED_SCOPES = {"read:tools", "read:scores", "read:rankings", "agent:write"}
 
 # Rate limit caps to prevent abuse
 MAX_RATE_LIMIT_PER_MINUTE = 120
