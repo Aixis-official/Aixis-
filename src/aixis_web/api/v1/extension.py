@@ -122,7 +122,7 @@ async def create_extension_session(
         "id": session_id,
         "code": session_code,
         "tool_id": body.tool_id,
-        "profile_id": body.profile_id or None,
+        "profile_id": body.profile_id or "",
         "status": "running",
         "initiated_by": user.id,
         "now": now,
