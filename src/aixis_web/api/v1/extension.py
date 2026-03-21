@@ -10,7 +10,6 @@ import base64
 import hashlib
 import json
 import logging
-import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -386,14 +385,9 @@ async def complete_session(
     })
     await db.commit()
 
-    # Trigger LLM scoring in background thread
-    thread = threading.Thread(
-        target=_run_llm_scoring_sync,
-        args=(session_id, tool_id),
-        daemon=True,
-        name=f"llm-score-{session_id[:8]}",
-    )
-    thread.start()
+    # Trigger LLM scoring as asyncio task (same event loop, avoids cross-loop DB issues)
+    import asyncio
+    asyncio.ensure_future(_run_llm_scoring_background(session_id, tool_id))
 
     logger.info("Session %s marked complete, scoring started (observations=%d)", session_id, total_executed)
     return {
@@ -405,78 +399,59 @@ async def complete_session(
     }
 
 
-def _run_llm_scoring_sync(session_id: str, tool_id: str) -> None:
-    """Run LLM scoring in a background thread."""
-    import asyncio
+async def _run_llm_scoring_background(session_id: str, tool_id: str) -> None:
+    """Run LLM scoring as a background asyncio task (same event loop as FastAPI)."""
+    from ...db.base import async_session
 
-    from ...services.audit_runner import (
-        cleanup_job,
-        emit_audit_events_sync,
-        register_job,
-        update_job,
-    )
-
-    register_job(session_id, phase="llm_scoring", tool_id=tool_id)
-
-    loop = asyncio.new_event_loop()
     try:
-        loop.run_until_complete(_run_llm_scoring_async(session_id, tool_id))
-        update_job(session_id, status="completed", phase="done")
+        from ...services.audit_runner import register_job, update_job, cleanup_job
+        register_job(session_id, phase="llm_scoring", tool_id=tool_id)
+    except Exception:
+        pass
 
-        # Emit completion event
-        try:
-            # Get tool name
-            from ...config import settings
-            emit_audit_events_sync(
-                db_session_id=session_id,
-                tool_name=tool_id,
-                event_type="audit.completed",
+    try:
+        from ...services.llm_scorer import LLMScorer
+
+        async with async_session() as db:
+            scorer = LLMScorer()
+            await scorer.score_session(session_id, tool_id, db)
+
+            await db.execute(
+                text("UPDATE audit_sessions SET status = 'completed' WHERE id = :sid"),
+                {"sid": session_id},
             )
+            await db.commit()
+
+        logger.info("LLM scoring completed for session %s", session_id)
+
+        try:
+            from ...services.audit_runner import update_job, cleanup_job
+            update_job(session_id, status="completed", phase="done")
+            cleanup_job(session_id)
         except Exception:
-            logger.warning("Failed to emit completion event for %s", session_id)
+            pass
 
     except Exception as e:
         logger.exception("LLM scoring failed for session %s: %s", session_id, e)
-        update_job(session_id, status="failed", error=str(e))
 
         # Update session status to failed
         try:
-            loop.run_until_complete(_update_session_status(session_id, "failed", str(e)))
+            async with async_session() as db:
+                await db.execute(text("""
+                    UPDATE audit_sessions
+                    SET status = 'failed', error_message = :error
+                    WHERE id = :sid
+                """), {"error": str(e)[:2000], "sid": session_id})
+                await db.commit()
+        except Exception:
+            logger.error("Failed to update session status for %s", session_id)
+
+        try:
+            from ...services.audit_runner import update_job, cleanup_job
+            update_job(session_id, status="failed", error=str(e))
+            cleanup_job(session_id)
         except Exception:
             pass
-    finally:
-        loop.close()
-        cleanup_job(session_id)
-
-
-async def _run_llm_scoring_async(session_id: str, tool_id: str) -> None:
-    """Async scoring logic."""
-    from ...db.base import async_session
-    from ...services.llm_scorer import LLMScorer
-
-    async with async_session() as db:
-        scorer = LLMScorer()
-        await scorer.score_session(session_id, tool_id, db)
-
-        # Update session status to completed
-        await db.execute(
-            text("UPDATE audit_sessions SET status = 'completed' WHERE id = :sid"),
-            {"sid": session_id},
-        )
-        await db.commit()
-
-
-async def _update_session_status(session_id: str, status: str, error_msg: str = "") -> None:
-    """Update session status in case of failure."""
-    from ...db.base import async_session
-
-    async with async_session() as db:
-        await db.execute(text("""
-            UPDATE audit_sessions
-            SET status = :status, error_message = :error
-            WHERE id = :sid
-        """), {"status": status, "error": error_msg[:2000], "sid": session_id})
-        await db.commit()
 
 
 # ---------------------------------------------------------------------------
