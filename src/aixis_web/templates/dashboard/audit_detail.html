@@ -357,7 +357,8 @@
                     var CATEGORY_NAMES = {
                         dialect: '方言', long_input: '長文', contradictory: '矛盾',
                         ambiguous: '曖昧', keigo_mixing: '敬語', unicode_edge: 'Unicode',
-                        business_jp: '商習慣', multi_step: '複合', broken_grammar: '文法破壊'
+                        business_jp: '商習慣', multi_step: '複合', broken_grammar: '文法破壊',
+            manual_screenshot: '手動スクショ'
                     };
                     var catLabel = CATEGORY_NAMES[category] || category;
                     document.getElementById('progress-text').textContent =
@@ -858,20 +859,40 @@
     }
 
     function renderResults(results) {
-        document.getElementById('results-count').textContent = results.length + ' 件';
+        var actualTestCount = results.filter(function(r) { return r.category !== 'manual_screenshot'; }).length;
+        document.getElementById('results-count').textContent = actualTestCount + ' 件';
         var body = document.getElementById('results-body');
 
         var CATEGORY_NAMES = {
             dialect: '方言', long_input: '長文', contradictory: '矛盾',
             ambiguous: '曖昧', keigo_mixing: '敬語', unicode_edge: 'Unicode',
-            business_jp: '商習慣', multi_step: '複合', broken_grammar: '文法破壊'
+            business_jp: '商習慣', multi_step: '複合', broken_grammar: '文法破壊',
+            manual_screenshot: '手動スクショ'
         };
 
-        body.innerHTML = results.map(function(r) {
+        // Filter out manual screenshots from test results display
+        var testResults = results.filter(function(r) { return r.category !== 'manual_screenshot'; });
+        var manualScreenshots = results.filter(function(r) { return r.category === 'manual_screenshot'; });
+
+        body.innerHTML = testResults.map(function(r) {
             var hasError = !!r.error;
             var hasResponse = !!r.response_raw;
-            var statusLabel = hasError ? 'エラー' : (hasResponse ? '成功' : '応答なし');
-            var statusClass = hasError ? 'text-red-500' : (hasResponse ? 'text-emerald-500' : 'text-gray-400');
+            var hasScreenshot = !!r.screenshot_path;
+            var statusLabel = hasError ? 'エラー' : (hasResponse ? '成功' : (hasScreenshot ? '記録済' : '応答なし'));
+            var statusClass = hasError ? 'text-red-500' : (hasResponse ? 'text-emerald-500' : (hasScreenshot ? 'text-indigo-500' : 'text-gray-400'));
+
+            var responseCell = '';
+            if (hasError) {
+                responseCell = '<span class="text-red-500">' + escapeHtml(r.error) + '</span>';
+            } else if (hasResponse) {
+                responseCell = escapeHtml(r.response_raw);
+            } else if (hasScreenshot) {
+                responseCell = '<a href="' + escapeHtml(r.screenshot_path) + '" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline">' +
+                    '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5z"/></svg>' +
+                    'スクリーンショット</a>';
+            } else {
+                responseCell = '<span class="text-gray-400">---</span>';
+            }
 
             return '<tr class="border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">' +
                 '<td class="px-4 py-3 text-xs font-medium text-gray-600 dark:text-gray-400">' +
@@ -880,15 +901,25 @@
                     '</span>' +
                 '</td>' +
                 '<td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-300 max-w-xs truncate">' + escapeHtml(r.prompt_sent || '') + '</td>' +
-                '<td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 max-w-sm truncate">' +
-                    (hasError ? '<span class="text-red-500">' + escapeHtml(r.error) + '</span>' : escapeHtml(r.response_raw || '---')) +
-                '</td>' +
+                '<td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 max-w-sm truncate">' + responseCell + '</td>' +
                 '<td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 tabular-nums">' +
                     (r.response_time_ms ? (r.response_time_ms / 1000).toFixed(1) + 's' : '---') +
                 '</td>' +
                 '<td class="px-4 py-3 text-xs font-medium ' + statusClass + '">' + statusLabel + '</td>' +
             '</tr>';
         }).join('');
+
+        // Show manual screenshots count if any
+        if (manualScreenshots.length > 0) {
+            body.innerHTML += '<tr class="border-b border-gray-50 dark:border-gray-700/30 bg-gray-50/30 dark:bg-gray-800/20">' +
+                '<td colspan="5" class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">' +
+                    '<span class="inline-flex items-center gap-1">' +
+                        '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>' +
+                        '手動スクリーンショット: ' + manualScreenshots.length + ' 枚（補足資料）' +
+                    '</span>' +
+                '</td>' +
+            '</tr>';
+        }
     }
 
     function statusMenuItem(status, label, currentStatus) {

@@ -249,8 +249,14 @@ async def upload_observation(
         raise HTTPException(400, f"セッションは現在 {session_row[2]} 状態です。観察データを追加できません。")
 
     now = datetime.utcnow()
-    current_executed = session_row[3] or 0
-    sequence_number = current_executed + 1
+
+    # Get actual observation count (including manual screenshots) for sequence numbering
+    count_result = await db.execute(
+        text("SELECT COUNT(*) FROM db_test_results WHERE session_id = :sid"),
+        {"sid": session_id},
+    )
+    observation_count = count_result.scalar() or 0
+    sequence_number = observation_count + 1
 
     # Handle screenshot
     screenshot_path = None
@@ -265,11 +271,37 @@ async def upload_observation(
         except Exception as e:
             logger.warning("Screenshot save failed: %s", e)
 
-    # For freeform mode, create synthetic test case
+    # Determine observation type: manual screenshot vs test observation
+    is_manual_screenshot = (not body.test_case_id) and (
+        body.metadata and body.metadata.get("type") == "manual_screenshot"
+    )
+
     test_case_id = body.test_case_id
     category = "freeform"
 
-    if not test_case_id:
+    if is_manual_screenshot:
+        # Manual screenshots: store as supplementary evidence, don't count as test
+        test_case_id = f"manual-{session_id[:8]}-{sequence_number:04d}"
+        category = "manual_screenshot"
+        await db.execute(text("""
+            INSERT INTO db_test_cases
+            (id, session_id, category, prompt, metadata_json,
+             expected_behaviors, failure_indicators, tags)
+            VALUES (:id, :session_id, :category, :prompt, :metadata,
+                    :expected, :failures, :tags)
+            ON CONFLICT (id) DO NOTHING
+        """), {
+            "id": test_case_id,
+            "session_id": session_id,
+            "category": "manual_screenshot",
+            "prompt": body.prompt_text or "手動スクリーンショット",
+            "metadata": "{}",
+            "expected": "[]",
+            "failures": "[]",
+            "tags": '["manual_screenshot"]',
+        })
+    elif not test_case_id:
+        # Freeform mode: create synthetic test case
         test_case_id = f"freeform-{session_id[:8]}-{sequence_number:04d}"
         await db.execute(text("""
             INSERT INTO db_test_cases
@@ -289,7 +321,7 @@ async def upload_observation(
             "tags": '["freeform"]',
         })
     else:
-        # Look up the actual category from the test case
+        # Protocol mode: look up the actual category from the test case
         tc_result = await db.execute(
             text("SELECT category FROM db_test_cases WHERE id = :tid AND session_id = :sid"),
             {"tid": test_case_id, "sid": session_id},
@@ -319,20 +351,30 @@ async def upload_observation(
         "metadata": json.dumps(body.metadata, ensure_ascii=False) if body.metadata else "{}",
     })
 
-    # Use sequence number as observation ID (compatible with both SQLite and PostgreSQL)
+    # Use sequence number as observation ID
     obs_id = sequence_number
 
-    # Update session progress
-    await db.execute(text("""
-        UPDATE audit_sessions
-        SET total_executed = :executed,
-            started_at = COALESCE(started_at, :now)
-        WHERE id = :sid
-    """), {
-        "executed": sequence_number,
-        "now": now,
-        "sid": session_id,
-    })
+    # Update session progress — only count actual tests, not manual screenshots
+    if not is_manual_screenshot:
+        await db.execute(text("""
+            UPDATE audit_sessions
+            SET total_executed = total_executed + 1,
+                started_at = COALESCE(started_at, :now)
+            WHERE id = :sid
+        """), {
+            "now": now,
+            "sid": session_id,
+        })
+    else:
+        # Still update started_at if needed
+        await db.execute(text("""
+            UPDATE audit_sessions
+            SET started_at = COALESCE(started_at, :now)
+            WHERE id = :sid
+        """), {
+            "now": now,
+            "sid": session_id,
+        })
 
     await db.commit()
 

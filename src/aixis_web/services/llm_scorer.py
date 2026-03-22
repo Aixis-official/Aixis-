@@ -116,7 +116,7 @@ class LLMScorer:
                    tc.expected_behaviors, tc.failure_indicators
             FROM db_test_results tr
             LEFT JOIN db_test_cases tc ON tr.test_case_id = tc.id AND tr.session_id = tc.session_id
-            WHERE tr.session_id = :sid
+            WHERE tr.session_id = :sid AND tr.category != 'manual_screenshot'
             ORDER BY tr.executed_at
         """), {"sid": session_id})
         rows = result.fetchall()
@@ -170,7 +170,7 @@ class LLMScorer:
                     "details": json.dumps(score_data["details"], ensure_ascii=False),
                     "strengths": json.dumps(score_data["strengths"], ensure_ascii=False),
                     "risks": json.dumps(score_data["risks"], ensure_ascii=False),
-                    "scored_at": datetime.now(timezone.utc).isoformat(),
+                    "scored_at": datetime.utcnow(),
                 })
 
             except Exception as e:
