@@ -188,29 +188,17 @@ async function advanceTest({ observation }) {
     return { error: "アクティブなセッションがありません" };
   }
 
-  // Upload the observation for the current test
+  // Record test progression (no screenshot — use camera button for that)
   const currentTest = state.testCases[state.currentTestIndex];
 
-  // Capture screenshot
-  let screenshotBase64 = null;
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab) {
-      const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "png" });
-      screenshotBase64 = dataUrl.replace(/^data:image\/png;base64,/, "");
-    }
-  } catch (err) {
-    console.warn("Screenshot capture failed:", err);
-  }
-
-  // Build observation data
+  // Build observation data without screenshot
   const obsData = {
     test_case_id: currentTest?.id || null,
     prompt_text: observation?.promptText || currentTest?.prompt || "",
     response_text: observation?.responseText || null,
     response_time_ms: observation?.responseTimeMs || 0,
     page_url: observation?.pageUrl || null,
-    screenshot_base64: screenshotBase64,
+    screenshot_base64: null,
     metadata: observation?.metadata || {},
   };
 

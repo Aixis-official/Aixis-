@@ -274,12 +274,9 @@ async function nextTest() {
   const skipBtn = $("#skipTestBtn");
   btn.disabled = true;
   skipBtn.disabled = true;
-  btn.textContent = "📸 記録中...";
+  btn.textContent = "移動中...";
   try {
     const result = await sendBg({ type: "NEXT_TEST", observation: {} });
-
-    btn.textContent = "✓ 完了";
-    await new Promise(r => setTimeout(r, 500));
 
     if (result.done) {
       await endSession();
@@ -291,7 +288,7 @@ async function nextTest() {
   } finally {
     btn.disabled = false;
     skipBtn.disabled = false;
-    btn.textContent = "記録して次へ";
+    btn.textContent = "次へ";
   }
 }
 
