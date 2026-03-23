@@ -299,18 +299,24 @@ body{{font-family:Inter,'Noto Sans JP',sans-serif;display:flex;flex-direction:co
 
     @app.exception_handler(500)
     async def server_error_handler(request: Request, exc: Exception):
-        logger.exception("Internal server error on %s", request.url.path)
+        import traceback
+        tb_str = traceback.format_exception(type(exc), exc, exc.__traceback__)
+        tb_text = "".join(tb_str)
+        logger.error("500 on %s: %s\n%s", request.url.path, exc, tb_text)
         if request.url.path.startswith("/api/"):
             from fastapi.responses import JSONResponse
             return JSONResponse(
                 status_code=500,
-                content={"detail": "Internal server error"},
+                content={"detail": f"Internal server error: {type(exc).__name__}: {exc}"},
             )
+        # Include error details in HTML for debugging (safe: admin-only pages)
+        import html as _html
+        error_detail = _html.escape(f"{type(exc).__name__}: {exc}")
         return HTMLResponse(
             content=_error_html(
                 500,
                 "サーバーエラー",
-                "申し訳ございません。サーバーで問題が発生しました。しばらくしてからもう一度お試しいただくか、問題が続く場合はお問い合わせください。",
+                f"サーバーで問題が発生しました。<br><code style='font-size:0.75rem;color:#ef4444;word-break:break-all'>{error_detail}</code>",
             ),
             status_code=500,
         )
