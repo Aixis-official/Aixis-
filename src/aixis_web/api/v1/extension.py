@@ -119,9 +119,9 @@ async def create_extension_session(
     await db.execute(text("""
         INSERT INTO audit_sessions
         (id, session_code, tool_id, profile_id, status, initiated_by,
-         created_at, executor_type, total_planned)
+         created_at, executor_type, total_planned, total_executed)
         VALUES (:id, :code, :tool_id, :profile_id, :status, :initiated_by,
-                :now, :executor_type, :total_planned)
+                :now, :executor_type, :total_planned, 0)
     """), {
         "id": session_id,
         "code": session_code,
@@ -273,7 +273,10 @@ async def upload_observation(
 
     # Determine observation type: manual screenshot vs test observation
     is_manual_screenshot = (not body.test_case_id) and (
-        body.metadata and body.metadata.get("type") == "manual_screenshot"
+        body.metadata and (
+            body.metadata.get("type") == "manual_screenshot"
+            or body.metadata.get("capture_type") == "manual_screenshot"
+        )
     )
 
     test_case_id = body.test_case_id
@@ -358,7 +361,7 @@ async def upload_observation(
     if not is_manual_screenshot:
         await db.execute(text("""
             UPDATE audit_sessions
-            SET total_executed = total_executed + 1,
+            SET total_executed = COALESCE(total_executed, 0) + 1,
                 started_at = COALESCE(started_at, :now)
             WHERE id = :sid
         """), {
