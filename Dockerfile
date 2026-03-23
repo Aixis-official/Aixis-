@@ -11,8 +11,11 @@ RUN apt-get update && apt-get install -y \
 # Copy all source first (needed for hatch build)
 COPY . .
 
+# Force-bust cache on every build
+ARG CACHEBUST=1
+
 # Force install compatible Jinja2 first, then install the rest
-RUN pip install --no-cache-dir "jinja2>=3.1,<3.2" && pip install --no-cache-dir .
+RUN pip install --no-cache-dir --force-reinstall "jinja2>=3.1,<3.2" && pip install --no-cache-dir .
 
 # NOTE: Use PostgreSQL in production (Railway addon).
 # SQLite data is LOST on every deploy because containers are ephemeral.
