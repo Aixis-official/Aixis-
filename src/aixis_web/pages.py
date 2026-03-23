@@ -14,13 +14,14 @@ from .i18n import get_translator, detect_language
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-# Disable Jinja2 template cache to work around Jinja2 3.2+ cache key issue
-# (globals dict is unhashable, causing TypeError when used as cache key)
-templates.env.auto_reload = True
-templates.env.cache = None  # type: ignore[assignment]
-
 # Register global template functions
 templates.env.globals["now"] = lambda: datetime.now(timezone.utc)
+
+
+def _render(name: str, ctx: dict):
+    """Render template with Starlette 0.46+ API (request, name, context)."""
+    request = ctx.pop("request")
+    return _render(request, name, context=ctx)
 
 page_router = APIRouter(default_response_class=HTMLResponse)
 
@@ -63,7 +64,7 @@ _OptionalUser = Annotated[User | None, Depends(get_current_user)]
 async def legacy_platform_landing(request: Request, user: _OptionalUser = None):
     """Serve landing page at old /platform URL for cached 301 redirects."""
     ctx = _get_template_context(request, user=user, title="AIツール比較・一覧 | 独立監査で選ぶ", active_page="home")
-    return templates.TemplateResponse("public/landing.html", ctx)
+    return _render("public/landing.html", ctx)
 
 
 @page_router.get("/platform/{path:path}")
@@ -89,91 +90,91 @@ async def legacy_platform_redirect(path: str):
 async def landing(request: Request, user: _OptionalUser = None):
     """Landing page."""
     ctx = _get_template_context(request, user=user, title="AIツール比較・一覧 | 独立監査で選ぶ", active_page="home")
-    return templates.TemplateResponse("public/landing.html", ctx)
+    return _render("public/landing.html", ctx)
 
 
 @page_router.get("/tools")
 async def tools_page(request: Request, user: _OptionalUser = None):
     """Tool catalog page."""
     ctx = _get_template_context(request, user=user, title="AIツール一覧・比較データベース | カテゴリ別評価", active_page="tools")
-    return templates.TemplateResponse("public/tools.html", ctx)
+    return _render("public/tools.html", ctx)
 
 
 @page_router.get("/categories")
 async def categories_index(request: Request, user: _OptionalUser = None):
     """Categories index page."""
     ctx = _get_template_context(request, user=user, title="AIツール カテゴリ別比較・ランキング", active_page="categories")
-    return templates.TemplateResponse("public/categories.html", ctx)
+    return _render("public/categories.html", ctx)
 
 
 @page_router.get("/tools/{slug}")
 async def tool_detail_page(request: Request, slug: str, user: _OptionalUser = None):
     """Tool detail page."""
     ctx = _get_template_context(request, user=user, title="ツール詳細レビュー・評価", slug=slug, active_page="tools")
-    return templates.TemplateResponse("public/tool_detail.html", ctx)
+    return _render("public/tool_detail.html", ctx)
 
 
 @page_router.get("/compare")
 async def compare_page(request: Request, user: _OptionalUser = None):
     """Comparison view page."""
     ctx = _get_template_context(request, user=user, title="AIツール比較 | 5軸スコアで横並び比較", active_page="compare")
-    return templates.TemplateResponse("public/compare.html", ctx)
+    return _render("public/compare.html", ctx)
 
 
 @page_router.get("/categories/{slug}")
 async def category_page(request: Request, slug: str, user: _OptionalUser = None):
     """Category page."""
     ctx = _get_template_context(request, user=user, title="カテゴリ別AIツールランキング", slug=slug, active_page="categories")
-    return templates.TemplateResponse("public/category.html", ctx)
+    return _render("public/category.html", ctx)
 
 
 @page_router.get("/terms")
 async def terms_page(request: Request, user: _OptionalUser = None):
     """Terms of service page."""
     ctx = _get_template_context(request, user=user, title="利用規約 | サービス利用条件", active_page="terms")
-    return templates.TemplateResponse("public/terms.html", ctx)
+    return _render("public/terms.html", ctx)
 
 
 @page_router.get("/pricing")
 async def pricing_page(request: Request, user: _OptionalUser = None):
     """Pricing plans page."""
     ctx = _get_template_context(request, user=user, title="料金プラン | 14日間無料トライアル", active_page="pricing")
-    return templates.TemplateResponse("public/pricing.html", ctx)
+    return _render("public/pricing.html", ctx)
 
 
 @page_router.get("/audit-process")
 async def audit_process_page(request: Request, user: _OptionalUser = None):
     """Audit process explanation page."""
     ctx = _get_template_context(request, user=user, title="AI監査プロセス | 評価方法の詳細", active_page="services")
-    return templates.TemplateResponse("public/audit_process.html", ctx)
+    return _render("public/audit_process.html", ctx)
 
 
 @page_router.get("/independence")
 async def independence_page(request: Request, user: _OptionalUser = None):
     """Independence declaration page."""
     ctx = _get_template_context(request, user=user, title="独立性宣言 | ベンダー非依存の評価体制", active_page="about")
-    return templates.TemplateResponse("public/independence.html", ctx)
+    return _render("public/independence.html", ctx)
 
 
 @page_router.get("/transparency")
 async def transparency_page(request: Request, user: _OptionalUser = None):
     """Transparency policy page."""
     ctx = _get_template_context(request, user=user, title="透明性ポリシー | 評価基準と利益相反の開示", active_page="transparency")
-    return templates.TemplateResponse("public/transparency.html", ctx)
+    return _render("public/transparency.html", ctx)
 
 
 @page_router.get("/audit-protocol")
 async def audit_protocol_page(request: Request, user: _OptionalUser = None):
     """Detailed audit protocol page."""
     ctx = _get_template_context(request, user=user, title="監査プロトコル | 5軸評価フレームワーク詳細", active_page="audit-protocol")
-    return templates.TemplateResponse("public/audit_protocol.html", ctx)
+    return _render("public/audit_protocol.html", ctx)
 
 
 @page_router.get("/contact")
 async def contact_page(request: Request, user: _OptionalUser = None):
     """Contact form page."""
     ctx = _get_template_context(request, user=user, title="お問い合わせ | 14日間の無料トライアル申請", active_page="contact")
-    return templates.TemplateResponse("public/contact.html", ctx)
+    return _render("public/contact.html", ctx)
 
 
 @page_router.get("/login")
@@ -184,7 +185,7 @@ async def login_page(request: Request, user: _OptionalUser = None):
             return RedirectResponse(url="/dashboard", status_code=302)
         return RedirectResponse(url="/tools", status_code=302)
     ctx = _get_template_context(request, title="ログイン", active_page="login")
-    return templates.TemplateResponse("public/login.html", ctx)
+    return _render("public/login.html", ctx)
 
 
 @page_router.get("/forgot-password")
@@ -195,7 +196,7 @@ async def forgot_password_page(request: Request, user: _OptionalUser = None):
             return RedirectResponse(url="/dashboard", status_code=302)
         return RedirectResponse(url="/tools", status_code=302)
     ctx = _get_template_context(request, title="パスワード再設定", active_page="forgot-password")
-    return templates.TemplateResponse("public/forgot-password.html", ctx)
+    return _render("public/forgot-password.html", ctx)
 
 
 @page_router.get("/reset-password")
@@ -206,7 +207,7 @@ async def reset_password_page(request: Request, user: _OptionalUser = None):
             return RedirectResponse(url="/dashboard", status_code=302)
         return RedirectResponse(url="/tools", status_code=302)
     ctx = _get_template_context(request, title="パスワード再設定", active_page="reset-password")
-    return templates.TemplateResponse("public/reset-password.html", ctx)
+    return _render("public/reset-password.html", ctx)
 
 
 @page_router.get("/invite/{token}")
@@ -236,7 +237,7 @@ async def invite_page(request: Request, token: str):
             invite_user_name=user.name,
             invite_token=token,
         )
-    return templates.TemplateResponse("public/invite.html", ctx)
+    return _render("public/invite.html", ctx)
 
 
 # ──────────── Auth-Protected Pages ────────────
@@ -263,7 +264,7 @@ async def dashboard_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="管理ダッシュボード", active_page="dashboard")
-    return templates.TemplateResponse("dashboard/index.html", ctx)
+    return _render("dashboard/index.html", ctx)
 
 
 @page_router.get("/dashboard/tools")
@@ -275,7 +276,7 @@ async def tools_management_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="ツール管理", active_page="tools")
-    return templates.TemplateResponse("dashboard/tools.html", ctx)
+    return _render("dashboard/tools.html", ctx)
 
 
 @page_router.get("/dashboard/manual")
@@ -287,7 +288,7 @@ async def manual_list_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="手動評価一覧", active_page="manual")
-    return templates.TemplateResponse("dashboard/manual_list.html", ctx)
+    return _render("dashboard/manual_list.html", ctx)
 
 
 @page_router.get("/dashboard/settings")
@@ -299,7 +300,7 @@ async def settings_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="設定", active_page="settings")
-    return templates.TemplateResponse("dashboard/settings.html", ctx)
+    return _render("dashboard/settings.html", ctx)
 
 
 @page_router.get("/dashboard/clients")
@@ -311,7 +312,7 @@ async def clients_management_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="クライアント管理", active_page="clients")
-    return templates.TemplateResponse("dashboard/clients.html", ctx)
+    return _render("dashboard/clients.html", ctx)
 
 
 @page_router.get("/dashboard/audits/new")
@@ -323,7 +324,7 @@ async def new_audit_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="新規監査を開始", active_page="audit-new")
-    return templates.TemplateResponse("dashboard/audit_new.html", ctx)
+    return _render("dashboard/audit_new.html", ctx)
 
 
 @page_router.get("/dashboard/audits/{session_id}")
@@ -336,7 +337,7 @@ async def audit_detail_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="監査セッション詳細", session_id=session_id, active_page="audit-new")
-    return templates.TemplateResponse("dashboard/audit_detail.html", ctx)
+    return _render("dashboard/audit_detail.html", ctx)
 
 
 @page_router.get("/dashboard/audits/{session_id}/manual")
@@ -349,7 +350,7 @@ async def manual_checklist_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="手動チェックリスト評価", session_id=session_id, active_page="manual")
-    return templates.TemplateResponse("dashboard/manual_checklist.html", ctx)
+    return _render("dashboard/manual_checklist.html", ctx)
 
 
 @page_router.get("/dashboard/comparison")
@@ -361,7 +362,7 @@ async def comparison_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="スコア比較", active_page="comparison")
-    return templates.TemplateResponse("dashboard/comparison.html", ctx)
+    return _render("dashboard/comparison.html", ctx)
 
 
 @page_router.get("/dashboard/custom-tests")
@@ -373,7 +374,7 @@ async def custom_tests_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="カスタムテスト管理", active_page="custom-tests")
-    return templates.TemplateResponse("dashboard/custom_tests.html", ctx)
+    return _render("dashboard/custom_tests.html", ctx)
 
 
 @page_router.get("/dashboard/api-keys")
@@ -385,7 +386,7 @@ async def api_keys_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="APIキー管理", active_page="api-keys")
-    return templates.TemplateResponse("dashboard/api_keys.html", ctx)
+    return _render("dashboard/api_keys.html", ctx)
 
 
 @page_router.get("/dashboard/audits/{session_id}/log")
@@ -398,7 +399,7 @@ async def audit_log_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="監査ログ詳細", session_id=session_id, active_page="audit-new")
-    return templates.TemplateResponse("dashboard/audit_log.html", ctx)
+    return _render("dashboard/audit_log.html", ctx)
 
 
 @page_router.get("/dashboard/webhooks")
@@ -410,7 +411,7 @@ async def webhooks_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="Webhook管理", active_page="webhooks")
-    return templates.TemplateResponse("dashboard/webhooks.html", ctx)
+    return _render("dashboard/webhooks.html", ctx)
 
 
 @page_router.get("/dashboard/notifications")
@@ -422,7 +423,7 @@ async def notifications_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="通知センター", active_page="notifications")
-    return templates.TemplateResponse("dashboard/notifications.html", ctx)
+    return _render("dashboard/notifications.html", ctx)
 
 
 @page_router.get("/portal")
@@ -444,7 +445,7 @@ async def mypage(
     if not user:
         return RedirectResponse(url="/login", status_code=302)
     ctx = _get_template_context(request, user=user, title="マイページ", active_page="mypage")
-    return templates.TemplateResponse("public/mypage.html", ctx)
+    return _render("public/mypage.html", ctx)
 
 
 # ──────────── Scheduled Re-audits ────────────
@@ -459,7 +460,7 @@ async def schedules_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="スケジュール管理", active_page="schedules")
-    return templates.TemplateResponse("dashboard/schedules.html", ctx)
+    return _render("dashboard/schedules.html", ctx)
 
 
 # ──────────── Vendor Portal ────────────
@@ -472,7 +473,7 @@ async def vendor_guide_page(
 ):
     """Public vendor guide — tool listing request info."""
     ctx = _get_template_context(request, user=user, title="ベンダーの皆様へ", active_page="vendor")
-    return templates.TemplateResponse("vendor/landing.html", ctx)
+    return _render("vendor/landing.html", ctx)
 
 
 @page_router.get("/vendor")
@@ -484,7 +485,7 @@ async def vendor_dashboard_page(
     if not user:
         return RedirectResponse(url="/login", status_code=302)
     ctx = _get_template_context(request, user=user, title="ベンダーポータル", active_page="vendor")
-    return templates.TemplateResponse("vendor/dashboard.html", ctx)
+    return _render("vendor/dashboard.html", ctx)
 
 
 @page_router.get("/vendor/submit")
@@ -496,7 +497,7 @@ async def vendor_submit_page(
     if not user:
         return RedirectResponse(url="/login", status_code=302)
     ctx = _get_template_context(request, user=user, title="ツール申請", active_page="vendor")
-    return templates.TemplateResponse("vendor/submit_tool.html", ctx)
+    return _render("vendor/submit_tool.html", ctx)
 
 
 @page_router.get("/dashboard/submissions")
@@ -508,7 +509,7 @@ async def admin_submissions_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="申請審査", active_page="submissions")
-    return templates.TemplateResponse("dashboard/submissions.html", ctx)
+    return _render("dashboard/submissions.html", ctx)
 
 
 # ──────────── Benchmarks & Leaderboard ────────────
@@ -522,7 +523,7 @@ async def leaderboard_page(
 ):
     """Public benchmark leaderboard page."""
     ctx = _get_template_context(request, user=user, title="リーダーボード", slug=slug, active_page="benchmarks")
-    return templates.TemplateResponse("public/leaderboard.html", ctx)
+    return _render("public/leaderboard.html", ctx)
 
 
 @page_router.get("/dashboard/benchmarks")
@@ -534,4 +535,4 @@ async def benchmark_manage_page(
     if redirect := _check_dashboard_access(user):
         return redirect
     ctx = _get_template_context(request, user=user, title="ベンチマーク管理", active_page="benchmarks")
-    return templates.TemplateResponse("dashboard/benchmark_manage.html", ctx)
+    return _render("dashboard/benchmark_manage.html", ctx)
