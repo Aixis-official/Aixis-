@@ -65,8 +65,8 @@ class AuditResponse(BaseModel):
     tool_id: str
     profile_id: str | None = None
     status: str
-    total_planned: int = 0
-    total_executed: int = 0
+    total_planned: int | None = 0
+    total_executed: int | None = 0
     error_message: str | None = None
     initiated_by: str | None = None
     started_at: datetime | None = None
@@ -79,14 +79,14 @@ class AuditResponse(BaseModel):
 
 class VolumeMetrics(BaseModel):
     """AI agent volume metrics for an audit session."""
-    executor_type: str = "playwright"
-    ai_total_steps: int = 0
-    ai_total_api_calls: int = 0
-    ai_total_input_tokens: int = 0
-    ai_total_output_tokens: int = 0
-    ai_estimated_cost_usd: float = 0.0  # in dollars
-    ai_screenshots_captured: int = 0
-    completeness_ratio: int = 0  # 0-100%
+    executor_type: str = "extension"
+    ai_total_steps: int | None = 0
+    ai_total_api_calls: int | None = 0
+    ai_total_input_tokens: int | None = 0
+    ai_total_output_tokens: int | None = 0
+    ai_estimated_cost_usd: float | None = 0.0
+    ai_screenshots_captured: int | None = 0
+    completeness_ratio: int | None = 0
 
 
 class AuditDetailResponse(AuditResponse):
