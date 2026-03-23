@@ -164,6 +164,18 @@ async def get_audit(
     _user: Annotated[User, Depends(require_analyst)],
 ):
     """Get audit session detail with test results and scores."""
+    import traceback as _tb
+    try:
+        return await _get_audit_impl(session_id, db)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("get_audit error for %s: %s\n%s", session_id, e, _tb.format_exc())
+        raise HTTPException(500, f"Internal error: {type(e).__name__}: {e}")
+
+
+async def _get_audit_impl(session_id: str, db: AsyncSession):
+    """Internal implementation of get_audit."""
     result = await db.execute(
         select(AuditSession).where(AuditSession.id == session_id, AuditSession.deleted_at.is_(None))
     )
