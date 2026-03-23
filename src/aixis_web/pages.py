@@ -19,9 +19,15 @@ templates.env.globals["now"] = lambda: datetime.now(timezone.utc)
 
 
 def _render(name: str, ctx: dict):
-    """Render template with Starlette 0.46+ API (request, name, context)."""
+    """Render template compatible with both old and new Starlette APIs."""
     request = ctx.pop("request")
-    return _render(request, name, context=ctx)
+    try:
+        # Starlette 0.46+: TemplateResponse(request, name, context)
+        return templates.TemplateResponse(request, name, ctx)
+    except TypeError:
+        # Fallback for older Starlette
+        ctx["request"] = request
+        return templates.TemplateResponse(name, ctx)
 
 page_router = APIRouter(default_response_class=HTMLResponse)
 
