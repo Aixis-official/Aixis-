@@ -17,7 +17,7 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 # Disable Jinja2 template cache to work around Jinja2 3.2+ cache key issue
 # (globals dict is unhashable, causing TypeError when used as cache key)
 templates.env.auto_reload = True
-templates.env.cache = {}  # type: ignore[assignment]
+templates.env.cache = None  # type: ignore[assignment]
 
 # Register global template functions
 templates.env.globals["now"] = lambda: datetime.now(timezone.utc)
