@@ -32,6 +32,20 @@ async def health_check():
     return {"status": "ok"}
 
 
+@api_router.get("/debug/render-test")
+async def debug_render_test():
+    """Test template rendering to diagnose 500 errors."""
+    import traceback
+    from fastapi import Request as _Req
+    try:
+        from ..deps import get_current_user
+        from ...pages import templates, _get_template_context
+        # Try to create a minimal template context
+        return {"step": "import_ok", "templates_dir": str(templates.env.loader.searchpath)}
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {e}", "trace": traceback.format_exc()}
+
+
 api_router.include_router(auth_router, prefix="/auth", tags=["認証"])
 api_router.include_router(contact_router, prefix="/contact", tags=["お問い合わせ"])
 api_router.include_router(tools_router, prefix="/tools", tags=["ツール"])

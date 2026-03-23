@@ -309,14 +309,16 @@ body{{font-family:Inter,'Noto Sans JP',sans-serif;display:flex;flex-direction:co
                 status_code=500,
                 content={"detail": f"Internal server error: {type(exc).__name__}: {exc}"},
             )
-        # Include error details in HTML for debugging (safe: admin-only pages)
+        # Include full traceback in HTML for debugging
         import html as _html
         error_detail = _html.escape(f"{type(exc).__name__}: {exc}")
+        tb_escaped = _html.escape(tb_text)
         return HTMLResponse(
             content=_error_html(
                 500,
                 "サーバーエラー",
-                f"サーバーで問題が発生しました。<br><code style='font-size:0.75rem;color:#ef4444;word-break:break-all'>{error_detail}</code>",
+                f"サーバーで問題が発生しました。<br><code style='font-size:0.75rem;color:#ef4444;word-break:break-all'>{error_detail}</code>"
+                f"<br><pre style='font-size:0.65rem;color:#666;text-align:left;max-height:400px;overflow:auto;margin-top:1rem;padding:1rem;background:#f1f5f9;border-radius:0.5rem'>{tb_escaped}</pre>",
             ),
             status_code=500,
         )
