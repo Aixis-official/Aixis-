@@ -276,7 +276,19 @@ async function nextTest() {
   skipBtn.disabled = true;
   btn.textContent = "移動中...";
   try {
-    const result = await sendBg({ type: "NEXT_TEST", observation: {} });
+    // Collect optional response text from input
+    const responseInput = $("#responseTextInput");
+    const responseText = responseInput ? responseInput.value.trim() : "";
+
+    const result = await sendBg({
+      type: "NEXT_TEST",
+      observation: {
+        responseText: responseText || null,
+      },
+    });
+
+    // Clear response input for next test
+    if (responseInput) responseInput.value = "";
 
     if (result.done) {
       await endSession();

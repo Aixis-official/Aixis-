@@ -199,7 +199,11 @@ async function advanceTest({ observation }) {
     response_time_ms: observation?.responseTimeMs || 0,
     page_url: observation?.pageUrl || null,
     screenshot_base64: null,
-    metadata: observation?.metadata || {},
+    metadata: {
+      ...(observation?.metadata || {}),
+      category: currentTest?.category || "protocol",
+      test_index: state.currentTestIndex,
+    },
   };
 
   try {

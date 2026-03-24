@@ -303,7 +303,37 @@ async def upload_observation(
             "failures": "[]",
             "tags": '["manual_screenshot"]',
         })
-    elif not test_case_id:
+    elif test_case_id:
+        # Protocol mode: look up the actual category from the test case
+        tc_result = await db.execute(
+            text("SELECT category FROM db_test_cases WHERE id = :tid AND session_id = :sid"),
+            {"tid": test_case_id, "sid": session_id},
+        )
+        tc_row = tc_result.fetchone()
+        if tc_row:
+            category = tc_row[0]
+        else:
+            # test_case_id provided but not found in DB — store as-is with protocol category
+            logger.warning("Test case %s not found in DB for session %s, creating inline", test_case_id, session_id)
+            category = body.metadata.get("category", "protocol") if body.metadata else "protocol"
+            await db.execute(text("""
+                INSERT INTO db_test_cases
+                (id, session_id, category, prompt, metadata_json,
+                 expected_behaviors, failure_indicators, tags)
+                VALUES (:id, :session_id, :category, :prompt, :metadata,
+                        :expected, :failures, :tags)
+                ON CONFLICT (id) DO NOTHING
+            """), {
+                "id": test_case_id,
+                "session_id": session_id,
+                "category": category,
+                "prompt": body.prompt_text or "",
+                "metadata": "{}",
+                "expected": "[]",
+                "failures": "[]",
+                "tags": '["protocol"]',
+            })
+    else:
         # Freeform mode: create synthetic test case
         test_case_id = f"freeform-{session_id[:8]}-{sequence_number:04d}"
         await db.execute(text("""
@@ -317,21 +347,12 @@ async def upload_observation(
             "id": test_case_id,
             "session_id": session_id,
             "category": "freeform",
-            "prompt": body.prompt_text,
+            "prompt": body.prompt_text or "",
             "metadata": "{}",
             "expected": "[]",
             "failures": "[]",
             "tags": '["freeform"]',
         })
-    else:
-        # Protocol mode: look up the actual category from the test case
-        tc_result = await db.execute(
-            text("SELECT category FROM db_test_cases WHERE id = :tid AND session_id = :sid"),
-            {"tid": test_case_id, "sid": session_id},
-        )
-        tc_row = tc_result.fetchone()
-        if tc_row:
-            category = tc_row[0]
 
     # Store as DBTestResult
     await db.execute(text("""
