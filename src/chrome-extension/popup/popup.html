@@ -26,7 +26,7 @@
     <button class="btn btn-primary" id="saveSettingsBtn">接続</button>
   </div>
 
-  <!-- Section 2: Session setup -->
+  <!-- Section 2: Setup -->
   <div class="section" id="setupSection">
     <label>対象ツール</label>
     <div class="tool-picker" id="toolPicker">
@@ -37,62 +37,64 @@
       <input type="hidden" id="toolSelectValue" value="">
     </div>
 
-    <label>記録モード</label>
-    <div class="radio-group">
-      <label><input type="radio" name="mode" value="protocol" checked> プロトコル</label>
-      <label><input type="radio" name="mode" value="freeform"> フリーフォーム</label>
-    </div>
-
     <button class="btn btn-primary" id="startSessionBtn">セッション開始</button>
     <button class="btn btn-text" id="changeSettingsBtn">設定変更</button>
   </div>
 
-  <!-- Section 3: Protocol recording -->
+  <!-- Section 3: Protocol Test -->
   <div class="section" id="protocolSection">
+    <!-- Progress -->
     <div class="progress-bar">
       <div class="fill" id="progressFill" style="width: 0%"></div>
     </div>
     <div class="progress-text" id="progressText">0 / 0</div>
 
+    <!-- Test card -->
     <div class="test-card" id="testCard">
-      <div class="category" id="testCategory"></div>
+      <div class="test-card-top">
+        <span class="category-badge" id="testCategory"></span>
+        <button class="copy-btn" id="copyPromptBtn">コピー</button>
+      </div>
       <div class="prompt" id="testPrompt"></div>
-      <button class="copy-btn" id="copyPromptBtn">コピー</button>
       <div class="expected" id="testExpected"></div>
     </div>
 
-    <div class="response-input-area" style="margin: 8px 0;">
-      <textarea id="responseTextInput" placeholder="AIの応答をここに貼り付け（任意）" rows="3"
-        style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;resize:vertical;font-family:inherit;"></textarea>
+    <!-- Timer -->
+    <div class="timer-display">
+      <div class="timer-value" id="timerDisplay">00:00.0</div>
+      <button class="btn btn-timer-stop" id="stopTimerBtn">停止</button>
     </div>
 
+    <!-- Response text -->
+    <textarea id="responseText" class="response-textarea" placeholder="AIの応答をここに貼り付け（任意）" rows="5"></textarea>
+
+    <!-- Screenshot toolbar -->
+    <div class="screenshot-toolbar">
+      <button class="btn btn-screenshot" id="fullScreenshotBtn">📷 全画面</button>
+      <button class="btn btn-screenshot" id="partialScreenshotBtn">✂️ 部分</button>
+      <label class="auto-capture-toggle">
+        <input type="checkbox" id="autoCaptureToggle">
+        <span class="toggle-label">🔄 自動</span>
+      </label>
+      <span class="capture-count-badge" id="captureCountBadge">0</span>
+    </div>
+
+    <!-- Action buttons -->
     <div class="action-bar">
       <button class="btn btn-primary" id="nextTestBtn">次へ</button>
       <button class="btn btn-ghost" id="skipTestBtn">スキップ</button>
-      <button class="btn btn-capture" id="manualCaptureBtn1" title="現在の画面を追加記録">📷</button>
     </div>
 
+    <!-- Session end -->
     <div class="session-end-area">
       <button class="btn btn-text btn-danger-text" id="endProtocolBtn">セッションを終了する</button>
     </div>
   </div>
 
-  <!-- Section 4: Freeform recording -->
-  <div class="section" id="freeformSection">
-    <div class="recording-status">
-      <div class="count" id="freeformCount">0</div>
-      <div class="label">記録された操作</div>
-    </div>
-
-    <div class="action-bar" style="justify-content: center;">
-      <button class="btn btn-capture" id="manualCaptureBtn2" title="現在の画面を追加記録">📷 画面を記録</button>
-    </div>
-
-    <button class="btn btn-primary" id="stopFreeformBtn">記録を完了する</button>
-  </div>
-
-  <!-- Section 5: Complete -->
+  <!-- Section 4: Complete -->
   <div class="section" id="completeSection">
+    <div class="complete-icon">✓</div>
+    <div class="complete-title">セッション完了</div>
     <div class="summary-stats">
       <div class="stat-card">
         <div class="value" id="summaryTotal">0</div>
@@ -108,7 +110,7 @@
       ダッシュボードで確認 →
     </a>
 
-    <button class="btn btn-secondary" id="newSessionBtn" style="margin-top: 12px;">新しいセッション</button>
+    <button class="btn btn-secondary" id="newSessionBtn">新しいセッション</button>
   </div>
 
   <script src="popup.js"></script>

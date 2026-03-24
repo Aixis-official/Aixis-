@@ -10,3 +10,5 @@ output/*
 *.db
 .playwright/
 .DS_Store
+*.yaml.bak
+src/aixis_web/static/screenshots/

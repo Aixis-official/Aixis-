@@ -34,6 +34,9 @@ dependencies = [
     # Google Drive export
     "google-api-python-client>=2.100",
     "google-auth>=2.25",
+    # File parsing for uploaded artifacts
+    "python-pptx>=1.0",
+    "pypdf>=4.0",
     # CLI
     "typer>=0.15",
 ]

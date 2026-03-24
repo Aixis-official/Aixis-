@@ -1,26 +1,16 @@
 /**
- * Aixis Chrome Extension — Content Script
+ * Aixis Chrome Extension v2 — Content Script
  *
- * Observes DOM for user inputs and AI responses on any page.
- * Detects input submission, response generation, and measures timing.
- * Communicates observations to the background service worker.
+ * Simplified: no DOM observation.
+ * Only handles:
+ * - Recording indicator (floating badge)
+ * - Partial screenshot selection overlay
  */
 
 (() => {
   "use strict";
 
-  // ---------------------------------------------------------------------------
-  // State
-  // ---------------------------------------------------------------------------
-
-  let isRecording = false;
-  let lastInputText = "";
-  let lastInputTimestamp = 0;
-  let responseObserver = null;
-  let responseStabilizeTimer = null;
   let indicator = null;
-
-  const RESPONSE_STABILIZE_MS = 2000; // Wait for response to stop changing
 
   // ---------------------------------------------------------------------------
   // Recording indicator UI
@@ -47,248 +37,134 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Input detection
+  // Partial screenshot selection overlay
   // ---------------------------------------------------------------------------
 
-  /**
-   * Find all input elements that could be used for AI tool input.
-   */
-  function getInputElements() {
-    return [
-      ...document.querySelectorAll("textarea"),
-      ...document.querySelectorAll('input[type="text"]'),
-      ...document.querySelectorAll("[contenteditable=true]"),
-      ...document.querySelectorAll('[role="textbox"]'),
-    ];
-  }
+  function injectSelectionOverlay() {
+    // Remove any existing overlay
+    removeSelectionOverlay();
 
-  /**
-   * Extract text from an input element.
-   */
-  function getInputText(el) {
-    if (el.tagName === "TEXTAREA" || el.tagName === "INPUT") {
-      return el.value || "";
+    const overlay = document.createElement("div");
+    overlay.id = "aixis-selection-overlay";
+    overlay.classList.add("aixis-selection-overlay");
+
+    const selectionBox = document.createElement("div");
+    selectionBox.id = "aixis-selection-box";
+    selectionBox.classList.add("aixis-selection-box");
+    overlay.appendChild(selectionBox);
+
+    const hint = document.createElement("div");
+    hint.classList.add("aixis-selection-hint");
+    hint.textContent = "ドラッグで範囲を選択してください（Escでキャンセル）";
+    overlay.appendChild(hint);
+
+    document.body.appendChild(overlay);
+
+    let startX = 0;
+    let startY = 0;
+    let isSelecting = false;
+
+    function onMouseDown(e) {
+      e.preventDefault();
+      isSelecting = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      selectionBox.style.left = startX + "px";
+      selectionBox.style.top = startY + "px";
+      selectionBox.style.width = "0";
+      selectionBox.style.height = "0";
+      selectionBox.style.display = "block";
     }
-    return el.innerText || el.textContent || "";
-  }
 
-  /**
-   * Detect when user submits input (Enter key or button click).
-   */
-  function onKeyDown(e) {
-    if (!isRecording) return;
+    function onMouseMove(e) {
+      if (!isSelecting) return;
+      e.preventDefault();
 
-    // Enter without Shift typically submits in chat UIs
-    if (e.key === "Enter" && !e.shiftKey) {
-      const text = getInputText(e.target);
-      if (text.trim()) {
-        captureInput(text.trim());
-      }
+      const currentX = e.clientX;
+      const currentY = e.clientY;
+
+      const left = Math.min(startX, currentX);
+      const top = Math.min(startY, currentY);
+      const width = Math.abs(currentX - startX);
+      const height = Math.abs(currentY - startY);
+
+      selectionBox.style.left = left + "px";
+      selectionBox.style.top = top + "px";
+      selectionBox.style.width = width + "px";
+      selectionBox.style.height = height + "px";
     }
-  }
 
-  /**
-   * Detect submit button clicks.
-   */
-  function onButtonClick(e) {
-    if (!isRecording) return;
+    function onMouseUp(e) {
+      if (!isSelecting) return;
+      isSelecting = false;
 
-    const btn = e.target.closest("button, [role=button], [type=submit]");
-    if (!btn) return;
+      const currentX = e.clientX;
+      const currentY = e.clientY;
 
-    // Check for nearby input element
-    const inputs = getInputElements();
-    for (const input of inputs) {
-      const text = getInputText(input);
-      if (text.trim()) {
-        captureInput(text.trim());
-        break;
-      }
-    }
-  }
+      const rect = {
+        x: Math.min(startX, currentX),
+        y: Math.min(startY, currentY),
+        w: Math.abs(currentX - startX),
+        h: Math.abs(currentY - startY),
+      };
 
-  function captureInput(text) {
-    lastInputText = text;
-    lastInputTimestamp = Date.now();
+      removeSelectionOverlay();
 
-    // Start watching for response
-    startResponseObservation();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Response detection via MutationObserver
-  // ---------------------------------------------------------------------------
-
-  function startResponseObservation() {
-    stopResponseObservation();
-
-    let lastContent = getMainContentSnapshot();
-    let lastChangeTimestamp = Date.now();
-
-    responseObserver = new MutationObserver(() => {
-      const currentContent = getMainContentSnapshot();
-      if (currentContent !== lastContent) {
-        lastContent = currentContent;
-        lastChangeTimestamp = Date.now();
-
-        // Reset stabilization timer
-        clearTimeout(responseStabilizeTimer);
-        responseStabilizeTimer = setTimeout(() => {
-          // Content has been stable for RESPONSE_STABILIZE_MS
-          onResponseStabilized(currentContent);
-        }, RESPONSE_STABILIZE_MS);
-      }
-    });
-
-    responseObserver.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    });
-
-    // Fallback: if no response within 60s, stop observing
-    setTimeout(() => {
-      if (responseObserver) {
-        stopResponseObservation();
-      }
-    }, 60000);
-  }
-
-  function stopResponseObservation() {
-    if (responseObserver) {
-      responseObserver.disconnect();
-      responseObserver = null;
-    }
-    clearTimeout(responseStabilizeTimer);
-  }
-
-  /**
-   * Get a snapshot of the main content area for change detection.
-   * Focuses on likely response containers.
-   */
-  function getMainContentSnapshot() {
-    // Common AI tool response selectors
-    const selectors = [
-      '[class*="response"]',
-      '[class*="message"]',
-      '[class*="answer"]',
-      '[class*="output"]',
-      '[class*="chat"]',
-      '[class*="conversation"]',
-      '[role="log"]',
-      '[role="main"]',
-      "main",
-      "#__next",
-      "#app",
-    ];
-
-    for (const sel of selectors) {
-      const el = document.querySelector(sel);
-      if (el) {
-        return el.innerText || "";
+      // Only send if selection has meaningful size
+      if (rect.w > 10 && rect.h > 10) {
+        chrome.runtime.sendMessage({
+          type: "PARTIAL_CAPTURE_COORDS",
+          rect: rect,
+          devicePixelRatio: window.devicePixelRatio || 1,
+        });
       }
     }
 
-    return document.body.innerText || "";
-  }
-
-  /**
-   * Extract the most recent response text from the page.
-   */
-  function extractLatestResponse() {
-    // Look for the last message-like element
-    const messageSelectors = [
-      '[class*="assistant"]',
-      '[class*="bot-message"]',
-      '[class*="ai-message"]',
-      '[class*="response"]:last-child',
-      '[data-message-author-role="assistant"]',
-      '[class*="message"]:last-child',
-    ];
-
-    for (const sel of messageSelectors) {
-      const elements = document.querySelectorAll(sel);
-      if (elements.length > 0) {
-        const lastEl = elements[elements.length - 1];
-        const text = lastEl.innerText || lastEl.textContent || "";
-        if (text.trim()) return text.trim();
+    function onKeyDown(e) {
+      if (e.key === "Escape") {
+        removeSelectionOverlay();
       }
     }
 
-    // Fallback: get last significant text block that appeared after input
-    return null;
+    overlay.addEventListener("mousedown", onMouseDown);
+    overlay.addEventListener("mousemove", onMouseMove);
+    overlay.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("keydown", onKeyDown, { once: true });
   }
 
-  function onResponseStabilized(contentSnapshot) {
-    stopResponseObservation();
-
-    if (!lastInputText || !lastInputTimestamp) return;
-
-    const responseTimeMs = Date.now() - lastInputTimestamp;
-    const responseText = extractLatestResponse() || contentSnapshot.slice(-2000);
-
-    // Send to background script
-    chrome.runtime.sendMessage({
-      type: "INTERACTION_COMPLETE",
-      prompt: lastInputText,
-      response: responseText,
-      responseTimeMs,
-      pageUrl: window.location.href,
-      metadata: {
-        pageTitle: document.title,
-        timestamp: new Date().toISOString(),
-      },
-    });
-
-    // Reset
-    lastInputText = "";
-    lastInputTimestamp = 0;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Event listeners
-  // ---------------------------------------------------------------------------
-
-  function attachListeners() {
-    document.addEventListener("keydown", onKeyDown, true);
-    document.addEventListener("click", onButtonClick, true);
-  }
-
-  function detachListeners() {
-    document.removeEventListener("keydown", onKeyDown, true);
-    document.removeEventListener("click", onButtonClick, true);
-    stopResponseObservation();
+  function removeSelectionOverlay() {
+    const existing = document.getElementById("aixis-selection-overlay");
+    if (existing) {
+      existing.remove();
+    }
   }
 
   // ---------------------------------------------------------------------------
   // Messages from background
   // ---------------------------------------------------------------------------
 
-  chrome.runtime.onMessage.addListener((message) => {
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.type) {
       case "RECORDING_STARTED":
-        isRecording = true;
-        attachListeners();
         showIndicator();
         break;
 
       case "RECORDING_STOPPED":
-        isRecording = false;
-        detachListeners();
         hideIndicator();
+        break;
+
+      case "INJECT_SELECTION_OVERLAY":
+        injectSelectionOverlay();
         break;
     }
   });
 
   // ---------------------------------------------------------------------------
-  // Initialize
+  // Initialize — check if we should show indicator
   // ---------------------------------------------------------------------------
 
-  // Check if we should already be recording (service worker may have restarted)
   chrome.runtime.sendMessage({ type: "GET_STATE" }, (response) => {
     if (response && response.isRecording) {
-      isRecording = true;
-      attachListeners();
       showIndicator();
     }
   });

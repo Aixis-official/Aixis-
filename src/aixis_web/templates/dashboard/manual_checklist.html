@@ -81,46 +81,34 @@
 const sessionId = '{{ session_id }}';
 
 const AXIS_CONFIG = [
-    { key: 'practicality',     name: '実務適性',       color: '#2b6cb0', autoRatio: 0.4,  manualRatio: 0.6  },
-    { key: 'cost_performance', name: '費用対効果',     color: '#38a169', autoRatio: 0.0,  manualRatio: 1.0  },
-    { key: 'localization',     name: '日本語能力',     color: '#ed8936', autoRatio: 0.7,  manualRatio: 0.3  },
-    { key: 'safety',           name: '信頼性・安全性', color: '#e53e3e', autoRatio: 0.35, manualRatio: 0.65 },
-    { key: 'uniqueness',       name: '革新性',         color: '#805ad5', autoRatio: 0.0,  manualRatio: 1.0  },
+    { key: 'instruction_adherence', name: '指示への忠実度',      color: '#2b6cb0', autoRatio: 70, manualRatio: 30 },
+    { key: 'japanese_quality',      name: '日本語品質',          color: '#38a169', autoRatio: 70, manualRatio: 30 },
+    { key: 'structure_logic',       name: '構成・論理展開',      color: '#ed8936', autoRatio: 60, manualRatio: 40 },
+    { key: 'contradiction_handling',name: '矛盾指示への対応力',  color: '#e53e3e', autoRatio: 80, manualRatio: 20 },
+    { key: 'accuracy',              name: '情報の正確性',        color: '#805ad5', autoRatio: 60, manualRatio: 40 },
 ];
 
 const CHECKLISTS = {
-    practicality: [
-        { id: 'PR-001', name_jp: 'チーム導入容易性', scoring_guide: '0=導入不可, 1=専門知識必須, 2=IT部門支援必要, 3=マニュアルで可能, 4=直感的, 5=即座に全員利用可能' },
-        { id: 'PR-002', name_jp: 'オンボーディング品質', scoring_guide: '0=なし, 1=英語のみ, 2=基本的, 3=充実, 4=インタラクティブ, 5=カスタマイズ可能な日本語ガイド' },
-        { id: 'PR-003', name_jp: '既存ワークフロー統合', scoring_guide: '0=統合不可, 2=API/Webhookあり, 3=主要サービス連携, 5=日本の業務ツール完全対応' },
-        { id: 'PR-004', name_jp: 'カスタマーサポート品質', scoring_guide: '0=なし, 1=英語メールのみ, 2=チャットボット, 3=日本語サポート, 5=専任日本語担当+SLA保証' },
-        { id: 'PR-005', name_jp: '出力品質の一貫性', scoring_guide: '0=ランダム, 2=基本的に安定, 3=プロンプト次第, 5=常に高品質' },
+    instruction_adherence: [
+        { id: 'IA-001', name_jp: 'UIの日本語対応度', weight: 1.0, scoring_guide: '0=英語のみ, 2=部分的に日本語, 3=ほぼ日本語対応, 5=完全日本語ネイティブ対応' },
+        { id: 'IA-002', name_jp: '学習コスト（直感性）', weight: 1.0, scoring_guide: '0=専門知識が必要, 2=チュートリアル必須, 3=比較的直感的, 5=初見で即利用可能' },
     ],
-    cost_performance: [
-        { id: 'CP-001', name_jp: '月額コスト（1人あたり）', scoring_guide: '0=5万円超, 1=3-5万円, 2=1-3万円, 3=5千-1万円, 4=千-5千円, 5=無料/千円未満' },
-        { id: 'CP-002', name_jp: 'TCO（総保有コスト）', scoring_guide: '0=隠れコスト大, 2=追加コストあり, 3=明確, 5=全コスト透明' },
-        { id: 'CP-003', name_jp: '無料プランの実用性', scoring_guide: '0=なし, 1=デモのみ, 2=制限大, 3=個人利用可, 5=チーム利用可' },
-        { id: 'CP-004', name_jp: '料金体系の透明性', scoring_guide: '0=不明瞭, 2=基本料金のみ公開, 3=詳細公開, 5=全コスト+シミュレータ' },
-        { id: 'CP-005', name_jp: '乗り換えコスト', scoring_guide: '0=ロックイン, 2=データ移行困難, 3=エクスポート可, 5=完全ポータブル' },
+    japanese_quality: [
+        { id: 'JQ-001', name_jp: 'テンプレート・デザインの品質', weight: 1.0, scoring_guide: '0=テンプレートなし, 2=基本的なテンプレート, 3=ビジネス利用可能, 5=プロ品質+日本向けデザイン' },
+        { id: 'JQ-002', name_jp: '日本語フォントの対応', weight: 1.0, scoring_guide: '0=日本語フォントなし, 2=基本ゴシック体のみ, 3=複数日本語フォント, 5=豊富な日本語フォント+ウェイト' },
     ],
-    localization: [
-        { id: 'LO-001', name_jp: 'UI日本語化品質', scoring_guide: '0=英語のみ, 1=機械翻訳, 2=部分的, 3=ほぼ完全, 5=ネイティブ品質' },
-        { id: 'LO-002', name_jp: 'ドキュメント日本語化', scoring_guide: '0=なし, 1=一部翻訳, 2=基本文書, 3=充実, 5=全文書+動画も日本語' },
-        { id: 'LO-003', name_jp: '日本固有機能対応', scoring_guide: '0=なし, 2=基本, 3=和暦/インボイス, 5=日本の商慣習完全対応' },
+    structure_logic: [
+        { id: 'SL-001', name_jp: 'エクスポート形式の対応', weight: 1.0, scoring_guide: '0=エクスポート不可, 2=PDF/PNGのみ, 3=PPTX対応, 5=PPTX+PDF+PNG+テーマ保持' },
+        { id: 'SL-002', name_jp: 'スライド編集の柔軟性', weight: 1.0, scoring_guide: '0=編集不可, 2=テキストのみ編集可, 3=レイアウト変更可, 5=完全なスライドエディタ' },
     ],
-    safety: [
-        { id: 'SF-001', name_jp: 'データ保護ポリシー', scoring_guide: '0=不明, 1=基本的, 2=GDPR準拠, 3=ISMS, 4=SOC2, 5=ISO27001+国内法完全準拠' },
-        { id: 'SF-002', name_jp: 'データ保存場所', scoring_guide: '0=不明, 1=海外のみ, 2=選択不可, 3=リージョン選択, 5=国内DC+選択可' },
-        { id: 'SF-003', name_jp: 'アクセス制御', scoring_guide: '0=なし, 2=基本認証, 3=RBAC, 4=SSO+MFA, 5=SAML+カスタムポリシー' },
-        { id: 'SF-004', name_jp: '監査ログ', scoring_guide: '0=なし, 2=基本ログ, 3=詳細ログ, 5=全操作記録+エクスポート+保持期間設定' },
-        { id: 'SF-005', name_jp: 'インシデント対応', scoring_guide: '0=不明, 2=メール通知, 3=SLA定義, 5=24h対応+日本語エスカレーション' },
+    contradiction_handling: [
+        { id: 'CH-001', name_jp: 'エラー時のリカバリ', weight: 1.0, scoring_guide: '0=クラッシュ, 2=エラー表示のみ, 3=リトライ可能, 5=自動リカバリ+代替提案' },
+        { id: 'CH-002', name_jp: '入力制限の明示', weight: 1.0, scoring_guide: '0=制限不明, 2=エラー後に判明, 3=事前表示, 5=明確な制限表示+回避策提案' },
     ],
-    uniqueness: [
-        { id: 'UQ-001', name_jp: '独自技術・モデル', scoring_guide: '0=完全ラッパー, 2=軽微カスタム, 3=独自ファインチューン, 5=独自基盤モデル' },
-        { id: 'UQ-002', name_jp: '差別化機能', scoring_guide: '0=なし, 2=UI差異のみ, 3=独自機能あり, 5=市場唯一の機能' },
-        { id: 'UQ-003', name_jp: 'エコシステム・拡張性', scoring_guide: '0=閉鎖的, 2=基本API, 3=プラグイン, 5=オープンエコシステム' },
-        { id: 'UQ-004', name_jp: '将来性・ロードマップ', scoring_guide: '0=不明, 2=基本更新, 3=明確なロードマップ, 5=透明+コミュニティ主導' },
-        { id: 'UQ-005', name_jp: 'ラッパー製品リスク', scoring_guide: '5=独自技術, 3=一部依存, 1=完全依存, 0=APIラッパーのみ（元サービス停止で利用不可）' },
+    accuracy: [
+        { id: 'AC-001', name_jp: '応答速度（体感）', weight: 1.0, scoring_guide: '0=非常に遅い(30秒超), 2=遅い(10-30秒), 3=普通(5-10秒), 5=速い(5秒以内)' },
+        { id: 'AC-002', name_jp: '共有・共同編集機能', weight: 1.0, scoring_guide: '0=共有不可, 2=リンク共有のみ, 3=共同編集可能, 5=リアルタイム共同編集+コメント+権限管理' },
+        { id: 'AC-003', name_jp: '料金体系の透明性', weight: 1.0, scoring_guide: '0=料金不明瞭, 2=基本料金のみ公開, 3=全プラン詳細公開, 5=全コスト明示+試算ツール提供' },
     ],
 };
 
@@ -145,7 +133,7 @@ function renderChecklists() {
                     <span class="w-3 h-3 rounded-full shrink-0" style="background-color:${axis.color}"></span>
                     <span class="text-base font-semibold text-gray-900 dark:text-white font-jp">${axis.name}</span>
                     <span class="px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
-                        自動${(axis.autoRatio * 100).toFixed(0)}% / 手動${(axis.manualRatio * 100).toFixed(0)}%
+                        自動${axis.autoRatio}% / 手動${axis.manualRatio}%
                     </span>
                     <span class="text-xs text-gray-400 dark:text-gray-500 tabular-nums" id="axis-count-${axis.key}">0 / ${items.length}</span>
                 </div>

@@ -1,5 +1,5 @@
 /**
- * Aixis Platform API client for Chrome extension.
+ * Aixis Platform API client for Chrome extension v2.
  * Handles all communication with the FastAPI backend.
  */
 
@@ -66,7 +66,12 @@ const AixisAPI = {
   },
 
   async uploadObservation(sessionId, observation) {
-    return this.request("POST", `/sessions/${sessionId}/observations`, observation);
+    // Ensure response_time_ms is sent correctly
+    const payload = {
+      ...observation,
+      response_time_ms: observation.response_time_ms || 0,
+    };
+    return this.request("POST", `/sessions/${sessionId}/observations`, payload);
   },
 
   async completeSession(sessionId) {

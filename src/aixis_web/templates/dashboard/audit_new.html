@@ -16,7 +16,7 @@
 
         <h1 class="text-xl font-bold text-gray-900 dark:text-white mb-1 font-jp">新規監査を開始</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400 mb-8 font-jp">
-            Chrome拡張を使って監査セッションを作成します。テスターが実際にAIツールを操作し、拡張が自動記録・LLMスコアリングを行います。
+            スライド作成AIの評価セッションを作成します。テスターがAIツールを操作し、Chrome拡張でエビデンスを収集。成果物はLLMが自動採点します。
         </p>
 
         <!-- Error -->
@@ -135,29 +135,29 @@
             <div class="flex items-start gap-2">
                 <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-[10px]">1</span>
                 <div>
-                    <div class="font-medium text-gray-700 dark:text-gray-300">テストケース生成</div>
-                    <div>プロファイルに基づき破壊的テストを自動生成</div>
+                    <div class="font-medium text-gray-700 dark:text-gray-300">テスト準備</div>
+                    <div>プロトコルに基づくテストプロンプトを提示</div>
                 </div>
             </div>
             <div class="flex items-start gap-2">
                 <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-[10px]">2</span>
                 <div>
-                    <div class="font-medium text-gray-700 dark:text-gray-300">人間がテスト実行</div>
-                    <div>Chrome拡張がプロンプトを提示、操作を自動記録</div>
+                    <div class="font-medium text-gray-700 dark:text-gray-300">テスト実行</div>
+                    <div>テスターがAIツールを操作、拡張がタイマー・スクショ記録</div>
                 </div>
             </div>
             <div class="flex items-start gap-2">
                 <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-[10px]">3</span>
                 <div>
-                    <div class="font-medium text-gray-700 dark:text-gray-300">LLMスコアリング</div>
-                    <div>記録データをClaude AIがルーブリックで5軸自動採点</div>
+                    <div class="font-medium text-gray-700 dark:text-gray-300">成果物評価</div>
+                    <div>LLMが生成物をルーブリックで5軸自動採点</div>
                 </div>
             </div>
             <div class="flex items-start gap-2">
                 <span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-[10px]">4</span>
                 <div>
-                    <div class="font-medium text-gray-700 dark:text-gray-300">レポート生成</div>
-                    <div>HTML/PDF/JSON形式の監査レポートを出力</div>
+                    <div class="font-medium text-gray-700 dark:text-gray-300">プロセス評価</div>
+                    <div>人間がUI・操作性等のチェックリストを記入</div>
                 </div>
             </div>
         </div>

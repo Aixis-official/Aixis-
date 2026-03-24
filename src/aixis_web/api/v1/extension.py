@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -406,6 +406,127 @@ async def upload_observation(
         observation_id=obs_id,
         sequence_number=sequence_number,
     )
+
+
+# ---------------------------------------------------------------------------
+# POST /sessions/{id}/upload-file — Upload PPTX/PDF artifact for analysis
+# ---------------------------------------------------------------------------
+
+@router.post("/sessions/{session_id}/upload-file")
+async def upload_file(
+    session_id: str,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_agent_key),
+):
+    """Upload a PPTX or PDF file and extract text content for LLM scoring."""
+    # Verify session exists
+    result = await db.execute(
+        text("SELECT id, status FROM audit_sessions WHERE id = :sid"),
+        {"sid": session_id},
+    )
+    session_row = result.fetchone()
+    if not session_row:
+        raise HTTPException(404, f"セッションが見つかりません: {session_id}")
+
+    # Validate file type
+    filename = file.filename or "upload"
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    if ext not in ("pptx", "pdf"):
+        raise HTTPException(400, "PPTX または PDF ファイルのみアップロード可能です")
+
+    # Save file
+    upload_dir = Path(__file__).resolve().parents[2] / "static" / "uploads" / "extension" / session_id
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    file_path = upload_dir / filename
+    content = await file.read()
+    file_path.write_bytes(content)
+
+    # Extract text
+    extracted_text = ""
+    try:
+        if ext == "pptx":
+            from pptx import Presentation
+            from io import BytesIO
+            prs = Presentation(BytesIO(content))
+            slide_texts = []
+            for i, slide in enumerate(prs.slides, 1):
+                texts = []
+                for shape in slide.shapes:
+                    if shape.has_text_frame:
+                        for para in shape.text_frame.paragraphs:
+                            text_content = para.text.strip()
+                            if text_content:
+                                texts.append(text_content)
+                if texts:
+                    slide_texts.append(f"--- スライド {i} ---\n" + "\n".join(texts))
+            extracted_text = "\n\n".join(slide_texts)
+
+        elif ext == "pdf":
+            from pypdf import PdfReader
+            from io import BytesIO
+            reader = PdfReader(BytesIO(content))
+            page_texts = []
+            for i, page in enumerate(reader.pages, 1):
+                page_text = page.extract_text()
+                if page_text and page_text.strip():
+                    page_texts.append(f"--- ページ {i} ---\n{page_text.strip()}")
+            extracted_text = "\n\n".join(page_texts)
+
+    except Exception as e:
+        logger.warning("File text extraction failed for %s: %s", filename, e)
+        extracted_text = f"(テキスト抽出に失敗しました: {e})"
+
+    # Store extracted text as a special observation
+    now = datetime.utcnow()
+    file_case_id = f"file-{session_id[:8]}-{filename}"
+    await db.execute(text("""
+        INSERT INTO db_test_cases
+        (id, session_id, category, prompt, metadata_json,
+         expected_behaviors, failure_indicators, tags)
+        VALUES (:id, :session_id, :category, :prompt, :metadata,
+                :expected, :failures, :tags)
+        ON CONFLICT (id) DO NOTHING
+    """), {
+        "id": file_case_id,
+        "session_id": session_id,
+        "category": "artifact_upload",
+        "prompt": f"アップロードされた成果物: {filename}",
+        "metadata": json.dumps({"file_type": ext, "filename": filename}, ensure_ascii=False),
+        "expected": "[]",
+        "failures": "[]",
+        "tags": json.dumps(["artifact", ext], ensure_ascii=False),
+    })
+
+    await db.execute(text("""
+        INSERT INTO db_test_results
+        (session_id, test_case_id, category, prompt_sent, response_raw,
+         response_time_ms, error, screenshot_path, page_url, executed_at, metadata_json)
+        VALUES (:session_id, :test_case_id, :category, :prompt, :response,
+                0, NULL, NULL, NULL, :now, :metadata)
+    """), {
+        "session_id": session_id,
+        "test_case_id": file_case_id,
+        "category": "artifact_upload",
+        "prompt": f"成果物ファイル: {filename}",
+        "response": extracted_text[:50000],  # Limit to 50K chars
+        "now": now,
+        "metadata": json.dumps({"file_path": str(file_path), "file_size": len(content)}, ensure_ascii=False),
+    })
+
+    await db.commit()
+
+    logger.info("File uploaded for session %s: %s (%d bytes, %d chars extracted)",
+                session_id, filename, len(content), len(extracted_text))
+
+    return {
+        "file_id": file_case_id,
+        "filename": filename,
+        "file_type": ext,
+        "file_size": len(content),
+        "extracted_text_length": len(extracted_text),
+        "extracted_text_preview": extracted_text[:500] if extracted_text else "",
+    }
 
 
 # ---------------------------------------------------------------------------

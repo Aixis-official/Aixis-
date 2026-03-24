@@ -1,8 +1,8 @@
 /**
- * Aixis Chrome Extension — Background Service Worker
+ * Aixis Chrome Extension v2 — Background Service Worker
  *
- * Manages session state, coordinates content script observations,
- * handles API communication and screenshot capture.
+ * Manages session state, screenshot capture (full/partial/auto),
+ * timer persistence, and API communication.
  */
 
 importScripts("../lib/api-client.js");
@@ -16,19 +16,31 @@ let state = {
   testCases: [],
   currentTestIndex: 0,
   isRecording: false,
-  pendingObservation: null, // Buffered from content script
   observationCount: 0,
+  timerStart: null,
+  captureCount: 0,
+  autoCaptureActive: false,
+  autoCaptureIntervalId: null,
 };
 
 // Restore state from storage on service worker wake
 chrome.storage.local.get(["sessionState"], (data) => {
   if (data.sessionState) {
     Object.assign(state, data.sessionState);
+    // Don't persist interval IDs — they're invalid after restart
+    state.autoCaptureIntervalId = null;
+    // Resume auto-capture if it was active
+    if (state.autoCaptureActive && state.currentSession) {
+      startAutoCaptureInterval(5000);
+    }
   }
 });
 
 function persistState() {
-  chrome.storage.local.set({ sessionState: state });
+  // Don't persist interval ID
+  const toSave = { ...state };
+  delete toSave.autoCaptureIntervalId;
+  chrome.storage.local.set({ sessionState: toSave });
 }
 
 // ---------------------------------------------------------------------------
@@ -52,7 +64,7 @@ async function handleMessage(message, sender) {
       return await completeSession();
 
     case "GET_STATE":
-      return { ...state };
+      return { ...state, autoCaptureIntervalId: undefined };
 
     case "GET_CURRENT_TEST":
       return getCurrentTest();
@@ -63,20 +75,30 @@ async function handleMessage(message, sender) {
     case "SKIP_TEST":
       return await skipTest(message);
 
-    // --- Recording control ---
-    case "START_RECORDING":
-      return startRecording();
+    case "RESET_SESSION":
+      return resetSession();
 
-    case "STOP_RECORDING":
-      return await stopRecording();
+    // --- Timer ---
+    case "SET_TIMER_START":
+      state.timerStart = message.timestamp;
+      persistState();
+      return { ok: true };
 
-    // --- Content script observations ---
-    case "INTERACTION_COMPLETE":
-      return await handleInteraction(message, sender);
+    // --- Screenshots ---
+    case "FULL_SCREENSHOT":
+      return await captureFullScreenshot();
 
-    // --- Manual screenshot ---
-    case "MANUAL_SCREENSHOT":
-      return await captureManualScreenshot(message);
+    case "START_PARTIAL_CAPTURE":
+      return await startPartialCapture();
+
+    case "PARTIAL_CAPTURE_COORDS":
+      return await handlePartialCaptureCoords(message);
+
+    case "START_AUTO_CAPTURE":
+      return startAutoCapture(message.intervalMs || 5000);
+
+    case "STOP_AUTO_CAPTURE":
+      return stopAutoCapture();
 
     // --- Settings ---
     case "SAVE_SETTINGS":
@@ -92,9 +114,6 @@ async function handleMessage(message, sender) {
     case "FETCH_TOOLS":
       return await AixisAPI.listTools();
 
-    case "RESET_SESSION":
-      return resetSession();
-
     default:
       return { error: `Unknown message type: ${message.type}` };
   }
@@ -104,12 +123,11 @@ async function handleMessage(message, sender) {
 // Session management
 // ---------------------------------------------------------------------------
 
-async function createSession({ toolId, profileId, recordingMode, categories }) {
+async function createSession({ toolId, profileId, recordingMode }) {
   const result = await AixisAPI.createSession(
     toolId,
     profileId || "",
-    recordingMode || "protocol",
-    categories
+    recordingMode || "protocol"
   );
 
   state.currentSession = {
@@ -123,11 +141,11 @@ async function createSession({ toolId, profileId, recordingMode, categories }) {
   state.currentTestIndex = 0;
   state.isRecording = true;
   state.observationCount = 0;
-  state.pendingObservation = null;
+  state.timerStart = null;
+  state.captureCount = 0;
+  state.autoCaptureActive = false;
 
   persistState();
-
-  // Notify content scripts to start observing
   broadcastToContentScripts({ type: "RECORDING_STARTED" });
 
   return {
@@ -143,6 +161,7 @@ async function completeSession() {
   }
 
   state.isRecording = false;
+  stopAutoCaptureInternal();
   broadcastToContentScripts({ type: "RECORDING_STOPPED" });
 
   try {
@@ -160,8 +179,11 @@ function resetSession() {
   state.testCases = [];
   state.currentTestIndex = 0;
   state.isRecording = false;
-  state.pendingObservation = null;
   state.observationCount = 0;
+  state.timerStart = null;
+  state.captureCount = 0;
+  state.autoCaptureActive = false;
+  stopAutoCaptureInternal();
   persistState();
   broadcastToContentScripts({ type: "RECORDING_STOPPED" });
   return { ok: true };
@@ -188,19 +210,16 @@ async function advanceTest({ observation }) {
     return { error: "アクティブなセッションがありません" };
   }
 
-  // Record test progression (no screenshot — use camera button for that)
   const currentTest = state.testCases[state.currentTestIndex];
 
-  // Build observation data without screenshot
   const obsData = {
     test_case_id: currentTest?.id || null,
-    prompt_text: observation?.promptText || currentTest?.prompt || "",
+    prompt_text: currentTest?.prompt || "",
     response_text: observation?.responseText || null,
     response_time_ms: observation?.responseTimeMs || 0,
-    page_url: observation?.pageUrl || null,
+    page_url: null,
     screenshot_base64: null,
     metadata: {
-      ...(observation?.metadata || {}),
       category: currentTest?.category || "protocol",
       test_index: state.currentTestIndex,
     },
@@ -214,11 +233,11 @@ async function advanceTest({ observation }) {
     return { error: err.message };
   }
 
-  // Advance to next test
   state.currentTestIndex++;
+  state.timerStart = null;
+  state.captureCount = 0;
   persistState();
 
-  // Check if all tests complete
   if (state.currentTestIndex >= state.testCases.length) {
     return { done: true, index: state.currentTestIndex, total: state.testCases.length };
   }
@@ -233,7 +252,6 @@ async function skipTest({ reason }) {
 
   const currentTest = state.testCases[state.currentTestIndex];
 
-  // Upload a skipped observation
   const obsData = {
     test_case_id: currentTest?.id || null,
     prompt_text: currentTest?.prompt || "(スキップ)",
@@ -250,6 +268,8 @@ async function skipTest({ reason }) {
   }
 
   state.currentTestIndex++;
+  state.timerStart = null;
+  state.captureCount = 0;
   persistState();
 
   if (state.currentTestIndex >= state.testCases.length) {
@@ -260,87 +280,18 @@ async function skipTest({ reason }) {
 }
 
 // ---------------------------------------------------------------------------
-// Freeform recording
+// Full screenshot capture
 // ---------------------------------------------------------------------------
 
-function startRecording() {
-  state.isRecording = true;
-  persistState();
-  broadcastToContentScripts({ type: "RECORDING_STARTED" });
-  return { ok: true };
-}
-
-async function stopRecording() {
-  state.isRecording = false;
-  persistState();
-  broadcastToContentScripts({ type: "RECORDING_STOPPED" });
-  return { ok: true };
-}
-
-// ---------------------------------------------------------------------------
-// Content script interaction handling
-// ---------------------------------------------------------------------------
-
-async function handleInteraction(message, sender) {
-  if (!state.isRecording || !state.currentSession) {
-    return { ignored: true };
-  }
-
-  // Capture screenshot
-  let screenshotBase64 = null;
-  try {
-    if (sender.tab) {
-      const dataUrl = await chrome.tabs.captureVisibleTab(
-        sender.tab.windowId,
-        { format: "png" }
-      );
-      screenshotBase64 = dataUrl.replace(/^data:image\/png;base64,/, "");
-    }
-  } catch (err) {
-    console.warn("Screenshot capture failed:", err);
-  }
-
-  // Determine test_case_id (protocol mode uses current test, freeform uses null)
-  let testCaseId = null;
-  if (state.currentSession.recordingMode === "protocol" && state.testCases.length) {
-    const currentTest = state.testCases[state.currentTestIndex];
-    testCaseId = currentTest?.id || null;
-  }
-
-  const obsData = {
-    test_case_id: testCaseId,
-    prompt_text: message.prompt || "",
-    response_text: message.response || null,
-    response_time_ms: message.responseTimeMs || 0,
-    page_url: message.pageUrl || sender.tab?.url || null,
-    screenshot_base64: screenshotBase64,
-    metadata: message.metadata || {},
-  };
-
-  try {
-    const result = await AixisAPI.uploadObservation(state.currentSession.id, obsData);
-    state.observationCount++;
-    persistState();
-    return { ok: true, observationId: result.observation_id };
-  } catch (err) {
-    console.error("Observation upload failed:", err);
-    return { error: err.message };
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Manual screenshot capture (UI/settings/error screens)
-// ---------------------------------------------------------------------------
-
-async function captureManualScreenshot({ label }) {
+async function captureFullScreenshot() {
   if (!state.currentSession) {
     return { error: "アクティブなセッションがありません" };
   }
 
-  // Capture current visible tab
   let screenshotBase64 = null;
   let pageUrl = null;
   let pageTitle = null;
+
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab) {
@@ -350,34 +301,201 @@ async function captureManualScreenshot({ label }) {
       screenshotBase64 = dataUrl.replace(/^data:image\/png;base64,/, "");
     }
   } catch (err) {
-    console.warn("Manual screenshot failed:", err);
+    console.warn("Screenshot capture failed:", err);
     return { error: "スクリーンショットの取得に失敗しました" };
   }
 
-  // Upload as a manual observation (not tied to a specific test case)
+  const currentTest = state.testCases[state.currentTestIndex];
+
   const obsData = {
-    test_case_id: null,
-    prompt_text: label || "手動スクリーンショット",
+    test_case_id: currentTest?.id || null,
+    prompt_text: currentTest?.prompt || "スクリーンショット",
     response_text: null,
     response_time_ms: 0,
     page_url: pageUrl,
     screenshot_base64: screenshotBase64,
     metadata: {
-      capture_type: "manual_screenshot",
-      label: label || "",
+      capture_type: "full_screenshot",
       page_title: pageTitle || "",
+      test_index: state.currentTestIndex,
       timestamp: new Date().toISOString(),
     },
   };
 
   try {
-    const result = await AixisAPI.uploadObservation(state.currentSession.id, obsData);
-    state.observationCount++;
+    await AixisAPI.uploadObservation(state.currentSession.id, obsData);
+    state.captureCount++;
     persistState();
-    return { ok: true, observationId: result.observation_id };
+    notifyPopup({ type: "CAPTURE_COUNT_UPDATE", count: state.captureCount });
+    return { ok: true, captureCount: state.captureCount };
   } catch (err) {
-    console.error("Manual screenshot upload failed:", err);
+    console.error("Screenshot upload failed:", err);
     return { error: err.message };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Partial screenshot capture
+// ---------------------------------------------------------------------------
+
+async function startPartialCapture() {
+  // Inject the selection overlay into the active tab
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab) {
+    return { error: "アクティブなタブが見つかりません" };
+  }
+
+  try {
+    await chrome.tabs.sendMessage(tab.id, { type: "INJECT_SELECTION_OVERLAY" });
+  } catch {
+    // Content script might not be loaded, inject it
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["content/content.js"],
+    });
+    await chrome.tabs.sendMessage(tab.id, { type: "INJECT_SELECTION_OVERLAY" });
+  }
+
+  return { ok: true };
+}
+
+async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
+  if (!state.currentSession) {
+    return { error: "アクティブなセッションがありません" };
+  }
+
+  // Step 1: Capture the full visible tab
+  let fullImageBase64 = null;
+  let pageUrl = null;
+  let pageTitle = null;
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab) {
+      pageUrl = tab.url;
+      pageTitle = tab.title;
+      const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "png" });
+      fullImageBase64 = dataUrl.replace(/^data:image\/png;base64,/, "");
+    }
+  } catch (err) {
+    console.warn("Partial screenshot capture failed:", err);
+    return { error: "スクリーンショットの取得に失敗しました" };
+  }
+
+  // Step 2: Crop via offscreen document
+  let croppedBase64 = fullImageBase64;
+  try {
+    await ensureOffscreenDocument();
+    const cropResult = await chrome.runtime.sendMessage({
+      type: "CROP_IMAGE",
+      target: "offscreen",
+      imageBase64: fullImageBase64,
+      rect: rect,
+      devicePixelRatio: devicePixelRatio || 1,
+    });
+    if (cropResult?.croppedBase64) {
+      croppedBase64 = cropResult.croppedBase64;
+    }
+  } catch (err) {
+    console.warn("Crop failed, using full image:", err);
+  }
+
+  // Step 3: Upload
+  const currentTest = state.testCases[state.currentTestIndex];
+
+  const obsData = {
+    test_case_id: currentTest?.id || null,
+    prompt_text: currentTest?.prompt || "部分スクリーンショット",
+    response_text: null,
+    response_time_ms: 0,
+    page_url: pageUrl,
+    screenshot_base64: croppedBase64,
+    metadata: {
+      capture_type: "partial_screenshot",
+      page_title: pageTitle || "",
+      test_index: state.currentTestIndex,
+      crop_rect: rect,
+      timestamp: new Date().toISOString(),
+    },
+  };
+
+  try {
+    await AixisAPI.uploadObservation(state.currentSession.id, obsData);
+    state.captureCount++;
+    persistState();
+    notifyPopup({ type: "PARTIAL_CAPTURE_DONE", captureCount: state.captureCount });
+    return { ok: true, captureCount: state.captureCount };
+  } catch (err) {
+    console.error("Partial screenshot upload failed:", err);
+    return { error: err.message };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Offscreen document management
+// ---------------------------------------------------------------------------
+
+let offscreenCreating = null;
+
+async function ensureOffscreenDocument() {
+  const existingContexts = await chrome.runtime.getContexts({
+    contextTypes: ["OFFSCREEN_DOCUMENT"],
+  });
+
+  if (existingContexts.length > 0) return;
+
+  if (offscreenCreating) {
+    await offscreenCreating;
+    return;
+  }
+
+  offscreenCreating = chrome.offscreen.createDocument({
+    url: "offscreen/offscreen.html",
+    reasons: ["CANVAS"],
+    justification: "Crop partial screenshots using canvas",
+  });
+
+  await offscreenCreating;
+  offscreenCreating = null;
+}
+
+// ---------------------------------------------------------------------------
+// Auto-capture (runs in service worker)
+// ---------------------------------------------------------------------------
+
+function startAutoCapture(intervalMs) {
+  state.autoCaptureActive = true;
+  persistState();
+  startAutoCaptureInterval(intervalMs);
+  return { ok: true };
+}
+
+function stopAutoCapture() {
+  state.autoCaptureActive = false;
+  stopAutoCaptureInternal();
+  persistState();
+  return { ok: true };
+}
+
+function startAutoCaptureInterval(intervalMs) {
+  stopAutoCaptureInternal();
+  state.autoCaptureIntervalId = setInterval(async () => {
+    if (!state.currentSession || !state.autoCaptureActive) {
+      stopAutoCaptureInternal();
+      return;
+    }
+    try {
+      await captureFullScreenshot();
+    } catch (err) {
+      console.warn("Auto-capture failed:", err);
+    }
+  }, intervalMs);
+}
+
+function stopAutoCaptureInternal() {
+  if (state.autoCaptureIntervalId) {
+    clearInterval(state.autoCaptureIntervalId);
+    state.autoCaptureIntervalId = null;
   }
 }
 
@@ -393,4 +511,10 @@ function broadcastToContentScripts(message) {
       } catch {}
     }
   });
+}
+
+function notifyPopup(message) {
+  try {
+    chrome.runtime.sendMessage(message);
+  } catch {}
 }

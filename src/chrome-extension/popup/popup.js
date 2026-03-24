@@ -1,12 +1,14 @@
 /**
- * Aixis Chrome Extension — Popup UI Logic
+ * Aixis Chrome Extension v2 — Popup UI Logic
  *
  * Manages the popup state machine:
- * Settings → Setup → Protocol/Freeform Recording → Complete
+ * Settings -> Setup -> Protocol Test -> Complete
+ *
+ * Features: timer, screenshots (full/partial/auto), response text capture.
  */
 
 // ---------------------------------------------------------------------------
-// DOM references
+// DOM helpers
 // ---------------------------------------------------------------------------
 
 const $ = (sel) => document.querySelector(sel);
@@ -14,7 +16,6 @@ const sections = {
   settings: $("#settingsSection"),
   setup: $("#setupSection"),
   protocol: $("#protocolSection"),
-  freeform: $("#freeformSection"),
   complete: $("#completeSection"),
 };
 
@@ -36,16 +37,15 @@ function setBadge(text, className) {
 }
 
 function showError(msg) {
-  // Provide helpful hints for common errors
   let displayMsg = msg;
   if (msg.includes("401") || msg.includes("Unauthorized")) {
     displayMsg = "認証エラー: APIキーが無効です。正しいキーを設定してください。";
   } else if (msg.includes("403") || msg.includes("agent:write")) {
-    displayMsg = "権限エラー: APIキーに agent:write スコープが必要です。ダッシュボードで再発行してください。";
+    displayMsg = "権限エラー: APIキーに agent:write スコープが必要です。";
   } else if (msg.includes("500") || msg.includes("Internal server")) {
-    displayMsg = "サーバーエラー: プラットフォームに接続できません。URLとAPIキーを確認してください。";
+    displayMsg = "サーバーエラー: プラットフォームに接続できません。";
   } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-    displayMsg = "ネットワークエラー: プラットフォームURLに接続できません。URLを確認してください。";
+    displayMsg = "ネットワークエラー: プラットフォームURLに接続できません。";
   }
 
   errorMsg.textContent = displayMsg;
@@ -70,6 +70,174 @@ function sendBg(message) {
     });
   });
 }
+
+// ---------------------------------------------------------------------------
+// Timer (local display — timerStart stored in background for persistence)
+// ---------------------------------------------------------------------------
+
+let timerStart = null;
+let timerInterval = null;
+let elapsedMs = 0;
+
+function startTimer() {
+  timerStart = Date.now();
+  elapsedMs = 0;
+  // Store timer start in background for persistence across popup close/open
+  sendBg({ type: "SET_TIMER_START", timestamp: timerStart });
+
+  $("#timerDisplay").classList.add("running");
+  $("#stopTimerBtn").disabled = false;
+
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    elapsedMs = Date.now() - timerStart;
+    renderTimer(elapsedMs);
+  }, 100);
+}
+
+function stopTimer() {
+  if (timerStart) {
+    elapsedMs = Date.now() - timerStart;
+  }
+  clearInterval(timerInterval);
+  timerInterval = null;
+  $("#timerDisplay").classList.remove("running");
+  $("#stopTimerBtn").disabled = true;
+  renderTimer(elapsedMs);
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerStart = null;
+  elapsedMs = 0;
+  sendBg({ type: "SET_TIMER_START", timestamp: null });
+  $("#timerDisplay").classList.remove("running");
+  $("#stopTimerBtn").disabled = true;
+  renderTimer(0);
+}
+
+function renderTimer(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const mins = String(Math.floor(totalSec / 60)).padStart(2, "0");
+  const secs = String(totalSec % 60).padStart(2, "0");
+  const tenths = Math.floor((ms % 1000) / 100);
+  $("#timerDisplay").textContent = `${mins}:${secs}.${tenths}`;
+}
+
+// Resume timer if popup was closed and reopened while timer was running
+async function resumeTimer() {
+  try {
+    const bgState = await sendBg({ type: "GET_STATE" });
+    if (bgState.timerStart) {
+      timerStart = bgState.timerStart;
+      elapsedMs = Date.now() - timerStart;
+      $("#timerDisplay").classList.add("running");
+      $("#stopTimerBtn").disabled = false;
+
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        elapsedMs = Date.now() - timerStart;
+        renderTimer(elapsedMs);
+      }, 100);
+    }
+  } catch {}
+}
+
+// ---------------------------------------------------------------------------
+// Copy prompt — auto starts timer
+// ---------------------------------------------------------------------------
+
+function copyPrompt() {
+  const prompt = $("#testPrompt").textContent;
+  navigator.clipboard.writeText(prompt).then(() => {
+    const btn = $("#copyPromptBtn");
+    btn.textContent = "コピー済み!";
+    setTimeout(() => (btn.textContent = "コピー"), 1500);
+    startTimer();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Screenshots
+// ---------------------------------------------------------------------------
+
+let captureCount = 0;
+let autoCaptureActive = false;
+
+function updateCaptureCount(count) {
+  captureCount = count;
+  const badge = $("#captureCountBadge");
+  badge.textContent = count;
+  if (count > 0) {
+    badge.classList.add("has-captures");
+  } else {
+    badge.classList.remove("has-captures");
+  }
+}
+
+async function captureFullScreenshot() {
+  const btn = $("#fullScreenshotBtn");
+  btn.disabled = true;
+  btn.textContent = "📸 撮影中...";
+  try {
+    const result = await sendBg({ type: "FULL_SCREENSHOT" });
+    updateCaptureCount(result.captureCount || captureCount + 1);
+    btn.textContent = "✓ 記録";
+    setTimeout(() => { btn.textContent = "📷 全画面"; btn.disabled = false; }, 1000);
+  } catch (err) {
+    showError(err.message);
+    btn.textContent = "📷 全画面";
+    btn.disabled = false;
+  }
+}
+
+async function capturePartialScreenshot() {
+  const btn = $("#partialScreenshotBtn");
+  btn.disabled = true;
+  btn.textContent = "✂️ 選択中...";
+  try {
+    await sendBg({ type: "START_PARTIAL_CAPTURE" });
+    // The content script will handle the selection overlay.
+    // When complete, background receives PARTIAL_CAPTURE_COORDS and does the crop.
+    // We wait for the result via a listener.
+    btn.textContent = "✂️ 部分";
+    btn.disabled = false;
+  } catch (err) {
+    showError(err.message);
+    btn.textContent = "✂️ 部分";
+    btn.disabled = false;
+  }
+}
+
+function toggleAutoCapture() {
+  const toggle = $(".auto-capture-toggle");
+  const checkbox = $("#autoCaptureToggle");
+
+  if (autoCaptureActive) {
+    // Stop auto-capture
+    autoCaptureActive = false;
+    checkbox.checked = false;
+    toggle.classList.remove("active");
+    sendBg({ type: "STOP_AUTO_CAPTURE" });
+  } else {
+    // Start auto-capture (5-second interval in background)
+    autoCaptureActive = true;
+    checkbox.checked = true;
+    toggle.classList.add("active");
+    sendBg({ type: "START_AUTO_CAPTURE", intervalMs: 5000 });
+  }
+}
+
+// Listen for capture count updates from background
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.type === "CAPTURE_COUNT_UPDATE") {
+    updateCaptureCount(message.count);
+  }
+  if (message.type === "PARTIAL_CAPTURE_DONE") {
+    updateCaptureCount(message.captureCount || captureCount + 1);
+  }
+});
 
 // ---------------------------------------------------------------------------
 // Settings
@@ -114,7 +282,7 @@ async function loadToolList() {
     allTools = await sendBg({ type: "FETCH_TOOLS" });
 
     if (!allTools || allTools.length === 0) {
-      toolList.innerHTML = '<div class="tool-list-empty">ツールが登録されていません。<br>ダッシュボードのツール管理から追加してください。</div>';
+      toolList.innerHTML = '<div class="tool-list-empty">ツールが登録されていません。<br>ダッシュボードから追加してください。</div>';
       return;
     }
 
@@ -145,12 +313,10 @@ function renderToolList(tools) {
     </div>`;
   }).join("");
 
-  // Add count footer
   if (allTools.length > 5) {
     toolList.innerHTML += `<div class="tool-count">${tools.length} / ${allTools.length} 件表示</div>`;
   }
 
-  // Click handlers
   toolList.querySelectorAll(".tool-list-item").forEach(item => {
     item.addEventListener("click", () => {
       selectedToolId = item.dataset.toolId;
@@ -178,13 +344,12 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// Search input handler
 $("#toolSearch").addEventListener("input", () => {
   renderToolList(getFilteredTools());
 });
 
 // ---------------------------------------------------------------------------
-// Session start
+// Session start (protocol only)
 // ---------------------------------------------------------------------------
 
 async function startSession() {
@@ -194,26 +359,18 @@ async function startSession() {
     return;
   }
 
-  const mode = document.querySelector('input[name="mode"]:checked').value;
-
   try {
     setBadge("接続中...", "badge-scoring");
     const result = await sendBg({
       type: "CREATE_SESSION",
       toolId,
       profileId: "",
-      recordingMode: mode,
+      recordingMode: "protocol",
     });
 
-    if (mode === "protocol") {
-      setBadge("記録中", "badge-recording");
-      showProtocolTest(result);
-      showSection("protocol");
-    } else {
-      setBadge("記録中", "badge-recording");
-      showSection("freeform");
-      startFreeformPolling();
-    }
+    setBadge("記録中", "badge-recording");
+    showProtocolTest(result);
+    showSection("protocol");
   } catch (err) {
     setBadge("待機中", "badge-idle");
     showError(err.message);
@@ -221,8 +378,15 @@ async function startSession() {
 }
 
 // ---------------------------------------------------------------------------
-// Protocol recording
+// Protocol test display
 // ---------------------------------------------------------------------------
+
+const CATEGORY_NAMES = {
+  dialect: "方言", long_input: "長文", contradictory: "矛盾",
+  ambiguous: "曖昧", keigo_mixing: "敬語混合", unicode_edge: "Unicode",
+  business_jp: "商習慣", multi_step: "複合指示", broken_grammar: "文法破壊",
+  freeform: "フリー",
+};
 
 function showProtocolTest(stateData) {
   const { test, index, total } = stateData.test
@@ -230,21 +394,11 @@ function showProtocolTest(stateData) {
     : { test: stateData.testCases?.[0], index: 0, total: stateData.totalCases || 0 };
 
   if (!test) {
-    // All tests done
     endSession();
     return;
   }
 
-  const pct = total > 0 ? ((index / total) * 100).toFixed(0) : 0;
-  $("#progressFill").style.width = `${pct}%`;
-  $("#progressText").textContent = `${index + 1} / ${total}`;
-
-  const CATEGORY_NAMES = {
-    dialect: "方言", long_input: "長文", contradictory: "矛盾",
-    ambiguous: "曖昧", keigo_mixing: "敬語混合", unicode_edge: "Unicode",
-    business_jp: "商習慣", multi_step: "複合指示", broken_grammar: "文法破壊",
-    freeform: "フリー",
-  };
+  updateProgress(index, total);
 
   $("#testCategory").textContent = CATEGORY_NAMES[test.category] || test.category;
   $("#testPrompt").textContent = test.prompt;
@@ -269,26 +423,39 @@ function showProtocolTest(stateData) {
   }
 }
 
+function updateProgress(current, total) {
+  const pct = total > 0 ? ((current / total) * 100).toFixed(0) : 0;
+  $("#progressFill").style.width = `${pct}%`;
+  $("#progressText").textContent = `${current + 1} / ${total}`;
+}
+
+// ---------------------------------------------------------------------------
+// Next / Skip test
+// ---------------------------------------------------------------------------
+
 async function nextTest() {
+  stopTimer();
+
   const btn = $("#nextTestBtn");
   const skipBtn = $("#skipTestBtn");
   btn.disabled = true;
   skipBtn.disabled = true;
-  btn.textContent = "移動中...";
+  btn.textContent = "送信中...";
+
   try {
-    // Collect optional response text from input
-    const responseInput = $("#responseTextInput");
-    const responseText = responseInput ? responseInput.value.trim() : "";
+    const responseText = $("#responseText").value.trim();
 
     const result = await sendBg({
       type: "NEXT_TEST",
       observation: {
         responseText: responseText || null,
+        responseTimeMs: elapsedMs,
       },
     });
 
-    // Clear response input for next test
-    if (responseInput) responseInput.value = "";
+    resetTimer();
+    $("#responseText").value = "";
+    updateCaptureCount(0);
 
     if (result.done) {
       await endSession();
@@ -308,6 +475,10 @@ async function skipTest() {
   const btn = $("#skipTestBtn");
   btn.disabled = true;
   try {
+    resetTimer();
+    $("#responseText").value = "";
+    updateCaptureCount(0);
+
     const result = await sendBg({ type: "SKIP_TEST", reason: "テスターがスキップ" });
     if (result.done) {
       await endSession();
@@ -321,43 +492,22 @@ async function skipTest() {
   }
 }
 
-function copyPrompt() {
-  const prompt = $("#testPrompt").textContent;
-  navigator.clipboard.writeText(prompt).then(() => {
-    const btn = $("#copyPromptBtn");
-    btn.textContent = "コピー済み!";
-    setTimeout(() => (btn.textContent = "プロンプトをコピー"), 1500);
-  });
-}
-
 // ---------------------------------------------------------------------------
-// Freeform recording
-// ---------------------------------------------------------------------------
-
-let freeformInterval = null;
-
-function startFreeformPolling() {
-  updateFreeformCount();
-  freeformInterval = setInterval(updateFreeformCount, 2000);
-}
-
-async function updateFreeformCount() {
-  try {
-    const state = await sendBg({ type: "GET_STATE" });
-    $("#freeformCount").textContent = state.observationCount || 0;
-  } catch {}
-}
-
-async function stopFreeform() {
-  clearInterval(freeformInterval);
-  await endSession();
-}
-
-// ---------------------------------------------------------------------------
-// Session completion
+// Session end / completion
 // ---------------------------------------------------------------------------
 
 async function endSession() {
+  const confirmed = confirm("セッションを終了しますか？");
+  if (!confirmed) return;
+
+  // Stop auto-capture if running
+  if (autoCaptureActive) {
+    autoCaptureActive = false;
+    $("#autoCaptureToggle").checked = false;
+    $(".auto-capture-toggle").classList.remove("active");
+    sendBg({ type: "STOP_AUTO_CAPTURE" });
+  }
+
   try {
     setBadge("スコアリング中...", "badge-scoring");
     const result = await sendBg({ type: "COMPLETE_SESSION" });
@@ -368,7 +518,35 @@ async function endSession() {
     $("#summaryTotal").textContent = state.observationCount || 0;
     $("#summaryStatus").textContent = result.status === "scoring" ? "採点中" : result.status;
 
-    // Dashboard link
+    const settings = await sendBg({ type: "GET_SETTINGS" });
+    if (state.currentSession) {
+      $("#dashboardLink").href =
+        `${settings.platformUrl}/dashboard/audits/${state.currentSession.id}`;
+    }
+
+    showSection("complete");
+  } catch (err) {
+    showError(err.message);
+    setBadge("エラー", "badge-idle");
+  }
+}
+
+// endSession without confirm (for internal calls when all tests done)
+async function endSessionDirect() {
+  if (autoCaptureActive) {
+    autoCaptureActive = false;
+    sendBg({ type: "STOP_AUTO_CAPTURE" });
+  }
+
+  try {
+    setBadge("スコアリング中...", "badge-scoring");
+    const result = await sendBg({ type: "COMPLETE_SESSION" });
+    setBadge("完了", "badge-done");
+
+    const state = await sendBg({ type: "GET_STATE" });
+    $("#summaryTotal").textContent = state.observationCount || 0;
+    $("#summaryStatus").textContent = result.status === "scoring" ? "採点中" : result.status;
+
     const settings = await sendBg({ type: "GET_SETTINGS" });
     if (state.currentSession) {
       $("#dashboardLink").href =
@@ -385,39 +563,14 @@ async function endSession() {
 async function newSession() {
   await sendBg({ type: "RESET_SESSION" });
   selectedToolId = "";
+  resetTimer();
+  updateCaptureCount(0);
+  autoCaptureActive = false;
+  $("#autoCaptureToggle").checked = false;
+  $(".auto-capture-toggle").classList.remove("active");
   setBadge("待機中", "badge-idle");
   await loadToolList();
   showSection("setup");
-}
-
-// ---------------------------------------------------------------------------
-// Manual screenshot capture
-// ---------------------------------------------------------------------------
-
-async function captureManualScreenshot(btn) {
-  const origText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = "📸 撮影中...";
-  btn.classList.add("capturing");
-
-  try {
-    const result = await sendBg({
-      type: "MANUAL_SCREENSHOT",
-      label: "",
-    });
-
-    btn.textContent = "✓ 記録しました";
-    setTimeout(() => {
-      btn.textContent = origText;
-      btn.classList.remove("capturing");
-      btn.disabled = false;
-    }, 1200);
-  } catch (err) {
-    showError(err.message);
-    btn.textContent = origText;
-    btn.classList.remove("capturing");
-    btn.disabled = false;
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -431,10 +584,11 @@ $("#nextTestBtn").addEventListener("click", nextTest);
 $("#skipTestBtn").addEventListener("click", skipTest);
 $("#copyPromptBtn").addEventListener("click", copyPrompt);
 $("#endProtocolBtn").addEventListener("click", endSession);
-$("#stopFreeformBtn").addEventListener("click", stopFreeform);
 $("#newSessionBtn").addEventListener("click", newSession);
-$("#manualCaptureBtn1").addEventListener("click", (e) => captureManualScreenshot(e.target));
-$("#manualCaptureBtn2").addEventListener("click", (e) => captureManualScreenshot(e.target));
+$("#fullScreenshotBtn").addEventListener("click", captureFullScreenshot);
+$("#partialScreenshotBtn").addEventListener("click", capturePartialScreenshot);
+$(".auto-capture-toggle").addEventListener("click", toggleAutoCapture);
+$("#stopTimerBtn").addEventListener("click", stopTimer);
 
 // ---------------------------------------------------------------------------
 // Initialize
@@ -443,11 +597,9 @@ $("#manualCaptureBtn2").addEventListener("click", (e) => captureManualScreenshot
 async function init() {
   await loadSettings();
 
-  // Check if there's an active session
   const state = await sendBg({ type: "GET_STATE" });
 
   if (state.currentSession) {
-    // Resume active session
     if (state.currentSession.status === "completed" || state.currentSession.status === "scoring") {
       setBadge(state.currentSession.status === "scoring" ? "採点中" : "完了", "badge-done");
       $("#summaryTotal").textContent = state.observationCount || 0;
@@ -455,18 +607,23 @@ async function init() {
       const settings = await sendBg({ type: "GET_SETTINGS" });
       $("#dashboardLink").href = `${settings.platformUrl}/dashboard/audits/${state.currentSession.id}`;
       showSection("complete");
-    } else if (state.currentSession.recordingMode === "protocol") {
+    } else {
       setBadge("記録中", "badge-recording");
       const testData = await sendBg({ type: "GET_CURRENT_TEST" });
       showProtocolTest(testData);
+      updateCaptureCount(state.captureCount || 0);
+
+      // Resume auto-capture state
+      if (state.autoCaptureActive) {
+        autoCaptureActive = true;
+        $("#autoCaptureToggle").checked = true;
+        $(".auto-capture-toggle").classList.add("active");
+      }
+
       showSection("protocol");
-    } else {
-      setBadge("記録中", "badge-recording");
-      showSection("freeform");
-      startFreeformPolling();
+      await resumeTimer();
     }
   } else {
-    // Check if API key is configured
     const settings = await sendBg({ type: "GET_SETTINGS" });
     if (settings.apiKey) {
       await loadToolList();

@@ -58,11 +58,18 @@ class ToolPublishedScore(Base):
 
     id = Column(String(36), primary_key=True, default=new_uuid)
     tool_id = Column(String(36), ForeignKey("tools.id"), nullable=False)
+    # Legacy axes (kept for backward compatibility with existing data)
     practicality = Column(Float, default=0.0)
     cost_performance = Column(Float, default=0.0)
     localization = Column(Float, default=0.0)
     safety = Column(Float, default=0.0)
     uniqueness = Column(Float, default=0.0)
+    # New slide-creation-specific axes
+    instruction_adherence = Column(Float, default=0.0)
+    japanese_quality = Column(Float, default=0.0)
+    structure_logic = Column(Float, default=0.0)
+    contradiction_handling = Column(Float, default=0.0)
+    accuracy = Column(Float, default=0.0)
     overall_score = Column(Float, default=0.0)
     overall_grade = Column(String(2))  # S|A|B|C|D|F
     source_session_id = Column(String(36), ForeignKey("audit_sessions.id"))

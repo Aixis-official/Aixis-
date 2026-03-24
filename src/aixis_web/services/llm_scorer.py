@@ -1,7 +1,9 @@
 """LLM-based rubric scoring service for Chrome extension audit sessions.
 
-Uses Claude API to evaluate AI tool observations across 5 axes,
-producing scores compatible with the existing AxisScoreRecord model.
+Uses Claude API to evaluate slide-creation AI tool observations across
+5 axes (instruction adherence, Japanese quality, structure/logic,
+contradiction handling, accuracy), producing scores compatible with
+the existing AxisScoreRecord model.
 """
 
 import json
@@ -18,75 +20,74 @@ from ..config import settings
 logger = logging.getLogger(__name__)
 
 # Axis definitions with Japanese names and evaluation criteria
+# Slide-creation AI specific 5 axes
 AXIS_RUBRICS = {
-    "practicality": {
-        "name_jp": "実務適性",
-        "description": "実際の日本のビジネスタスクを処理する能力",
+    "instruction_adherence": {
+        "name_jp": "指示への忠実度",
+        "description": "プロンプトの指示内容をどの程度正確に反映した成果物を生成したか",
         "criteria": [
-            {"rule_id": "contradiction_handling", "name_jp": "矛盾検出・対応", "weight": 2.5,
-             "guide": "矛盾する指示に対して、矛盾を指摘したか、適切に対処したか"},
-            {"rule_id": "multi_step_completion", "name_jp": "複合指示の完遂", "weight": 3.0,
-             "guide": "複数のステップを含む指示を漏れなく実行できたか"},
-            {"rule_id": "ambiguity_clarification", "name_jp": "曖昧さへの対応", "weight": 2.0,
-             "guide": "曖昧な指示に対して確認を行ったか、合理的に解釈したか"},
-            {"rule_id": "error_recovery", "name_jp": "エラー回復力", "weight": 1.5,
-             "guide": "文法破壊や不完全な入力に対して、意図を汲み取って対応できたか"},
+            {"rule_id": "topic_coverage", "name_jp": "テーマ網羅性", "weight": 3.0,
+             "guide": "指示されたトピック・要件をすべてカバーしているか"},
+            {"rule_id": "slide_count", "name_jp": "スライド数の適切性", "weight": 2.0,
+             "guide": "指定されたスライド数に従っているか、逸脱の場合は理由が妥当か"},
+            {"rule_id": "format_compliance", "name_jp": "形式指定の遵守", "weight": 2.5,
+             "guide": "箇条書き/表/図表の指定、レイアウト指定に従っているか"},
+            {"rule_id": "audience_awareness", "name_jp": "対象読者への配慮", "weight": 2.0,
+             "guide": "指定された対象者（経営層/技術者/新入社員等）に適した表現・深さか"},
         ],
     },
-    "cost_performance": {
-        "name_jp": "費用対効果",
-        "description": "価格に対する品質とパフォーマンス",
+    "japanese_quality": {
+        "name_jp": "日本語品質",
+        "description": "ビジネス日本語としての品質、敬語、表現の適切性",
         "criteria": [
-            {"rule_id": "response_speed", "name_jp": "応答速度", "weight": 2.5,
-             "guide": "レスポンス時間が実務上許容範囲内か (3秒以内が理想、10秒以上は減点)"},
-            {"rule_id": "task_success_rate", "name_jp": "タスク成功率", "weight": 3.0,
-             "guide": "要求されたタスクを正しく完了できた割合"},
-            {"rule_id": "output_thoroughness", "name_jp": "出力の充実度", "weight": 2.0,
-             "guide": "回答の網羅性、詳細さ、付加価値の提供"},
+            {"rule_id": "keigo_consistency", "name_jp": "敬語の一貫性", "weight": 3.0,
+             "guide": "です/ます調の統一、社内向け/社外向けの敬語レベルの適切性"},
+            {"rule_id": "business_expression", "name_jp": "ビジネス表現", "weight": 2.5,
+             "guide": "ビジネスプレゼンにふさわしい表現、カタカナ語の適切な使用"},
+            {"rule_id": "readability", "name_jp": "可読性", "weight": 2.0,
+             "guide": "スライド用の簡潔な文、箇条書きの並列構造、文字量の適切性"},
+            {"rule_id": "terminology", "name_jp": "専門用語の正確性", "weight": 2.0,
+             "guide": "業界用語の正確な使用、不自然な直訳がないか"},
         ],
     },
-    "localization": {
-        "name_jp": "日本語能力",
-        "description": "日本語の理解・生成能力",
+    "structure_logic": {
+        "name_jp": "構成・論理展開",
+        "description": "プレゼン全体の構成力と各スライド間の論理的なつながり",
         "criteria": [
-            {"rule_id": "dialect_comprehension", "name_jp": "方言理解", "weight": 2.0,
-             "guide": "関西弁、東北弁などの方言を正しく理解できたか"},
-            {"rule_id": "keigo_consistency", "name_jp": "敬語の一貫性", "weight": 2.5,
-             "guide": "敬語・丁寧語・タメ口の混在入力に対し、適切な敬語レベルで応答したか"},
-            {"rule_id": "encoding_preservation", "name_jp": "文字エンコーディング", "weight": 1.5,
-             "guide": "旧字体、絵文字、特殊記号が正しく保持されたか"},
-            {"rule_id": "business_terminology", "name_jp": "ビジネス用語", "weight": 3.0,
-             "guide": "稟議、根回し、報連相などの日本固有のビジネス概念を正しく理解・使用できたか"},
-            {"rule_id": "date_format", "name_jp": "日付・数値形式", "weight": 1.0,
-             "guide": "和暦、全角数字、日本式の日付形式を適切に扱えたか"},
+            {"rule_id": "story_flow", "name_jp": "ストーリーフロー", "weight": 3.0,
+             "guide": "導入→本論→結論の流れ、スライド間の論理的接続"},
+            {"rule_id": "slide_purpose", "name_jp": "各スライドの役割明確性", "weight": 2.5,
+             "guide": "各スライドに明確な目的があるか、冗長なスライドがないか"},
+            {"rule_id": "data_presentation", "name_jp": "データの提示方法", "weight": 2.0,
+             "guide": "数値データの視覚化提案、グラフ種類の適切性"},
+            {"rule_id": "executive_summary", "name_jp": "要点の明確化", "weight": 2.0,
+             "guide": "キーメッセージの明示、テイクアウェイの提示"},
         ],
     },
-    "safety": {
-        "name_jp": "信頼性・安全性",
-        "description": "安定性、エラー耐性、一貫した動作",
+    "contradiction_handling": {
+        "name_jp": "矛盾指示への対応力",
+        "description": "矛盾した指示や不明確な要件に対する対応品質",
         "criteria": [
-            {"rule_id": "no_crash", "name_jp": "クラッシュなし", "weight": 4.0,
-             "guide": "エラー、タイムアウト、空回答がなかったか"},
-            {"rule_id": "response_consistency", "name_jp": "応答時間の安定性", "weight": 2.0,
-             "guide": "応答時間にばらつきがないか（標準偏差が平均の50%以下が理想）"},
-            {"rule_id": "long_input_stability", "name_jp": "長文入力の安定性", "weight": 3.0,
-             "guide": "長い入力に対しても打ち切りなく安定して処理できたか"},
-            {"rule_id": "unicode_handling", "name_jp": "Unicode処理", "weight": 2.0,
-             "guide": "絵文字、サロゲートペア、特殊文字を含む入力を正しく処理できたか"},
+            {"rule_id": "contradiction_detection", "name_jp": "矛盾検出", "weight": 3.0,
+             "guide": "矛盾する指示を認識し、指摘できたか"},
+            {"rule_id": "clarification_request", "name_jp": "確認・提案力", "weight": 2.5,
+             "guide": "矛盾解消のための代替案や確認質問を提示したか"},
+            {"rule_id": "graceful_degradation", "name_jp": "妥当な判断", "weight": 2.0,
+             "guide": "矛盾解消できない場合、合理的な判断で対応したか"},
         ],
     },
-    "uniqueness": {
-        "name_jp": "革新性",
-        "description": "他ツールにない独自の価値",
+    "accuracy": {
+        "name_jp": "情報の正確性",
+        "description": "生成された情報の事実性、ハルシネーションの有無",
         "criteria": [
-            {"rule_id": "output_diversity", "name_jp": "出力の多様性", "weight": 3.0,
-             "guide": "類似の質問に対してもテンプレ的でない多様な回答を生成したか"},
-            {"rule_id": "creative_handling", "name_jp": "創造的問題解決", "weight": 2.5,
-             "guide": "想定外の入力に対して創造的・柔軟な対応ができたか"},
-            {"rule_id": "output_richness", "name_jp": "出力のリッチさ", "weight": 2.0,
-             "guide": "構造化された出力、書式設定、図表の活用があったか"},
-            {"rule_id": "error_grace", "name_jp": "エラー時の品格", "weight": 1.5,
-             "guide": "対応できない場合でも、丁寧で有益な案内ができたか"},
+            {"rule_id": "factual_accuracy", "name_jp": "事実の正確性", "weight": 3.5,
+             "guide": "提示された数値、固有名詞、日付等が正確か"},
+            {"rule_id": "source_attribution", "name_jp": "出典・根拠の提示", "weight": 2.0,
+             "guide": "データや主張に対して出典や根拠を示しているか"},
+            {"rule_id": "no_hallucination", "name_jp": "ハルシネーションなし", "weight": 3.0,
+             "guide": "存在しない製品名、架空の統計、捏造された引用がないか"},
+            {"rule_id": "internal_consistency", "name_jp": "内部一貫性", "weight": 2.0,
+             "guide": "スライド間で数値や主張が矛盾していないか"},
         ],
     },
 }
@@ -241,8 +242,9 @@ class LLMScorer:
 
         observations_text = "\n".join(obs_entries)
 
-        return f"""あなたはAIツールの専門的な評価者です。
-以下の観察データに基づいて、「{rubric['name_jp']}」（{axis}）軸のスコアを算出してください。
+        return f"""あなたはスライド作成・資料作成AIツールの専門的な品質評価者です。
+以下の観察データ（テスターが入力したプロンプトとAIの応答テキスト）に基づいて、
+指定された評価軸のルーブリックに従って「{rubric['name_jp']}」（{axis}）軸のスコアを算出してください。
 
 ## 軸の定義
 {rubric['description']}
@@ -252,6 +254,12 @@ class LLMScorer:
 
 ## 観察データ（合計 {len(observations)} 件）
 {observations_text}
+
+## 重要な注意事項
+- 応答テキストがない場合は、テスト実施記録のみに基づいて可能な範囲で評価してください。
+  応答テキストがない項目は confidence を低めに設定してください。
+- 応答時間が0msの場合は応答速度の評価をスキップしてください。
+- スライド作成AIとしての品質を重視して評価してください。
 
 ## 出力形式
 以下のJSON形式で出力してください。JSONのみを出力し、他のテキストは含めないでください。
