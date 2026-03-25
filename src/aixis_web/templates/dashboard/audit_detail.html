@@ -792,18 +792,33 @@
             return '<span class="text-gray-500">手動</span>';
         }
 
-        // Confidence bar helper
-        function confidenceBar(confidence) {
+        // 4-dimensional confidence display
+        var CONFIDENCE_DIMS = [
+            { key: 'consistency',       label: '再現性', color: '#3b82f6' },
+            { key: 'correctness',       label: '正確性', color: '#f59e0b' },
+            { key: 'comprehensiveness', label: '網羅性', color: '#10b981' },
+            { key: 'intelligibility',   label: '解釈性', color: '#8b5cf6' },
+        ];
+
+        function confidenceBar(confidence, metadata) {
             if (confidence === 0) return '';
-            var pct = Math.round(confidence * 100);
-            var color = confidence >= 0.7 ? 'bg-emerald-500' : (confidence >= 0.3 ? 'bg-indigo-500' : 'bg-amber-500');
-            return '<div class="mt-1.5 flex items-center gap-1.5">' +
-                '<span class="text-[9px] text-gray-400 dark:text-gray-500 font-jp">確信度</span>' +
-                '<div class="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full">' +
-                    '<div class="h-1 rounded-full ' + color + '" style="width:' + pct + '%"></div>' +
-                '</div>' +
-                '<span class="text-[9px] text-gray-400 dark:text-gray-500 tabular-nums">' + pct + '%</span>' +
-            '</div>';
+            var dims = (metadata && metadata.confidence_dimensions) ? metadata.confidence_dimensions : null;
+            var html = '<div class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">';
+            CONFIDENCE_DIMS.forEach(function(dim) {
+                var val = dims ? dims[dim.key] : null;
+                var hasVal = val !== null && val !== undefined;
+                var pct = hasVal ? Math.round(val * 100) : 0;
+                var displayVal = hasVal ? pct + '%' : '---';
+                html += '<div class="flex items-center gap-1">' +
+                    '<span class="text-[9px] text-gray-400 dark:text-gray-500 font-jp w-8 shrink-0">' + dim.label + '</span>' +
+                    '<div class="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full">' +
+                        (hasVal ? '<div class="h-1 rounded-full" style="width:' + pct + '%;background-color:' + dim.color + '"></div>' : '') +
+                    '</div>' +
+                    '<span class="text-[9px] text-gray-400 dark:text-gray-500 tabular-nums w-7 text-right">' + displayVal + '</span>' +
+                '</div>';
+            });
+            html += '</div>';
+            return html;
         }
 
         // Details section helper
@@ -846,7 +861,7 @@
                     ? '<div class="text-[10px] text-amber-500 dark:text-amber-400 mt-1 font-jp">手動評価待ち</div>'
                     : '<div class="mt-2"><div class="score-bar"><div class="score-bar-fill ' + level + '" style="width:' + barPct + '%"></div></div></div>'
                 ) +
-                confidenceBar(s.confidence) +
+                confidenceBar(s.confidence, s.metadata) +
                 (mix.auto !== undefined
                     ? '<div class="text-[9px] text-gray-400 dark:text-gray-500 mt-1 font-jp">自動' + mix.auto + '% / 手動' + mix.manual + '%</div>'
                     : '') +

@@ -3,10 +3,21 @@
 Uses Claude API to evaluate slide-creation AI tool observations across
 5 axes (practicality, cost_performance, localization, safety, uniqueness),
 producing scores compatible with the existing AxisScoreRecord model.
+
+Score composition follows the public audit protocol:
+  final_axis_score = (auto_score * 0.6) + (manual_score * 0.4)
+When manual evaluation is pending, auto_score is used alone with lower confidence.
+
+Confidence is calculated across 4 dimensions:
+  - 再現性 (consistency): score variance across tests in same category
+  - 正確性 (correctness): proportion of tests with actual data vs empty
+  - 網羅性 (comprehensiveness): test completion rate
+  - 解釈性 (intelligibility): richness of evidence data
 """
 
 import json
 import logging
+import statistics
 import uuid
 from datetime import datetime, timezone
 
@@ -102,7 +113,7 @@ class LLMScorer:
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY が設定されていません")
         self.client = anthropic.Anthropic(api_key=api_key)
-        self.model = settings.ai_agent_model or "claude-haiku-4-5-20251001"
+        self.model = settings.ai_scoring_model or settings.ai_agent_model or "claude-haiku-4-5-20251001"
 
     async def score_session(
         self,
@@ -166,12 +177,62 @@ class LLMScorer:
             logger.warning("No test observations found for session %s (only screenshots)", session_id)
             return []
 
-        # 2. Score each axis
+        # 2. Fetch any existing manual checklist scores for 60/40 blending
+        manual_result = await db.execute(text("""
+            SELECT axis, AVG(score) as avg_score, COUNT(*) as cnt
+            FROM manual_checklist_entries
+            WHERE session_id = :sid AND score IS NOT NULL
+            GROUP BY axis
+        """), {"sid": session_id})
+        manual_scores = {row[0]: {"avg": float(row[1]), "count": int(row[2])}
+                         for row in manual_result.fetchall()}
+
+        # 3. Calculate confidence dimensions from observations
+        confidence_dimensions = self._calculate_confidence_dimensions(observations)
+
+        # 4. Score each axis
         all_scores = []
         for axis, rubric in AXIS_RUBRICS.items():
             try:
                 score_data = self._score_axis(axis, rubric, observations)
+
+                # Apply 60/40 auto/manual split
+                auto_score = score_data["score"]
+                auto_ratio = 0.6
+                manual_ratio = 0.4
+
+                if axis in manual_scores:
+                    manual_score = manual_scores[axis]["avg"]
+                    final_score = (auto_score * auto_ratio) + (manual_score * manual_ratio)
+                    source = "hybrid"
+                else:
+                    # Manual not yet available — use auto only, lower confidence
+                    final_score = auto_score
+                    manual_score = None
+                    source = "llm"
+                    # Penalize confidence when manual component is missing
+                    score_data["confidence"] = score_data["confidence"] * 0.8
+
+                score_data["score"] = max(0.0, min(5.0, final_score))
+
+                # Merge confidence dimensions into score metadata
+                score_data["confidence_dimensions"] = confidence_dimensions
+                score_data["auto_ratio"] = auto_ratio
+                score_data["manual_ratio"] = manual_ratio
+                score_data["auto_score"] = auto_score
+                score_data["manual_score"] = manual_score
+
                 all_scores.append(score_data)
+
+                # Build details JSON including confidence dimensions and split info
+                details_with_meta = {
+                    "rule_results": score_data["details"],
+                    "confidence_dimensions": confidence_dimensions,
+                    "auto_ratio": auto_ratio,
+                    "manual_ratio": manual_ratio,
+                    "auto_score": auto_score,
+                    "manual_score": manual_score,
+                }
 
                 # Store in DB
                 score_id = str(uuid.uuid4())
@@ -193,8 +254,8 @@ class LLMScorer:
                     "axis_name_jp": rubric["name_jp"],
                     "score": score_data["score"],
                     "confidence": score_data["confidence"],
-                    "source": "llm",
-                    "details": json.dumps(score_data["details"], ensure_ascii=False),
+                    "source": source,
+                    "details": json.dumps(details_with_meta, ensure_ascii=False),
                     "strengths": json.dumps(score_data["strengths"], ensure_ascii=False),
                     "risks": json.dumps(score_data["risks"], ensure_ascii=False),
                     "scored_at": datetime.utcnow(),
@@ -218,6 +279,87 @@ class LLMScorer:
             {s["axis"]: s["score"] for s in all_scores},
         )
         return all_scores
+
+    def _calculate_confidence_dimensions(
+        self,
+        observations: list[dict],
+    ) -> dict:
+        """Calculate 4-dimension confidence metrics from observations.
+
+        Returns dict with:
+          consistency (再現性): Based on score variance across tests in same category
+          correctness (正確性): Proportion of tests with actual data vs empty
+          comprehensiveness (網羅性): Test completion rate
+          intelligibility (解釈性): Richness of evidence data
+        """
+        if not observations:
+            return {
+                "consistency": 0.0,
+                "correctness": 0.0,
+                "comprehensiveness": 0.0,
+                "intelligibility": 0.0,
+            }
+
+        # --- 再現性 (consistency): low variance across categories = high consistency ---
+        category_response_times = {}
+        for obs in observations:
+            cat = obs.get("category", "unknown")
+            rt = obs.get("response_time_ms", 0)
+            if rt and rt > 0:
+                category_response_times.setdefault(cat, []).append(rt)
+
+        if category_response_times:
+            cvs = []  # coefficient of variation per category
+            for times in category_response_times.values():
+                if len(times) >= 2:
+                    mean = statistics.mean(times)
+                    if mean > 0:
+                        cv = statistics.stdev(times) / mean
+                        cvs.append(cv)
+            if cvs:
+                avg_cv = statistics.mean(cvs)
+                # CV of 0 = perfect consistency (1.0), CV >= 1.0 = low consistency (0.0)
+                consistency = max(0.0, min(1.0, 1.0 - avg_cv))
+            else:
+                consistency = 0.5  # insufficient data
+        else:
+            consistency = 0.3  # no timing data
+
+        # --- 正確性 (correctness): proportion of tests with actual response data ---
+        tests_with_data = sum(
+            1 for obs in observations
+            if (obs.get("response") and len(obs["response"].strip()) > 10)
+            or obs.get("screenshots")
+        )
+        correctness = tests_with_data / len(observations) if observations else 0.0
+
+        # --- 網羅性 (comprehensiveness): completion rate ---
+        total_planned = len(observations) + max(0, 17 - len(observations))
+        comprehensiveness = min(1.0, len(observations) / max(total_planned, 1))
+
+        # --- 解釈性 (intelligibility): richness of evidence ---
+        richness_scores = []
+        for obs in observations:
+            r = 0.0
+            if obs.get("response") and len(obs["response"].strip()) > 50:
+                r += 0.4
+            elif obs.get("response") and len(obs["response"].strip()) > 10:
+                r += 0.2
+            if obs.get("screenshots"):
+                r += 0.3
+            if obs.get("expected_behaviors"):
+                r += 0.15
+            if obs.get("response_time_ms") and obs["response_time_ms"] > 0:
+                r += 0.15
+            richness_scores.append(min(1.0, r))
+        intelligibility = statistics.mean(richness_scores) if richness_scores else 0.0
+
+        return {
+            "consistency": round(consistency, 3),
+            "correctness": round(correctness, 3),
+            "comprehensiveness": round(comprehensiveness, 3),
+            "intelligibility": round(intelligibility, 3),
+        }
 
     def _score_axis(
         self,
@@ -371,14 +513,34 @@ class LLMScorer:
   "risks": ["リスク1", "リスク2"]
 }}
 
-注意:
-- score は 0.0〜5.0 のスケール（5.0が最高）
+【重要】スコアリング規則:
+- score は必ず 0.0〜5.0 のスケールで記述（5.0が最高）。パーセンテージや100点満点は使わないでください。
+- details[].score も必ず 0.0〜5.0 のスケールで記述してください。パーセンテージ（例: 80, 300）は禁止です。
+  例: 良い→ "score": 4.2  悪い→ "score": 80（これはパーセンテージなので禁止）
 - confidence は 0.0〜1.0（観察データの量と質に基づく信頼度）
-- details の各エントリは評価基準に対応
-- details[].score も 0.0〜5.0
+- details の各エントリは上記の評価基準に1対1で対応させてください
 - severity は critical/high/medium/low/info のいずれか
 - 日本語で記述してください
 """
+
+    @staticmethod
+    def _normalize_to_5_scale(value: float) -> float:
+        """Normalize a score value to the 0.0-5.0 scale.
+
+        Handles cases where the LLM returns percentages (e.g. 80, 300, 450)
+        instead of the requested 0.0-5.0 scale.
+        """
+        if value > 5.0:
+            # Likely a percentage (0-100) or scaled percentage (0-500)
+            if value <= 100.0:
+                value = value / 100.0 * 5.0
+            elif value <= 500.0:
+                # Could be 0-500 scale (percentage of 5.0)
+                value = value / 100.0
+            else:
+                # Extremely high — treat as percentage
+                value = value / 100.0 * 5.0
+        return max(0.0, min(5.0, value))
 
     def _parse_score_response(
         self,
@@ -417,24 +579,19 @@ class LLMScorer:
                 "risks": ["LLM応答のパースに失敗しました"],
             }
 
-        # Validate and normalize
+        # Validate and normalize — all scores must be on 0.0-5.0 scale
         raw_score = float(data.get("score", 0.0))
-        # If the LLM returned a percentage (>5), convert to 0-5 scale
-        if raw_score > 5.0:
-            raw_score = raw_score / 100.0 * 5.0
-        score = max(0.0, min(5.0, raw_score))
+        score = self._normalize_to_5_scale(raw_score)
         confidence = max(0.0, min(1.0, float(data.get("confidence", 0.0))))
 
         details = []
         for d in data.get("details", []):
             detail_score = float(d.get("score", 0.0))
-            # If detail score looks like a percentage, convert to 0-5 scale
-            if detail_score > 5.0:
-                detail_score = detail_score / 100.0 * 5.0
+            detail_score = self._normalize_to_5_scale(detail_score)
             details.append({
                 "rule_id": d.get("rule_id", "unknown"),
                 "rule_name_jp": d.get("rule_name_jp", ""),
-                "score": max(0.0, min(5.0, detail_score)),
+                "score": detail_score,
                 "weight": float(d.get("weight", 1.0)),
                 "evidence": d.get("evidence", ""),
                 "severity": d.get("severity", "medium"),

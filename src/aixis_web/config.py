@@ -73,6 +73,7 @@ class Settings(BaseSettings):
     # AI Browser Agent (Haiku Vision — hybrid: learn once, replay without API)
     anthropic_api_key: str = ""
     ai_agent_model: str = "claude-haiku-4-5-20251001"
+    ai_scoring_model: str = "claude-haiku-4-5-20251001"  # LLM rubric scoring model
     ai_budget_max_calls: int = 400   # Discovery ~20 + replay verify ~1/test × ~300 tests
     ai_budget_max_calls_per_case: int = 20
     ai_budget_max_cost_jpy: int = 40  # 1監査あたりのコスト上限（円）
