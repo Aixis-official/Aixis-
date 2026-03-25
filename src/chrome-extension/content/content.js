@@ -1,47 +1,1138 @@
 /**
- * Aixis Chrome Extension v2 — Content Script
+ * Aixis Chrome Extension v3 — Content Script
  *
- * Simplified: no DOM observation.
- * Only handles:
- * - Recording indicator (floating badge)
- * - Partial screenshot selection overlay
+ * Injects a draggable floating panel into the page using Shadow DOM.
+ * All UI logic: test display, timer, screenshots, session management.
+ * Communicates with service-worker via chrome.runtime.sendMessage.
  */
 
 (() => {
   "use strict";
 
-  let indicator = null;
+  // Prevent double-injection
+  if (document.getElementById("aixis-panel-host")) return;
 
-  // ---------------------------------------------------------------------------
-  // Recording indicator UI
-  // ---------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
+  // Constants
+  // -------------------------------------------------------------------------
 
-  function createIndicator() {
-    if (indicator) return;
-    indicator = document.createElement("div");
-    indicator.id = "aixis-recording-indicator";
-    indicator.innerHTML = '<span class="dot"></span><span>Aixis 記録中</span>';
-    indicator.classList.add("idle");
-    document.body.appendChild(indicator);
+  const CATEGORY_NAMES = {
+    slide_basic: "基本作成",
+    slide_structure: "構成力",
+    slide_japanese: "日本語",
+    slide_accuracy: "正確性",
+    slide_advanced: "応用機能",
+    dialect: "方言",
+    long_input: "長文",
+    contradictory: "矛盾",
+    ambiguous: "曖昧",
+    keigo_mixing: "敬語混合",
+    unicode_edge: "Unicode",
+    business_jp: "商習慣",
+    multi_step: "複合指示",
+    broken_grammar: "文法破壊",
+    freeform: "フリー",
+    protocol: "プロトコル",
+  };
+
+  const CATEGORY_COLORS = {
+    slide_basic: "#4f46e5",
+    slide_structure: "#059669",
+    slide_japanese: "#d97706",
+    slide_accuracy: "#dc2626",
+    slide_advanced: "#7c3aed",
+    dialect: "#0891b2",
+    long_input: "#be185d",
+    contradictory: "#b91c1c",
+    ambiguous: "#6d28d9",
+    keigo_mixing: "#0d9488",
+    unicode_edge: "#9333ea",
+    business_jp: "#ca8a04",
+    multi_step: "#2563eb",
+    broken_grammar: "#e11d48",
+    freeform: "#64748b",
+    protocol: "#475569",
+  };
+
+  // -------------------------------------------------------------------------
+  // State
+  // -------------------------------------------------------------------------
+
+  let panelHost = null;
+  let shadow = null;
+  let panelEl = null;
+  let collapsed = false;
+  let timerInterval = null;
+  let allTools = [];
+  let selectedToolId = "";
+
+  // -------------------------------------------------------------------------
+  // Helper: send message to background
+  // -------------------------------------------------------------------------
+
+  function sendBg(message) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(message, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else if (response && response.error) {
+          reject(new Error(response.error));
+        } else {
+          resolve(response);
+        }
+      });
+    });
   }
 
-  function showIndicator() {
-    if (!indicator) createIndicator();
-    indicator.classList.remove("idle");
+  // -------------------------------------------------------------------------
+  // Shadow DOM panel creation
+  // -------------------------------------------------------------------------
+
+  function createPanel() {
+    panelHost = document.createElement("div");
+    panelHost.id = "aixis-panel-host";
+    panelHost.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:2147483647;font-size:initial;line-height:initial;";
+
+    shadow = panelHost.attachShadow({ mode: "open" });
+
+    const style = document.createElement("style");
+    style.textContent = getPanelCSS();
+    shadow.appendChild(style);
+
+    panelEl = document.createElement("div");
+    panelEl.className = "aixis-panel";
+    panelEl.innerHTML = getPanelHTML();
+    shadow.appendChild(panelEl);
+
+    document.documentElement.appendChild(panelHost);
+
+    setupDragging();
+    setupEventListeners();
   }
 
-  function hideIndicator() {
-    if (indicator) {
-      indicator.classList.add("idle");
+  // -------------------------------------------------------------------------
+  // Panel HTML
+  // -------------------------------------------------------------------------
+
+  function getPanelHTML() {
+    return `
+      <div class="panel-header" id="panelHeader">
+        <span class="panel-title">Aixis</span>
+        <div class="panel-header-buttons">
+          <button class="header-btn" id="collapseBtn" title="最小化">−</button>
+          <button class="header-btn" id="closeBtn" title="閉じる">×</button>
+        </div>
+      </div>
+      <div class="panel-body" id="panelBody">
+
+        <!-- Error display -->
+        <div class="error-msg" id="errorMsg"></div>
+
+        <!-- Section: Settings -->
+        <div class="section" id="settingsSection">
+          <label>APIキー</label>
+          <input type="password" id="apiKeyInput" placeholder="axk_...">
+          <label>プラットフォームURL</label>
+          <input type="text" id="platformUrlInput" placeholder="https://platform.aixis.jp">
+          <button class="btn btn-primary" id="saveSettingsBtn">接続</button>
+        </div>
+
+        <!-- Section: Setup -->
+        <div class="section" id="setupSection">
+          <label>対象ツール</label>
+          <div class="tool-picker">
+            <input type="text" id="toolSearch" class="tool-search" placeholder="ツール名で検索...">
+            <div class="tool-list" id="toolList">
+              <div class="tool-list-empty">読み込み中...</div>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="startSessionBtn">セッション開始</button>
+          <button class="btn btn-text" id="changeSettingsBtn">設定変更</button>
+        </div>
+
+        <!-- Section: Protocol Test -->
+        <div class="section" id="protocolSection">
+          <!-- Progress -->
+          <div class="progress-row">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <span class="progress-text" id="progressText">0 / 0</span>
+          </div>
+
+          <!-- Test card -->
+          <div class="test-card" id="testCard">
+            <div class="test-card-top">
+              <span class="category-badge" id="testCategory"></span>
+            </div>
+            <div class="prompt" id="testPrompt"></div>
+            <div class="expected" id="testExpected"></div>
+          </div>
+
+          <button class="btn btn-copy" id="copyPromptBtn">コピー</button>
+
+          <!-- Timer -->
+          <div class="timer-row">
+            <span class="timer-icon">&#9201;</span>
+            <span class="timer-value" id="timerDisplay">00:00.0</span>
+            <button class="btn btn-timer-start" id="startTimerBtn">開始</button>
+            <button class="btn btn-timer-stop" id="stopTimerBtn">停止</button>
+          </div>
+
+          <!-- Screenshots -->
+          <div class="screenshot-row">
+            <button class="btn btn-screenshot" id="fullScreenshotBtn">&#128247; 全画面</button>
+            <button class="btn btn-screenshot" id="partialScreenshotBtn">&#9986; 部分</button>
+            <span class="capture-count" id="captureCount">(0)</span>
+          </div>
+
+          <!-- Navigation -->
+          <div class="nav-row">
+            <button class="btn btn-primary btn-next" id="nextTestBtn">次へ</button>
+            <button class="btn btn-ghost" id="skipTestBtn">スキップ</button>
+          </div>
+
+          <!-- Session end -->
+          <div class="session-end">
+            <button class="btn btn-text btn-danger" id="endProtocolBtn">セッションを終了する</button>
+          </div>
+        </div>
+
+        <!-- Section: Complete -->
+        <div class="section" id="completeSection">
+          <div class="complete-icon">&#10003;</div>
+          <div class="complete-title">セッション完了</div>
+          <div class="summary-stats">
+            <div class="stat-card">
+              <div class="stat-value" id="summaryTotal">0</div>
+              <div class="stat-label">記録数</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="summaryStatus">-</div>
+              <div class="stat-label">ステータス</div>
+            </div>
+          </div>
+          <a class="dashboard-link" id="dashboardLink" href="#" target="_blank">ダッシュボードで確認 →</a>
+          <button class="btn btn-secondary" id="newSessionBtn">新しいセッション</button>
+        </div>
+
+      </div>
+    `;
+  }
+
+  // -------------------------------------------------------------------------
+  // Panel CSS (inside shadow DOM)
+  // -------------------------------------------------------------------------
+
+  function getPanelCSS() {
+    return `
+      :host {
+        all: initial;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      .aixis-panel {
+        width: 320px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+        font-size: 13px;
+        color: #1e293b;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      /* Header */
+      .panel-header {
+        background: #0f172a;
+        color: #fff;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: grab;
+      }
+
+      .panel-header:active {
+        cursor: grabbing;
+      }
+
+      .panel-title {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .panel-header-buttons {
+        display: flex;
+        gap: 4px;
+      }
+
+      .header-btn {
+        background: rgba(255,255,255,0.15);
+        border: none;
+        color: #fff;
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s;
+        line-height: 1;
+      }
+
+      .header-btn:hover {
+        background: rgba(255,255,255,0.25);
+      }
+
+      /* Body */
+      .panel-body {
+        max-height: 520px;
+        overflow-y: auto;
+        transition: max-height 0.2s ease;
+      }
+
+      .panel-body.collapsed {
+        max-height: 0;
+        overflow: hidden;
+      }
+
+      /* Sections */
+      .section {
+        display: none;
+        padding: 12px;
+      }
+
+      .section.active {
+        display: block;
+      }
+
+      /* Error */
+      .error-msg {
+        background: #fef2f2;
+        color: #991b1b;
+        padding: 8px 12px;
+        font-size: 12px;
+        display: none;
+      }
+
+      .error-msg.visible {
+        display: block;
+      }
+
+      /* Forms */
+      label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: #94a3b8;
+        margin-bottom: 4px;
+        letter-spacing: 0.03em;
+      }
+
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        padding: 7px 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 13px;
+        margin-bottom: 10px;
+        background: #fff;
+        color: #1e293b;
+        transition: border-color 0.15s;
+        font-family: inherit;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 2px rgba(99,102,241,0.1);
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+        width: 100%;
+        font-family: inherit;
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-primary {
+        background: #4f46e5;
+        color: #fff;
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: #4338ca;
+      }
+
+      .btn-secondary {
+        background: #f1f5f9;
+        color: #334155;
+      }
+      .btn-secondary:hover {
+        background: #e2e8f0;
+      }
+
+      .btn-ghost {
+        background: none;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        padding: 7px 10px;
+      }
+      .btn-ghost:hover {
+        background: #f8fafc;
+      }
+
+      .btn-text {
+        background: none;
+        color: #94a3b8;
+        font-size: 11px;
+        padding: 4px;
+        width: auto;
+        margin-top: 4px;
+      }
+      .btn-text:hover {
+        color: #64748b;
+      }
+
+      .btn-danger {
+        color: #dc2626;
+      }
+      .btn-danger:hover {
+        color: #b91c1c;
+        background: #fef2f2;
+      }
+
+      .btn-copy {
+        background: #eef2ff;
+        color: #4f46e5;
+        border: 1px solid #c7d2fe;
+        margin: 8px 0;
+      }
+      .btn-copy:hover {
+        background: #e0e7ff;
+      }
+
+      /* Timer */
+      .timer-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+      }
+
+      .timer-icon {
+        font-size: 16px;
+      }
+
+      .timer-value {
+        font-size: 22px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: #0f172a;
+        font-family: "SF Mono", "Menlo", "Consolas", monospace;
+        letter-spacing: -0.02em;
+        flex: 1;
+      }
+
+      .timer-value.running {
+        color: #4f46e5;
+      }
+
+      .btn-timer-start {
+        font-size: 11px;
+        padding: 4px 10px;
+        background: #eef2ff;
+        color: #4f46e5;
+        border: 1px solid #c7d2fe;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.15s;
+        width: auto;
+        font-family: inherit;
+      }
+      .btn-timer-start:hover {
+        background: #e0e7ff;
+      }
+      .btn-timer-start:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .btn-timer-stop {
+        font-size: 11px;
+        padding: 4px 10px;
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.15s;
+        width: auto;
+        font-family: inherit;
+      }
+      .btn-timer-stop:hover {
+        background: #fee2e2;
+      }
+      .btn-timer-stop:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* Screenshots */
+      .screenshot-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 6px 0;
+      }
+
+      .btn-screenshot {
+        font-size: 11px;
+        padding: 5px 8px;
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.15s;
+        white-space: nowrap;
+        width: auto;
+        font-family: inherit;
+      }
+      .btn-screenshot:hover {
+        background: #e2e8f0;
+      }
+      .btn-screenshot:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .capture-count {
+        font-size: 12px;
+        font-weight: 700;
+        color: #4f46e5;
+        margin-left: auto;
+      }
+
+      /* Navigation */
+      .nav-row {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .nav-row .btn-next {
+        flex: 2;
+      }
+
+      .nav-row .btn-ghost {
+        flex: 1;
+        width: auto;
+      }
+
+      /* Session end */
+      .session-end {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
+        text-align: center;
+      }
+
+      /* Progress */
+      .progress-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .progress-bar {
+        flex: 1;
+        background: #f1f5f9;
+        border-radius: 3px;
+        height: 4px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        background: #6366f1;
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.3s;
+        width: 0%;
+      }
+
+      .progress-text {
+        font-size: 11px;
+        color: #94a3b8;
+        white-space: nowrap;
+      }
+
+      /* Test card */
+      .test-card {
+        background: #fafafa;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px;
+      }
+
+      .test-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+
+      .category-badge {
+        font-size: 10px;
+        font-weight: 700;
+        color: #fff;
+        background: #6366f1;
+        padding: 2px 8px;
+        border-radius: 4px;
+        letter-spacing: 0.05em;
+      }
+
+      .test-card .prompt {
+        font-size: 13px;
+        line-height: 1.5;
+        color: #0f172a;
+        margin-bottom: 6px;
+        max-height: 100px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        user-select: text;
+        -webkit-user-select: text;
+      }
+
+      .test-card .expected {
+        font-size: 11px;
+        color: #64748b;
+        padding-top: 6px;
+        border-top: 1px solid #f1f5f9;
+      }
+
+      .test-card .expected ul {
+        padding-left: 0;
+        list-style: none;
+      }
+
+      .test-card .expected li {
+        margin-bottom: 2px;
+      }
+
+      .test-card .expected li::before {
+        content: "→ ";
+        color: #94a3b8;
+      }
+
+      /* Tool picker */
+      .tool-picker {
+        margin-bottom: 10px;
+      }
+
+      .tool-search {
+        width: 100%;
+        padding: 7px 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px 6px 0 0;
+        font-size: 12px;
+        margin-bottom: 0;
+        background: #fff;
+        color: #1e293b;
+        font-family: inherit;
+      }
+
+      .tool-search:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 2px rgba(99,102,241,0.1);
+      }
+
+      .tool-list {
+        max-height: 140px;
+        overflow-y: auto;
+        border: 1px solid #e2e8f0;
+        border-top: none;
+        border-radius: 0 0 6px 6px;
+        background: #fff;
+      }
+
+      .tool-list-item {
+        padding: 6px 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #f8fafc;
+        transition: background 0.1s;
+      }
+
+      .tool-list-item:last-child {
+        border-bottom: none;
+      }
+
+      .tool-list-item:hover {
+        background: #f8fafc;
+      }
+
+      .tool-list-item.selected {
+        background: #eef2ff;
+        border-left: 2px solid #6366f1;
+        padding-left: 8px;
+      }
+
+      .tool-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: #0f172a;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tool-meta {
+        font-size: 10px;
+        color: #94a3b8;
+        flex-shrink: 0;
+      }
+
+      .tool-check {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid #cbd5e1;
+        flex-shrink: 0;
+      }
+
+      .tool-list-item.selected .tool-check {
+        border-color: #6366f1;
+        background: #6366f1;
+        position: relative;
+      }
+
+      .tool-list-item.selected .tool-check::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 4px;
+        width: 4px;
+        height: 6px;
+        border: solid #fff;
+        border-width: 0 1.5px 1.5px 0;
+        transform: rotate(45deg);
+      }
+
+      .tool-list-empty {
+        padding: 14px;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 12px;
+      }
+
+      .tool-count {
+        font-size: 10px;
+        color: #94a3b8;
+        padding: 4px 10px;
+        background: #f8fafc;
+        border-top: 1px solid #f1f5f9;
+      }
+
+      /* Complete section */
+      .complete-icon {
+        width: 44px;
+        height: 44px;
+        margin: 8px auto 10px;
+        background: #dcfce7;
+        color: #16a34a;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      .complete-title {
+        text-align: center;
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 12px;
+      }
+
+      .summary-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .stat-card {
+        background: #fafafa;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 8px;
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 18px;
+        font-weight: 800;
+        color: #0f172a;
+      }
+
+      .stat-label {
+        font-size: 10px;
+        color: #94a3b8;
+        margin-top: 2px;
+      }
+
+      .dashboard-link {
+        display: block;
+        text-align: center;
+        color: #6366f1;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        text-decoration: none;
+      }
+
+      .dashboard-link:hover {
+        text-decoration: underline;
+      }
+
+      /* Scrollbar */
+      .panel-body::-webkit-scrollbar,
+      .tool-list::-webkit-scrollbar,
+      .prompt::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      .panel-body::-webkit-scrollbar-thumb,
+      .tool-list::-webkit-scrollbar-thumb,
+      .prompt::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 2px;
+      }
+    `;
+  }
+
+  // -------------------------------------------------------------------------
+  // Shadow DOM helper: query within shadow
+  // -------------------------------------------------------------------------
+
+  function $(sel) {
+    return shadow.querySelector(sel);
+  }
+
+  // -------------------------------------------------------------------------
+  // Section management
+  // -------------------------------------------------------------------------
+
+  function showSection(name) {
+    const sectionIds = {
+      settings: "settingsSection",
+      setup: "setupSection",
+      protocol: "protocolSection",
+      complete: "completeSection",
+    };
+
+    for (const id of Object.values(sectionIds)) {
+      const el = shadow.getElementById(id);
+      if (el) el.classList.remove("active");
+    }
+
+    const targetId = sectionIds[name];
+    if (targetId) {
+      const el = shadow.getElementById(targetId);
+      if (el) el.classList.add("active");
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Partial screenshot selection overlay
-  // ---------------------------------------------------------------------------
+  function showError(msg) {
+    let displayMsg = msg;
+    if (msg.includes("401") || msg.includes("Unauthorized")) {
+      displayMsg = "認証エラー: APIキーが無効です。正しいキーを設定してください。";
+    } else if (msg.includes("403") || msg.includes("agent:write")) {
+      displayMsg = "権限エラー: APIキーに agent:write スコープが必要です。";
+    } else if (msg.includes("500") || msg.includes("Internal server")) {
+      displayMsg = "サーバーエラー: プラットフォームに接続できません。";
+    } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+      displayMsg = "ネットワークエラー: プラットフォームURLに接続できません。";
+    }
+
+    const el = shadow.getElementById("errorMsg");
+    el.textContent = displayMsg;
+    el.classList.add("visible");
+    setTimeout(() => el.classList.remove("visible"), 8000);
+  }
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // -------------------------------------------------------------------------
+  // Dragging
+  // -------------------------------------------------------------------------
+
+  function setupDragging() {
+    const header = shadow.getElementById("panelHeader");
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    header.addEventListener("mousedown", (e) => {
+      // Don't start drag on button clicks
+      if (e.target.closest(".header-btn")) return;
+      isDragging = true;
+      const rect = panelHost.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+      e.preventDefault();
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const x = e.clientX - offsetX;
+      const y = e.clientY - offsetY;
+
+      // Clamp to viewport
+      const maxX = window.innerWidth - 40;
+      const maxY = window.innerHeight - 40;
+      const clampedX = Math.max(0, Math.min(x, maxX));
+      const clampedY = Math.max(0, Math.min(y, maxY));
+
+      panelHost.style.left = clampedX + "px";
+      panelHost.style.top = clampedY + "px";
+      panelHost.style.right = "auto";
+      panelHost.style.bottom = "auto";
+    });
+
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Collapse / Close
+  // -------------------------------------------------------------------------
+
+  function toggleCollapse() {
+    collapsed = !collapsed;
+    const body = shadow.getElementById("panelBody");
+    const btn = shadow.getElementById("collapseBtn");
+    if (collapsed) {
+      body.classList.add("collapsed");
+      btn.textContent = "+";
+      btn.title = "展開";
+    } else {
+      body.classList.remove("collapsed");
+      btn.textContent = "\u2212";
+      btn.title = "最小化";
+    }
+  }
+
+  function closePanel() {
+    if (panelHost) {
+      panelHost.style.display = "none";
+    }
+  }
+
+  function showPanel() {
+    if (panelHost) {
+      panelHost.style.display = "";
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Timer
+  // -------------------------------------------------------------------------
+
+  function startTimer() {
+    sendBg({ type: "TIMER_START" });
+    shadow.getElementById("timerDisplay").classList.add("running");
+    shadow.getElementById("startTimerBtn").disabled = true;
+    shadow.getElementById("stopTimerBtn").disabled = false;
+    startTimerDisplay();
+  }
+
+  function stopTimer() {
+    sendBg({ type: "TIMER_STOP" });
+    clearInterval(timerInterval);
+    timerInterval = null;
+    shadow.getElementById("timerDisplay").classList.remove("running");
+    shadow.getElementById("startTimerBtn").disabled = false;
+    shadow.getElementById("stopTimerBtn").disabled = true;
+    // Update display one final time from background state
+    sendBg({ type: "GET_STATE" }).then((bgState) => {
+      renderTimer(bgState.timerElapsedMs || 0);
+    }).catch(() => {});
+  }
+
+  function resetTimer() {
+    sendBg({ type: "TIMER_RESET" });
+    clearInterval(timerInterval);
+    timerInterval = null;
+    shadow.getElementById("timerDisplay").classList.remove("running");
+    shadow.getElementById("startTimerBtn").disabled = false;
+    shadow.getElementById("stopTimerBtn").disabled = true;
+    renderTimer(0);
+  }
+
+  function startTimerDisplay() {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(async () => {
+      try {
+        const bgState = await sendBg({ type: "GET_STATE" });
+        if (bgState.timerRunning && bgState.timerStartedAt) {
+          const elapsed = (bgState.timerElapsedMs || 0) + (Date.now() - bgState.timerStartedAt);
+          renderTimer(elapsed);
+        } else {
+          renderTimer(bgState.timerElapsedMs || 0);
+          if (!bgState.timerRunning) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+          }
+        }
+      } catch {
+        // Extension context invalidated, stop polling
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }, 100);
+  }
+
+  function renderTimer(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const mins = String(Math.floor(totalSec / 60)).padStart(2, "0");
+    const secs = String(totalSec % 60).padStart(2, "0");
+    const tenths = Math.floor((ms % 1000) / 100);
+    const el = shadow.getElementById("timerDisplay");
+    if (el) el.textContent = `${mins}:${secs}.${tenths}`;
+  }
+
+  async function resumeTimerIfRunning() {
+    try {
+      const bgState = await sendBg({ type: "GET_STATE" });
+      if (bgState.timerRunning) {
+        shadow.getElementById("timerDisplay").classList.add("running");
+        shadow.getElementById("startTimerBtn").disabled = true;
+        shadow.getElementById("stopTimerBtn").disabled = false;
+        startTimerDisplay();
+      } else {
+        renderTimer(bgState.timerElapsedMs || 0);
+        shadow.getElementById("startTimerBtn").disabled = false;
+        shadow.getElementById("stopTimerBtn").disabled = true;
+      }
+    } catch {}
+  }
+
+  function getCurrentTimerMs() {
+    return sendBg({ type: "GET_STATE" }).then((bgState) => {
+      if (bgState.timerRunning && bgState.timerStartedAt) {
+        return (bgState.timerElapsedMs || 0) + (Date.now() - bgState.timerStartedAt);
+      }
+      return bgState.timerElapsedMs || 0;
+    }).catch(() => 0);
+  }
+
+  // -------------------------------------------------------------------------
+  // Copy prompt
+  // -------------------------------------------------------------------------
+
+  function copyPrompt() {
+    const prompt = shadow.getElementById("testPrompt").textContent;
+    navigator.clipboard.writeText(prompt).then(() => {
+      const btn = shadow.getElementById("copyPromptBtn");
+      btn.textContent = "コピー済み!";
+      setTimeout(() => (btn.textContent = "コピー"), 1500);
+    }).catch(() => {});
+  }
+
+  // -------------------------------------------------------------------------
+  // Screenshots
+  // -------------------------------------------------------------------------
+
+  function updateCaptureCount(count) {
+    const el = shadow.getElementById("captureCount");
+    if (el) el.textContent = `(${count})`;
+  }
+
+  async function captureFullScreenshot() {
+    const btn = shadow.getElementById("fullScreenshotBtn");
+    btn.disabled = true;
+    btn.textContent = "\uD83D\uDCF8 撮影中...";
+    try {
+      const result = await sendBg({ type: "FULL_SCREENSHOT" });
+      updateCaptureCount(result.captureCount || 0);
+      btn.textContent = "\u2713 記録";
+      setTimeout(() => {
+        btn.textContent = "\uD83D\uDCF7 全画面";
+        btn.disabled = false;
+      }, 1000);
+    } catch (err) {
+      showError(err.message);
+      btn.textContent = "\uD83D\uDCF7 全画面";
+      btn.disabled = false;
+    }
+  }
+
+  async function capturePartialScreenshot() {
+    const btn = shadow.getElementById("partialScreenshotBtn");
+    btn.disabled = true;
+    btn.textContent = "\u2702 選択中...";
+
+    // Hide panel temporarily so it's not in the screenshot
+    if (panelHost) panelHost.style.visibility = "hidden";
+
+    injectSelectionOverlay();
+
+    btn.textContent = "\u2702 部分";
+    btn.disabled = false;
+  }
+
+  // -------------------------------------------------------------------------
+  // Partial screenshot selection overlay (injected into main DOM)
+  // -------------------------------------------------------------------------
 
   function injectSelectionOverlay() {
-    // Remove any existing overlay
     removeSelectionOverlay();
 
     const overlay = document.createElement("div");
@@ -79,15 +1170,12 @@
     function onMouseMove(e) {
       if (!isSelecting) return;
       e.preventDefault();
-
       const currentX = e.clientX;
       const currentY = e.clientY;
-
       const left = Math.min(startX, currentX);
       const top = Math.min(startY, currentY);
       const width = Math.abs(currentX - startX);
       const height = Math.abs(currentY - startY);
-
       selectionBox.style.left = left + "px";
       selectionBox.style.top = top + "px";
       selectionBox.style.width = width + "px";
@@ -97,20 +1185,19 @@
     function onMouseUp(e) {
       if (!isSelecting) return;
       isSelecting = false;
-
       const currentX = e.clientX;
       const currentY = e.clientY;
-
       const rect = {
         x: Math.min(startX, currentX),
         y: Math.min(startY, currentY),
         w: Math.abs(currentX - startX),
         h: Math.abs(currentY - startY),
       };
-
       removeSelectionOverlay();
 
-      // Only send if selection has meaningful size
+      // Show panel again
+      if (panelHost) panelHost.style.visibility = "visible";
+
       if (rect.w > 10 && rect.h > 10) {
         chrome.runtime.sendMessage({
           type: "PARTIAL_CAPTURE_COORDS",
@@ -123,6 +1210,7 @@
     function onKeyDown(e) {
       if (e.key === "Escape") {
         removeSelectionOverlay();
+        if (panelHost) panelHost.style.visibility = "visible";
       }
     }
 
@@ -134,38 +1222,384 @@
 
   function removeSelectionOverlay() {
     const existing = document.getElementById("aixis-selection-overlay");
-    if (existing) {
-      existing.remove();
+    if (existing) existing.remove();
+  }
+
+  // -------------------------------------------------------------------------
+  // Settings
+  // -------------------------------------------------------------------------
+
+  async function loadSettings() {
+    try {
+      const settings = await sendBg({ type: "GET_SETTINGS" });
+      shadow.getElementById("apiKeyInput").value = settings.apiKey || "";
+      shadow.getElementById("platformUrlInput").value = settings.platformUrl || "https://platform.aixis.jp";
+      return settings;
+    } catch {
+      return { apiKey: "", platformUrl: "https://platform.aixis.jp" };
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Messages from background
-  // ---------------------------------------------------------------------------
+  async function saveSettings() {
+    const apiKey = shadow.getElementById("apiKeyInput").value.trim();
+    const platformUrl = shadow.getElementById("platformUrlInput").value.trim() || "https://platform.aixis.jp";
+
+    if (!apiKey) {
+      showError("APIキーを入力してください");
+      return;
+    }
+    if (!apiKey.startsWith("axk_")) {
+      showError("APIキーの形式が正しくありません（axk_... で始まる必要があります）");
+      return;
+    }
+
+    await sendBg({ type: "SAVE_SETTINGS", apiKey, platformUrl });
+    await loadToolList();
+    showSection("setup");
+  }
+
+  // -------------------------------------------------------------------------
+  // Tool picker
+  // -------------------------------------------------------------------------
+
+  async function loadToolList() {
+    const toolList = shadow.getElementById("toolList");
+    try {
+      allTools = await sendBg({ type: "FETCH_TOOLS" });
+      if (!allTools || allTools.length === 0) {
+        toolList.innerHTML = '<div class="tool-list-empty">ツールが登録されていません。<br>ダッシュボードから追加してください。</div>';
+        return;
+      }
+      shadow.getElementById("toolSearch").value = "";
+      renderToolList(allTools);
+    } catch (err) {
+      toolList.innerHTML = '<div class="tool-list-empty" style="color:#991b1b;">ツール一覧の取得に失敗しました</div>';
+      showError(err.message);
+    }
+  }
+
+  function renderToolList(tools) {
+    const toolList = shadow.getElementById("toolList");
+    if (tools.length === 0) {
+      toolList.innerHTML = '<div class="tool-list-empty">一致するツールがありません</div>';
+      return;
+    }
+
+    toolList.innerHTML = tools.map((t) => {
+      const isSelected = t.id === selectedToolId;
+      const name = t.name_jp || t.name;
+      const meta = [t.vendor, t.category_name_jp].filter(Boolean).join(" \u00B7 ");
+      return `<div class="tool-list-item${isSelected ? " selected" : ""}" data-tool-id="${t.id}">
+        <div class="tool-check"></div>
+        <div class="tool-name">${escapeHtml(name)}</div>
+        ${meta ? `<div class="tool-meta">${escapeHtml(meta)}</div>` : ""}
+      </div>`;
+    }).join("");
+
+    if (allTools.length > 5) {
+      toolList.innerHTML += `<div class="tool-count">${tools.length} / ${allTools.length} 件表示</div>`;
+    }
+
+    toolList.querySelectorAll(".tool-list-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        selectedToolId = item.dataset.toolId;
+        renderToolList(getFilteredTools());
+      });
+    });
+  }
+
+  function getFilteredTools() {
+    const q = (shadow.getElementById("toolSearch").value || "").toLowerCase().trim();
+    if (!q) return allTools;
+    return allTools.filter((t) =>
+      (t.name || "").toLowerCase().includes(q) ||
+      (t.name_jp || "").toLowerCase().includes(q) ||
+      (t.vendor || "").toLowerCase().includes(q) ||
+      (t.category_name_jp || "").toLowerCase().includes(q)
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Session management
+  // -------------------------------------------------------------------------
+
+  async function startSession() {
+    if (!selectedToolId) {
+      showError("ツールを選択してください");
+      return;
+    }
+
+    const btn = shadow.getElementById("startSessionBtn");
+    btn.disabled = true;
+    btn.textContent = "接続中...";
+
+    try {
+      const result = await sendBg({
+        type: "CREATE_SESSION",
+        toolId: selectedToolId,
+        profileId: "",
+        recordingMode: "protocol",
+      });
+
+      showProtocolTest(result);
+      showSection("protocol");
+      resetTimer();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "セッション開始";
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Protocol test display
+  // -------------------------------------------------------------------------
+
+  function showProtocolTest(stateData) {
+    const { test, index, total } = stateData.test
+      ? stateData
+      : { test: stateData.testCases && stateData.testCases[0], index: 0, total: stateData.totalCases || 0 };
+
+    if (!test) {
+      updateProgress(index, total);
+      shadow.getElementById("testCategory").textContent = "---";
+      shadow.getElementById("testPrompt").textContent = total === 0
+        ? "テストケースの読み込みに失敗しました。セッションを終了して再試行してください。"
+        : "すべてのテストが完了しました。";
+      shadow.getElementById("testExpected").innerHTML = "";
+      return;
+    }
+
+    updateProgress(index, total);
+
+    const categoryBadge = shadow.getElementById("testCategory");
+    categoryBadge.textContent = CATEGORY_NAMES[test.category] || test.category;
+    categoryBadge.style.background = CATEGORY_COLORS[test.category] || "#6366f1";
+
+    shadow.getElementById("testPrompt").textContent = test.prompt;
+
+    const expectedEl = shadow.getElementById("testExpected");
+    expectedEl.innerHTML = "";
+    if (test.expected_behaviors && test.expected_behaviors.length) {
+      const title = document.createElement("div");
+      title.style.fontWeight = "600";
+      title.style.marginBottom = "4px";
+      title.textContent = "期待される動作:";
+      expectedEl.appendChild(title);
+
+      const ul = document.createElement("ul");
+      for (const b of test.expected_behaviors.slice(0, 5)) {
+        const li = document.createElement("li");
+        li.textContent = b;
+        ul.appendChild(li);
+      }
+      expectedEl.appendChild(ul);
+    }
+  }
+
+  function updateProgress(current, total) {
+    const pct = total > 0 ? ((current / total) * 100).toFixed(0) : 0;
+    shadow.getElementById("progressFill").style.width = pct + "%";
+    shadow.getElementById("progressText").textContent = `${current + 1} / ${total}`;
+  }
+
+  // -------------------------------------------------------------------------
+  // Next / Skip test
+  // -------------------------------------------------------------------------
+
+  async function nextTest() {
+    const btn = shadow.getElementById("nextTestBtn");
+    const skipBtn = shadow.getElementById("skipTestBtn");
+    btn.disabled = true;
+    skipBtn.disabled = true;
+    btn.textContent = "送信中...";
+
+    try {
+      const elapsedMs = await getCurrentTimerMs();
+
+      const result = await sendBg({
+        type: "NEXT_TEST",
+        observation: {
+          responseText: null,
+          responseTimeMs: elapsedMs,
+        },
+      });
+
+      resetTimer();
+      updateCaptureCount(0);
+
+      if (result.done) {
+        await endSessionDirect();
+      } else {
+        showProtocolTest(result);
+      }
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      btn.disabled = false;
+      skipBtn.disabled = false;
+      btn.textContent = "次へ";
+    }
+  }
+
+  async function skipTest() {
+    const btn = shadow.getElementById("skipTestBtn");
+    btn.disabled = true;
+
+    try {
+      resetTimer();
+      updateCaptureCount(0);
+
+      const result = await sendBg({ type: "SKIP_TEST", reason: "テスターがスキップ" });
+      if (result.done) {
+        await endSessionDirect();
+      } else {
+        showProtocolTest(result);
+      }
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Session end
+  // -------------------------------------------------------------------------
+
+  async function endSession() {
+    if (!confirm("セッションを終了しますか？")) return;
+    await endSessionDirect();
+  }
+
+  async function endSessionDirect() {
+    try {
+      const result = await sendBg({ type: "COMPLETE_SESSION" });
+      const bgState = await sendBg({ type: "GET_STATE" });
+
+      shadow.getElementById("summaryTotal").textContent = bgState.observationCount || 0;
+      shadow.getElementById("summaryStatus").textContent = result.status === "scoring" ? "採点中" : result.status;
+
+      const settings = await sendBg({ type: "GET_SETTINGS" });
+      if (bgState.currentSession) {
+        shadow.getElementById("dashboardLink").href =
+          `${settings.platformUrl}/dashboard/audits/${bgState.currentSession.id}`;
+      }
+
+      showSection("complete");
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  async function newSession() {
+    await sendBg({ type: "RESET_SESSION" });
+    selectedToolId = "";
+    resetTimer();
+    updateCaptureCount(0);
+    await loadToolList();
+    showSection("setup");
+  }
+
+  // -------------------------------------------------------------------------
+  // Event listeners
+  // -------------------------------------------------------------------------
+
+  function setupEventListeners() {
+    shadow.getElementById("collapseBtn").addEventListener("click", toggleCollapse);
+    shadow.getElementById("closeBtn").addEventListener("click", closePanel);
+    shadow.getElementById("saveSettingsBtn").addEventListener("click", saveSettings);
+    shadow.getElementById("startSessionBtn").addEventListener("click", startSession);
+    shadow.getElementById("changeSettingsBtn").addEventListener("click", () => showSection("settings"));
+    shadow.getElementById("copyPromptBtn").addEventListener("click", copyPrompt);
+    shadow.getElementById("startTimerBtn").addEventListener("click", startTimer);
+    shadow.getElementById("stopTimerBtn").addEventListener("click", stopTimer);
+    shadow.getElementById("fullScreenshotBtn").addEventListener("click", captureFullScreenshot);
+    shadow.getElementById("partialScreenshotBtn").addEventListener("click", capturePartialScreenshot);
+    shadow.getElementById("nextTestBtn").addEventListener("click", nextTest);
+    shadow.getElementById("skipTestBtn").addEventListener("click", skipTest);
+    shadow.getElementById("endProtocolBtn").addEventListener("click", endSession);
+    shadow.getElementById("newSessionBtn").addEventListener("click", newSession);
+
+    shadow.getElementById("toolSearch").addEventListener("input", () => {
+      renderToolList(getFilteredTools());
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Messages from background / popup
+  // -------------------------------------------------------------------------
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.type) {
-      case "RECORDING_STARTED":
-        showIndicator();
-        break;
-
-      case "RECORDING_STOPPED":
-        hideIndicator();
+      case "SHOW_PANEL":
+        showPanel();
         break;
 
       case "INJECT_SELECTION_OVERLAY":
         injectSelectionOverlay();
         break;
+
+      case "CAPTURE_COUNT_UPDATE":
+        updateCaptureCount(message.count);
+        break;
+
+      case "PARTIAL_CAPTURE_DONE":
+        updateCaptureCount(message.captureCount || 0);
+        break;
+
+      case "RECORDING_STARTED":
+        // Panel is already visible; just ensure it shows protocol section
+        break;
+
+      case "RECORDING_STOPPED":
+        break;
     }
   });
 
-  // ---------------------------------------------------------------------------
-  // Initialize — check if we should show indicator
-  // ---------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
+  // Initialize
+  // -------------------------------------------------------------------------
 
-  chrome.runtime.sendMessage({ type: "GET_STATE" }, (response) => {
-    if (response && response.isRecording) {
-      showIndicator();
+  async function init() {
+    createPanel();
+
+    try {
+      const bgState = await sendBg({ type: "GET_STATE" });
+
+      if (bgState.currentSession) {
+        if (bgState.currentSession.status === "completed" || bgState.currentSession.status === "scoring") {
+          const settings = await sendBg({ type: "GET_SETTINGS" });
+          shadow.getElementById("summaryTotal").textContent = bgState.observationCount || 0;
+          shadow.getElementById("summaryStatus").textContent = bgState.currentSession.status === "scoring" ? "採点中" : "完了";
+          shadow.getElementById("dashboardLink").href = `${settings.platformUrl}/dashboard/audits/${bgState.currentSession.id}`;
+          showSection("complete");
+        } else {
+          const testData = await sendBg({ type: "GET_CURRENT_TEST" });
+          showProtocolTest(testData);
+          updateCaptureCount(bgState.captureCount || 0);
+          showSection("protocol");
+          await resumeTimerIfRunning();
+        }
+      } else {
+        const settings = await loadSettings();
+        if (settings.apiKey) {
+          await loadToolList();
+          showSection("setup");
+        } else {
+          showSection("settings");
+        }
+      }
+    } catch {
+      const settings = await loadSettings();
+      if (settings.apiKey) {
+        showSection("setup");
+      } else {
+        showSection("settings");
+      }
     }
-  });
+  }
+
+  init();
 })();

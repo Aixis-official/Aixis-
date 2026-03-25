@@ -1,8 +1,12 @@
 /**
- * Aixis Chrome Extension v2 — Background Service Worker
+ * Aixis Chrome Extension v3 — Background Service Worker
  *
- * Manages session state, screenshot capture (full/partial/auto),
+ * Manages session state, screenshot capture (full/partial),
  * timer persistence, and API communication.
+ *
+ * Timer is manual (start/stop buttons in the floating panel).
+ * No auto-start on copy. No auto-capture.
+ * No response text input — evaluation is screenshot-based only.
  */
 
 importScripts("../lib/api-client.js");
@@ -17,30 +21,22 @@ let state = {
   currentTestIndex: 0,
   isRecording: false,
   observationCount: 0,
-  timerStart: null,
   captureCount: 0,
-  autoCaptureActive: false,
-  autoCaptureIntervalId: null,
+  // Timer state (manual start/stop)
+  timerRunning: false,
+  timerStartedAt: null, // Date.now() when started
+  timerElapsedMs: 0, // accumulated elapsed time before latest start
 };
 
 // Restore state from storage on service worker wake
 chrome.storage.local.get(["sessionState"], (data) => {
   if (data.sessionState) {
     Object.assign(state, data.sessionState);
-    // Don't persist interval IDs — they're invalid after restart
-    state.autoCaptureIntervalId = null;
-    // Resume auto-capture if it was active
-    if (state.autoCaptureActive && state.currentSession) {
-      startAutoCaptureInterval(5000);
-    }
   }
 });
 
 function persistState() {
-  // Don't persist interval ID
-  const toSave = { ...state };
-  delete toSave.autoCaptureIntervalId;
-  chrome.storage.local.set({ sessionState: toSave });
+  chrome.storage.local.set({ sessionState: { ...state } });
 }
 
 // ---------------------------------------------------------------------------
@@ -48,6 +44,9 @@ function persistState() {
 // ---------------------------------------------------------------------------
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Ignore messages targeted at the offscreen document
+  if (message.target === "offscreen") return false;
+
   handleMessage(message, sender)
     .then(sendResponse)
     .catch((err) => sendResponse({ error: err.message }));
@@ -64,7 +63,7 @@ async function handleMessage(message, sender) {
       return await completeSession();
 
     case "GET_STATE":
-      return { ...state, autoCaptureIntervalId: undefined };
+      return { ...state };
 
     case "GET_CURRENT_TEST":
       return getCurrentTest();
@@ -78,9 +77,26 @@ async function handleMessage(message, sender) {
     case "RESET_SESSION":
       return resetSession();
 
-    // --- Timer ---
-    case "SET_TIMER_START":
-      state.timerStart = message.timestamp;
+    // --- Timer (manual) ---
+    case "TIMER_START":
+      state.timerRunning = true;
+      state.timerStartedAt = Date.now();
+      persistState();
+      return { ok: true };
+
+    case "TIMER_STOP":
+      if (state.timerRunning && state.timerStartedAt) {
+        state.timerElapsedMs += Date.now() - state.timerStartedAt;
+      }
+      state.timerRunning = false;
+      state.timerStartedAt = null;
+      persistState();
+      return { ok: true, elapsedMs: state.timerElapsedMs };
+
+    case "TIMER_RESET":
+      state.timerRunning = false;
+      state.timerStartedAt = null;
+      state.timerElapsedMs = 0;
       persistState();
       return { ok: true };
 
@@ -93,12 +109,6 @@ async function handleMessage(message, sender) {
 
     case "PARTIAL_CAPTURE_COORDS":
       return await handlePartialCaptureCoords(message);
-
-    case "START_AUTO_CAPTURE":
-      return startAutoCapture(message.intervalMs || 5000);
-
-    case "STOP_AUTO_CAPTURE":
-      return stopAutoCapture();
 
     // --- Settings ---
     case "SAVE_SETTINGS":
@@ -141,9 +151,10 @@ async function createSession({ toolId, profileId, recordingMode }) {
   state.currentTestIndex = 0;
   state.isRecording = true;
   state.observationCount = 0;
-  state.timerStart = null;
   state.captureCount = 0;
-  state.autoCaptureActive = false;
+  state.timerRunning = false;
+  state.timerStartedAt = null;
+  state.timerElapsedMs = 0;
 
   persistState();
   broadcastToContentScripts({ type: "RECORDING_STARTED" });
@@ -161,7 +172,8 @@ async function completeSession() {
   }
 
   state.isRecording = false;
-  stopAutoCaptureInternal();
+  state.timerRunning = false;
+  state.timerStartedAt = null;
   broadcastToContentScripts({ type: "RECORDING_STOPPED" });
 
   try {
@@ -180,10 +192,10 @@ function resetSession() {
   state.currentTestIndex = 0;
   state.isRecording = false;
   state.observationCount = 0;
-  state.timerStart = null;
   state.captureCount = 0;
-  state.autoCaptureActive = false;
-  stopAutoCaptureInternal();
+  state.timerRunning = false;
+  state.timerStartedAt = null;
+  state.timerElapsedMs = 0;
   persistState();
   broadcastToContentScripts({ type: "RECORDING_STOPPED" });
   return { ok: true };
@@ -234,7 +246,9 @@ async function advanceTest({ observation }) {
   }
 
   state.currentTestIndex++;
-  state.timerStart = null;
+  state.timerRunning = false;
+  state.timerStartedAt = null;
+  state.timerElapsedMs = 0;
   state.captureCount = 0;
   persistState();
 
@@ -268,7 +282,9 @@ async function skipTest({ reason }) {
   }
 
   state.currentTestIndex++;
-  state.timerStart = null;
+  state.timerRunning = false;
+  state.timerStartedAt = null;
+  state.timerElapsedMs = 0;
   state.captureCount = 0;
   persistState();
 
@@ -326,7 +342,7 @@ async function captureFullScreenshot() {
     await AixisAPI.uploadObservation(state.currentSession.id, obsData);
     state.captureCount++;
     persistState();
-    notifyPopup({ type: "CAPTURE_COUNT_UPDATE", count: state.captureCount });
+    broadcastToContentScripts({ type: "CAPTURE_COUNT_UPDATE", count: state.captureCount });
     return { ok: true, captureCount: state.captureCount };
   } catch (err) {
     console.error("Screenshot upload failed:", err);
@@ -339,7 +355,6 @@ async function captureFullScreenshot() {
 // ---------------------------------------------------------------------------
 
 async function startPartialCapture() {
-  // Inject the selection overlay into the active tab
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) {
     return { error: "アクティブなタブが見つかりません" };
@@ -348,7 +363,6 @@ async function startPartialCapture() {
   try {
     await chrome.tabs.sendMessage(tab.id, { type: "INJECT_SELECTION_OVERLAY" });
   } catch {
-    // Content script might not be loaded, inject it
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       files: ["content/content.js"],
@@ -364,7 +378,6 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
     return { error: "アクティブなセッションがありません" };
   }
 
-  // Step 1: Capture the full visible tab
   let fullImageBase64 = null;
   let pageUrl = null;
   let pageTitle = null;
@@ -382,7 +395,7 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
     return { error: "スクリーンショットの取得に失敗しました" };
   }
 
-  // Step 2: Crop via offscreen document
+  // Crop via offscreen document
   let croppedBase64 = fullImageBase64;
   try {
     await ensureOffscreenDocument();
@@ -400,7 +413,6 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
     console.warn("Crop failed, using full image:", err);
   }
 
-  // Step 3: Upload
   const currentTest = state.testCases[state.currentTestIndex];
 
   const obsData = {
@@ -423,7 +435,7 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
     await AixisAPI.uploadObservation(state.currentSession.id, obsData);
     state.captureCount++;
     persistState();
-    notifyPopup({ type: "PARTIAL_CAPTURE_DONE", captureCount: state.captureCount });
+    broadcastToContentScripts({ type: "PARTIAL_CAPTURE_DONE", captureCount: state.captureCount });
     return { ok: true, captureCount: state.captureCount };
   } catch (err) {
     console.error("Partial screenshot upload failed:", err);
@@ -460,46 +472,6 @@ async function ensureOffscreenDocument() {
 }
 
 // ---------------------------------------------------------------------------
-// Auto-capture (runs in service worker)
-// ---------------------------------------------------------------------------
-
-function startAutoCapture(intervalMs) {
-  state.autoCaptureActive = true;
-  persistState();
-  startAutoCaptureInterval(intervalMs);
-  return { ok: true };
-}
-
-function stopAutoCapture() {
-  state.autoCaptureActive = false;
-  stopAutoCaptureInternal();
-  persistState();
-  return { ok: true };
-}
-
-function startAutoCaptureInterval(intervalMs) {
-  stopAutoCaptureInternal();
-  state.autoCaptureIntervalId = setInterval(async () => {
-    if (!state.currentSession || !state.autoCaptureActive) {
-      stopAutoCaptureInternal();
-      return;
-    }
-    try {
-      await captureFullScreenshot();
-    } catch (err) {
-      console.warn("Auto-capture failed:", err);
-    }
-  }, intervalMs);
-}
-
-function stopAutoCaptureInternal() {
-  if (state.autoCaptureIntervalId) {
-    clearInterval(state.autoCaptureIntervalId);
-    state.autoCaptureIntervalId = null;
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -511,10 +483,4 @@ function broadcastToContentScripts(message) {
       } catch {}
     }
   });
-}
-
-function notifyPopup(message) {
-  try {
-    chrome.runtime.sendMessage(message);
-  } catch {}
 }

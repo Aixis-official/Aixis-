@@ -5,114 +5,15 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-
-  <!-- Header -->
-  <div class="header">
-    <h1>Aixis</h1>
-    <span class="badge badge-idle" id="statusBadge">待機中</span>
-  </div>
-
-  <!-- Error display -->
-  <div class="error-msg" id="errorMsg"></div>
-
-  <!-- Section 1: Settings -->
-  <div class="section active" id="settingsSection">
-    <label>APIキー</label>
-    <input type="password" id="apiKeyInput" placeholder="axk_...">
-
-    <label>プラットフォームURL</label>
-    <input type="text" id="platformUrlInput" placeholder="https://platform.aixis.jp">
-
-    <button class="btn btn-primary" id="saveSettingsBtn">接続</button>
-  </div>
-
-  <!-- Section 2: Setup -->
-  <div class="section" id="setupSection">
-    <label>対象ツール</label>
-    <div class="tool-picker" id="toolPicker">
-      <input type="text" id="toolSearch" class="tool-search" placeholder="ツール名で検索...">
-      <div class="tool-list" id="toolList">
-        <div class="tool-list-empty">読み込み中...</div>
-      </div>
-      <input type="hidden" id="toolSelectValue" value="">
+  <div class="popup-container">
+    <div class="popup-header">
+      <h1>Aixis</h1>
     </div>
-
-    <button class="btn btn-primary" id="startSessionBtn">セッション開始</button>
-    <button class="btn btn-text" id="changeSettingsBtn">設定変更</button>
-  </div>
-
-  <!-- Section 3: Protocol Test -->
-  <div class="section" id="protocolSection">
-    <!-- Progress -->
-    <div class="progress-bar">
-      <div class="fill" id="progressFill" style="width: 0%"></div>
-    </div>
-    <div class="progress-text" id="progressText">0 / 0</div>
-
-    <!-- Test card -->
-    <div class="test-card" id="testCard">
-      <div class="test-card-top">
-        <span class="category-badge" id="testCategory"></span>
-        <button class="copy-btn" id="copyPromptBtn">コピー</button>
-      </div>
-      <div class="prompt" id="testPrompt"></div>
-      <div class="expected" id="testExpected"></div>
-    </div>
-
-    <!-- Timer -->
-    <div class="timer-display">
-      <div class="timer-value" id="timerDisplay">00:00.0</div>
-      <button class="btn btn-timer-stop" id="stopTimerBtn">停止</button>
-    </div>
-
-    <!-- Response text -->
-    <textarea id="responseText" class="response-textarea" placeholder="AIの応答をここに貼り付け（任意）" rows="5"></textarea>
-
-    <!-- Screenshot toolbar -->
-    <div class="screenshot-toolbar">
-      <button class="btn btn-screenshot" id="fullScreenshotBtn">📷 全画面</button>
-      <button class="btn btn-screenshot" id="partialScreenshotBtn">✂️ 部分</button>
-      <label class="auto-capture-toggle">
-        <input type="checkbox" id="autoCaptureToggle">
-        <span class="toggle-label">🔄 自動</span>
-      </label>
-      <span class="capture-count-badge" id="captureCountBadge">0</span>
-    </div>
-
-    <!-- Action buttons -->
-    <div class="action-bar">
-      <button class="btn btn-primary" id="nextTestBtn">次へ</button>
-      <button class="btn btn-ghost" id="skipTestBtn">スキップ</button>
-    </div>
-
-    <!-- Session end -->
-    <div class="session-end-area">
-      <button class="btn btn-text btn-danger-text" id="endProtocolBtn">セッションを終了する</button>
+    <div class="popup-body">
+      <p class="popup-message">ページ上のAixisパネルを使用してください</p>
+      <button class="btn" id="showPanelBtn">パネルを表示</button>
     </div>
   </div>
-
-  <!-- Section 4: Complete -->
-  <div class="section" id="completeSection">
-    <div class="complete-icon">✓</div>
-    <div class="complete-title">セッション完了</div>
-    <div class="summary-stats">
-      <div class="stat-card">
-        <div class="value" id="summaryTotal">0</div>
-        <div class="label">記録数</div>
-      </div>
-      <div class="stat-card">
-        <div class="value" id="summaryStatus">-</div>
-        <div class="label">ステータス</div>
-      </div>
-    </div>
-
-    <a class="dashboard-link" id="dashboardLink" href="#" target="_blank">
-      ダッシュボードで確認 →
-    </a>
-
-    <button class="btn btn-secondary" id="newSessionBtn">新しいセッション</button>
-  </div>
-
   <script src="popup.js"></script>
 </body>
 </html>

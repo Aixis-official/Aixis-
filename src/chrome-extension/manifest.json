@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Aixis AI Audit Recorder",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "AI監査プラットフォーム — テスト記録Chrome拡張。プロトコルテストの実行、タイマー計測、スクリーンショット収集を行います。",
   "permissions": [
     "activeTab",
@@ -23,7 +23,7 @@
     {
       "matches": ["<all_urls>"],
       "js": ["content/content.js"],
-      "css": ["styles/content.css"],
+      "css": ["content/content.css"],
       "run_at": "document_idle"
     }
   ],
