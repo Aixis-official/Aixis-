@@ -186,8 +186,12 @@
             <span class="capture-count" id="captureCount">(0)</span>
           </div>
 
+          <!-- Screenshot thumbnails -->
+          <div class="screenshot-thumbs" id="screenshotThumbs"></div>
+
           <!-- Navigation -->
           <div class="nav-row">
+            <button class="btn btn-ghost btn-prev" id="prevTestBtn">← 戻る</button>
             <button class="btn btn-primary btn-next" id="nextTestBtn">次へ</button>
             <button class="btn btn-ghost" id="skipTestBtn">スキップ</button>
           </div>
@@ -543,11 +547,54 @@
         margin-left: auto;
       }
 
+      /* Screenshot thumbnails */
+      .screenshot-thumbs {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+        min-height: 0;
+      }
+      .screenshot-thumbs:empty {
+        display: none;
+      }
+      .thumb-item {
+        width: 48px;
+        height: 32px;
+        border-radius: 4px;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        cursor: default;
+        position: relative;
+      }
+      .thumb-item .thumb-type {
+        font-size: 8px;
+        line-height: 1;
+      }
+      .thumb-item .thumb-time {
+        position: absolute;
+        bottom: 1px;
+        right: 2px;
+        font-size: 7px;
+        color: #94a3b8;
+      }
+
       /* Navigation */
       .nav-row {
         display: flex;
         gap: 6px;
         margin-top: 8px;
+      }
+
+      .nav-row .btn-prev {
+        flex: 0 0 auto;
+        font-size: 11px;
+        padding: 6px 10px;
       }
 
       .nav-row .btn-next {
@@ -1102,6 +1149,7 @@
     try {
       const result = await sendBg({ type: "FULL_SCREENSHOT" });
       updateCaptureCount(result.captureCount || 0);
+      renderScreenshotThumbs(result.screenshots || []);
       btn.textContent = "\u2713 記録";
       setTimeout(() => {
         btn.textContent = "\uD83D\uDCF7 全画面";
@@ -1373,6 +1421,10 @@
 
     updateProgress(index, total);
 
+    // Enable/disable prev button
+    const prevBtn = shadow.getElementById("prevTestBtn");
+    if (prevBtn) prevBtn.disabled = index <= 0;
+
     const categoryBadge = shadow.getElementById("testCategory");
     categoryBadge.textContent = CATEGORY_NAMES[test.category] || test.category;
     categoryBadge.style.background = CATEGORY_COLORS[test.category] || "#6366f1";
@@ -1427,12 +1479,12 @@
       });
 
       resetTimer();
-      updateCaptureCount(0);
 
       if (result.done) {
         await endSessionDirect();
       } else {
         showProtocolTest(result);
+        await refreshScreenshotThumbs();
       }
     } catch (err) {
       showError(err.message);
@@ -1443,25 +1495,76 @@
     }
   }
 
+  async function prevTest() {
+    const btn = shadow.getElementById("prevTestBtn");
+    btn.disabled = true;
+
+    try {
+      const result = await sendBg({ type: "PREV_TEST" });
+      if (result.error) {
+        // Already at first test — just ignore
+        return;
+      }
+      resetTimer();
+      showProtocolTest(result);
+      await refreshScreenshotThumbs();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
   async function skipTest() {
     const btn = shadow.getElementById("skipTestBtn");
     btn.disabled = true;
 
     try {
       resetTimer();
-      updateCaptureCount(0);
 
       const result = await sendBg({ type: "SKIP_TEST", reason: "テスターがスキップ" });
       if (result.done) {
         await endSessionDirect();
       } else {
         showProtocolTest(result);
+        await refreshScreenshotThumbs();
       }
     } catch (err) {
       showError(err.message);
     } finally {
       btn.disabled = false;
     }
+  }
+
+  // Update screenshot thumbnails for current test
+  async function refreshScreenshotThumbs() {
+    try {
+      const result = await sendBg({ type: "GET_TEST_SCREENSHOTS" });
+      const screenshots = result.screenshots || [];
+      updateCaptureCount(screenshots.length);
+      renderScreenshotThumbs(screenshots);
+    } catch (err) {
+      console.warn("Failed to refresh screenshots:", err);
+    }
+  }
+
+  function renderScreenshotThumbs(screenshots) {
+    const container = shadow.getElementById("screenshotThumbs");
+    if (!container) return;
+
+    if (!screenshots.length) {
+      container.innerHTML = "";
+      return;
+    }
+
+    container.innerHTML = screenshots.map((s, i) => {
+      const time = new Date(s.timestamp).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+      const typeLabel = s.type === "partial" ? "部分" : "全体";
+      return `<div class="thumb-item" title="${s.pageTitle || ""}">
+        <span class="thumb-type">📷${i + 1}</span>
+        <span class="thumb-time">${time}</span>
+      </div>`;
+    }).join("");
   }
 
   // -------------------------------------------------------------------------
@@ -1517,6 +1620,7 @@
     shadow.getElementById("stopTimerBtn").addEventListener("click", stopTimer);
     shadow.getElementById("fullScreenshotBtn").addEventListener("click", captureFullScreenshot);
     shadow.getElementById("partialScreenshotBtn").addEventListener("click", capturePartialScreenshot);
+    shadow.getElementById("prevTestBtn").addEventListener("click", prevTest);
     shadow.getElementById("nextTestBtn").addEventListener("click", nextTest);
     shadow.getElementById("skipTestBtn").addEventListener("click", skipTest);
     shadow.getElementById("endProtocolBtn").addEventListener("click", endSession);
@@ -1543,10 +1647,12 @@
 
       case "CAPTURE_COUNT_UPDATE":
         updateCaptureCount(message.count);
+        if (message.screenshots) renderScreenshotThumbs(message.screenshots);
         break;
 
       case "PARTIAL_CAPTURE_DONE":
         updateCaptureCount(message.captureCount || 0);
+        if (message.screenshots) renderScreenshotThumbs(message.screenshots);
         break;
 
       case "RECORDING_STARTED":

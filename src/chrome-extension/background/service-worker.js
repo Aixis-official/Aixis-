@@ -22,6 +22,8 @@ let state = {
   isRecording: false,
   observationCount: 0,
   captureCount: 0,
+  // Per-test screenshot tracking: { [testIndex]: [{ url, timestamp }] }
+  testScreenshots: {},
   // Timer state (manual start/stop)
   timerRunning: false,
   timerStartedAt: null, // Date.now() when started
@@ -73,6 +75,12 @@ async function handleMessage(message, sender) {
 
     case "SKIP_TEST":
       return await skipTest(message);
+
+    case "PREV_TEST":
+      return goToPrevTest();
+
+    case "GET_TEST_SCREENSHOTS":
+      return getTestScreenshots(message.testIndex);
 
     case "RESET_SESSION":
       return resetSession();
@@ -152,6 +160,7 @@ async function createSession({ toolId, profileId, recordingMode }) {
   state.isRecording = true;
   state.observationCount = 0;
   state.captureCount = 0;
+  state.testScreenshots = {};
   state.timerRunning = false;
   state.timerStartedAt = null;
   state.timerElapsedMs = 0;
@@ -193,6 +202,7 @@ function resetSession() {
   state.isRecording = false;
   state.observationCount = 0;
   state.captureCount = 0;
+  state.testScreenshots = {};
   state.timerRunning = false;
   state.timerStartedAt = null;
   state.timerElapsedMs = 0;
@@ -215,6 +225,32 @@ function getCurrentTest() {
     index: state.currentTestIndex,
     total: state.testCases.length,
   };
+}
+
+function goToPrevTest() {
+  if (!state.currentSession) {
+    return { error: "アクティブなセッションがありません" };
+  }
+  if (state.currentTestIndex <= 0) {
+    return { error: "最初のテストです" };
+  }
+
+  state.currentTestIndex--;
+  // Restore capture count for this test
+  const screenshots = state.testScreenshots[state.currentTestIndex] || [];
+  state.captureCount = screenshots.length;
+  // Reset timer for the test we're returning to
+  state.timerRunning = false;
+  state.timerStartedAt = null;
+  state.timerElapsedMs = 0;
+  persistState();
+
+  return getCurrentTest();
+}
+
+function getTestScreenshots(testIndex) {
+  const idx = testIndex ?? state.currentTestIndex;
+  return { screenshots: state.testScreenshots[idx] || [] };
 }
 
 async function advanceTest({ observation }) {
@@ -246,10 +282,12 @@ async function advanceTest({ observation }) {
   }
 
   state.currentTestIndex++;
+  // Set captureCount for the new test (may have screenshots if navigated back before)
+  const nextScreenshots = state.testScreenshots[state.currentTestIndex] || [];
+  state.captureCount = nextScreenshots.length;
   state.timerRunning = false;
   state.timerStartedAt = null;
   state.timerElapsedMs = 0;
-  state.captureCount = 0;
   persistState();
 
   if (state.currentTestIndex >= state.testCases.length) {
@@ -282,10 +320,11 @@ async function skipTest({ reason }) {
   }
 
   state.currentTestIndex++;
+  const nextScreenshots = state.testScreenshots[state.currentTestIndex] || [];
+  state.captureCount = nextScreenshots.length;
   state.timerRunning = false;
   state.timerStartedAt = null;
   state.timerElapsedMs = 0;
-  state.captureCount = 0;
   persistState();
 
   if (state.currentTestIndex >= state.testCases.length) {
@@ -339,11 +378,27 @@ async function captureFullScreenshot() {
   };
 
   try {
-    await AixisAPI.uploadObservation(state.currentSession.id, obsData);
+    const result = await AixisAPI.uploadObservation(state.currentSession.id, obsData);
     state.captureCount++;
+
+    // Track screenshot per test for thumbnail display
+    const idx = state.currentTestIndex;
+    if (!state.testScreenshots[idx]) state.testScreenshots[idx] = [];
+    state.testScreenshots[idx].push({
+      dataUrl: "data:image/png;base64," + screenshotBase64.substring(0, 200) + "...",  // Don't store full image in state
+      timestamp: new Date().toISOString(),
+      type: "full",
+      pageUrl: pageUrl,
+      pageTitle: pageTitle,
+    });
+
     persistState();
-    broadcastToContentScripts({ type: "CAPTURE_COUNT_UPDATE", count: state.captureCount });
-    return { ok: true, captureCount: state.captureCount };
+    broadcastToContentScripts({
+      type: "CAPTURE_COUNT_UPDATE",
+      count: state.captureCount,
+      screenshots: state.testScreenshots[idx],
+    });
+    return { ok: true, captureCount: state.captureCount, screenshots: state.testScreenshots[idx] };
   } catch (err) {
     console.error("Screenshot upload failed:", err);
     return { error: err.message };
@@ -434,9 +489,24 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
   try {
     await AixisAPI.uploadObservation(state.currentSession.id, obsData);
     state.captureCount++;
+
+    // Track per-test
+    const idx = state.currentTestIndex;
+    if (!state.testScreenshots[idx]) state.testScreenshots[idx] = [];
+    state.testScreenshots[idx].push({
+      timestamp: new Date().toISOString(),
+      type: "partial",
+      pageUrl: pageUrl,
+      pageTitle: pageTitle,
+    });
+
     persistState();
-    broadcastToContentScripts({ type: "PARTIAL_CAPTURE_DONE", captureCount: state.captureCount });
-    return { ok: true, captureCount: state.captureCount };
+    broadcastToContentScripts({
+      type: "PARTIAL_CAPTURE_DONE",
+      captureCount: state.captureCount,
+      screenshots: state.testScreenshots[idx],
+    });
+    return { ok: true, captureCount: state.captureCount, screenshots: state.testScreenshots[idx] };
   } catch (err) {
     console.error("Partial screenshot upload failed:", err);
     return { error: err.message };
