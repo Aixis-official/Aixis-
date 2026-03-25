@@ -36,7 +36,7 @@ class AuditSession(Base):
     deleted_by = Column(String(36), ForeignKey("users.id"), nullable=True, default=None)
 
     # AI agent volume tracking
-    executor_type = Column(String(20), default="playwright")
+    executor_type = Column(String(20), default="extension")
     ai_total_steps = Column(Integer, default=0)
     ai_total_api_calls = Column(Integer, default=0)
     ai_total_input_tokens = Column(Integer, default=0)

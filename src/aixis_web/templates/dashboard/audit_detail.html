@@ -358,7 +358,9 @@
                         dialect: '方言', long_input: '長文', contradictory: '矛盾',
                         ambiguous: '曖昧', keigo_mixing: '敬語', unicode_edge: 'Unicode',
                         business_jp: '商習慣', multi_step: '複合', broken_grammar: '文法破壊',
-            manual_screenshot: '手動スクショ'
+                        slide_basic: '基本作成', slide_structure: '構成力', slide_japanese: '日本語',
+                        slide_accuracy: '正確性', slide_advanced: '応用機能', screenshot_evidence: 'スクショ',
+                        manual_screenshot: '手動スクショ'
                     };
                     var catLabel = CATEGORY_NAMES[category] || category;
                     document.getElementById('progress-text').textContent =
@@ -867,6 +869,8 @@
             dialect: '方言', long_input: '長文', contradictory: '矛盾',
             ambiguous: '曖昧', keigo_mixing: '敬語', unicode_edge: 'Unicode',
             business_jp: '商習慣', multi_step: '複合', broken_grammar: '文法破壊',
+            slide_basic: '基本作成', slide_structure: '構成力', slide_japanese: '日本語',
+            slide_accuracy: '正確性', slide_advanced: '応用機能', screenshot_evidence: 'スクショ',
             manual_screenshot: '手動スクショ'
         };
 
@@ -878,8 +882,8 @@
             var hasError = !!r.error;
             var hasResponse = !!r.response_raw;
             var hasScreenshot = !!r.screenshot_path;
-            var statusLabel = hasError ? 'エラー' : (hasResponse ? '成功' : (hasScreenshot ? '記録済' : '応答なし'));
-            var statusClass = hasError ? 'text-red-500' : (hasResponse ? 'text-emerald-500' : (hasScreenshot ? 'text-indigo-500' : 'text-gray-400'));
+            var statusLabel = hasError ? 'エラー' : (hasResponse ? '成功' : (hasScreenshot ? 'スクショ記録' : '応答なし'));
+            var statusClass = hasError ? 'text-red-500' : (hasResponse ? 'text-emerald-500' : (hasScreenshot ? 'text-blue-500' : 'text-gray-400'));
 
             var responseCell = '';
             if (hasError) {
@@ -889,7 +893,7 @@
             } else if (hasScreenshot) {
                 responseCell = '<a href="' + escapeHtml(r.screenshot_path) + '" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline">' +
                     '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5z"/></svg>' +
-                    'スクリーンショット</a>';
+                    '\ud83d\udcf7 スクショあり</a>';
             } else {
                 responseCell = '<span class="text-gray-400">---</span>';
             }

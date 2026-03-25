@@ -233,7 +233,7 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
 
     # Build volume metrics
     volume_metrics = VolumeMetrics(
-        executor_type=session.executor_type or "playwright",
+        executor_type=session.executor_type or "extension",
         ai_total_steps=session.ai_total_steps or 0,
         ai_total_api_calls=session.ai_total_api_calls or 0,
         ai_total_input_tokens=session.ai_total_input_tokens or 0,

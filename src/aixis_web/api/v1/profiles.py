@@ -64,7 +64,7 @@ async def list_target_configs(
                     "name": f.stem,
                     "display_name": data.get("name", f.stem),
                     "url": data.get("url", ""),
-                    "executor_type": data.get("executor_type", "playwright"),
+                    "executor_type": data.get("executor_type", "extension"),
                 })
             except Exception:
                 logger.warning("Failed to parse target config %s", f, exc_info=True)
