@@ -271,38 +271,24 @@ async def upload_observation(
         except Exception as e:
             logger.warning("Screenshot save failed: %s", e)
 
-    # Determine observation type: manual screenshot vs test observation
-    is_manual_screenshot = (not body.test_case_id) and (
-        body.metadata and (
-            body.metadata.get("type") == "manual_screenshot"
-            or body.metadata.get("capture_type") == "manual_screenshot"
-        )
+    # Determine observation type: screenshot evidence vs test progression
+    capture_type = (body.metadata or {}).get("capture_type", "")
+    is_screenshot_evidence = capture_type in (
+        "manual_screenshot", "full_screenshot", "partial_screenshot"
     )
+    is_manual_screenshot = is_screenshot_evidence
 
     test_case_id = body.test_case_id
     category = "freeform"
 
-    if is_manual_screenshot:
-        # Manual screenshots: store as supplementary evidence, don't count as test
-        test_case_id = f"manual-{session_id[:8]}-{sequence_number:04d}"
-        category = "manual_screenshot"
-        await db.execute(text("""
-            INSERT INTO db_test_cases
-            (id, session_id, category, prompt, metadata_json,
-             expected_behaviors, failure_indicators, tags)
-            VALUES (:id, :session_id, :category, :prompt, :metadata,
-                    :expected, :failures, :tags)
-            ON CONFLICT (id) DO NOTHING
-        """), {
-            "id": test_case_id,
-            "session_id": session_id,
-            "category": "manual_screenshot",
-            "prompt": body.prompt_text or "手動スクリーンショット",
-            "metadata": "{}",
-            "expected": "[]",
-            "failures": "[]",
-            "tags": '["manual_screenshot"]',
-        })
+    if is_screenshot_evidence:
+        # Screenshots: store as supplementary evidence linked to the current test
+        # Use the test_case_id if provided, otherwise create a synthetic one
+        if not test_case_id:
+            test_case_id = f"screenshot-{session_id[:8]}-{sequence_number:04d}"
+        category = "screenshot_evidence"
+        # Don't create a synthetic test case — just store the screenshot as evidence
+        # The test_case_id links it to the real test case if provided
     elif test_case_id:
         # Protocol mode: look up the actual category from the test case
         tc_result = await db.execute(
@@ -378,8 +364,8 @@ async def upload_observation(
     # Use sequence number as observation ID
     obs_id = sequence_number
 
-    # Update session progress — only count actual tests, not manual screenshots
-    if not is_manual_screenshot:
+    # Update session progress — only count actual test progressions, not screenshots
+    if not is_screenshot_evidence:
         await db.execute(text("""
             UPDATE audit_sessions
             SET total_executed = COALESCE(total_executed, 0) + 1,
