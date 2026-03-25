@@ -4,7 +4,14 @@ from enum import Enum
 
 
 class TestCategory(str, Enum):
-    """Categories of destructive test patterns."""
+    """Categories of test patterns."""
+    # Slide-creation-specific categories
+    SLIDE_BASIC = "slide_basic"
+    SLIDE_STRUCTURE = "slide_structure"
+    SLIDE_JAPANESE = "slide_japanese"
+    SLIDE_ACCURACY = "slide_accuracy"
+    SLIDE_ADVANCED = "slide_advanced"
+    # Legacy categories (kept for backward compatibility)
     DIALECT = "dialect"
     LONG_INPUT = "long_input"
     CONTRADICTORY = "contradictory"

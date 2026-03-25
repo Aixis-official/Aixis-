@@ -38,15 +38,22 @@ def generate_test_cases(
 
 # Priority order for test categories (most important first)
 CATEGORY_PRIORITY = {
-    TestCategory.CONTRADICTORY: 0,
-    TestCategory.BUSINESS_JP: 1,
-    TestCategory.KEIGO_MIXING: 2,
-    TestCategory.DIALECT: 3,
-    TestCategory.AMBIGUOUS: 4,
-    TestCategory.MULTI_STEP: 5,
-    TestCategory.BROKEN_GRAMMAR: 6,
-    TestCategory.LONG_INPUT: 7,
-    TestCategory.UNICODE_EDGE: 8,
+    # Slide-creation categories (primary)
+    TestCategory.SLIDE_BASIC: 0,
+    TestCategory.SLIDE_JAPANESE: 1,
+    TestCategory.SLIDE_STRUCTURE: 2,
+    TestCategory.SLIDE_ACCURACY: 3,
+    TestCategory.SLIDE_ADVANCED: 4,
+    # Legacy categories
+    TestCategory.CONTRADICTORY: 10,
+    TestCategory.BUSINESS_JP: 11,
+    TestCategory.KEIGO_MIXING: 12,
+    TestCategory.DIALECT: 13,
+    TestCategory.AMBIGUOUS: 14,
+    TestCategory.MULTI_STEP: 15,
+    TestCategory.BROKEN_GRAMMAR: 16,
+    TestCategory.LONG_INPUT: 17,
+    TestCategory.UNICODE_EDGE: 18,
 }
 
 

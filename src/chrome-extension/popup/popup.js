@@ -382,10 +382,12 @@ async function startSession() {
 // ---------------------------------------------------------------------------
 
 const CATEGORY_NAMES = {
+  slide_basic: "基本作成", slide_structure: "構成力", slide_japanese: "日本語",
+  slide_accuracy: "正確性", slide_advanced: "応用機能",
   dialect: "方言", long_input: "長文", contradictory: "矛盾",
   ambiguous: "曖昧", keigo_mixing: "敬語混合", unicode_edge: "Unicode",
   business_jp: "商習慣", multi_step: "複合指示", broken_grammar: "文法破壊",
-  freeform: "フリー",
+  freeform: "フリー", protocol: "プロトコル",
 };
 
 function showProtocolTest(stateData) {
@@ -394,7 +396,12 @@ function showProtocolTest(stateData) {
     : { test: stateData.testCases?.[0], index: 0, total: stateData.totalCases || 0 };
 
   if (!test) {
-    endSession();
+    // No test available — show message instead of auto-ending
+    updateProgress(index, total);
+    $("#testCategory").textContent = "---";
+    $("#testPrompt").textContent = total === 0
+      ? "テストケースの読み込みに失敗しました。セッションを終了して再試行してください。"
+      : "すべてのテストが完了しました。";
     return;
   }
 
