@@ -91,7 +91,7 @@
   function createPanel() {
     panelHost = document.createElement("div");
     panelHost.id = "aixis-panel-host";
-    panelHost.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:2147483647;font-size:initial;line-height:initial;";
+    panelHost.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:999999;font-size:initial;line-height:initial;pointer-events:none;";
 
     shadow = panelHost.attachShadow({ mode: "open" });
 
@@ -108,6 +108,8 @@
 
     setupDragging();
     setupEventListeners();
+    setupKeyboardShortcut();
+    restorePanelPosition();
   }
 
   // -------------------------------------------------------------------------
@@ -251,6 +253,7 @@
         overflow: hidden;
         user-select: none;
         -webkit-user-select: none;
+        pointer-events: auto;
       }
 
       /* Header */
@@ -993,7 +996,52 @@
     });
 
     document.addEventListener("mouseup", () => {
-      isDragging = false;
+      if (isDragging) {
+        isDragging = false;
+        // Save position to storage for persistence across navigations
+        const rect = panelHost.getBoundingClientRect();
+        chrome.storage.local.set({ panelPosition: { x: rect.left, y: rect.top } });
+      }
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Position persistence
+  // -------------------------------------------------------------------------
+
+  function restorePanelPosition() {
+    chrome.storage.local.get("panelPosition", (data) => {
+      if (data.panelPosition && panelHost) {
+        const { x, y } = data.panelPosition;
+        // Clamp to current viewport
+        const maxX = window.innerWidth - 40;
+        const maxY = window.innerHeight - 40;
+        const clampedX = Math.max(0, Math.min(x, maxX));
+        const clampedY = Math.max(0, Math.min(y, maxY));
+        panelHost.style.left = clampedX + "px";
+        panelHost.style.top = clampedY + "px";
+        panelHost.style.right = "auto";
+        panelHost.style.bottom = "auto";
+      }
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Keyboard shortcut: Alt+A to toggle panel visibility
+  // -------------------------------------------------------------------------
+
+  function setupKeyboardShortcut() {
+    document.addEventListener("keydown", (e) => {
+      if (e.altKey && (e.key === "a" || e.key === "A") && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        e.preventDefault();
+        if (panelHost) {
+          if (panelHost.style.display === "none") {
+            panelHost.style.display = "";
+          } else {
+            panelHost.style.display = "none";
+          }
+        }
+      }
     });
   }
 

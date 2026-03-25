@@ -46,8 +46,9 @@ def _validate_session_id(session_id: str) -> None:
     if not _UUID_RE.match(session_id):
         raise HTTPException(400, "Invalid session ID format")
 
-# Screenshots storage base path
-_SCREENSHOTS_DIR = Path(__file__).resolve().parents[2] / "static" / "screenshots" / "extension"
+# Screenshots storage base path (persistent volume in production)
+from ...config import settings as _ext_settings
+_SCREENSHOTS_DIR = Path(_ext_settings.screenshots_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -294,8 +295,8 @@ async def upload_observation(
             session_dir.mkdir(parents=True, exist_ok=True)
             img_path = session_dir / f"{sequence_number:04d}.png"
             img_path.write_bytes(img_data)
-            # Path relative to static file mount; accessible via /static/screenshots/...
-            screenshot_path = f"/static/screenshots/extension/{session_id}/{sequence_number:04d}.png"
+            # Path relative to screenshots mount; accessible via /screenshots/...
+            screenshot_path = f"/screenshots/{session_id}/{sequence_number:04d}.png"
         except Exception as e:
             logger.warning("Screenshot save failed: %s", e)
 

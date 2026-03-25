@@ -15,10 +15,12 @@ Confidence is calculated across 4 dimensions:
   - 解釈性 (intelligibility): richness of evidence data
 """
 
+import io
 import json
 import logging
 import statistics
 import uuid
+from collections import defaultdict
 from datetime import datetime, timezone
 
 import anthropic
@@ -282,6 +284,62 @@ class LLMScorer:
                     "risks": [f"スコアリングエラー: {str(e)}"],
                 })
 
+        # --- Apply completion rate penalty ---
+        # Fetch total_planned / total_executed from session to compute real completion rate
+        session_result = await db.execute(text("""
+            SELECT total_planned, total_executed FROM audit_sessions WHERE id = :sid
+        """), {"sid": session_id})
+        session_row = session_result.fetchone()
+        total_planned = session_row[0] if session_row and session_row[0] else len(observations)
+        total_executed = session_row[1] if session_row and session_row[1] else len(observations)
+        # Use the more conservative estimate (observations vs session metadata)
+        if total_planned > 0:
+            completion_rate = min(total_executed, len(observations)) / total_planned
+        else:
+            completion_rate = 1.0 if observations else 0.0
+
+        if completion_rate < 0.3:
+            # Less than 30% completion: cap all scores at 2.0 and mark as "insufficient"
+            penalty_factor = completion_rate / 0.3  # 0.0 to 1.0
+            await db.execute(text("""
+                UPDATE axis_scores
+                SET score = LEAST(score * :factor, 2.0),
+                    confidence = LEAST(confidence * :factor, 30),
+                    details = details || :suffix
+                WHERE session_id = :sid
+            """), {
+                "factor": penalty_factor,
+                "sid": session_id,
+                "suffix": json.dumps({"completion_penalty": True, "completion_rate": completion_rate}),
+            })
+            # Update in-memory scores to reflect penalty
+            for s in all_scores:
+                s["score"] = min(s["score"] * penalty_factor, 2.0)
+                s["confidence"] = min(s["confidence"] * penalty_factor, 0.3)
+                s["completion_penalty"] = True
+                s["completion_rate"] = completion_rate
+            logger.warning(
+                "Completion penalty applied for session %s: rate=%.1f%%, factor=%.2f",
+                session_id, completion_rate * 100, penalty_factor,
+            )
+        elif completion_rate < 0.6:
+            # 30-60% completion: reduce confidence significantly
+            confidence_factor = 0.5 + (completion_rate - 0.3) / 0.6
+            await db.execute(text("""
+                UPDATE axis_scores
+                SET confidence = LEAST(confidence * :factor, 60)
+                WHERE session_id = :sid
+            """), {
+                "factor": confidence_factor,
+                "sid": session_id,
+            })
+            for s in all_scores:
+                s["confidence"] = min(s["confidence"] * confidence_factor, 0.6)
+            logger.info(
+                "Confidence penalty applied for session %s: rate=%.1f%%, factor=%.2f",
+                session_id, completion_rate * 100, confidence_factor,
+            )
+
         await db.commit()
         logger.info(
             "LLM scoring complete for session %s: %s",
@@ -371,35 +429,118 @@ class LLMScorer:
             "intelligibility": round(intelligibility, 3),
         }
 
+    def _select_representative_screenshots(
+        self,
+        observations: list[dict],
+        max_total: int = 10,
+    ) -> list[str]:
+        """Select the most representative screenshots across all observations.
+
+        Strategy:
+        - 1 screenshot from each test category (ensuring diversity)
+        - Fill remaining slots from tests with the most screenshots
+        - Deduplicate by path
+        """
+        seen_paths: set[str] = set()
+        selected: list[str] = []
+
+        # Group observations by category
+        by_category: dict[str, list[dict]] = defaultdict(list)
+        for obs in observations:
+            cat = obs.get("category", "unknown")
+            by_category[cat].append(obs)
+
+        # Phase 1: Pick 1 screenshot per category for diversity
+        for _cat, cat_obs in by_category.items():
+            if len(selected) >= max_total:
+                break
+            for obs in cat_obs:
+                found = False
+                for ss_path in obs.get("screenshots", []):
+                    if ss_path and ss_path not in seen_paths:
+                        seen_paths.add(ss_path)
+                        selected.append(ss_path)
+                        found = True
+                        break  # 1 per category
+                if found:
+                    break
+
+        # Phase 2: Fill remaining slots from tests with the most screenshots
+        remaining = max_total - len(selected)
+        if remaining > 0:
+            obs_by_ss_count = sorted(
+                observations,
+                key=lambda o: len(o.get("screenshots", [])),
+                reverse=True,
+            )
+            for obs in obs_by_ss_count:
+                if remaining <= 0:
+                    break
+                for ss_path in obs.get("screenshots", []):
+                    if remaining <= 0:
+                        break
+                    if ss_path and ss_path not in seen_paths:
+                        seen_paths.add(ss_path)
+                        selected.append(ss_path)
+                        remaining -= 1
+
+        return selected
+
+    @staticmethod
+    def _resize_screenshot(img_data: bytes, max_width: int = 1024) -> bytes:
+        """Resize screenshot to reduce API token cost.
+
+        Retina screenshots from Chrome's captureVisibleTab are often 2x resolution.
+        Resizing to max_width significantly reduces the image token count.
+        """
+        try:
+            from PIL import Image
+        except ImportError:
+            logger.debug("Pillow not installed, skipping image resize")
+            return img_data
+
+        try:
+            img = Image.open(io.BytesIO(img_data))
+            if img.width > max_width:
+                ratio = max_width / img.width
+                new_size = (max_width, int(img.height * ratio))
+                img = img.resize(new_size, Image.LANCZOS)
+            buf = io.BytesIO()
+            img.save(buf, format="PNG", optimize=True)
+            return buf.getvalue()
+        except Exception as e:
+            logger.warning("Failed to resize screenshot: %s", e)
+            return img_data
+
     def _score_axis(
         self,
         axis: str,
         rubric: dict,
         observations: list[dict],
     ) -> dict:
-        """Score a single axis using Claude with multimodal (text + screenshots)."""
+        """Score a single axis using Claude with multimodal (text + screenshots).
+
+        Screenshots are selected once (max 10 total, deduplicated, diverse by
+        category) and resized to reduce API token cost.
+        """
         prompt_text = self._build_rubric_prompt(axis, rubric, observations)
 
         # Build multimodal content: text prompt + screenshot images
         content = []
 
-        # Add screenshot images from observations (limit to 10 to control costs)
-        image_count = 0
-        for obs in observations:
-            for ss_path in obs.get("screenshots", [])[:3]:  # Max 3 per test
-                if image_count >= 10:
-                    break
-                image_data = self._load_screenshot(ss_path)
-                if image_data:
-                    content.append({
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": "image/png",
-                            "data": image_data,
-                        },
-                    })
-                    image_count += 1
+        # Select representative screenshots across all observations (max 10, deduplicated)
+        selected_paths = self._select_representative_screenshots(observations, max_total=10)
+        for ss_path in selected_paths:
+            image_data = self._load_screenshot(ss_path)
+            if image_data:
+                content.append({
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/png",
+                        "data": image_data,
+                    },
+                })
 
         # Add text prompt
         content.append({"type": "text", "text": prompt_text})
@@ -422,14 +563,20 @@ class LLMScorer:
         if not screenshot_path:
             return None
 
-        # screenshot_path is like /static/screenshots/extension/session_id/0001.png
-        static_dir = Path(__file__).parent.parent / "static"
-        # Remove leading /static/ to get relative path
         rel_path = screenshot_path.lstrip("/")
-        if rel_path.startswith("static/"):
-            rel_path = rel_path[len("static/"):]
 
-        file_path = static_dir / rel_path
+        if rel_path.startswith("screenshots/"):
+            # New path: /screenshots/session_id/0001.png -> resolve from screenshots_dir
+            rel_path = rel_path[len("screenshots/"):]
+            file_path = Path(settings.screenshots_dir) / rel_path
+        elif rel_path.startswith("static/"):
+            # Legacy path: /static/screenshots/extension/session_id/0001.png
+            rel_path = rel_path[len("static/"):]
+            static_dir = Path(__file__).parent.parent / "static"
+            file_path = static_dir / rel_path
+        else:
+            static_dir = Path(__file__).parent.parent / "static"
+            file_path = static_dir / rel_path
         if not file_path.exists():
             logger.debug("Screenshot not found: %s", file_path)
             return None
@@ -440,6 +587,8 @@ class LLMScorer:
             if len(data) > 5 * 1024 * 1024:
                 logger.warning("Screenshot too large, skipping: %s", file_path)
                 return None
+            # Resize to reduce API token cost (retina screenshots can be 2x+)
+            data = self._resize_screenshot(data, max_width=1024)
             return base64.b64encode(data).decode("ascii")
         except Exception as e:
             logger.warning("Failed to load screenshot %s: %s", file_path, e)
@@ -492,6 +641,7 @@ class LLMScorer:
 - スクリーンショット画像がある場合は、それを主要な評価根拠としてください。
 - テストの完遂率は {completion_rate:.0f}% です（{len(observations)}件/{total_planned}件）。
 - 未実施のテストが多い場合、confidenceを低く設定してください（完遂率に比例）。
+- テスト完遂率が低い場合（30%未満）、確信度を大幅に下げ、スコアには「評価不十分」と注記してください。
 - 観察データが少ない場合、スコアは控えめに評価してください。
 - 応答時間が0msまたは未計測の場合、応答速度の評価はスキップしてください。
 

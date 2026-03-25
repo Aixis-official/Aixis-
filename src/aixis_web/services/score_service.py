@@ -74,7 +74,20 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
 
     # Overall score: equal-weight average of all 5 axes
     overall = round(sum(final.values()) / len(final), 1) if final else 0.0
-    grade = OverallGrade.from_score(overall)
+
+    # Check completion rate — override grade if insufficient
+    session_obj_q = await db.execute(select(AuditSession).where(AuditSession.id == session_id))
+    session_for_completion = session_obj_q.scalar_one_or_none()
+    _total_planned = session_for_completion.total_planned if session_for_completion else 0
+    _total_executed = session_for_completion.total_executed if session_for_completion else 0
+    _completion_rate = _total_executed / _total_planned if _total_planned > 0 else 1.0
+
+    if _completion_rate < 0.3 and _total_planned > 0:
+        # Insufficient completion: override grade to N/A
+        grade_value = "N/A"
+    else:
+        grade = OverallGrade.from_score(overall)
+        grade_value = grade.value
 
     # Determine next version
     existing = await db.execute(
@@ -91,7 +104,7 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
         safety=final.get("safety", 0.0),
         uniqueness=final.get("uniqueness", 0.0),
         overall_score=overall,
-        overall_grade=grade.value,
+        overall_grade=grade_value,
         source_session_id=session_id,
         version=next_version,
         published_at=datetime.now(timezone.utc),
@@ -106,7 +119,7 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
             axis=axis,
             score=score,
             overall_score=overall,
-            overall_grade=grade.value,
+            overall_grade=grade_value,
             source_session_id=session_id,
         ))
 
@@ -129,7 +142,7 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
             "session_id": session_id,
             "version": next_version,
             "overall_score": overall,
-            "overall_grade": grade.value,
+            "overall_grade": grade_value,
             "scores": final,
         }, db)
         await db.commit()

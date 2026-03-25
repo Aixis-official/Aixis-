@@ -227,6 +227,11 @@ def create_app() -> FastAPI:
         ],
     )
 
+    # Mount screenshots from persistent volume (before /static to avoid shadowing)
+    screenshots_dir = Path(settings.screenshots_dir)
+    screenshots_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/screenshots", StaticFiles(directory=str(screenshots_dir)), name="screenshots")
+
     # Mount static files
     static_dir = BASE_DIR / "static"
     static_dir.mkdir(exist_ok=True)

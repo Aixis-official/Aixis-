@@ -37,6 +37,8 @@ dependencies = [
     # File parsing for uploaded artifacts
     "python-pptx>=1.0",
     "pypdf>=4.0",
+    # Image processing (screenshot resizing for LLM scoring)
+    "Pillow>=10.0",
     # CLI
     "typer>=0.15",
 ]

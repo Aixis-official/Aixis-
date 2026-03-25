@@ -61,6 +61,7 @@ class Settings(BaseSettings):
     # Paths
     config_dir: str = "config"
     output_dir: str = "output"
+    screenshots_dir: str = "/data/screenshots"
 
     # Admin seed
     admin_email: str = "admin@aixis.jp"

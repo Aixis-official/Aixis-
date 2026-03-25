@@ -49,13 +49,18 @@ window.AIXIS = {
     { min: 0,   grade: 'D', label: 'D', color: '#e53e3e' }
   ],
 
+  // Special grade for insufficient test completion
+  GRADE_NA: { grade: 'N/A', label: '評価不十分', color: '#a0aec0' },
+
   MAX_SCORE: 5.0
 };
 
 
 // ===== GRADE UTILITIES =====
 
-function getGrade(score) {
+function getGrade(score, gradeOverride) {
+  // Handle N/A grade from backend (insufficient test completion)
+  if (gradeOverride === 'N/A') return AIXIS.GRADE_NA;
   for (const g of AIXIS.GRADES) {
     if (score >= g.min) return g;
   }

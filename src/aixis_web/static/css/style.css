@@ -414,6 +414,7 @@ main.main-constrained {
 .grade-B { background: var(--grade-b); }
 .grade-C { background: var(--grade-c); }
 .grade-D { background: var(--grade-d); }
+.grade-N\/A { background: #a0aec0; }
 
 /* ==========================================================================
    4f. Score Bars
