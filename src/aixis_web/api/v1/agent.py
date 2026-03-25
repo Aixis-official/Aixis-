@@ -167,12 +167,23 @@ async def upload_agent_results(
     user: User = Depends(require_agent_key),
 ):
     """Upload audit results from the remote agent."""
+    import re as _re
+    # Validate session_id format to prevent path traversal
+    if not _re.match(r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$', session_id):
+        raise HTTPException(400, "Invalid session ID format")
     # Verify session exists and belongs to user
     result = await db.execute(
-        text("SELECT id, tool_id, status FROM audit_sessions WHERE id = :sid"),
-        {"sid": session_id},
+        text("SELECT id, tool_id, status FROM audit_sessions WHERE id = :sid AND initiated_by = :uid"),
+        {"sid": session_id, "uid": user.id},
     )
     session_row = result.fetchone()
+    # Admin/analyst fallback — can access any session
+    if not session_row and user.role in ('admin', 'analyst'):
+        result = await db.execute(
+            text("SELECT id, tool_id, status FROM audit_sessions WHERE id = :sid"),
+            {"sid": session_id},
+        )
+        session_row = result.fetchone()
     if not session_row:
         raise HTTPException(404, f"Session not found: {session_id}")
 

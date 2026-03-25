@@ -65,8 +65,8 @@ class AuditResponse(BaseModel):
     tool_id: str
     profile_id: str | None = None
     status: str
-    total_planned: int | None = 0
-    total_executed: int | None = 0
+    total_planned: int = 0
+    total_executed: int = 0
     error_message: str | None = None
     initiated_by: str | None = None
     started_at: datetime | None = None

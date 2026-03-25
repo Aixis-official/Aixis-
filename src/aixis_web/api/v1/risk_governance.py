@@ -14,7 +14,7 @@ from ...schemas.risk_governance import (
     RegulatoryFrameworkResponse,
 )
 from ...services import risk_governance_service
-from ..deps import require_admin
+from ..deps import require_admin, require_auth
 
 router = APIRouter()
 
@@ -26,6 +26,7 @@ router = APIRouter()
 async def get_risk_governance(
     tool_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(require_auth)],
 ):
     """Get latest risk/governance assessment for a tool."""
     return await risk_governance_service.get_latest_risk_governance(db, tool_id)
@@ -72,6 +73,7 @@ async def update_risk_governance(
 )
 async def list_regulatory_frameworks(
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(require_auth)],
 ):
     """List all regulatory frameworks."""
     return await risk_governance_service.list_regulatory_frameworks(db)

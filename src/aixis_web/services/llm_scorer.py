@@ -178,14 +178,22 @@ class LLMScorer:
             return []
 
         # 2. Fetch any existing manual checklist scores for 60/40 blending
-        manual_result = await db.execute(text("""
-            SELECT axis, AVG(score) as avg_score, COUNT(*) as cnt
-            FROM manual_checklist_entries
-            WHERE session_id = :sid AND score IS NOT NULL
-            GROUP BY axis
-        """), {"sid": session_id})
-        manual_scores = {row[0]: {"avg": float(row[1]), "count": int(row[2])}
-                         for row in manual_result.fetchall()}
+        try:
+            manual_result = await db.execute(text("""
+                SELECT axis, AVG(score) as avg_score, COUNT(*) as cnt
+                FROM manual_checklist_entries
+                WHERE session_id = :sid AND score IS NOT NULL
+                GROUP BY axis
+            """), {"sid": session_id})
+            manual_scores = {row[0]: {"avg": float(row[1]), "count": int(row[2])}
+                             for row in manual_result.fetchall()}
+        except Exception as e:
+            logger.warning("Manual checklist query failed (table may not exist): %s", e)
+            manual_scores = {}
+            try:
+                await db.rollback()
+            except Exception:
+                pass
 
         # 3. Calculate confidence dimensions from observations
         confidence_dimensions = self._calculate_confidence_dimensions(observations)
@@ -239,9 +247,10 @@ class LLMScorer:
                 await db.execute(text("""
                     INSERT INTO axis_scores
                     (id, session_id, tool_id, axis, axis_name_jp, score, confidence,
-                     source, details, strengths, risks, scored_at)
+                     source, details, strengths, risks, scored_at, scored_by)
                     VALUES (:id, :session_id, :tool_id, :axis, :axis_name_jp, :score,
-                            :confidence, :source, :details, :strengths, :risks, :scored_at)
+                            :confidence, :source, :details, :strengths, :risks, :scored_at,
+                            :scored_by)
                     ON CONFLICT (id) DO UPDATE SET
                         score = EXCLUDED.score, confidence = EXCLUDED.confidence,
                         details = EXCLUDED.details, strengths = EXCLUDED.strengths,
@@ -258,7 +267,8 @@ class LLMScorer:
                     "details": json.dumps(details_with_meta, ensure_ascii=False),
                     "strengths": json.dumps(score_data["strengths"], ensure_ascii=False),
                     "risks": json.dumps(score_data["risks"], ensure_ascii=False),
-                    "scored_at": datetime.utcnow(),
+                    "scored_at": datetime.now(timezone.utc),
+                    "scored_by": None,  # NULL = automated LLM scoring
                 })
 
             except Exception as e:

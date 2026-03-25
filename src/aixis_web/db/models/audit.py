@@ -22,7 +22,7 @@ class AuditSession(Base):
     profile_id = Column(String(100), nullable=False)
     status = Column(
         String(20), default="pending"
-    )  # pending|running|waiting_login|aborting|awaiting_manual|completed|failed|cancelled|aborted
+    )  # pending|running|scoring|waiting_login|aborting|awaiting_manual|completed|failed|cancelled|aborted
     total_planned = Column(Integer, default=0)
     total_executed = Column(Integer, default=0)
     error_message = Column(Text)

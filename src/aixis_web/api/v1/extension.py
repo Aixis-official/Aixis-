@@ -10,6 +10,8 @@ import base64
 import hashlib
 import json
 import logging
+import os
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,6 +37,15 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# UUID format regex for session_id validation (prevents path traversal)
+_UUID_RE = re.compile(r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$')
+
+
+def _validate_session_id(session_id: str) -> None:
+    """Validate session_id is a proper UUID to prevent path traversal."""
+    if not _UUID_RE.match(session_id):
+        raise HTTPException(400, "Invalid session ID format")
+
 # Screenshots storage base path
 _SCREENSHOTS_DIR = Path(__file__).resolve().parents[2] / "static" / "screenshots" / "extension"
 
@@ -55,12 +66,12 @@ async def create_extension_session(
     In freeform mode, creates session without pre-generated test cases.
     """
     session_id = str(uuid.uuid4())
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Generate session code
     hash_input = f"{now.isoformat()}-{session_id}"
     short_hash = hashlib.sha256(hash_input.encode()).hexdigest()[:8].upper()
-    date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
+    date_str = now.strftime("%Y%m%d")
     session_code = f"AX-{date_str}-{short_hash}"
 
     # Verify tool exists
@@ -196,6 +207,7 @@ async def get_session_test_cases(
     user: User = Depends(require_agent_key),
 ):
     """Return test cases for a session."""
+    _validate_session_id(session_id)
     result = await db.execute(
         text("""
             SELECT id, category, prompt, metadata_json,
@@ -236,19 +248,27 @@ async def upload_observation(
     user: User = Depends(require_agent_key),
 ):
     """Upload a single observation (input/output pair) from the Chrome extension."""
-    # Verify session exists
+    _validate_session_id(session_id)
+    # Verify session exists and belongs to user
     result = await db.execute(
-        text("SELECT id, tool_id, status, total_executed FROM audit_sessions WHERE id = :sid"),
-        {"sid": session_id},
+        text("SELECT id, tool_id, status, total_executed FROM audit_sessions WHERE id = :sid AND initiated_by = :uid"),
+        {"sid": session_id, "uid": user.id},
     )
     session_row = result.fetchone()
+    # Admin/analyst fallback — can access any session
+    if not session_row and user.role in ('admin', 'analyst'):
+        result = await db.execute(
+            text("SELECT id, tool_id, status, total_executed FROM audit_sessions WHERE id = :sid"),
+            {"sid": session_id},
+        )
+        session_row = result.fetchone()
     if not session_row:
         raise HTTPException(404, f"セッションが見つかりません: {session_id}")
 
     if session_row[2] not in ("running", "pending"):
         raise HTTPException(400, f"セッションは現在 {session_row[2]} 状態です。観察データを追加できません。")
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Get actual observation count (including manual screenshots) for sequence numbering
     count_result = await db.execute(
@@ -406,6 +426,7 @@ async def upload_file(
     user: User = Depends(require_agent_key),
 ):
     """Upload a PPTX or PDF file and extract text content for LLM scoring."""
+    _validate_session_id(session_id)
     # Verify session exists
     result = await db.execute(
         text("SELECT id, status FROM audit_sessions WHERE id = :sid"),
@@ -415,17 +436,27 @@ async def upload_file(
     if not session_row:
         raise HTTPException(404, f"セッションが見つかりません: {session_id}")
 
-    # Validate file type
-    filename = file.filename or "upload"
-    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    # Validate file type — use only the LAST extension after stripping path
+    raw_filename = file.filename or "upload"
+    safe_name = os.path.basename(raw_filename)
+    ext = safe_name.rsplit(".", 1)[-1].lower() if "." in safe_name else ""
     if ext not in ("pptx", "pdf"):
         raise HTTPException(400, "PPTX または PDF ファイルのみアップロード可能です")
+
+    # Read and validate file size (50MB limit)
+    content = await file.read()
+    if len(content) > 50 * 1024 * 1024:
+        raise HTTPException(400, "ファイルサイズが大きすぎます（最大50MB）")
+
+    # Sanitize filename — strip path separators and only allow safe characters
+    safe_filename = re.sub(r'[^a-zA-Z0-9._-]', '_', safe_name)
+    if not safe_filename or safe_filename.startswith('.'):
+        safe_filename = f"upload_{uuid.uuid4().hex[:8]}.{ext}"
 
     # Save file
     upload_dir = Path(__file__).resolve().parents[2] / "static" / "uploads" / "extension" / session_id
     upload_dir.mkdir(parents=True, exist_ok=True)
-    file_path = upload_dir / filename
-    content = await file.read()
+    file_path = upload_dir / safe_filename
     file_path.write_bytes(content)
 
     # Extract text
@@ -464,8 +495,8 @@ async def upload_file(
         extracted_text = f"(テキスト抽出に失敗しました: {e})"
 
     # Store extracted text as a special observation
-    now = datetime.utcnow()
-    file_case_id = f"file-{session_id[:8]}-{filename}"
+    now = datetime.now(timezone.utc)
+    file_case_id = f"file-{session_id[:8]}-{safe_filename}"
     await db.execute(text("""
         INSERT INTO db_test_cases
         (id, session_id, category, prompt, metadata_json,
@@ -526,11 +557,20 @@ async def complete_session(
     user: User = Depends(require_agent_key),
 ):
     """Mark session as complete and trigger LLM scoring."""
+    _validate_session_id(session_id)
+    # Verify session exists and belongs to user
     result = await db.execute(
-        text("SELECT id, tool_id, status, total_planned, total_executed FROM audit_sessions WHERE id = :sid"),
-        {"sid": session_id},
+        text("SELECT id, tool_id, status, total_planned, total_executed FROM audit_sessions WHERE id = :sid AND initiated_by = :uid"),
+        {"sid": session_id, "uid": user.id},
     )
     session_row = result.fetchone()
+    # Admin/analyst fallback — can access any session
+    if not session_row and user.role in ('admin', 'analyst'):
+        result = await db.execute(
+            text("SELECT id, tool_id, status, total_planned, total_executed FROM audit_sessions WHERE id = :sid"),
+            {"sid": session_id},
+        )
+        session_row = result.fetchone()
     if not session_row:
         raise HTTPException(404, f"セッションが見つかりません: {session_id}")
 
@@ -540,9 +580,9 @@ async def complete_session(
     tool_id = session_row[1]
     total_planned = session_row[3] or 0
     total_executed = session_row[4] or 0
-    completeness = int(total_executed / total_planned * 100) if total_planned > 0 else 100
+    completeness = int(total_executed / total_planned * 100) if total_planned > 0 else 0
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Update session to "scoring" status
     await db.execute(text("""
@@ -638,15 +678,28 @@ async def get_session_progress(
     user: User = Depends(require_agent_key),
 ):
     """Return current session progress."""
+    _validate_session_id(session_id)
+    # Verify session exists and belongs to user
     result = await db.execute(
         text("""
             SELECT id, session_code, status, total_planned, total_executed,
                    completeness_ratio, executor_type
-            FROM audit_sessions WHERE id = :sid
+            FROM audit_sessions WHERE id = :sid AND initiated_by = :uid
         """),
-        {"sid": session_id},
+        {"sid": session_id, "uid": user.id},
     )
     row = result.fetchone()
+    # Admin/analyst fallback — can access any session
+    if not row and user.role in ('admin', 'analyst'):
+        result = await db.execute(
+            text("""
+                SELECT id, session_code, status, total_planned, total_executed,
+                       completeness_ratio, executor_type
+                FROM audit_sessions WHERE id = :sid
+            """),
+            {"sid": session_id},
+        )
+        row = result.fetchone()
     if not row:
         raise HTTPException(404, f"セッションが見つかりません: {session_id}")
 
