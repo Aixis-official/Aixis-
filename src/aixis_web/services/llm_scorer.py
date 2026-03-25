@@ -329,13 +329,19 @@ class LLMScorer:
 
         observations_text = "\n".join(obs_entries)
 
+        total_planned = len(observations) + max(0, 17 - len(observations))  # approximate
+        completion_rate = len(observations) / max(total_planned, 1) * 100
+
         return f"""あなたはスライド作成・資料作成AIツールの専門的な品質評価者です。
 以下の観察データ（テスターが入力したプロンプトとAIの応答）およびスクリーンショット画像に基づいて、
 指定された評価軸のルーブリックに従って「{rubric['name_jp']}」（{axis}）軸のスコアを算出してください。
 
-重要: スクリーンショット画像がある場合は、それを主要な評価根拠としてください。
-画像にはAIツールが生成したスライドの内容、UI、レイアウト等が含まれています。
-テキストの応答がなくてもスクリーンショットから評価を行ってください。
+重要な注意事項:
+- スクリーンショット画像がある場合は、それを主要な評価根拠としてください。
+- テストの完遂率は {completion_rate:.0f}% です（{len(observations)}件/{total_planned}件）。
+- 未実施のテストが多い場合、confidenceを低く設定してください（完遂率に比例）。
+- 観察データが少ない場合、スコアは控えめに評価してください。
+- 応答時間が0msまたは未計測の場合、応答速度の評価はスキップしてください。
 
 ## 軸の定義
 {rubric['description']}

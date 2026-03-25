@@ -811,12 +811,13 @@
             if (!details || details.length === 0) return '';
             var html = '<div class="mt-2 space-y-1.5 border-t border-gray-100 dark:border-gray-700/50 pt-2">';
             details.forEach(function(d) {
-                var dPct = (d.score * 100).toFixed(0);
-                var dColor = d.score >= 0.7 ? 'text-emerald-600 dark:text-emerald-400' : (d.score >= 0.4 ? 'text-indigo-600 dark:text-indigo-400' : 'text-red-500 dark:text-red-400');
+                var dScore = d.score;
+                var dDisplay = dScore.toFixed(1);
+                var dColor = dScore >= 3.5 ? 'text-emerald-600 dark:text-emerald-400' : (dScore >= 2.0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-red-500 dark:text-red-400');
                 html += '<div class="text-[10px]">' +
                     '<div class="flex items-center justify-between">' +
                         '<span class="text-gray-500 dark:text-gray-400 font-jp">' + escapeHtml(d.rule_name_jp || d.rule_id || '') + '</span>' +
-                        '<span class="font-medium tabular-nums ' + dColor + '">' + dPct + '%</span>' +
+                        '<span class="font-medium tabular-nums ' + dColor + '">' + dDisplay + ' / 5.0</span>' +
                     '</div>' +
                     (d.evidence ? '<div class="text-[9px] text-gray-400 dark:text-gray-500 font-jp mt-0.5">' + escapeHtml(d.evidence) + '</div>' : '') +
                 '</div>';

@@ -208,6 +208,7 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
             "response_raw": r.response_raw[:500] if r.response_raw else None,
             "response_time_ms": r.response_time_ms,
             "error": r.error,
+            "screenshot_path": r.screenshot_path,
             "executed_at": r.executed_at.isoformat() if r.executed_at else None,
             "ai_steps_taken": r.ai_steps_taken or 0,
             "ai_calls_used": r.ai_calls_used or 0,
