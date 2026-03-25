@@ -180,7 +180,7 @@ function renderChecklistItem(axis, item) {
                        oninput="onRangeInput(this)">
                 <input type="number" min="0" max="5" step="0.1" value="0.0"
                        class="w-14 sm:w-16 text-center text-sm font-bold tabular-nums rounded-md border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-colors duration-150"
-                       data-axis="${axis.key}" data-item="${item.id}"
+                       data-axis="${axis.key}" data-item="${item.id}" data-name="${item.name_jp}" data-weight="${item.weight}"
                        onchange="onNumberChange(this)">
                 <span class="text-xs text-gray-400 dark:text-gray-500">/ 5</span>
             </div>
@@ -379,18 +379,24 @@ document.getElementById('submit-scores').addEventListener('click', async () => {
     btn.disabled = true;
     btn.textContent = '送信中...';
 
-    const entries = [];
+    const items = [];
     document.querySelectorAll('input[type="number"][data-axis]').forEach(el => {
         const score = parseFloat(el.value);
         if (score > 0) {
             const axis = el.dataset.axis;
             const itemId = el.dataset.item;
+            const itemName = el.dataset.name || itemId;
+            const weight = parseFloat(el.dataset.weight) || 1.0;
             const textarea = document.querySelector(`textarea[data-axis="${axis}"][data-item="${itemId}"]`);
-            entries.push({
+            items.push({
                 axis: axis,
-                item_id: itemId,
+                checklist_item_id: itemId,
+                item_name_jp: itemName,
+                passed: score >= 3,
                 score: score,
+                weight: weight,
                 evidence: textarea ? textarea.value : '',
+                evidence_url: '',
             });
         }
     });
@@ -398,10 +404,13 @@ document.getElementById('submit-scores').addEventListener('click', async () => {
     try {
         await aixisAPI(`/audits/${sessionId}/manual-scores`, {
             method: 'POST',
-            body: JSON.stringify({ entries }),
+            body: JSON.stringify({ items }),
         });
-        alert('手動スコアが送信されました。自動スコアとの統合処理を開始します。');
-        window.location.href = '/dashboard';
+        const msg = document.createElement('div');
+        msg.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg text-sm font-medium';
+        msg.innerHTML = '手動スコアが送信されました。 <a href="/dashboard/audits/' + sessionId + '" class="underline font-bold ml-2">監査詳細に戻る</a>';
+        document.body.appendChild(msg);
+        btn.textContent = '送信完了';
     } catch (e) {
         alert('エラー: ' + e.message);
         btn.disabled = false;

@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ...db.base import get_db
 from ...db.models.tool import Tool, ToolCategory, ToolTargetConfig
@@ -104,7 +105,7 @@ async def list_tools(
     total = total_result.scalar() or 0
 
     offset = (page - 1) * page_size
-    query = query.order_by(Tool.name_jp).offset(offset).limit(page_size)
+    query = query.options(selectinload(Tool.scores)).order_by(Tool.name_jp).offset(offset).limit(page_size)
     result = await db.execute(query)
     items = result.scalars().all()
 
@@ -114,7 +115,7 @@ async def list_tools(
 @router.get("/{slug}", response_model=ToolResponse)
 async def get_tool(slug: str, db: Annotated[AsyncSession, Depends(get_db)]):
     """Get tool detail by slug."""
-    result = await db.execute(select(Tool).where(Tool.slug == slug))
+    result = await db.execute(select(Tool).where(Tool.slug == slug).options(selectinload(Tool.scores)))
     tool = result.scalar_one_or_none()
     if not tool:
         raise HTTPException(

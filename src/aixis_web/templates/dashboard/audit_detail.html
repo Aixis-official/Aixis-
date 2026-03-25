@@ -461,6 +461,24 @@
         alert('再試行機能はChrome拡張に移行されました。Chrome拡張から新しい監査セッションを開始してください。');
     };
 
+    window.finalizeAudit = async function() {
+        if (!confirm('この監査結果を公開しますか？公開すると利用者ページの監査データベースに反映されます。')) return;
+
+        var btn = document.getElementById('finalize-btn');
+        btn.disabled = true;
+        btn.textContent = '公開中...';
+
+        try {
+            var result = await aixisAPI('/audits/' + sessionId + '/finalize', { method: 'POST' });
+            alert('公開完了: 総合グレード ' + result.overall_grade + ' (' + result.overall_score.toFixed(1) + '/5.0)');
+            window.location.reload();
+        } catch (e) {
+            alert('公開に失敗しました: ' + (e.message || '不明なエラー'));
+            btn.disabled = false;
+            btn.textContent = '監査結果を公開';
+        }
+    };
+
     function renderAudit(data) {
         // Header
         document.getElementById('session-tool-name').textContent = data.tool_name || data.tool_id;
@@ -475,6 +493,9 @@
         var btns = '';
         if (data.status === 'awaiting_manual') {
             btns += '<a href="/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors font-jp">手動評価を入力</a>';
+        }
+        if (data.status === 'completed' || data.status === 'awaiting_manual') {
+            btns += '<button id="finalize-btn" onclick="finalizeAudit()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm font-jp"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>監査結果を公開</button>';
         }
         if (data.status === 'running' || data.status === 'pending') {
             btns += '<span class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 font-jp"><svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>実行中</span>';

@@ -562,14 +562,35 @@ async def finalize_audit(
     if session.status not in ("awaiting_manual", "completed"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"現在のステータス '{session.status}' では確定できません",
+            detail=f"セッションは {session.status} 状態です。完了済みまたは手動評価待ちのセッションのみファイナライズできます。",
+        )
+
+    # Merge auto + manual scores and publish to ToolPublishedScore
+    from ...services.score_service import merge_and_publish
+
+    try:
+        published_score = await merge_and_publish(
+            db=db,
+            session_id=session_id,
+            tool_id=session.tool_id,
+            published_by=user.id,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"スコア公開に失敗しました: {e}",
         )
 
     session.status = "completed"
     session.completed_at = datetime.now(timezone.utc)
     await db.commit()
 
-    return {"status": "finalized", "session_id": session_id}
+    return {
+        "message": "監査結果を公開しました",
+        "overall_score": published_score.overall_score,
+        "overall_grade": published_score.overall_grade,
+        "version": published_score.version,
+    }
 
 
 # ---------------------------------------------------------------------------

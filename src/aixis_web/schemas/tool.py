@@ -103,6 +103,21 @@ class CategoryResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PublishedScoreResponse(BaseModel):
+    id: str
+    practicality: float = 0.0
+    cost_performance: float = 0.0
+    localization: float = 0.0
+    safety: float = 0.0
+    uniqueness: float = 0.0
+    overall_score: float = 0.0
+    overall_grade: str | None = None
+    version: int = 1
+    published_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
 class ToolResponse(BaseModel):
     id: str
     slug: str
@@ -149,6 +164,7 @@ class ToolResponse(BaseModel):
     seo_keywords_jp: list[str] | None = None
     content_updated_at: datetime | None = None
     auth_storage_state: dict | None = None
+    scores: list[PublishedScoreResponse] = []
 
     model_config = {"from_attributes": True}
 
