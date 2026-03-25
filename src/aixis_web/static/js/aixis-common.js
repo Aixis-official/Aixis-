@@ -183,18 +183,25 @@ window.addEventListener('aixis-theme-change', () => {
 
 // ===== DATE UTILITIES =====
 
+function _parseUTC(isoString) {
+  // DB stores UTC without timezone suffix — append Z so JS parses as UTC correctly
+  if (!isoString) return null;
+  return new Date(isoString.endsWith('Z') || isoString.includes('+') ? isoString : isoString + 'Z');
+}
+
 function formatDate(isoString) {
-  if (!isoString) return '---';
-  const d = new Date(isoString);
-  return d.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  const d = _parseUTC(isoString);
+  if (!d || isNaN(d)) return '---';
+  return d.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tokyo' });
 }
 
 function formatDateTime(isoString) {
-  if (!isoString) return '---';
-  const d = new Date(isoString);
+  const d = _parseUTC(isoString);
+  if (!d || isNaN(d)) return '---';
   return d.toLocaleDateString('ja-JP', {
     year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit'
+    hour: '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Tokyo'
   });
 }
 

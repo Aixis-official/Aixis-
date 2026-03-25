@@ -269,7 +269,7 @@ class LLMScorer:
                     "details": json.dumps(details_with_meta, ensure_ascii=False),
                     "strengths": json.dumps(score_data["strengths"], ensure_ascii=False),
                     "risks": json.dumps(score_data["risks"], ensure_ascii=False),
-                    "scored_at": datetime.now(timezone.utc),
+                    "scored_at": datetime.utcnow(),
                     "scored_by": None,  # NULL = automated LLM scoring
                 })
 
