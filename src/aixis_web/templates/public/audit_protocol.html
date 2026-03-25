@@ -76,10 +76,10 @@
                 <div class="mt-4 border-t border-gray-100 pt-4">
                     <span class="text-xs font-semibold text-gray-500">計測項目:</span>
                     <ul class="mt-2 space-y-1 text-xs text-gray-500">
-                        <li>- タスク完遂率・成功率（自動）</li>
-                        <li>- チーム導入容易性・オンボーディング品質（手動）</li>
-                        <li>- 既存ワークフロー統合性（手動）</li>
-                        <li>- カスタマーサポート品質（手動）</li>
+                        <li>- AIが指示通りのスライドを生成できたか（自動）</li>
+                        <li>- UI操作性・直感的なワークフロー（手動）</li>
+                        <li>- テンプレート品質・デザインの充実度（手動）</li>
+                        <li>- 出力形式の対応（PPTX/PDF等）（手動）</li>
                         <li>- 出力品質の一貫性（自動 + 手動）</li>
                     </ul>
                 </div>
@@ -99,11 +99,11 @@
                 <div class="mt-4 border-t border-gray-100 pt-4">
                     <span class="text-xs font-semibold text-gray-500">計測項目:</span>
                     <ul class="mt-2 space-y-1 text-xs text-gray-500">
-                        <li>- 月額コスト・TCO（総保有コスト）（手動）</li>
+                        <li>- 料金体系の透明性・妥当性（手動）</li>
                         <li>- 無料プランの実用性（手動）</li>
-                        <li>- 料金体系の透明性（手動）</li>
+                        <li>- 有料プランの機能制限の妥当性（手動）</li>
                         <li>- 乗り換えコスト・ロックインリスク（手動）</li>
-                        <li>- 応答速度・API効率性（自動）</li>
+                        <li>- 応答速度（Chrome拡張タイマーによる参考計測）（自動）</li>
                     </ul>
                 </div>
             </div>
@@ -122,11 +122,11 @@
                 <div class="mt-4 border-t border-gray-100 pt-4">
                     <span class="text-xs font-semibold text-gray-500">計測項目:</span>
                     <ul class="mt-2 space-y-1 text-xs text-gray-500">
-                        <li>- UI日本語化品質（自動 + 手動）</li>
-                        <li>- 日本語入力に対する応答精度（自動）</li>
-                        <li>- ドキュメント日本語化・ヘルプ充実度（手動）</li>
-                        <li>- 日本固有機能対応（和暦・通貨・住所形式）（自動）</li>
-                        <li>- 敬語・ビジネス日本語の適切性（手動）</li>
+                        <li>- UI日本語化品質（手動）</li>
+                        <li>- 日本語プロンプトに対するスライド品質（自動）</li>
+                        <li>- ドキュメント・ヘルプの日本語対応（手動）</li>
+                        <li>- 日本語フォント・レイアウト対応（手動）</li>
+                        <li>- ビジネス日本語の適切性（自動 + 手動）</li>
                     </ul>
                 </div>
             </div>
@@ -194,15 +194,14 @@
             <!-- Automated -->
             <div class="p-6 border-b md:border-b-0 md:border-r border-gray-200 bg-white">
                 <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-sans">自動テスト（Automated）</span>
-                <p class="mt-3 text-sm text-gray-600 leading-relaxed">ブラウザ自動化による再現可能な定量測定</p>
+                <p class="mt-3 text-sm text-gray-600 leading-relaxed">Chrome拡張とLLM画像解析による成果物の定量評価</p>
                 <ul class="mt-4 space-y-2 text-sm text-gray-600">
-                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>API応答速度（p50/p95/p99）</li>
-                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>標準テストケース通過率</li>
-                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>日本語形態素解析精度</li>
-                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>操作フロー完了率</li>
-                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>エラー発生率・復帰率</li>
-                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>暗号化・認証チェック</li>
-                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>ハルシネーション検出</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>スクリーンショットのLLM画像解析による成果物品質評価</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>テストプロンプトに対するAI出力の忠実度判定</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>日本語出力の品質・敬語適切性の自動評価</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>応答時間の手動計測（Chrome拡張タイマー）</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>矛盾指示への対応力の自動判定</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>情報の正確性・ハルシネーション検出</li>
                 </ul>
                 <div class="mt-4 text-xs text-gray-400">
                     配分比率: 全体スコアの約60%
@@ -345,14 +344,14 @@
                 <div class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 text-xs font-bold rounded-sm shrink-0">02</div>
                 <div>
                     <h3 class="text-sm font-bold text-gray-900">ダブルチェック評価</h3>
-                    <p class="mt-1 text-sm text-gray-600">手動評価は2名以上の独立した評価者が別々に実施。評価者間の乖離が大きい場合は第3の評価者を追加します。</p>
+                    <p class="mt-1 text-sm text-gray-600">手動評価結果はLLM自動評価との整合性を確認。大きな乖離がある場合はレビューを実施します。将来的に複数評価者体制への移行を予定しています。</p>
                 </div>
             </div>
             <div class="flex items-start gap-4">
                 <div class="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 text-xs font-bold rounded-sm shrink-0">03</div>
                 <div>
                     <h3 class="text-sm font-bold text-gray-900">自動テスト検証</h3>
-                    <p class="mt-1 text-sm text-gray-600">自動テストスクリプトの精度を定期検証。テスト環境の差異による誤差を統計的に補正します。</p>
+                    <p class="mt-1 text-sm text-gray-600">LLMによる評価基準（ルーブリック）を定期的に検証・改善。評価の一貫性を確保します。</p>
                 </div>
             </div>
             <div class="flex items-start gap-4">
@@ -470,7 +469,7 @@
                     </div>
                     <div>
                         <dt class="font-semibold text-gray-900">網羅性 <span class="font-sans text-xs text-gray-400">(Comprehensiveness)</span></dt>
-                        <dd class="text-gray-600 mt-0.5 leading-relaxed">テスト計画の完遂率とカテゴリカバー率で計測。全テストカテゴリ（方言・長文・矛盾・曖昧・敬語など）を網羅的に実行したかを評価します。</dd>
+                        <dd class="text-gray-600 mt-0.5 leading-relaxed">テスト計画の完遂率とカテゴリカバー率で計測。全テストカテゴリ（基本作成・構成力・日本語品質・正確性・応用機能）を網羅的に実行したかを評価します。</dd>
                     </div>
                     <div>
                         <dt class="font-semibold text-gray-900">解釈性 <span class="font-sans text-xs text-gray-400">(Intelligibility)</span></dt>

@@ -43,14 +43,14 @@
         <div class="border border-gray-200 rounded-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100">
                 <h3 class="text-sm font-bold text-gray-900">自動テストで計測する項目</h3>
-                <p class="mt-1 text-xs text-gray-500">ブラウザ自動化を用いた客観的・定量的データ収集</p>
+                <p class="mt-1 text-xs text-gray-500">Chrome拡張とLLM画像解析による客観的・定量的データ収集</p>
             </div>
             <ul class="px-6 py-4 space-y-2 text-sm text-gray-600">
-                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>API応答速度（p50/p95/p99レイテンシ）</li>
-                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>機能テスト成功率（標準テストケースの通過率）</li>
-                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>日本語処理精度（形態素解析・文脈理解精度）</li>
-                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>UI操作性スコア（標準操作フローの完了率・操作ステップ数）</li>
-                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>エラーハンドリング品質（エラー発生時の挙動・復帰率）</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>スクリーンショットLLM画像解析による成果物品質評価</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>テストプロンプト忠実度（指示通りの出力が得られたか）</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>日本語出力品質（敬語・ビジネス表現の適切性）</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>応答時間（Chrome拡張タイマーによる参考計測）</li>
+                <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>矛盾指示への対応力・エラーハンドリング品質</li>
             </ul>
         </div>
 
@@ -321,15 +321,15 @@
             <li class="flex items-start gap-3">
                 <span class="text-blue-500 shrink-0 mt-0.5 font-bold">-</span>
                 <div>
-                    <span class="font-bold text-gray-900">ダブルチェック体制</span>
-                    <p class="mt-1 text-gray-600">手動評価は必ず2名以上の独立した評価者が実施し、結果を照合します。</p>
+                    <span class="font-bold text-gray-900">クロスチェック体制（LLM自動評価と手動評価の整合性を確認）</span>
+                    <p class="mt-1 text-gray-600">手動評価結果はLLM自動評価との整合性を確認し、大きな乖離がある場合はレビューを実施します。</p>
                 </div>
             </li>
             <li class="flex items-start gap-3">
                 <span class="text-blue-500 shrink-0 mt-0.5 font-bold">-</span>
                 <div>
-                    <span class="font-bold text-gray-900">自動テストの継続監視</span>
-                    <p class="mt-1 text-gray-600">自動テストスクリプトの精度を定期的に検証し、テスト環境の変動による誤差を排除します。</p>
+                    <span class="font-bold text-gray-900">LLM評価ルーブリックの継続的な精度検証・改善</span>
+                    <p class="mt-1 text-gray-600">LLM評価基準（ルーブリック）の精度を定期的に検証・改善し、評価の一貫性を確保します。</p>
                 </div>
             </li>
             <li class="flex items-start gap-3">
