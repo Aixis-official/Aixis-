@@ -5,33 +5,33 @@
 // ===== 5-AXIS CONSTANTS =====
 window.AIXIS = {
   // Canonical axis keys (order matters for radar charts)
-  AXIS_KEYS: ['instruction_adherence', 'japanese_quality', 'structure_logic', 'contradiction_handling', 'accuracy'],
+  AXIS_KEYS: ['practicality', 'cost_performance', 'localization', 'safety', 'uniqueness'],
 
   // Japanese labels for each axis
   AXIS_LABELS: {
-    instruction_adherence: '指示への忠実度',
-    japanese_quality: '日本語品質',
-    structure_logic: '構成・論理展開',
-    contradiction_handling: '矛盾指示への対応力',
-    accuracy: '情報の正確性'
+    practicality: '実務適性',
+    cost_performance: '費用対効果',
+    localization: '日本語能力',
+    safety: '信頼性・安全性',
+    uniqueness: '革新性'
   },
 
   // Short labels for compact display
   AXIS_SHORT: {
-    instruction_adherence: '忠実度',
-    japanese_quality: '日本語',
-    structure_logic: '構成',
-    contradiction_handling: '矛盾対応',
-    accuracy: '正確性'
+    practicality: '実務',
+    cost_performance: 'コスパ',
+    localization: '日本語',
+    safety: '安全性',
+    uniqueness: '革新性'
   },
 
   // Auto:Manual ratio display
   AXIS_MIX: {
-    instruction_adherence: { auto: 70, manual: 30 },
-    japanese_quality: { auto: 70, manual: 30 },
-    structure_logic: { auto: 60, manual: 40 },
-    contradiction_handling: { auto: 80, manual: 20 },
-    accuracy: { auto: 60, manual: 40 }
+    practicality: { auto: 40, manual: 60 },
+    cost_performance: { auto: 0, manual: 100 },
+    localization: { auto: 70, manual: 30 },
+    safety: { auto: 35, manual: 65 },
+    uniqueness: { auto: 0, manual: 100 }
   },
 
   // Colors for up to 8 tools in comparison charts

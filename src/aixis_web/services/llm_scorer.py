@@ -1,9 +1,8 @@
 """LLM-based rubric scoring service for Chrome extension audit sessions.
 
 Uses Claude API to evaluate slide-creation AI tool observations across
-5 axes (instruction adherence, Japanese quality, structure/logic,
-contradiction handling, accuracy), producing scores compatible with
-the existing AxisScoreRecord model.
+5 axes (practicality, cost_performance, localization, safety, uniqueness),
+producing scores compatible with the existing AxisScoreRecord model.
 """
 
 import json
@@ -20,11 +19,11 @@ from ..config import settings
 logger = logging.getLogger(__name__)
 
 # Axis definitions with Japanese names and evaluation criteria
-# Slide-creation AI specific 5 axes
+# Mapped to the canonical 5 axes used across the platform
 AXIS_RUBRICS = {
-    "instruction_adherence": {
-        "name_jp": "指示への忠実度",
-        "description": "プロンプトの指示内容をどの程度正確に反映した成果物を生成したか",
+    "practicality": {
+        "name_jp": "実務適性",
+        "description": "スライド作成タスクの完了度、指示への忠実性、実務での活用しやすさ",
         "criteria": [
             {"rule_id": "topic_coverage", "name_jp": "テーマ網羅性", "weight": 3.0,
              "guide": "指示されたトピック・要件をすべてカバーしているか"},
@@ -36,8 +35,20 @@ AXIS_RUBRICS = {
              "guide": "指定された対象者（経営層/技術者/新入社員等）に適した表現・深さか"},
         ],
     },
-    "japanese_quality": {
-        "name_jp": "日本語品質",
+    "cost_performance": {
+        "name_jp": "費用対効果",
+        "description": "応答速度、タスク成功率、出力の徹底度から見たコストパフォーマンス",
+        "criteria": [
+            {"rule_id": "response_speed", "name_jp": "応答速度", "weight": 2.5,
+             "guide": "プロンプトに対する応答時間が実用的か（5秒以内が理想）"},
+            {"rule_id": "task_success_rate", "name_jp": "タスク成功率", "weight": 3.0,
+             "guide": "指示されたタスクを正常に完了できた割合"},
+            {"rule_id": "output_thoroughness", "name_jp": "出力の徹底度", "weight": 2.5,
+             "guide": "出力内容が十分な量と質を備えているか、手直しの必要性"},
+        ],
+    },
+    "localization": {
+        "name_jp": "日本語能力",
         "description": "ビジネス日本語としての品質、敬語、表現の適切性",
         "criteria": [
             {"rule_id": "keigo_consistency", "name_jp": "敬語の一貫性", "weight": 3.0,
@@ -50,35 +61,9 @@ AXIS_RUBRICS = {
              "guide": "業界用語の正確な使用、不自然な直訳がないか"},
         ],
     },
-    "structure_logic": {
-        "name_jp": "構成・論理展開",
-        "description": "プレゼン全体の構成力と各スライド間の論理的なつながり",
-        "criteria": [
-            {"rule_id": "story_flow", "name_jp": "ストーリーフロー", "weight": 3.0,
-             "guide": "導入→本論→結論の流れ、スライド間の論理的接続"},
-            {"rule_id": "slide_purpose", "name_jp": "各スライドの役割明確性", "weight": 2.5,
-             "guide": "各スライドに明確な目的があるか、冗長なスライドがないか"},
-            {"rule_id": "data_presentation", "name_jp": "データの提示方法", "weight": 2.0,
-             "guide": "数値データの視覚化提案、グラフ種類の適切性"},
-            {"rule_id": "executive_summary", "name_jp": "要点の明確化", "weight": 2.0,
-             "guide": "キーメッセージの明示、テイクアウェイの提示"},
-        ],
-    },
-    "contradiction_handling": {
-        "name_jp": "矛盾指示への対応力",
-        "description": "矛盾した指示や不明確な要件に対する対応品質",
-        "criteria": [
-            {"rule_id": "contradiction_detection", "name_jp": "矛盾検出", "weight": 3.0,
-             "guide": "矛盾する指示を認識し、指摘できたか"},
-            {"rule_id": "clarification_request", "name_jp": "確認・提案力", "weight": 2.5,
-             "guide": "矛盾解消のための代替案や確認質問を提示したか"},
-            {"rule_id": "graceful_degradation", "name_jp": "妥当な判断", "weight": 2.0,
-             "guide": "矛盾解消できない場合、合理的な判断で対応したか"},
-        ],
-    },
-    "accuracy": {
-        "name_jp": "情報の正確性",
-        "description": "生成された情報の事実性、ハルシネーションの有無",
+    "safety": {
+        "name_jp": "信頼性・安全性",
+        "description": "生成された情報の正確性、ハルシネーションの有無、事実性",
         "criteria": [
             {"rule_id": "factual_accuracy", "name_jp": "事実の正確性", "weight": 3.5,
              "guide": "提示された数値、固有名詞、日付等が正確か"},
@@ -88,6 +73,22 @@ AXIS_RUBRICS = {
              "guide": "存在しない製品名、架空の統計、捏造された引用がないか"},
             {"rule_id": "internal_consistency", "name_jp": "内部一貫性", "weight": 2.0,
              "guide": "スライド間で数値や主張が矛盾していないか"},
+        ],
+    },
+    "uniqueness": {
+        "name_jp": "革新性",
+        "description": "プレゼン全体の構成力、論理的つながり、創造的な問題解決",
+        "criteria": [
+            {"rule_id": "story_flow", "name_jp": "ストーリーフロー", "weight": 3.0,
+             "guide": "導入→本論→結論の流れ、スライド間の論理的接続"},
+            {"rule_id": "slide_purpose", "name_jp": "各スライドの役割明確性", "weight": 2.5,
+             "guide": "各スライドに明確な目的があるか、冗長なスライドがないか"},
+            {"rule_id": "data_presentation", "name_jp": "データの提示方法", "weight": 2.0,
+             "guide": "数値データの視覚化提案、グラフ種類の適切性"},
+            {"rule_id": "contradiction_handling", "name_jp": "矛盾指示への対応力", "weight": 2.5,
+             "guide": "矛盾する指示を認識し、代替案や確認質問を提示できたか"},
+            {"rule_id": "executive_summary", "name_jp": "要点の明確化", "weight": 2.0,
+             "guide": "キーメッセージの明示、テイクアウェイの提示"},
         ],
     },
 }
@@ -101,7 +102,7 @@ class LLMScorer:
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY が設定されていません")
         self.client = anthropic.Anthropic(api_key=api_key)
-        self.model = "claude-sonnet-4-20250514"
+        self.model = settings.ai_agent_model or "claude-haiku-4-5-20251001"
 
     async def score_session(
         self,
@@ -411,15 +412,23 @@ class LLMScorer:
             }
 
         # Validate and normalize
-        score = max(0.0, min(5.0, float(data.get("score", 0.0))))
+        raw_score = float(data.get("score", 0.0))
+        # If the LLM returned a percentage (>5), convert to 0-5 scale
+        if raw_score > 5.0:
+            raw_score = raw_score / 100.0 * 5.0
+        score = max(0.0, min(5.0, raw_score))
         confidence = max(0.0, min(1.0, float(data.get("confidence", 0.0))))
 
         details = []
         for d in data.get("details", []):
+            detail_score = float(d.get("score", 0.0))
+            # If detail score looks like a percentage, convert to 0-5 scale
+            if detail_score > 5.0:
+                detail_score = detail_score / 100.0 * 5.0
             details.append({
                 "rule_id": d.get("rule_id", "unknown"),
                 "rule_name_jp": d.get("rule_name_jp", ""),
-                "score": max(0.0, min(5.0, float(d.get("score", 0.0)))),
+                "score": max(0.0, min(5.0, detail_score)),
                 "weight": float(d.get("weight", 1.0)),
                 "evidence": d.get("evidence", ""),
                 "severity": d.get("severity", "medium"),
