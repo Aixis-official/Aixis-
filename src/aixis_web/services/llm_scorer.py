@@ -110,14 +110,14 @@ class LLMScorer:
         db: AsyncSession,
     ) -> list[dict]:
         """Score all observations in a session across all 5 axes."""
-        # 1. Fetch observations (test results)
+        # 1. Fetch observations (test results + screenshot evidence)
         result = await db.execute(text("""
             SELECT tr.test_case_id, tr.category, tr.prompt_sent, tr.response_raw,
-                   tr.response_time_ms, tr.error,
+                   tr.response_time_ms, tr.error, tr.screenshot_path,
                    tc.expected_behaviors, tc.failure_indicators
             FROM db_test_results tr
             LEFT JOIN db_test_cases tc ON tr.test_case_id = tc.id AND tr.session_id = tc.session_id
-            WHERE tr.session_id = :sid AND tr.category != 'manual_screenshot'
+            WHERE tr.session_id = :sid
             ORDER BY tr.executed_at
         """), {"sid": session_id})
         rows = result.fetchall()
@@ -126,19 +126,44 @@ class LLMScorer:
             logger.warning("No observations found for session %s", session_id)
             return []
 
-        # Build observations list
+        # Build observations list, grouping screenshots per test
         observations = []
+        screenshot_map = {}  # test_case_id -> [screenshot_paths]
+
         for row in rows:
+            test_case_id = row[0]
+            category = row[1]
+            screenshot_path = row[6]
+
+            if category == "screenshot_evidence":
+                # Group screenshots by test_case_id
+                if test_case_id not in screenshot_map:
+                    screenshot_map[test_case_id] = []
+                if screenshot_path:
+                    screenshot_map[test_case_id].append(screenshot_path)
+                continue
+
             observations.append({
-                "test_case_id": row[0],
-                "category": row[1],
+                "test_case_id": test_case_id,
+                "category": category,
                 "prompt": row[2],
                 "response": row[3] or "",
                 "response_time_ms": row[4] or 0,
                 "error": row[5],
-                "expected_behaviors": json.loads(row[6]) if row[6] else [],
-                "failure_indicators": json.loads(row[7]) if row[7] else [],
+                "screenshot_path": screenshot_path,
+                "expected_behaviors": json.loads(row[7]) if row[7] else [],
+                "failure_indicators": json.loads(row[8]) if row[8] else [],
             })
+
+        # Attach grouped screenshots to their test observations
+        for obs in observations:
+            obs["screenshots"] = screenshot_map.get(obs["test_case_id"], [])
+            if obs["screenshot_path"] and obs["screenshot_path"] not in obs["screenshots"]:
+                obs["screenshots"].insert(0, obs["screenshot_path"])
+
+        if not observations:
+            logger.warning("No test observations found for session %s (only screenshots)", session_id)
+            return []
 
         # 2. Score each axis
         all_scores = []
@@ -199,18 +224,73 @@ class LLMScorer:
         rubric: dict,
         observations: list[dict],
     ) -> dict:
-        """Score a single axis using Claude."""
-        prompt = self._build_rubric_prompt(axis, rubric, observations)
+        """Score a single axis using Claude with multimodal (text + screenshots)."""
+        prompt_text = self._build_rubric_prompt(axis, rubric, observations)
+
+        # Build multimodal content: text prompt + screenshot images
+        content = []
+
+        # Add screenshot images from observations (limit to 10 to control costs)
+        image_count = 0
+        for obs in observations:
+            for ss_path in obs.get("screenshots", [])[:3]:  # Max 3 per test
+                if image_count >= 10:
+                    break
+                image_data = self._load_screenshot(ss_path)
+                if image_data:
+                    content.append({
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/png",
+                            "data": image_data,
+                        },
+                    })
+                    image_count += 1
+
+        # Add text prompt
+        content.append({"type": "text", "text": prompt_text})
 
         response = self.client.messages.create(
             model=self.model,
             max_tokens=2000,
             temperature=0.0,
-            messages=[{"role": "user", "content": prompt}],
+            messages=[{"role": "user", "content": content}],
         )
 
         response_text = response.content[0].text
         return self._parse_score_response(axis, rubric, response_text)
+
+    def _load_screenshot(self, screenshot_path: str) -> str | None:
+        """Load a screenshot file and return base64 data."""
+        import base64
+        from pathlib import Path
+
+        if not screenshot_path:
+            return None
+
+        # screenshot_path is like /static/screenshots/extension/session_id/0001.png
+        static_dir = Path(__file__).parent.parent / "static"
+        # Remove leading /static/ to get relative path
+        rel_path = screenshot_path.lstrip("/")
+        if rel_path.startswith("static/"):
+            rel_path = rel_path[len("static/"):]
+
+        file_path = static_dir / rel_path
+        if not file_path.exists():
+            logger.debug("Screenshot not found: %s", file_path)
+            return None
+
+        try:
+            data = file_path.read_bytes()
+            # Skip if too large (> 5MB)
+            if len(data) > 5 * 1024 * 1024:
+                logger.warning("Screenshot too large, skipping: %s", file_path)
+                return None
+            return base64.b64encode(data).decode("ascii")
+        except Exception as e:
+            logger.warning("Failed to load screenshot %s: %s", file_path, e)
+            return None
 
     def _build_rubric_prompt(
         self,
@@ -231,9 +311,15 @@ class LLMScorer:
             entry = f"--- 観察 {i+1} ---\n"
             entry += f"カテゴリ: {obs['category']}\n"
             entry += f"入力: {obs['prompt'][:500]}\n"
-            response_preview = (obs['response'] or '(応答なし)')[:800]
+            response_preview = (obs['response'] or '(テキスト応答なし — スクリーンショットを参照)')[:800]
             entry += f"応答: {response_preview}\n"
-            entry += f"応答時間: {obs['response_time_ms']}ms\n"
+            if obs['response_time_ms'] and obs['response_time_ms'] > 0:
+                entry += f"応答時間: {obs['response_time_ms']}ms\n"
+            else:
+                entry += "応答時間: 未計測\n"
+            screenshots = obs.get("screenshots", [])
+            if screenshots:
+                entry += f"添付スクリーンショット: {len(screenshots)}枚（上記の画像を参照）\n"
             if obs['error']:
                 entry += f"エラー: {obs['error']}\n"
             if obs['expected_behaviors']:
@@ -243,8 +329,12 @@ class LLMScorer:
         observations_text = "\n".join(obs_entries)
 
         return f"""あなたはスライド作成・資料作成AIツールの専門的な品質評価者です。
-以下の観察データ（テスターが入力したプロンプトとAIの応答テキスト）に基づいて、
+以下の観察データ（テスターが入力したプロンプトとAIの応答）およびスクリーンショット画像に基づいて、
 指定された評価軸のルーブリックに従って「{rubric['name_jp']}」（{axis}）軸のスコアを算出してください。
+
+重要: スクリーンショット画像がある場合は、それを主要な評価根拠としてください。
+画像にはAIツールが生成したスライドの内容、UI、レイアウト等が含まれています。
+テキストの応答がなくてもスクリーンショットから評価を行ってください。
 
 ## 軸の定義
 {rubric['description']}
