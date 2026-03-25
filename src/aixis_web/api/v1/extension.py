@@ -61,11 +61,17 @@ async def create_extension_session(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_agent_key),
 ):
-    """Create a new audit session for the Chrome extension.
+    """Create a new audit session for the Chrome extension."""
+    try:
+        return await _create_session_impl(body, db, user)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Session creation failed: %s", e)
+        raise HTTPException(500, f"セッション作成に失敗: {type(e).__name__}: {e}")
 
-    In protocol mode, generates test cases from YAML patterns and returns them.
-    In freeform mode, creates session without pre-generated test cases.
-    """
+
+async def _create_session_impl(body, db, user):
     session_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
 
