@@ -172,7 +172,7 @@ async def update_settings(
     if body.anthropic_api_key is not None:
         key = body.anthropic_api_key.strip()
         if not key.startswith("sk-ant-") or len(key) < 20:
-            raise HTTPException(400, "有効なAnthropicのAPIキーを入力してください（'sk-ant-' で始まる20文字以上）")
+            raise HTTPException(400, "無効なAPIキーです")
         # Persist to PostgreSQL (survives redeploy)
         await _db_set(db, "AIXIS_ANTHROPIC_API_KEY", key)
         # Also write to .env (local dev) and update runtime

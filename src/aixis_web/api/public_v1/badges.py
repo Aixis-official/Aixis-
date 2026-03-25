@@ -72,7 +72,7 @@ async def tool_badge_svg(
         media_type="image/svg+xml",
         headers={
             "Cache-Control": "public, max-age=3600",
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": "*",  # Intentional: badges are embedded on external sites
         },
     )
 
@@ -113,7 +113,7 @@ async def axis_badge_svg(
         media_type="image/svg+xml",
         headers={
             "Cache-Control": "public, max-age=3600",
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": "*",  # Intentional: badges are embedded on external sites
         },
     )
 
@@ -166,7 +166,7 @@ async def embed_widget(
         headers={
             "X-Frame-Options": "ALLOWALL",
             "Content-Security-Policy": "frame-ancestors *",
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": "*",  # Intentional: embed widget is used on external sites
         },
     )
 
@@ -198,7 +198,7 @@ async def evaluated_badge_svg(
         media_type="image/svg+xml",
         headers={
             "Cache-Control": "public, max-age=3600",
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": "*",  # Intentional: badges are embedded on external sites
         },
     )
 

@@ -249,6 +249,13 @@ async def upload_observation(
 ):
     """Upload a single observation (input/output pair) from the Chrome extension."""
     _validate_session_id(session_id)
+
+    # Limit payload size
+    import sys
+    body_size = sys.getsizeof(body.model_dump_json())
+    if body_size > 10 * 1024 * 1024:  # 10MB limit
+        raise HTTPException(400, "ペイロードが大きすぎます（最大10MB）")
+
     # Verify session exists and belongs to user
     result = await db.execute(
         text("SELECT id, tool_id, status, total_executed FROM audit_sessions WHERE id = :sid AND initiated_by = :uid"),
@@ -287,6 +294,7 @@ async def upload_observation(
             session_dir.mkdir(parents=True, exist_ok=True)
             img_path = session_dir / f"{sequence_number:04d}.png"
             img_path.write_bytes(img_data)
+            # Path relative to static file mount; accessible via /static/screenshots/...
             screenshot_path = f"/static/screenshots/extension/{session_id}/{sequence_number:04d}.png"
         except Exception as e:
             logger.warning("Screenshot save failed: %s", e)
@@ -445,6 +453,12 @@ async def upload_file(
 
     # Read and validate file size (50MB limit)
     content = await file.read()
+
+    # Validate file magic bytes
+    if ext == "pdf" and not content[:4] == b'%PDF':
+        raise HTTPException(400, "ファイルの内容がPDF形式ではありません")
+    if ext == "pptx" and not content[:2] == b'PK':
+        raise HTTPException(400, "ファイルの内容がPPTX形式ではありません")
     if len(content) > 50 * 1024 * 1024:
         raise HTTPException(400, "ファイルサイズが大きすぎます（最大50MB）")
 
@@ -710,6 +724,7 @@ async def get_session_progress(
         total_planned=row[3] or 0,
         total_executed=row[4] or 0,
         completeness_ratio=row[5] or 0,
+        # Inferred from total_planned: protocol mode has test cases, freeform does not
         recording_mode="protocol" if (row[3] or 0) > 0 else "freeform",
     )
 

@@ -24,7 +24,12 @@ router = APIRouter()
 _LOGIN_MAX_ATTEMPTS = 5  # max attempts per window
 _LOGIN_WINDOW_SECONDS = 300  # 5-minute window
 
-# Admin IPs that bypass rate limiting (set ADMIN_IPS env var, comma-separated)
+# Admin IPs that bypass rate limiting (set ADMIN_IPS env var, comma-separated).
+# NOTE: request.client.host is used for IP detection. Behind a reverse proxy,
+# this may be the proxy IP, not the real client. For proper X-Forwarded-For
+# handling, configure the ASGI server's trusted proxy settings (e.g.,
+# uvicorn --proxy-headers --forwarded-allow-ips). The last IP in the chain
+# (closest to the server) should be trusted, not the first.
 _ADMIN_IPS: set[str] = set(
     ip.strip() for ip in settings.admin_ips.split(",") if ip.strip()
 )

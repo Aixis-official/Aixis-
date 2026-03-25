@@ -98,7 +98,11 @@ async def create_client(
             organization_name=body.organization_name,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        error_msg = str(e)
+        # Don't expose internal details
+        if "internal" in error_msg.lower() or "sql" in error_msg.lower():
+            error_msg = "リクエストの処理に失敗しました"
+        raise HTTPException(status_code=400, detail=error_msg)
 
     # Send invite email (in background to not block response)
     invite_url = _build_invite_url(request, raw_token)
@@ -121,7 +125,11 @@ async def suspend_client(
     try:
         user = await client_service.suspend_client(db, client_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        error_msg = str(e)
+        # Don't expose internal details
+        if "internal" in error_msg.lower() or "sql" in error_msg.lower():
+            error_msg = "リクエストの処理に失敗しました"
+        raise HTTPException(status_code=404, detail=error_msg)
     return await _client_to_response(db, user)
 
 
@@ -135,7 +143,11 @@ async def reactivate_client(
     try:
         user = await client_service.reactivate_client(db, client_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        error_msg = str(e)
+        # Don't expose internal details
+        if "internal" in error_msg.lower() or "sql" in error_msg.lower():
+            error_msg = "リクエストの処理に失敗しました"
+        raise HTTPException(status_code=404, detail=error_msg)
     return await _client_to_response(db, user)
 
 
@@ -150,7 +162,11 @@ async def resend_invite(
     try:
         user, raw_token = await client_service.regenerate_invite(db, client_id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        error_msg = str(e)
+        # Don't expose internal details
+        if "internal" in error_msg.lower() or "sql" in error_msg.lower():
+            error_msg = "リクエストの処理に失敗しました"
+        raise HTTPException(status_code=400, detail=error_msg)
 
     invite_url = _build_invite_url(request, raw_token)
     try:
@@ -181,7 +197,11 @@ async def complete_invite(
     except PasswordPolicyError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        error_msg = str(e)
+        # Don't expose internal details
+        if "internal" in error_msg.lower() or "sql" in error_msg.lower():
+            error_msg = "リクエストの処理に失敗しました"
+        raise HTTPException(status_code=400, detail=error_msg)
 
     return {
         "message": "パスワードが設定されました。ログインしてください。",

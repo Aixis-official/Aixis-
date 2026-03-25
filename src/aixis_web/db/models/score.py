@@ -53,6 +53,10 @@ class AxisScoreRecord(Base):
     )
 
 
+# TODO: Add aggregation job to populate ToolPublishedScore from AxisScoreRecord
+# Currently axis scores are stored per-session but not aggregated for publication
+
+
 class ToolPublishedScore(Base):
     __tablename__ = "tool_scores"
 
