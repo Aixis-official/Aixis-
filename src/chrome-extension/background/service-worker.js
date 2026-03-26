@@ -179,6 +179,7 @@ async function createSession({ toolId, profileId, recordingMode }) {
   state.captureCount = 0;
   state.testScreenshots = {};
   state.testTimers = {};
+  state.submittedTests = {};
   state.timerRunning = false;
   state.timerStartedAt = null;
   state.timerElapsedMs = 0;
@@ -225,6 +226,7 @@ async function resetSession() {
   state.captureCount = 0;
   state.testScreenshots = {};
   state.testTimers = {};
+  state.submittedTests = {};
   state.timerRunning = false;
   state.timerStartedAt = null;
   state.timerElapsedMs = 0;
@@ -322,25 +324,33 @@ async function advanceTest({ observation }) {
 
   const currentTest = state.testCases[state.currentTestIndex];
 
-  const obsData = {
-    test_case_id: currentTest?.id || null,
-    prompt_text: currentTest?.prompt || "",
-    response_text: observation?.responseText || null,
-    response_time_ms: observation?.responseTimeMs || elapsed || 0,
-    page_url: null,
-    screenshot_base64: null,
-    metadata: {
-      category: currentTest?.category || "protocol",
-      test_index: state.currentTestIndex,
-    },
-  };
+  // Track which tests have been submitted to prevent duplicate uploads
+  if (!state.submittedTests) state.submittedTests = {};
+  const testKey = String(state.currentTestIndex);
 
-  try {
-    await AixisAPI.uploadObservation(state.currentSession.id, obsData);
-    state.observationCount++;
-  } catch (err) {
-    console.error("Observation upload failed:", err);
-    return { error: err.message };
+  // Only upload observation if this test hasn't been submitted before
+  if (!state.submittedTests[testKey]) {
+    const obsData = {
+      test_case_id: currentTest?.id || null,
+      prompt_text: currentTest?.prompt || "",
+      response_text: observation?.responseText || null,
+      response_time_ms: observation?.responseTimeMs || elapsed || 0,
+      page_url: null,
+      screenshot_base64: null,
+      metadata: {
+        category: currentTest?.category || "protocol",
+        test_index: state.currentTestIndex,
+      },
+    };
+
+    try {
+      await AixisAPI.uploadObservation(state.currentSession.id, obsData);
+      state.observationCount++;
+      state.submittedTests[testKey] = true;
+    } catch (err) {
+      console.error("Observation upload failed:", err);
+      return { error: err.message };
+    }
   }
 
   // Save current test's timer

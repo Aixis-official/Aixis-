@@ -823,6 +823,10 @@
 
         function confidenceBar(confidence, metadata) {
             if (confidence === 0) return '';
+            // Parse JSON string if needed
+            if (typeof metadata === 'string') {
+                try { metadata = JSON.parse(metadata); } catch (e) { metadata = null; }
+            }
             var dims = (metadata && metadata.confidence_dimensions) ? metadata.confidence_dimensions : null;
             var html = '<div class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">';
             CONFIDENCE_DIMS.forEach(function(dim) {
@@ -844,7 +848,11 @@
 
         // Details section helper
         function detailsHtml(details) {
-            if (!details || details.length === 0) return '';
+            // Parse JSON string if needed
+            if (typeof details === 'string') {
+                try { details = JSON.parse(details); } catch (e) { return ''; }
+            }
+            if (!details || !Array.isArray(details) || details.length === 0) return '';
             var html = '<div class="mt-2 space-y-1.5 border-t border-gray-100 dark:border-gray-700/50 pt-2">';
             details.forEach(function(d) {
                 var dScore = d.score;
