@@ -273,6 +273,7 @@ def load_checklist_template(axis: str, checklists_dir: Path | None = None) -> li
         "safety": "safety_manual.yaml",
         "uniqueness": "uniqueness.yaml",
         "practicality": "practicality_manual.yaml",
+        "localization": "localization.yaml",
     }
 
     filename = file_map.get(axis)

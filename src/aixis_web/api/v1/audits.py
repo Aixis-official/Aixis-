@@ -522,21 +522,41 @@ async def submit_manual_scores(
         )
 
     for item in body.items:
-        record = ManualChecklistRecord(
-            session_id=session_id,
-            tool_id=session.tool_id,
-            axis=item.axis,
-            checklist_item_id=item.checklist_item_id,
-            item_name_jp=item.item_name_jp,
-            passed=item.passed,
-            score=item.score,
-            weight=item.weight,
-            evidence=item.evidence,
-            evidence_url=item.evidence_url,
-            evaluated_by=user.id,
-            evaluated_at=datetime.now(timezone.utc),
+        # Upsert: update existing entry or create new one
+        existing = await db.execute(
+            select(ManualChecklistRecord).where(
+                ManualChecklistRecord.session_id == session_id,
+                ManualChecklistRecord.checklist_item_id == item.checklist_item_id,
+            )
         )
-        db.add(record)
+        existing_record = existing.scalar_one_or_none()
+
+        if existing_record:
+            existing_record.axis = item.axis
+            existing_record.item_name_jp = item.item_name_jp
+            existing_record.passed = item.passed
+            existing_record.score = item.score
+            existing_record.weight = item.weight
+            existing_record.evidence = item.evidence
+            existing_record.evidence_url = item.evidence_url
+            existing_record.evaluated_by = user.id
+            existing_record.evaluated_at = datetime.now(timezone.utc)
+        else:
+            record = ManualChecklistRecord(
+                session_id=session_id,
+                tool_id=session.tool_id,
+                axis=item.axis,
+                checklist_item_id=item.checklist_item_id,
+                item_name_jp=item.item_name_jp,
+                passed=item.passed,
+                score=item.score,
+                weight=item.weight,
+                evidence=item.evidence,
+                evidence_url=item.evidence_url,
+                evaluated_by=user.id,
+                evaluated_at=datetime.now(timezone.utc),
+            )
+            db.add(record)
 
     await db.commit()
     return {"status": "ok", "count": len(body.items)}

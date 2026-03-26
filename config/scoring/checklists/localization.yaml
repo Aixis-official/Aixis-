@@ -1,0 +1,47 @@
+axis: localization
+axis_name_jp: 日本語能力
+axis_name_en: Localization
+description: >
+  AIツールの日本語対応品質を評価するチェックリスト。
+  UI/UXの日本語化、日本語フォント対応、ドキュメントの日本語化、
+  日本語生成品質を包括的に評価する。
+
+items:
+  - id: "LC-001"
+    name_jp: "日本語UI完成度"
+    name_en: "Japanese UI completeness"
+    weight: 2.0
+    scoring_guide: |
+      0: 英語のみでUI日本語化なし
+      1: メニュー等の一部のみ日本語化
+      2: 主要画面は日本語だがエラーメッセージ等が英語
+      3: ほぼ全画面が日本語対応
+      4: 完全日本語対応でUIの文言が自然
+      5: ネイティブ品質の日本語UI、文化的配慮も含む
+    category: "UI日本語化"
+
+  - id: "LC-002"
+    name_jp: "日本語フォント対応"
+    name_en: "Japanese font support"
+    weight: 1.5
+    scoring_guide: |
+      0: 日本語フォントなし、文字化けや豆腐表示あり
+      1: 基本的なゴシック体1種のみ
+      2: ゴシック体と明朝体の基本2種対応
+      3: 複数の日本語フォント対応(ウェイト含む)
+      4: 豊富な日本語フォント、ウェイト選択可能
+      5: プロ品質の日本語フォントライブラリ、カスタムフォントアップロード対応
+    category: "フォント"
+
+  - id: "LC-003"
+    name_jp: "ヘルプ・ドキュメント日本語化"
+    name_en: "Help documentation in Japanese"
+    weight: 1.5
+    scoring_guide: |
+      0: ドキュメントが英語のみ
+      1: FAQの一部のみ日本語
+      2: 主要ドキュメントが機械翻訳レベルで日本語化
+      3: 主要ドキュメントが自然な日本語で提供
+      4: 全ドキュメント日本語化、動画チュートリアルも日本語
+      5: 全ドキュメント+日本語サポートチーム+日本語コミュニティ
+    category: "サポート"

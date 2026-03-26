@@ -255,10 +255,10 @@ class LLMScorer:
                     VALUES (:id, :session_id, :tool_id, :axis, :axis_name_jp, :score,
                             :confidence, :source, :details, :strengths, :risks, :scored_at,
                             :scored_by)
-                    ON CONFLICT (id) DO UPDATE SET
+                    ON CONFLICT (session_id, axis) DO UPDATE SET
                         score = EXCLUDED.score, confidence = EXCLUDED.confidence,
                         details = EXCLUDED.details, strengths = EXCLUDED.strengths,
-                        risks = EXCLUDED.risks
+                        risks = EXCLUDED.risks, scored_at = EXCLUDED.scored_at
                 """), {
                     "id": score_id,
                     "session_id": session_id,
@@ -306,7 +306,7 @@ class LLMScorer:
             await db.execute(text("""
                 UPDATE axis_scores
                 SET score = LEAST(score * :factor, 2.0),
-                    confidence = LEAST(confidence * :factor, 30)
+                    confidence = LEAST(confidence * :factor, 0.30)
                 WHERE session_id = :sid
             """), {
                 "factor": penalty_factor,
@@ -327,7 +327,7 @@ class LLMScorer:
             confidence_factor = 0.5 + (completion_rate - 0.3) / 0.6
             await db.execute(text("""
                 UPDATE axis_scores
-                SET confidence = LEAST(confidence * :factor, 60)
+                SET confidence = LEAST(confidence * :factor, 0.60)
                 WHERE session_id = :sid
             """), {
                 "factor": confidence_factor,

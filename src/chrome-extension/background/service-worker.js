@@ -295,7 +295,9 @@ async function goToPrevTest() {
 }
 
 function getTestScreenshots(testIndex) {
-  return { screenshots: _getScreenshots(testIndex) };
+  // Default to current test index if not specified
+  const idx = testIndex ?? state.currentTestIndex;
+  return { screenshots: _getScreenshots(idx) };
 }
 
 async function deleteScreenshot(index) {
