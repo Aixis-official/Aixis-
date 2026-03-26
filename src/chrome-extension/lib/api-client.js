@@ -16,7 +16,7 @@ const AixisAPI = {
   },
 
   /**
-   * Make an authenticated API request.
+   * Make an authenticated API request with timeout and robust error handling.
    */
   async request(method, path, body = null) {
     const { apiKey, platformUrl } = await this.getSettings();
@@ -36,7 +36,24 @@ const AixisAPI = {
       options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(url, options);
+    // Add 30-second timeout to prevent hung requests blocking the session
+    const controller = new AbortController();
+    options.signal = controller.signal;
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    let response;
+    try {
+      response = await fetch(url, options);
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        throw new Error("APIリクエストがタイムアウトしました（30秒）");
+      }
+      // Network error (offline, DNS failure, CORS, etc.)
+      throw new Error("ネットワークエラー: " + (err.message || "接続できません"));
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       let detail = `API error: ${response.status}`;
@@ -47,7 +64,27 @@ const AixisAPI = {
       throw new Error(detail);
     }
 
-    return response.json();
+    // Handle empty or non-JSON responses safely
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      // Some endpoints may return 200 with no body
+      const text = await response.text();
+      if (!text || text.trim() === "") {
+        return { ok: true };
+      }
+      // Try parsing as JSON anyway (some servers don't set content-type correctly)
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new Error("サーバーが不正なレスポンスを返しました");
+      }
+    }
+
+    try {
+      return await response.json();
+    } catch (err) {
+      throw new Error("JSONパースエラー: レスポンスの解析に失敗しました");
+    }
   },
 
   // --- Session APIs ---

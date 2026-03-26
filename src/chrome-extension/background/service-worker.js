@@ -36,12 +36,26 @@ let state = {
 
 // Restore state from storage on service worker wake
 let _stateReady = new Promise((resolve) => {
-  chrome.storage.local.get(["sessionState"], (data) => {
-    if (data.sessionState) {
-      Object.assign(state, data.sessionState);
-    }
+  try {
+    chrome.storage.local.get(["sessionState"], (data) => {
+      if (chrome.runtime.lastError) {
+        console.warn("Failed to restore state:", chrome.runtime.lastError);
+        resolve();
+        return;
+      }
+      if (data && data.sessionState) {
+        try {
+          Object.assign(state, data.sessionState);
+        } catch (e) {
+          console.warn("Failed to merge restored state:", e);
+        }
+      }
+      resolve();
+    });
+  } catch (err) {
+    console.warn("Storage access failed during init:", err);
     resolve();
-  });
+  }
 });
 
 function persistState() {
@@ -52,6 +66,7 @@ function persistState() {
   if (stateToSave.testScreenshots) {
     const stripped = {};
     for (const [key, shots] of Object.entries(stateToSave.testScreenshots)) {
+      if (!Array.isArray(shots)) continue; // Guard against corrupted data
       stripped[key] = shots.map(s => ({
         ...s,
         thumbDataUrl: null,  // Don't persist base64 thumbnails
@@ -60,7 +75,21 @@ function persistState() {
     stateToSave.testScreenshots = stripped;
   }
 
-  return chrome.storage.local.set({ sessionState: stateToSave });
+  try {
+    return chrome.storage.local.set({ sessionState: stateToSave }).catch(err => {
+      console.error("persistState failed:", err);
+      // If quota exceeded, try saving without testScreenshots entirely
+      if (err.message && err.message.includes("QUOTA")) {
+        const minimal = { ...stateToSave, testScreenshots: {} };
+        return chrome.storage.local.set({ sessionState: minimal }).catch(err2 => {
+          console.error("persistState minimal save also failed:", err2);
+        });
+      }
+    });
+  } catch (err) {
+    console.error("persistState sync error:", err);
+    return Promise.resolve();
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -394,6 +423,10 @@ async function skipTest({ reason }) {
     return { error: "アクティブなセッションがありません" };
   }
 
+  if (state.currentTestIndex >= state.testCases.length) {
+    return { done: true, index: state.currentTestIndex, total: state.testCases.length };
+  }
+
   const currentTest = state.testCases[state.currentTestIndex];
 
   const obsData = {
@@ -460,7 +493,11 @@ async function captureFullScreenshot() {
 
       // Single capture as JPEG (faster than PNG, good enough for evaluation)
       const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality: 85 });
-      screenshotBase64 = dataUrl.replace(/^data:image\/jpeg;base64,/, "");
+      if (!dataUrl || typeof dataUrl !== "string") {
+        throw new Error("captureVisibleTab returned empty result");
+      }
+      // Strip any data URL prefix (handle both jpeg and png formats)
+      screenshotBase64 = dataUrl.replace(/^data:image\/[a-z]+;base64,/, "");
       // Use same capture for thumbnail (no second call)
       thumbDataUrl = dataUrl;
 
@@ -529,7 +566,14 @@ async function captureFullScreenshot() {
 // ---------------------------------------------------------------------------
 
 async function startPartialCapture() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  let tab;
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    tab = tabs[0];
+  } catch (err) {
+    return { error: "タブの取得に失敗しました: " + err.message };
+  }
+
   if (!tab) {
     return { error: "アクティブなタブが見つかりません" };
   }
@@ -537,11 +581,15 @@ async function startPartialCapture() {
   try {
     await chrome.tabs.sendMessage(tab.id, { type: "INJECT_SELECTION_OVERLAY" });
   } catch {
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["content/content.js"],
-    });
-    await chrome.tabs.sendMessage(tab.id, { type: "INJECT_SELECTION_OVERLAY" });
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ["content/content.js"],
+      });
+      await chrome.tabs.sendMessage(tab.id, { type: "INJECT_SELECTION_OVERLAY" });
+    } catch (err) {
+      return { error: "コンテンツスクリプトの注入に失敗しました: " + err.message };
+    }
   }
 
   return { ok: true };
@@ -567,6 +615,10 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
   } catch (err) {
     console.warn("Partial screenshot capture failed:", err);
     return { error: "スクリーンショットの取得に失敗しました" };
+  }
+
+  if (!fullImageBase64) {
+    return { error: "スクリーンショットの取得に失敗しました（タブなし）" };
   }
 
   // Crop via offscreen document (with retry for initialization delay)
@@ -656,15 +708,30 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
 let offscreenCreating = null;
 
 async function ensureOffscreenDocument() {
-  const existingContexts = await chrome.runtime.getContexts({
-    contextTypes: ["OFFSCREEN_DOCUMENT"],
-  });
-
-  if (existingContexts.length > 0) return;
+  try {
+    const existingContexts = await chrome.runtime.getContexts({
+      contextTypes: ["OFFSCREEN_DOCUMENT"],
+    });
+    if (existingContexts.length > 0) return;
+  } catch (err) {
+    console.warn("getContexts failed:", err);
+    // Proceed to try creating anyway
+  }
 
   if (offscreenCreating) {
-    await offscreenCreating;
-    return;
+    try {
+      await offscreenCreating;
+    } catch {
+      // Previous creation failed, reset and retry below
+      offscreenCreating = null;
+    }
+    // Re-check if it exists now
+    try {
+      const existingContexts = await chrome.runtime.getContexts({
+        contextTypes: ["OFFSCREEN_DOCUMENT"],
+      });
+      if (existingContexts.length > 0) return;
+    } catch {}
   }
 
   offscreenCreating = chrome.offscreen.createDocument({
@@ -673,8 +740,14 @@ async function ensureOffscreenDocument() {
     justification: "Crop partial screenshots using canvas",
   });
 
-  await offscreenCreating;
-  offscreenCreating = null;
+  try {
+    await offscreenCreating;
+  } catch (err) {
+    console.warn("Offscreen document creation failed:", err);
+    // May already exist (race condition), which is fine
+  } finally {
+    offscreenCreating = null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -685,6 +758,7 @@ async function broadcastToContentScripts(message) {
   try {
     const tabs = await chrome.tabs.query({});
     for (const tab of tabs) {
+      if (!tab.id || tab.id < 0) continue; // Skip special tabs (devtools, etc.)
       try { await chrome.tabs.sendMessage(tab.id, message); } catch {}
     }
   } catch {}

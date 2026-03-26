@@ -10,12 +10,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "CROP_IMAGE" && message.target === "offscreen") {
     cropImage(message)
       .then(sendResponse)
-      .catch((err) => sendResponse({ error: err.message }));
+      .catch((err) => sendResponse({ error: err.message || "Crop failed" }));
     return true; // async
   }
 });
 
 async function cropImage({ imageBase64, rect, devicePixelRatio }) {
+  if (!imageBase64 || !rect) {
+    throw new Error("Missing imageBase64 or rect for cropping");
+  }
+
   const dpr = devicePixelRatio || 1;
 
   // Scale rect by devicePixelRatio to match actual image pixels
@@ -24,22 +28,57 @@ async function cropImage({ imageBase64, rect, devicePixelRatio }) {
   const sw = Math.round(rect.w * dpr);
   const sh = Math.round(rect.h * dpr);
 
-  // Load the full image
+  // Validate dimensions
+  if (sw <= 0 || sh <= 0) {
+    throw new Error("Invalid crop dimensions: width or height is zero or negative");
+  }
+
+  // Load the full image with timeout
   const img = new Image();
   await new Promise((resolve, reject) => {
-    img.onload = resolve;
-    img.onerror = () => reject(new Error("Failed to load image for cropping"));
+    const timeout = setTimeout(() => {
+      reject(new Error("Image loading timed out (10s)"));
+    }, 10000);
+
+    img.onload = () => {
+      clearTimeout(timeout);
+      resolve();
+    };
+    img.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error("Failed to load image for cropping"));
+    };
     img.src = `data:image/png;base64,${imageBase64}`;
   });
 
-  // Set canvas to cropped dimensions
-  const canvas = document.getElementById("canvas");
-  canvas.width = sw;
-  canvas.height = sh;
+  // Clamp crop region to image bounds to prevent blank output
+  const clampedSx = Math.max(0, Math.min(sx, img.naturalWidth));
+  const clampedSy = Math.max(0, Math.min(sy, img.naturalHeight));
+  const clampedSw = Math.min(sw, img.naturalWidth - clampedSx);
+  const clampedSh = Math.min(sh, img.naturalHeight - clampedSy);
+
+  if (clampedSw <= 0 || clampedSh <= 0) {
+    throw new Error("Crop region is entirely outside the image bounds");
+  }
+
+  // Get or create canvas element
+  let canvas = document.getElementById("canvas");
+  if (!canvas) {
+    canvas = document.createElement("canvas");
+    canvas.id = "canvas";
+    document.body.appendChild(canvas);
+  }
+
+  canvas.width = clampedSw;
+  canvas.height = clampedSh;
 
   const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, sw, sh);
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+  if (!ctx) {
+    throw new Error("Failed to get 2D canvas context");
+  }
+
+  ctx.clearRect(0, 0, clampedSw, clampedSh);
+  ctx.drawImage(img, clampedSx, clampedSy, clampedSw, clampedSh, 0, 0, clampedSw, clampedSh);
 
   // Export as base64 PNG (without data URL prefix)
   const dataUrl = canvas.toDataURL("image/png");

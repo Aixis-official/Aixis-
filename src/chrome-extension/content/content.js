@@ -72,15 +72,23 @@
 
   function sendBg(message) {
     return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(message, (response) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else if (response && response.error) {
-          reject(new Error(response.error));
-        } else {
-          resolve(response);
+      try {
+        if (!chrome.runtime?.id) {
+          reject(new Error("拡張機能のコンテキストが無効です。ページをリロードしてください。"));
+          return;
         }
-      });
+        chrome.runtime.sendMessage(message, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else if (response && response.error) {
+            reject(new Error(response.error));
+          } else {
+            resolve(response || {});
+          }
+        });
+      } catch (err) {
+        reject(new Error("拡張機能との通信に失敗しました: " + (err.message || "")));
+      }
     });
   }
 
@@ -972,21 +980,27 @@
   }
 
   function showError(msg) {
-    let displayMsg = msg;
-    if (msg.includes("401") || msg.includes("Unauthorized")) {
+    if (!shadow) return;
+    let displayMsg = msg || "不明なエラーが発生しました";
+    if (msg && msg.includes("401") || msg && msg.includes("Unauthorized")) {
       displayMsg = "認証エラー: APIキーが無効です。正しいキーを設定してください。";
-    } else if (msg.includes("403") || msg.includes("agent:write")) {
+    } else if (msg && msg.includes("403") || msg && msg.includes("agent:write")) {
       displayMsg = "権限エラー: APIキーに agent:write スコープが必要です。";
-    } else if (msg.includes("500") || msg.includes("Internal server")) {
+    } else if (msg && msg.includes("500") || msg && msg.includes("Internal server")) {
       displayMsg = "サーバーエラー: プラットフォームに接続できません。";
-    } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+    } else if (msg && (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("ネットワークエラー"))) {
       displayMsg = "ネットワークエラー: プラットフォームURLに接続できません。";
+    } else if (msg && msg.includes("タイムアウト")) {
+      displayMsg = "タイムアウト: APIリクエストに時間がかかりすぎています。再試行してください。";
     }
 
     const el = shadow.getElementById("errorMsg");
+    if (!el) return;
     el.textContent = displayMsg;
     el.classList.add("visible");
-    setTimeout(() => el.classList.remove("visible"), 8000);
+    setTimeout(() => {
+      try { el.classList.remove("visible"); } catch {}
+    }, 8000);
   }
 
   function escapeHtml(str) {
@@ -1120,10 +1134,16 @@
   // -------------------------------------------------------------------------
 
   function startTimer() {
-    sendBg({ type: "TIMER_START" });
-    shadow.getElementById("timerDisplay").classList.add("running");
-    shadow.getElementById("startTimerBtn").disabled = true;
-    shadow.getElementById("stopTimerBtn").disabled = false;
+    sendBg({ type: "TIMER_START" }).catch(err => {
+      console.warn("Timer start failed:", err);
+      showError("タイマーの開始に失敗しました");
+    });
+    const timerDisplay = shadow.getElementById("timerDisplay");
+    const startBtn = shadow.getElementById("startTimerBtn");
+    const stopBtn = shadow.getElementById("stopTimerBtn");
+    if (timerDisplay) timerDisplay.classList.add("running");
+    if (startBtn) startBtn.disabled = true;
+    if (stopBtn) stopBtn.disabled = false;
     startTimerDisplay();
   }
 
@@ -1142,12 +1162,15 @@
   }
 
   function resetTimer() {
-    sendBg({ type: "TIMER_RESET" });
+    sendBg({ type: "TIMER_RESET" }).catch(() => {});
     clearInterval(timerInterval);
     timerInterval = null;
-    shadow.getElementById("timerDisplay").classList.remove("running");
-    shadow.getElementById("startTimerBtn").disabled = false;
-    shadow.getElementById("stopTimerBtn").disabled = true;
+    const timerDisplay = shadow.getElementById("timerDisplay");
+    const startBtn = shadow.getElementById("startTimerBtn");
+    const stopBtn = shadow.getElementById("stopTimerBtn");
+    if (timerDisplay) timerDisplay.classList.remove("running");
+    if (startBtn) startBtn.disabled = false;
+    if (stopBtn) stopBtn.disabled = true;
     renderTimer(0);
   }
 
@@ -1175,18 +1198,50 @@
 
   function startTimerDisplay() {
     clearInterval(timerInterval);
-    timerInterval = setInterval(async () => {
+    // Cache the start values from background to avoid polling on every tick
+    let cachedElapsedMs = 0;
+    let cachedStartedAt = Date.now();
+    let pollCounter = 0;
+
+    // Fetch initial values
+    sendBg({ type: "GET_STATE" }).then(bgState => {
+      if (bgState && bgState.timerRunning && bgState.timerStartedAt) {
+        cachedElapsedMs = bgState.timerElapsedMs || 0;
+        cachedStartedAt = bgState.timerStartedAt;
+      }
+    }).catch(() => {});
+
+    timerInterval = setInterval(() => {
       try {
-        const bgState = await sendBg({ type: "GET_STATE" });
-        if (bgState.timerRunning && bgState.timerStartedAt) {
-          const elapsed = (bgState.timerElapsedMs || 0) + (Date.now() - bgState.timerStartedAt);
-          renderTimer(elapsed);
-        } else {
-          renderTimer(bgState.timerElapsedMs || 0);
-          if (!bgState.timerRunning) {
+        if (!shadow) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          return;
+        }
+        // Calculate locally most of the time for smooth display
+        const elapsed = cachedElapsedMs + (Date.now() - cachedStartedAt);
+        renderTimer(elapsed);
+
+        // Sync with background every 2 seconds (20 ticks at 100ms) to stay accurate
+        pollCounter++;
+        if (pollCounter >= 20) {
+          pollCounter = 0;
+          sendBg({ type: "GET_STATE" }).then(bgState => {
+            if (!bgState) return;
+            if (bgState.timerRunning && bgState.timerStartedAt) {
+              cachedElapsedMs = bgState.timerElapsedMs || 0;
+              cachedStartedAt = bgState.timerStartedAt;
+            } else {
+              renderTimer(bgState.timerElapsedMs || 0);
+              if (!bgState.timerRunning) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+              }
+            }
+          }).catch(() => {
             clearInterval(timerInterval);
             timerInterval = null;
-          }
+          });
         }
       } catch {
         // Extension context invalidated, stop polling
@@ -1274,13 +1329,20 @@
 
   async function capturePartialScreenshot() {
     const btn = shadow.getElementById("partialScreenshotBtn");
+    if (!btn) return;
     btn.disabled = true;
     btn.textContent = "\u2702 選択中...";
 
     // Hide panel temporarily so it's not in the screenshot
     if (panelHost) panelHost.style.display = "none";
 
-    injectSelectionOverlay();
+    try {
+      injectSelectionOverlay();
+    } catch (err) {
+      console.warn("Selection overlay injection failed:", err);
+      if (panelHost) panelHost.style.display = "";
+      showError("範囲選択の開始に失敗しました");
+    }
 
     btn.textContent = "\u2702 部分";
     btn.disabled = false;
@@ -1357,10 +1419,19 @@
       if (panelHost) panelHost.style.display = "";
 
       if (rect.w > 10 && rect.h > 10) {
-        chrome.runtime.sendMessage({
+        sendBg({
           type: "PARTIAL_CAPTURE_COORDS",
           rect: rect,
           devicePixelRatio: window.devicePixelRatio || 1,
+        }).then(result => {
+          if (result && result.captureCount != null) {
+            updateCaptureCount(result.captureCount);
+          }
+          if (result && result.screenshots) {
+            renderScreenshotThumbs(result.screenshots);
+          }
+        }).catch(err => {
+          showError("部分スクリーンショットの処理に失敗しました: " + err.message);
         });
       }
     }
@@ -1706,14 +1777,14 @@
   async function deleteScreenshot(idx) {
     try {
       const result = await sendBg({ type: "DELETE_SCREENSHOT", index: idx });
-      if (result.error) {
-        showError(result.error);
+      if (!result || result.error) {
+        showError((result && result.error) || "スクリーンショットの削除に失敗しました");
         return;
       }
       updateCaptureCount(result.captureCount || 0);
       renderScreenshotThumbs(result.screenshots || []);
     } catch (err) {
-      showError(err.message);
+      showError(err.message || "スクリーンショットの削除に失敗しました");
     }
   }
 
@@ -1770,19 +1841,42 @@
 
   async function endSessionDirect() {
     try {
-      const result = await sendBg({ type: "COMPLETE_SESSION" });
-      const bgState = await sendBg({ type: "GET_STATE" });
+      let result = {};
+      try {
+        result = await sendBg({ type: "COMPLETE_SESSION" });
+      } catch (err) {
+        console.warn("Complete session API call failed:", err);
+        // Continue to show completion screen even if API fails
+        // The session data is already saved locally
+      }
+
+      let bgState = {};
+      try {
+        bgState = await sendBg({ type: "GET_STATE" });
+      } catch {
+        bgState = {};
+      }
 
       // Show total tests executed (currentTestIndex tracks how many tests were advanced through)
       const totalExecuted = bgState.currentTestIndex || bgState.observationCount || 0;
-      shadow.getElementById("summaryTotal").textContent = totalExecuted;
-      shadow.getElementById("summaryStatus").textContent = result.status === "scoring" ? "採点中" : result.status;
+      const summaryTotalEl = shadow.getElementById("summaryTotal");
+      if (summaryTotalEl) summaryTotalEl.textContent = totalExecuted;
 
-      const settings = await sendBg({ type: "GET_SETTINGS" });
-      if (bgState.currentSession) {
-        shadow.getElementById("dashboardLink").href =
-          `${settings.platformUrl}/dashboard/audits/${bgState.currentSession.id}`;
+      const summaryStatusEl = shadow.getElementById("summaryStatus");
+      if (summaryStatusEl) {
+        const status = result.status || bgState.currentSession?.status || "完了";
+        summaryStatusEl.textContent = status === "scoring" ? "採点中" : status;
       }
+
+      try {
+        const settings = await sendBg({ type: "GET_SETTINGS" });
+        if (bgState.currentSession) {
+          const dashLink = shadow.getElementById("dashboardLink");
+          if (dashLink) {
+            dashLink.href = `${settings.platformUrl}/dashboard/audits/${bgState.currentSession.id}`;
+          }
+        }
+      } catch {}
 
       showSection("complete");
     } catch (err) {
@@ -1892,8 +1986,8 @@
           showProtocolTest(testData);
           updateCaptureCount(bgState.captureCount || 0);
           showSection("protocol");
-          await resumeTimerIfRunning();
-          await refreshScreenshotThumbs();
+          try { await resumeTimerIfRunning(); } catch {}
+          try { await refreshScreenshotThumbs(); } catch {}
         }
       } else {
         const settings = await loadSettings();
