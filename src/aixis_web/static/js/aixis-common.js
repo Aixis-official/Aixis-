@@ -25,13 +25,13 @@ window.AIXIS = {
     uniqueness: '革新性'
   },
 
-  // Auto:Manual ratio display (audit protocol: auto 60% / manual 40%)
+  // Auto:Manual ratio per axis (must match score_service.py AXIS_MIX)
   AXIS_MIX: {
-    practicality: { auto: 60, manual: 40 },
-    cost_performance: { auto: 60, manual: 40 },
-    localization: { auto: 60, manual: 40 },
-    safety: { auto: 60, manual: 40 },
-    uniqueness: { auto: 60, manual: 40 }
+    practicality: { auto: 40, manual: 60 },
+    cost_performance: { auto: 0, manual: 100 },
+    localization: { auto: 70, manual: 30 },
+    safety: { auto: 35, manual: 65 },
+    uniqueness: { auto: 0, manual: 100 }
   },
 
   // Colors for up to 8 tools in comparison charts

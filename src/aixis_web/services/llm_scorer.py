@@ -5,7 +5,7 @@ Uses Claude API to evaluate slide-creation AI tool observations across
 producing scores compatible with the existing AxisScoreRecord model.
 
 Score composition follows the public audit protocol:
-  final_axis_score = (auto_score * 0.6) + (manual_score * 0.4)
+  final_axis_score = (auto_score * auto_ratio) + (manual_score * manual_ratio)  [per-axis ratios from AXIS_MIX]
 When manual evaluation is pending, auto_score is used alone with lower confidence.
 
 Confidence is calculated across 4 dimensions:
@@ -206,10 +206,12 @@ class LLMScorer:
             try:
                 score_data = self._score_axis(axis, rubric, observations)
 
-                # Apply 60/40 auto/manual split
+                # Apply per-axis auto/manual split (from score_service.AXIS_MIX)
+                from .score_service import AXIS_MIX
                 auto_score = score_data["score"]
-                auto_ratio = 0.6
-                manual_ratio = 0.4
+                mix = AXIS_MIX.get(axis, {"auto": 0.6, "manual": 0.4})
+                auto_ratio = mix["auto"]
+                manual_ratio = mix["manual"]
 
                 if axis in manual_scores:
                     manual_score = manual_scores[axis]["avg"]

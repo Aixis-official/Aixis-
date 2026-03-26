@@ -469,7 +469,7 @@ async def upload_file(
     if len(content) > 50 * 1024 * 1024:
         raise HTTPException(400, "ファイルサイズが大きすぎます（最大50MB）")
 
-    # Sanitize filename — strip path separators and only allow safe characters
+    # Sanitize safe_name — strip path separators and only allow safe characters
     safe_filename = re.sub(r'[^a-zA-Z0-9._-]', '_', safe_name)
     if not safe_filename or safe_filename.startswith('.'):
         safe_filename = f"upload_{uuid.uuid4().hex[:8]}.{ext}"
@@ -512,7 +512,7 @@ async def upload_file(
             extracted_text = "\n\n".join(page_texts)
 
     except Exception as e:
-        logger.warning("File text extraction failed for %s: %s", filename, e)
+        logger.warning("File text extraction failed for %s: %s", safe_name, e)
         extracted_text = f"(テキスト抽出に失敗しました: {e})"
 
     # Store extracted text as a special observation
@@ -529,8 +529,8 @@ async def upload_file(
         "id": file_case_id,
         "session_id": session_id,
         "category": "artifact_upload",
-        "prompt": f"アップロードされた成果物: {filename}",
-        "metadata": json.dumps({"file_type": ext, "filename": filename}, ensure_ascii=False),
+        "prompt": f"アップロードされた成果物: {safe_name}",
+        "metadata": json.dumps({"file_type": ext, "filename": safe_name}, ensure_ascii=False),
         "expected": "[]",
         "failures": "[]",
         "tags": json.dumps(["artifact", ext], ensure_ascii=False),
@@ -546,7 +546,7 @@ async def upload_file(
         "session_id": session_id,
         "test_case_id": file_case_id,
         "category": "artifact_upload",
-        "prompt": f"成果物ファイル: {filename}",
+        "prompt": f"成果物ファイル: {safe_name}",
         "response": extracted_text[:50000],  # Limit to 50K chars
         "now": now,
         "metadata": json.dumps({"file_path": str(file_path), "file_size": len(content)}, ensure_ascii=False),
@@ -555,11 +555,11 @@ async def upload_file(
     await db.commit()
 
     logger.info("File uploaded for session %s: %s (%d bytes, %d chars extracted)",
-                session_id, filename, len(content), len(extracted_text))
+                session_id, safe_name, len(content), len(extracted_text))
 
     return {
         "file_id": file_case_id,
-        "filename": filename,
+        "filename": safe_name,
         "file_type": ext,
         "file_size": len(content),
         "extracted_text_length": len(extracted_text),
