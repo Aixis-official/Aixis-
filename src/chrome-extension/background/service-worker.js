@@ -239,6 +239,11 @@ function resetSession() {
 // Test case navigation
 // ---------------------------------------------------------------------------
 
+// Helper: get per-test data using string key (chrome.storage serializes keys as strings)
+function _ssKey(idx) { return String(idx ?? state.currentTestIndex); }
+function _getScreenshots(idx) { return state.testScreenshots[_ssKey(idx)] || []; }
+function _getTimer(idx) { return state.testTimers[_ssKey(idx)] || 0; }
+
 function getCurrentTest() {
   if (!state.testCases.length) {
     return { test: null, index: 0, total: 0 };
@@ -260,41 +265,38 @@ function goToPrevTest() {
   }
 
   // Save current test's timer value
-  const currentIdx = state.currentTestIndex;
+  const key = _ssKey();
   if (state.timerRunning && state.timerStartedAt) {
-    state.testTimers[currentIdx] = state.timerElapsedMs + (Date.now() - state.timerStartedAt);
+    state.testTimers[key] = state.timerElapsedMs + (Date.now() - state.timerStartedAt);
   } else {
-    state.testTimers[currentIdx] = state.timerElapsedMs;
+    state.testTimers[key] = state.timerElapsedMs;
   }
 
   state.currentTestIndex--;
   // Restore capture count and timer for previous test
-  const screenshots = state.testScreenshots[state.currentTestIndex] || [];
-  state.captureCount = screenshots.length;
+  state.captureCount = _getScreenshots().length;
   state.timerRunning = false;
   state.timerStartedAt = null;
-  state.timerElapsedMs = state.testTimers[state.currentTestIndex] || 0;
+  state.timerElapsedMs = _getTimer();
   persistState();
 
   return getCurrentTest();
 }
 
 function getTestScreenshots(testIndex) {
-  const idx = testIndex ?? state.currentTestIndex;
-  return { screenshots: state.testScreenshots[idx] || [] };
+  return { screenshots: _getScreenshots(testIndex) };
 }
 
 function deleteScreenshot(index) {
-  const idx = state.currentTestIndex;
-  const screenshots = state.testScreenshots[idx] || [];
+  const key = _ssKey();
+  const screenshots = _getScreenshots();
 
   if (index < 0 || index >= screenshots.length) {
     return { error: "無効なインデックスです" };
   }
 
-  // Remove from array
   screenshots.splice(index, 1);
-  state.testScreenshots[idx] = screenshots;
+  state.testScreenshots[key] = screenshots;
   state.captureCount = screenshots.length;
   persistState();
 
@@ -334,15 +336,14 @@ async function advanceTest({ observation }) {
   }
 
   // Save current test's timer
-  state.testTimers[state.currentTestIndex] = observation?.responseTimeMs || state.timerElapsedMs;
+  state.testTimers[_ssKey()] = observation?.responseTimeMs || state.timerElapsedMs;
 
   state.currentTestIndex++;
   // Restore captureCount and timer for next test
-  const nextScreenshots = state.testScreenshots[state.currentTestIndex] || [];
-  state.captureCount = nextScreenshots.length;
+  state.captureCount = _getScreenshots().length;
   state.timerRunning = false;
   state.timerStartedAt = null;
-  state.timerElapsedMs = state.testTimers[state.currentTestIndex] || 0;
+  state.timerElapsedMs = _getTimer();
   persistState();
 
   if (state.currentTestIndex >= state.testCases.length) {
@@ -375,14 +376,13 @@ async function skipTest({ reason }) {
   }
 
   // Save current test timer as 0 (skipped)
-  state.testTimers[state.currentTestIndex] = 0;
+  state.testTimers[_ssKey()] = 0;
 
   state.currentTestIndex++;
-  const nextScreenshots = state.testScreenshots[state.currentTestIndex] || [];
-  state.captureCount = nextScreenshots.length;
+  state.captureCount = _getScreenshots().length;
   state.timerRunning = false;
   state.timerStartedAt = null;
-  state.timerElapsedMs = state.testTimers[state.currentTestIndex] || 0;
+  state.timerElapsedMs = _getTimer();
   persistState();
 
   if (state.currentTestIndex >= state.testCases.length) {
@@ -460,10 +460,10 @@ async function captureFullScreenshot() {
     const result = await AixisAPI.uploadObservation(state.currentSession.id, obsData);
     state.captureCount++;
 
-    // Track screenshot per test with thumbnail for preview
-    const idx = state.currentTestIndex;
-    if (!state.testScreenshots[idx]) state.testScreenshots[idx] = [];
-    state.testScreenshots[idx].push({
+    // Track screenshot per test with thumbnail for preview (string key for storage compat)
+    const key = _ssKey();
+    if (!state.testScreenshots[key]) state.testScreenshots[key] = [];
+    state.testScreenshots[key].push({
       thumbDataUrl: thumbDataUrl || null,
       timestamp: new Date().toISOString(),
       type: "full",
@@ -475,9 +475,9 @@ async function captureFullScreenshot() {
     broadcastToContentScripts({
       type: "CAPTURE_COUNT_UPDATE",
       count: state.captureCount,
-      screenshots: state.testScreenshots[idx],
+      screenshots: state.testScreenshots[key],
     });
-    return { ok: true, captureCount: state.captureCount, screenshots: state.testScreenshots[idx] };
+    return { ok: true, captureCount: state.captureCount, screenshots: state.testScreenshots[key] };
   } catch (err) {
     console.error("Screenshot upload failed:", err);
     return { error: err.message };
@@ -581,15 +581,14 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
     await AixisAPI.uploadObservation(state.currentSession.id, obsData);
     state.captureCount++;
 
-    // Track per-test
-    const idx = state.currentTestIndex;
-    if (!state.testScreenshots[idx]) state.testScreenshots[idx] = [];
-    // Store thumbnail for partial: use cropped image as small JPEG
+    // Track per-test (string key for chrome.storage compatibility)
+    const key = _ssKey();
+    if (!state.testScreenshots[key]) state.testScreenshots[key] = [];
     let partialThumb = null;
     if (croppedBase64) {
       partialThumb = "data:image/png;base64," + croppedBase64.substring(0, 5000);
     }
-    state.testScreenshots[idx].push({
+    state.testScreenshots[key].push({
       thumbDataUrl: partialThumb,
       timestamp: new Date().toISOString(),
       type: "partial",
@@ -601,9 +600,9 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
     broadcastToContentScripts({
       type: "PARTIAL_CAPTURE_DONE",
       captureCount: state.captureCount,
-      screenshots: state.testScreenshots[idx],
+      screenshots: state.testScreenshots[key],
     });
-    return { ok: true, captureCount: state.captureCount, screenshots: state.testScreenshots[idx] };
+    return { ok: true, captureCount: state.captureCount, screenshots: state.testScreenshots[key] };
   } catch (err) {
     console.error("Partial screenshot upload failed:", err);
     return { error: err.message };
