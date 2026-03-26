@@ -43,9 +43,7 @@ let _stateReady = new Promise((resolve) => {
 });
 
 function persistState() {
-  return new Promise((resolve) => {
-    chrome.storage.local.set({ sessionState: { ...state } }, resolve);
-  });
+  return chrome.storage.local.set({ sessionState: { ...state } });
 }
 
 // ---------------------------------------------------------------------------
@@ -211,14 +209,14 @@ async function completeSession() {
   try {
     const result = await AixisAPI.completeSession(state.currentSession.id);
     state.currentSession.status = result.status;
-    persistState();
+    await persistState();
     return result;
   } catch (err) {
     return { error: err.message };
   }
 }
 
-function resetSession() {
+async function resetSession() {
   state.currentSession = null;
   state.testCases = [];
   state.currentTestIndex = 0;
@@ -230,7 +228,7 @@ function resetSession() {
   state.timerRunning = false;
   state.timerStartedAt = null;
   state.timerElapsedMs = 0;
-  persistState();
+  await persistState();
   broadcastToContentScripts({ type: "RECORDING_STOPPED" });
   return { ok: true };
 }
@@ -256,7 +254,7 @@ function getCurrentTest() {
   };
 }
 
-function goToPrevTest() {
+async function goToPrevTest() {
   if (!state.currentSession) {
     return { error: "アクティブなセッションがありません" };
   }
@@ -278,7 +276,7 @@ function goToPrevTest() {
   state.timerRunning = false;
   state.timerStartedAt = null;
   state.timerElapsedMs = _getTimer();
-  persistState();
+  await persistState();
 
   return getCurrentTest();
 }
@@ -287,7 +285,7 @@ function getTestScreenshots(testIndex) {
   return { screenshots: _getScreenshots(testIndex) };
 }
 
-function deleteScreenshot(index) {
+async function deleteScreenshot(index) {
   const key = _ssKey();
   const screenshots = _getScreenshots();
 
@@ -298,7 +296,7 @@ function deleteScreenshot(index) {
   screenshots.splice(index, 1);
   state.testScreenshots[key] = screenshots;
   state.captureCount = screenshots.length;
-  persistState();
+  await persistState();
 
   return {
     ok: true,
@@ -312,13 +310,23 @@ async function advanceTest({ observation }) {
     return { error: "アクティブなセッションがありません" };
   }
 
+  if (state.currentTestIndex >= state.testCases.length) {
+    return { done: true, index: state.currentTestIndex, total: state.testCases.length };
+  }
+
+  // Save the actual timer elapsed time for this test
+  let elapsed = state.timerElapsedMs;
+  if (state.timerRunning && state.timerStartedAt) {
+    elapsed += Date.now() - state.timerStartedAt;
+  }
+
   const currentTest = state.testCases[state.currentTestIndex];
 
   const obsData = {
     test_case_id: currentTest?.id || null,
     prompt_text: currentTest?.prompt || "",
     response_text: observation?.responseText || null,
-    response_time_ms: observation?.responseTimeMs || 0,
+    response_time_ms: observation?.responseTimeMs || elapsed || 0,
     page_url: null,
     screenshot_base64: null,
     metadata: {
@@ -336,7 +344,7 @@ async function advanceTest({ observation }) {
   }
 
   // Save current test's timer
-  state.testTimers[_ssKey()] = observation?.responseTimeMs || state.timerElapsedMs;
+  state.testTimers[_ssKey()] = elapsed;
 
   state.currentTestIndex++;
   // Restore captureCount and timer for next test
@@ -344,7 +352,7 @@ async function advanceTest({ observation }) {
   state.timerRunning = false;
   state.timerStartedAt = null;
   state.timerElapsedMs = _getTimer();
-  persistState();
+  await persistState();
 
   if (state.currentTestIndex >= state.testCases.length) {
     return { done: true, index: state.currentTestIndex, total: state.testCases.length };
@@ -383,7 +391,7 @@ async function skipTest({ reason }) {
   state.timerRunning = false;
   state.timerStartedAt = null;
   state.timerElapsedMs = _getTimer();
-  persistState();
+  await persistState();
 
   if (state.currentTestIndex >= state.testCases.length) {
     return { done: true, index: state.currentTestIndex, total: state.testCases.length };
@@ -471,7 +479,7 @@ async function captureFullScreenshot() {
       pageTitle: pageTitle,
     });
 
-    persistState();
+    await persistState();
     broadcastToContentScripts({
       type: "CAPTURE_COUNT_UPDATE",
       count: state.captureCount,
@@ -585,8 +593,8 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
     const key = _ssKey();
     if (!state.testScreenshots[key]) state.testScreenshots[key] = [];
     let partialThumb = null;
-    if (croppedBase64) {
-      partialThumb = "data:image/png;base64," + croppedBase64.substring(0, 5000);
+    if (croppedBase64 && croppedBase64.length < 50000) {
+      partialThumb = "data:image/png;base64," + croppedBase64;
     }
     state.testScreenshots[key].push({
       thumbDataUrl: partialThumb,
@@ -596,7 +604,7 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
       pageTitle: pageTitle,
     });
 
-    persistState();
+    await persistState();
     broadcastToContentScripts({
       type: "PARTIAL_CAPTURE_DONE",
       captureCount: state.captureCount,
@@ -641,12 +649,11 @@ async function ensureOffscreenDocument() {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function broadcastToContentScripts(message) {
-  chrome.tabs.query({}, (tabs) => {
+async function broadcastToContentScripts(message) {
+  try {
+    const tabs = await chrome.tabs.query({});
     for (const tab of tabs) {
-      try {
-        chrome.tabs.sendMessage(tab.id, message);
-      } catch {}
+      try { await chrome.tabs.sendMessage(tab.id, message); } catch {}
     }
-  });
+  } catch {}
 }

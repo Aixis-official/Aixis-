@@ -1828,37 +1828,41 @@
     switch (message.type) {
       case "SHOW_PANEL":
         showPanel();
+        sendResponse({ ok: true });
         break;
 
       case "INJECT_SELECTION_OVERLAY":
         injectSelectionOverlay();
+        sendResponse({ ok: true });
         break;
 
       case "CAPTURE_COUNT_UPDATE":
         updateCaptureCount(message.count);
         if (message.screenshots) renderScreenshotThumbs(message.screenshots);
+        sendResponse({ ok: true });
         break;
 
       case "PARTIAL_CAPTURE_DONE":
         updateCaptureCount(message.captureCount || 0);
         if (message.screenshots) renderScreenshotThumbs(message.screenshots);
+        sendResponse({ ok: true });
         break;
 
       case "HIDE_PANEL":
         if (panelHost) panelHost.style.display = "none";
-        break;
-
-      case "SHOW_PANEL":
-        if (panelHost) panelHost.style.display = "";
+        sendResponse({ ok: true });
         break;
 
       case "RECORDING_STARTED":
         // Panel is already visible; just ensure it shows protocol section
+        sendResponse({ ok: true });
         break;
 
       case "RECORDING_STOPPED":
+        sendResponse({ ok: true });
         break;
     }
+    return true;
   });
 
   // -------------------------------------------------------------------------
