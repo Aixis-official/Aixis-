@@ -562,8 +562,8 @@
         display: none;
       }
       .thumb-item {
-        width: 48px;
-        height: 32px;
+        width: 52px;
+        height: 36px;
         border-radius: 4px;
         background: #f1f5f9;
         display: flex;
@@ -574,6 +574,20 @@
         border: 1px solid #e2e8f0;
         cursor: default;
         position: relative;
+        overflow: hidden;
+      }
+      .thumb-item.has-preview {
+        cursor: pointer;
+        border-color: #c7d2fe;
+      }
+      .thumb-item.has-preview:hover {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+      }
+      .thumb-item .thumb-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
       .thumb-item .thumb-type {
         font-size: 8px;
@@ -584,7 +598,10 @@
         bottom: 1px;
         right: 2px;
         font-size: 7px;
-        color: #94a3b8;
+        color: #fff;
+        background: rgba(0,0,0,0.4);
+        padding: 0 2px;
+        border-radius: 2px;
       }
 
       /* Navigation */
@@ -1596,9 +1613,13 @@
     }
   }
 
+  // Store screenshots data for preview
+  let _currentScreenshots = [];
+
   function renderScreenshotThumbs(screenshots) {
     const container = shadow.getElementById("screenshotThumbs");
     if (!container) return;
+    _currentScreenshots = screenshots;
 
     if (!screenshots.length) {
       container.innerHTML = "";
@@ -1607,12 +1628,45 @@
 
     container.innerHTML = screenshots.map((s, i) => {
       const time = new Date(s.timestamp).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
-      const typeLabel = s.type === "partial" ? "部分" : "全体";
-      return `<div class="thumb-item" title="${s.pageTitle || ""}">
-        <span class="thumb-type">📷${i + 1}</span>
+      const hasThumb = !!s.thumbDataUrl;
+      return `<div class="thumb-item ${hasThumb ? 'has-preview' : ''}" data-idx="${i}" title="${s.pageTitle || ''}">
+        ${hasThumb ? `<img src="${s.thumbDataUrl}" class="thumb-img" alt="">` : `<span class="thumb-type">📷${i + 1}</span>`}
         <span class="thumb-time">${time}</span>
       </div>`;
     }).join("");
+
+    // Add click handlers for preview
+    container.querySelectorAll(".thumb-item.has-preview").forEach(el => {
+      el.addEventListener("click", () => {
+        const idx = parseInt(el.dataset.idx);
+        showScreenshotPreview(_currentScreenshots[idx]);
+      });
+    });
+  }
+
+  function showScreenshotPreview(screenshot) {
+    if (!screenshot?.thumbDataUrl) return;
+
+    // Create or reuse preview overlay
+    let overlay = shadow.getElementById("screenshotPreview");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "screenshotPreview";
+      overlay.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:999999;display:flex;align-items:center;justify-content:center;cursor:pointer;";
+      overlay.addEventListener("click", () => { overlay.style.display = "none"; });
+      shadow.querySelector(".aixis-panel").parentNode.appendChild(overlay);
+    }
+
+    const time = new Date(screenshot.timestamp).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const typeLabel = screenshot.type === "partial" ? "部分" : "全画面";
+
+    overlay.innerHTML = `
+      <div style="max-width:90vw;max-height:90vh;position:relative;" onclick="event.stopPropagation()">
+        <img src="${screenshot.thumbDataUrl}" style="max-width:100%;max-height:85vh;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.5);">
+        <div style="color:#fff;text-align:center;margin-top:8px;font-size:12px;">${typeLabel} — ${time} — ${screenshot.pageTitle || ""}</div>
+      </div>
+    `;
+    overlay.style.display = "flex";
   }
 
   // -------------------------------------------------------------------------

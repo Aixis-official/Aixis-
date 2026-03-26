@@ -22,8 +22,10 @@ let state = {
   isRecording: false,
   observationCount: 0,
   captureCount: 0,
-  // Per-test screenshot tracking: { [testIndex]: [{ url, timestamp }] }
+  // Per-test screenshot tracking: { [testIndex]: [{ timestamp, type, thumbDataUrl }] }
   testScreenshots: {},
+  // Per-test timer values: { [testIndex]: elapsedMs }
+  testTimers: {},
   // Timer state (manual start/stop)
   timerRunning: false,
   timerStartedAt: null, // Date.now() when started
@@ -167,6 +169,7 @@ async function createSession({ toolId, profileId, recordingMode }) {
   state.observationCount = 0;
   state.captureCount = 0;
   state.testScreenshots = {};
+  state.testTimers = {};
   state.timerRunning = false;
   state.timerStartedAt = null;
   state.timerElapsedMs = 0;
@@ -212,6 +215,7 @@ function resetSession() {
   state.observationCount = 0;
   state.captureCount = 0;
   state.testScreenshots = {};
+  state.testTimers = {};
   state.timerRunning = false;
   state.timerStartedAt = null;
   state.timerElapsedMs = 0;
@@ -244,14 +248,21 @@ function goToPrevTest() {
     return { error: "最初のテストです" };
   }
 
+  // Save current test's timer value
+  const currentIdx = state.currentTestIndex;
+  if (state.timerRunning && state.timerStartedAt) {
+    state.testTimers[currentIdx] = state.timerElapsedMs + (Date.now() - state.timerStartedAt);
+  } else {
+    state.testTimers[currentIdx] = state.timerElapsedMs;
+  }
+
   state.currentTestIndex--;
-  // Restore capture count for this test
+  // Restore capture count and timer for previous test
   const screenshots = state.testScreenshots[state.currentTestIndex] || [];
   state.captureCount = screenshots.length;
-  // Reset timer for the test we're returning to
   state.timerRunning = false;
   state.timerStartedAt = null;
-  state.timerElapsedMs = 0;
+  state.timerElapsedMs = state.testTimers[state.currentTestIndex] || 0;
   persistState();
 
   return getCurrentTest();
@@ -290,13 +301,16 @@ async function advanceTest({ observation }) {
     return { error: err.message };
   }
 
+  // Save current test's timer
+  state.testTimers[state.currentTestIndex] = observation?.responseTimeMs || state.timerElapsedMs;
+
   state.currentTestIndex++;
-  // Set captureCount for the new test (may have screenshots if navigated back before)
+  // Restore captureCount and timer for next test
   const nextScreenshots = state.testScreenshots[state.currentTestIndex] || [];
   state.captureCount = nextScreenshots.length;
   state.timerRunning = false;
   state.timerStartedAt = null;
-  state.timerElapsedMs = 0;
+  state.timerElapsedMs = state.testTimers[state.currentTestIndex] || 0;
   persistState();
 
   if (state.currentTestIndex >= state.testCases.length) {
@@ -328,12 +342,15 @@ async function skipTest({ reason }) {
     console.error("Skip observation upload failed:", err);
   }
 
+  // Save current test timer as 0 (skipped)
+  state.testTimers[state.currentTestIndex] = 0;
+
   state.currentTestIndex++;
   const nextScreenshots = state.testScreenshots[state.currentTestIndex] || [];
   state.captureCount = nextScreenshots.length;
   state.timerRunning = false;
   state.timerStartedAt = null;
-  state.timerElapsedMs = 0;
+  state.timerElapsedMs = state.testTimers[state.currentTestIndex] || 0;
   persistState();
 
   if (state.currentTestIndex >= state.testCases.length) {
@@ -353,6 +370,7 @@ async function captureFullScreenshot() {
   }
 
   let screenshotBase64 = null;
+  let thumbDataUrl = null;
   let pageUrl = null;
   let pageTitle = null;
 
@@ -363,6 +381,8 @@ async function captureFullScreenshot() {
       pageTitle = tab.title;
       const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "png" });
       screenshotBase64 = dataUrl.replace(/^data:image\/png;base64,/, "");
+      // Also capture a low-quality JPEG thumbnail for preview
+      thumbDataUrl = await chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality: 15 });
     }
   } catch (err) {
     console.warn("Screenshot capture failed:", err);
@@ -390,11 +410,11 @@ async function captureFullScreenshot() {
     const result = await AixisAPI.uploadObservation(state.currentSession.id, obsData);
     state.captureCount++;
 
-    // Track screenshot per test for thumbnail display
+    // Track screenshot per test with thumbnail for preview
     const idx = state.currentTestIndex;
     if (!state.testScreenshots[idx]) state.testScreenshots[idx] = [];
     state.testScreenshots[idx].push({
-      dataUrl: "data:image/png;base64," + screenshotBase64.substring(0, 200) + "...",  // Don't store full image in state
+      thumbDataUrl: thumbDataUrl || null,
       timestamp: new Date().toISOString(),
       type: "full",
       pageUrl: pageUrl,
@@ -514,7 +534,13 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
     // Track per-test
     const idx = state.currentTestIndex;
     if (!state.testScreenshots[idx]) state.testScreenshots[idx] = [];
+    // Store thumbnail for partial: use cropped image as small JPEG
+    let partialThumb = null;
+    if (croppedBase64) {
+      partialThumb = "data:image/png;base64," + croppedBase64.substring(0, 5000);
+    }
     state.testScreenshots[idx].push({
+      thumbDataUrl: partialThumb,
       timestamp: new Date().toISOString(),
       type: "partial",
       pageUrl: pageUrl,
