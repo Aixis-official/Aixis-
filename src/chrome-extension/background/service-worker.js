@@ -33,14 +33,19 @@ let state = {
 };
 
 // Restore state from storage on service worker wake
-chrome.storage.local.get(["sessionState"], (data) => {
-  if (data.sessionState) {
-    Object.assign(state, data.sessionState);
-  }
+let _stateReady = new Promise((resolve) => {
+  chrome.storage.local.get(["sessionState"], (data) => {
+    if (data.sessionState) {
+      Object.assign(state, data.sessionState);
+    }
+    resolve();
+  });
 });
 
 function persistState() {
-  chrome.storage.local.set({ sessionState: { ...state } });
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ sessionState: { ...state } }, resolve);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -64,6 +69,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function handleMessage(message, sender) {
+  // Ensure state is fully restored from storage before handling any message
+  await _stateReady;
+
   switch (message.type) {
     // --- Session management ---
     case "CREATE_SESSION":
@@ -174,7 +182,7 @@ async function createSession({ toolId, profileId, recordingMode }) {
   state.timerStartedAt = null;
   state.timerElapsedMs = 0;
 
-  persistState();
+  await persistState();
   broadcastToContentScripts({ type: "RECORDING_STARTED" });
 
   // Pre-create offscreen document for partial screenshot cropping
