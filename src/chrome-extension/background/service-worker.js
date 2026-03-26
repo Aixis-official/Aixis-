@@ -75,14 +75,23 @@ let _stateReady = new Promise((resolve) => {
 
 // Re-fetch test cases from API if session exists but testCases is empty
 async function ensureTestCases() {
-  if (state.currentSession && state.testCases.length === 0) {
+  if (!state.currentSession || state.testCases.length > 0) return;
+
+  // Retry up to 3 times with 1s delay
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const cases = await AixisAPI.getTestCases(state.currentSession.id);
-      state.testCases = cases || [];
+      if (cases && cases.length > 0) {
+        state.testCases = cases;
+        console.log("Re-fetched test cases:", cases.length);
+        return;
+      }
     } catch (err) {
-      console.warn("Failed to re-fetch test cases:", err);
+      console.warn(`Failed to fetch test cases (attempt ${attempt + 1}/3):`, err);
     }
+    if (attempt < 2) await new Promise(r => setTimeout(r, 1000));
   }
+  console.error("Could not load test cases after 3 attempts");
 }
 
 function persistState() {
@@ -98,6 +107,7 @@ function persistState() {
     timerRunning: state.timerRunning,
     timerStartedAt: state.timerStartedAt,
     timerElapsedMs: state.timerElapsedMs,
+    totalTestCases: state.testCases.length, // Save count only (not full data)
     // testCases: NOT saved (re-fetched from API on wake)
     // testScreenshots: NOT saved (kept in memory only)
   };
@@ -324,14 +334,15 @@ function _getScreenshots(idx) { return state.testScreenshots[_ssKey(idx)] || [];
 function _getTimer(idx) { return state.testTimers[_ssKey(idx)] || 0; }
 
 function getCurrentTest() {
+  const total = state.testCases.length || state.totalTestCases || 0;
   if (!state.testCases.length) {
-    return { test: null, index: 0, total: 0 };
+    return { test: null, index: state.currentTestIndex, total: total };
   }
   const test = state.testCases[state.currentTestIndex] || null;
   return {
     test,
     index: state.currentTestIndex,
-    total: state.testCases.length,
+    total: total,
   };
 }
 
@@ -393,6 +404,14 @@ async function advanceTest({ observation }) {
     return { error: "アクティブなセッションがありません" };
   }
 
+  // Ensure test cases are loaded (may be empty after service worker restart)
+  if (state.testCases.length === 0) {
+    await ensureTestCases();
+    if (state.testCases.length === 0) {
+      return { error: "テストケースの読み込みに失敗しました。ページを再読み込みしてください。" };
+    }
+  }
+
   if (state.currentTestIndex >= state.testCases.length) {
     return { done: true, index: state.currentTestIndex, total: state.testCases.length };
   }
@@ -447,6 +466,13 @@ async function skipTest({ reason }) {
     return { error: "アクティブなセッションがありません" };
   }
 
+  if (state.testCases.length === 0) {
+    await ensureTestCases();
+    if (state.testCases.length === 0) {
+      return { error: "テストケースの読み込みに失敗しました。ページを再読み込みしてください。" };
+    }
+  }
+
   if (state.currentTestIndex >= state.testCases.length) {
     return { done: true, index: state.currentTestIndex, total: state.testCases.length };
   }
@@ -496,6 +522,11 @@ async function skipTest({ reason }) {
 async function captureFullScreenshot() {
   if (!state.currentSession) {
     return { error: "アクティブなセッションがありません" };
+  }
+
+  // Ensure test cases are available for test_case_id linkage
+  if (state.testCases.length === 0) {
+    await ensureTestCases();
   }
 
   let screenshotBase64 = null;
