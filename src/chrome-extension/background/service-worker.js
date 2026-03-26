@@ -34,6 +34,14 @@ let state = {
   timerElapsedMs: 0, // accumulated elapsed time before latest start
 };
 
+// Clear any oversized old data on first load
+chrome.storage.local.getBytesInUse(null, (bytes) => {
+  if (bytes > 5 * 1024 * 1024) { // Over 5MB — something is wrong
+    console.warn("Storage is " + (bytes / 1024 / 1024).toFixed(1) + "MB, clearing old data");
+    chrome.storage.local.remove(["sessionState"]); // Clear and start fresh
+  }
+});
+
 // Restore state from storage on service worker wake
 let _stateReady = new Promise((resolve) => {
   try {
@@ -46,6 +54,13 @@ let _stateReady = new Promise((resolve) => {
       if (data && data.sessionState) {
         try {
           Object.assign(state, data.sessionState);
+          // testCases and testScreenshots are NOT persisted — re-fetch if needed
+          if (!state.testCases || !state.testCases.length) {
+            state.testCases = [];
+          }
+          if (!state.testScreenshots) {
+            state.testScreenshots = {};
+          }
         } catch (e) {
           console.warn("Failed to merge restored state:", e);
         }
@@ -58,33 +73,38 @@ let _stateReady = new Promise((resolve) => {
   }
 });
 
-function persistState() {
-  // Strip large thumbnail data before saving to chrome.storage.local (10MB quota)
-  const stateToSave = { ...state };
-
-  // Remove thumbDataUrl from screenshots to prevent quota exceeded
-  if (stateToSave.testScreenshots) {
-    const stripped = {};
-    for (const [key, shots] of Object.entries(stateToSave.testScreenshots)) {
-      if (!Array.isArray(shots)) continue; // Guard against corrupted data
-      stripped[key] = shots.map(s => ({
-        ...s,
-        thumbDataUrl: null,  // Don't persist base64 thumbnails
-      }));
+// Re-fetch test cases from API if session exists but testCases is empty
+async function ensureTestCases() {
+  if (state.currentSession && state.testCases.length === 0) {
+    try {
+      const cases = await AixisAPI.getTestCases(state.currentSession.id);
+      state.testCases = cases || [];
+    } catch (err) {
+      console.warn("Failed to re-fetch test cases:", err);
     }
-    stateToSave.testScreenshots = stripped;
   }
+}
+
+function persistState() {
+  // ONLY save small essential data — never save testCases or testScreenshots
+  const minimal = {
+    currentSession: state.currentSession,
+    currentTestIndex: state.currentTestIndex,
+    isRecording: state.isRecording,
+    observationCount: state.observationCount,
+    captureCount: state.captureCount,
+    testTimers: state.testTimers,
+    submittedTests: state.submittedTests,
+    timerRunning: state.timerRunning,
+    timerStartedAt: state.timerStartedAt,
+    timerElapsedMs: state.timerElapsedMs,
+    // testCases: NOT saved (re-fetched from API on wake)
+    // testScreenshots: NOT saved (kept in memory only)
+  };
 
   try {
-    return chrome.storage.local.set({ sessionState: stateToSave }).catch(err => {
+    return chrome.storage.local.set({ sessionState: minimal }).catch(err => {
       console.error("persistState failed:", err);
-      // If quota exceeded, try saving without testScreenshots entirely
-      if (err.message && err.message.includes("QUOTA")) {
-        const minimal = { ...stateToSave, testScreenshots: {} };
-        return chrome.storage.local.set({ sessionState: minimal }).catch(err2 => {
-          console.error("persistState minimal save also failed:", err2);
-        });
-      }
     });
   } catch (err) {
     console.error("persistState sync error:", err);
@@ -128,15 +148,19 @@ async function handleMessage(message, sender) {
       return { ...state };
 
     case "GET_CURRENT_TEST":
+      await ensureTestCases();
       return getCurrentTest();
 
     case "NEXT_TEST":
+      await ensureTestCases();
       return await advanceTest(message);
 
     case "SKIP_TEST":
+      await ensureTestCases();
       return await skipTest(message);
 
     case "PREV_TEST":
+      await ensureTestCases();
       return goToPrevTest();
 
     case "GET_TEST_SCREENSHOTS":
