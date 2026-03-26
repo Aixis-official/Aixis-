@@ -28,6 +28,8 @@ let state = {
   testTimers: {},
   // Per-test submitted tracking: { [testIndex]: true }
   submittedTests: {},
+  // Saved total test case count (survives restart when testCases array is not persisted)
+  totalTestCases: 0,
   // Timer state (manual start/stop)
   timerRunning: false,
   timerStartedAt: null, // Date.now() when started
@@ -54,13 +56,20 @@ let _stateReady = new Promise((resolve) => {
       if (data && data.sessionState) {
         try {
           Object.assign(state, data.sessionState);
-          // testCases and testScreenshots are NOT persisted — re-fetch if needed
+          // testCases are NOT persisted — re-fetch if needed
           if (!state.testCases || !state.testCases.length) {
             state.testCases = [];
           }
-          if (!state.testScreenshots) {
-            state.testScreenshots = {};
+          // Restore screenshot metadata from persisted stripped data
+          if (!state.testScreenshots || !Object.keys(state.testScreenshots).length) {
+            if (state.testScreenshotsMeta && Object.keys(state.testScreenshotsMeta).length > 0) {
+              state.testScreenshots = state.testScreenshotsMeta;
+            } else {
+              state.testScreenshots = {};
+            }
           }
+          // Clean up transient field
+          delete state.testScreenshotsMeta;
         } catch (e) {
           console.warn("Failed to merge restored state:", e);
         }
@@ -83,6 +92,7 @@ async function ensureTestCases() {
       const cases = await AixisAPI.getTestCases(state.currentSession.id);
       if (cases && cases.length > 0) {
         state.testCases = cases;
+        state.totalTestCases = cases.length;
         console.log("Re-fetched test cases:", cases.length);
         return;
       }
@@ -107,9 +117,11 @@ function persistState() {
     timerRunning: state.timerRunning,
     timerStartedAt: state.timerStartedAt,
     timerElapsedMs: state.timerElapsedMs,
-    totalTestCases: state.testCases.length, // Save count only (not full data)
+    // Preserve totalTestCases: use current array length if available, else keep previously saved value
+    totalTestCases: state.testCases.length > 0 ? state.testCases.length : (state.totalTestCases || 0),
     // testCases: NOT saved (re-fetched from API on wake)
-    // testScreenshots: NOT saved (kept in memory only)
+    // testScreenshots: Save minimal metadata (strip thumbDataUrl to avoid storage bloat)
+    testScreenshotsMeta: _stripScreenshotThumbs(state.testScreenshots),
   };
 
   try {
@@ -253,6 +265,7 @@ async function createSession({ toolId, profileId, recordingMode }) {
     recordingMode: result.recording_mode,
   };
   state.testCases = result.test_cases || [];
+  state.totalTestCases = state.testCases.length;
   state.currentTestIndex = 0;
   state.isRecording = true;
   state.observationCount = 0;
@@ -309,6 +322,7 @@ async function completeSession() {
 async function resetSession() {
   state.currentSession = null;
   state.testCases = [];
+  state.totalTestCases = 0;
   state.currentTestIndex = 0;
   state.isRecording = false;
   state.observationCount = 0;
@@ -327,6 +341,21 @@ async function resetSession() {
 // ---------------------------------------------------------------------------
 // Test case navigation
 // ---------------------------------------------------------------------------
+
+// Strip large thumbDataUrl from screenshots for persistence (keep metadata only)
+function _stripScreenshotThumbs(testScreenshots) {
+  const stripped = {};
+  for (const key in testScreenshots) {
+    stripped[key] = (testScreenshots[key] || []).map(s => ({
+      timestamp: s.timestamp,
+      type: s.type,
+      pageUrl: s.pageUrl,
+      pageTitle: s.pageTitle,
+      // thumbDataUrl deliberately omitted to save storage space
+    }));
+  }
+  return stripped;
+}
 
 // Helper: get per-test data using string key (chrome.storage serializes keys as strings)
 function _ssKey(idx) { return String(idx ?? state.currentTestIndex); }

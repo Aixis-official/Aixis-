@@ -1586,9 +1586,22 @@
   // -------------------------------------------------------------------------
 
   function showProtocolTest(stateData) {
-    const { test, index, total } = stateData.test
-      ? stateData
-      : { test: stateData.testCases && stateData.testCases[0], index: 0, total: stateData.totalCases || 0 };
+    let test, index, total;
+    if (stateData.test !== undefined) {
+      // From getCurrentTest / advanceTest / goToPrevTest / skipTest: { test, index, total }
+      test = stateData.test;
+      index = stateData.index || 0;
+      total = stateData.total || 0;
+    } else if (stateData.testCases) {
+      // From createSession: { session, testCases, totalCases }
+      test = stateData.testCases[0] || null;
+      index = 0;
+      total = stateData.totalCases || stateData.testCases.length || 0;
+    } else {
+      test = null;
+      index = 0;
+      total = 0;
+    }
 
     if (!test) {
       updateProgress(index, total);
