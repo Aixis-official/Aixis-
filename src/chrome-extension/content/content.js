@@ -1647,26 +1647,43 @@
   function showScreenshotPreview(screenshot) {
     if (!screenshot?.thumbDataUrl) return;
 
-    // Create or reuse preview overlay
-    let overlay = shadow.getElementById("screenshotPreview");
-    if (!overlay) {
-      overlay = document.createElement("div");
-      overlay.id = "screenshotPreview";
-      overlay.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:999999;display:flex;align-items:center;justify-content:center;cursor:pointer;";
-      overlay.addEventListener("click", () => { overlay.style.display = "none"; });
-      shadow.querySelector(".aixis-panel").parentNode.appendChild(overlay);
-    }
+    // Remove any existing overlay
+    const existing = shadow.getElementById("screenshotPreview");
+    if (existing) existing.remove();
+
+    // Create overlay inside shadow root
+    const overlay = document.createElement("div");
+    overlay.id = "screenshotPreview";
+    overlay.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);z-index:1000000;display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;pointer-events:auto;";
 
     const time = new Date(screenshot.timestamp).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     const typeLabel = screenshot.type === "partial" ? "部分" : "全画面";
 
-    overlay.innerHTML = `
-      <div style="max-width:90vw;max-height:90vh;position:relative;" onclick="event.stopPropagation()">
-        <img src="${screenshot.thumbDataUrl}" style="max-width:100%;max-height:85vh;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.5);">
-        <div style="color:#fff;text-align:center;margin-top:8px;font-size:12px;">${typeLabel} — ${time} — ${screenshot.pageTitle || ""}</div>
-      </div>
-    `;
-    overlay.style.display = "flex";
+    // Build image
+    const img = document.createElement("img");
+    img.src = screenshot.thumbDataUrl;
+    img.style.cssText = "max-width:85vw;max-height:80vh;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.5);pointer-events:none;";
+
+    // Build caption
+    const caption = document.createElement("div");
+    caption.style.cssText = "color:#fff;text-align:center;margin-top:10px;font-size:13px;pointer-events:none;";
+    caption.textContent = `${typeLabel} — ${time} — ${screenshot.pageTitle || ""}`;
+
+    // Close button
+    const closeBtn = document.createElement("div");
+    closeBtn.style.cssText = "position:absolute;top:16px;right:20px;color:#fff;font-size:28px;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.15);border-radius:50%;";
+    closeBtn.textContent = "✕";
+
+    overlay.appendChild(img);
+    overlay.appendChild(caption);
+    overlay.appendChild(closeBtn);
+
+    // Close on any click on overlay or close button
+    const closeOverlay = () => overlay.remove();
+    overlay.addEventListener("click", closeOverlay);
+    closeBtn.addEventListener("click", closeOverlay);
+
+    shadow.appendChild(overlay);
   }
 
   // -------------------------------------------------------------------------
