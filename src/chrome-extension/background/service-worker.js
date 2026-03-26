@@ -26,6 +26,8 @@ let state = {
   testScreenshots: {},
   // Per-test timer values: { [testIndex]: elapsedMs }
   testTimers: {},
+  // Per-test submitted tracking: { [testIndex]: true }
+  submittedTests: {},
   // Timer state (manual start/stop)
   timerRunning: false,
   timerStartedAt: null, // Date.now() when started
@@ -202,6 +204,15 @@ async function completeSession() {
     return { error: "アクティブなセッションがありません" };
   }
 
+  // Save the current test's timer value before stopping
+  if (state.timerRunning && state.timerStartedAt) {
+    const key = _ssKey();
+    state.testTimers[key] = state.timerElapsedMs + (Date.now() - state.timerStartedAt);
+  } else if (state.timerElapsedMs > 0) {
+    const key = _ssKey();
+    state.testTimers[key] = state.timerElapsedMs;
+  }
+
   state.isRecording = false;
   state.timerRunning = false;
   state.timerStartedAt = null;
@@ -376,9 +387,13 @@ async function skipTest({ reason }) {
     metadata: { skipped: true, reason: reason || "" },
   };
 
+  if (!state.submittedTests) state.submittedTests = {};
+  const testKey = String(state.currentTestIndex);
+
   try {
     await AixisAPI.uploadObservation(state.currentSession.id, obsData);
     state.observationCount++;
+    state.submittedTests[testKey] = true;
   } catch (err) {
     console.error("Skip observation upload failed:", err);
   }

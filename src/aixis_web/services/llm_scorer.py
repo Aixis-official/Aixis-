@@ -204,7 +204,7 @@ class LLMScorer:
         all_scores = []
         for axis, rubric in AXIS_RUBRICS.items():
             try:
-                score_data = self._score_axis(axis, rubric, observations)
+                score_data = await self._score_axis(axis, rubric, observations)
 
                 # Apply per-axis auto/manual split (from score_service.AXIS_MIX)
                 from .score_service import AXIS_MIX
@@ -402,7 +402,7 @@ class LLMScorer:
         correctness = tests_with_data / len(observations) if observations else 0.0
 
         # --- 網羅性 (comprehensiveness): completion rate ---
-        total_planned = len(observations) + max(0, 17 - len(observations))
+        total_planned = max(len(observations), 17)  # approximate; actual value from DB used for penalties
         comprehensiveness = min(1.0, len(observations) / max(total_planned, 1))
 
         # --- 解釈性 (intelligibility): richness of evidence ---
@@ -512,7 +512,7 @@ class LLMScorer:
             logger.warning("Failed to resize screenshot: %s", e)
             return img_data
 
-    def _score_axis(
+    async def _score_axis(
         self,
         axis: str,
         rubric: dict,
@@ -533,11 +533,15 @@ class LLMScorer:
         for ss_path in selected_paths:
             image_data = self._load_screenshot(ss_path)
             if image_data:
+                # Detect media type from file extension
+                media_type = "image/png"
+                if ss_path.lower().endswith((".jpg", ".jpeg")):
+                    media_type = "image/jpeg"
                 content.append({
                     "type": "image",
                     "source": {
                         "type": "base64",
-                        "media_type": "image/png",
+                        "media_type": media_type,
                         "data": image_data,
                     },
                 })
@@ -545,11 +549,21 @@ class LLMScorer:
         # Add text prompt
         content.append({"type": "text", "text": prompt_text})
 
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=2000,
-            temperature=0.0,
-            messages=[{"role": "user", "content": content}],
+        # Run synchronous Anthropic API call in a thread to avoid blocking
+        # the asyncio event loop (this method is called from async context)
+        import asyncio
+        import functools
+
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            functools.partial(
+                self.client.messages.create,
+                model=self.model,
+                max_tokens=2000,
+                temperature=0.0,
+                messages=[{"role": "user", "content": content}],
+            ),
         )
 
         response_text = response.content[0].text
@@ -630,7 +644,7 @@ class LLMScorer:
 
         observations_text = "\n".join(obs_entries)
 
-        total_planned = len(observations) + max(0, 17 - len(observations))  # approximate
+        total_planned = max(len(observations), 17)  # approximate
         completion_rate = len(observations) / max(total_planned, 1) * 100
 
         return f"""あなたはスライド作成・資料作成AIツールの専門的な品質評価者です。

@@ -21,16 +21,31 @@ AXIS_MIX = {
 
 
 async def get_auto_scores(db: AsyncSession, session_id: str) -> dict[str, float]:
-    """Get automated scores for all axes from a session."""
+    """Get automated scores for all axes from a session.
+
+    The LLM scorer stores scores with source='llm' or 'hybrid', while the
+    legacy agent scorer uses source='auto'. Accept all non-manual sources.
+    """
     result = await db.execute(
         select(AxisScoreRecord).where(
             AxisScoreRecord.session_id == session_id,
-            AxisScoreRecord.source == "auto"
+            AxisScoreRecord.source.in_(["auto", "llm", "hybrid"]),
         )
     )
     scores = {}
     for record in result.scalars():
-        scores[record.axis] = record.score
+        # Use the raw auto_score if available in details (stored by LLM scorer),
+        # otherwise use the record score directly
+        auto_score = record.score
+        if record.details:
+            import json as _json
+            try:
+                details = record.details if isinstance(record.details, dict) else _json.loads(record.details)
+                if "auto_score" in details:
+                    auto_score = float(details["auto_score"])
+            except (TypeError, ValueError, _json.JSONDecodeError):
+                pass
+        scores[record.axis] = auto_score
     return scores
 
 

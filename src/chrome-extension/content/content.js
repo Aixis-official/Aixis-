@@ -1127,17 +1127,18 @@
     startTimerDisplay();
   }
 
-  function stopTimer() {
-    sendBg({ type: "TIMER_STOP" });
+  async function stopTimer() {
+    await sendBg({ type: "TIMER_STOP" });
     clearInterval(timerInterval);
     timerInterval = null;
     shadow.getElementById("timerDisplay").classList.remove("running");
     shadow.getElementById("startTimerBtn").disabled = false;
     shadow.getElementById("stopTimerBtn").disabled = true;
     // Update display one final time from background state
-    sendBg({ type: "GET_STATE" }).then((bgState) => {
+    try {
+      const bgState = await sendBg({ type: "GET_STATE" });
       renderTimer(bgState.timerElapsedMs || 0);
-    }).catch(() => {});
+    } catch {}
   }
 
   function resetTimer() {
@@ -1560,9 +1561,11 @@
   }
 
   function updateProgress(current, total) {
-    const pct = total > 0 ? ((current / total) * 100).toFixed(0) : 0;
+    const pct = total > 0 ? (Math.min(current, total) / total * 100).toFixed(0) : 0;
     shadow.getElementById("progressFill").style.width = pct + "%";
-    shadow.getElementById("progressText").textContent = `${current + 1} / ${total}`;
+    // Display 1-indexed but cap at total so it never shows e.g. "18 / 17"
+    const displayNum = Math.min(current + 1, total);
+    shadow.getElementById("progressText").textContent = `${displayNum} / ${total}`;
   }
 
   // -------------------------------------------------------------------------
@@ -1770,7 +1773,9 @@
       const result = await sendBg({ type: "COMPLETE_SESSION" });
       const bgState = await sendBg({ type: "GET_STATE" });
 
-      shadow.getElementById("summaryTotal").textContent = bgState.observationCount || 0;
+      // Show total tests executed (currentTestIndex tracks how many tests were advanced through)
+      const totalExecuted = bgState.currentTestIndex || bgState.observationCount || 0;
+      shadow.getElementById("summaryTotal").textContent = totalExecuted;
       shadow.getElementById("summaryStatus").textContent = result.status === "scoring" ? "採点中" : result.status;
 
       const settings = await sendBg({ type: "GET_SETTINGS" });
@@ -1878,7 +1883,7 @@
       if (bgState.currentSession) {
         if (bgState.currentSession.status === "completed" || bgState.currentSession.status === "scoring") {
           const settings = await sendBg({ type: "GET_SETTINGS" });
-          shadow.getElementById("summaryTotal").textContent = bgState.observationCount || 0;
+          shadow.getElementById("summaryTotal").textContent = bgState.currentTestIndex || bgState.observationCount || 0;
           shadow.getElementById("summaryStatus").textContent = bgState.currentSession.status === "scoring" ? "採点中" : "完了";
           shadow.getElementById("dashboardLink").href = `${settings.platformUrl}/dashboard/audits/${bgState.currentSession.id}`;
           showSection("complete");
@@ -1888,6 +1893,7 @@
           updateCaptureCount(bgState.captureCount || 0);
           showSection("protocol");
           await resumeTimerIfRunning();
+          await refreshScreenshotThumbs();
         }
       } else {
         const settings = await loadSettings();

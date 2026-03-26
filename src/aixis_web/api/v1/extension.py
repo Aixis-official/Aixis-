@@ -299,10 +299,14 @@ async def upload_observation(
             img_data = base64.b64decode(body.screenshot_base64)
             session_dir = _SCREENSHOTS_DIR / session_id
             session_dir.mkdir(parents=True, exist_ok=True)
-            img_path = session_dir / f"{sequence_number:04d}.png"
+            # Detect image format from magic bytes to use correct extension
+            img_ext = "png"
+            if img_data[:3] == b'\xff\xd8\xff':
+                img_ext = "jpg"
+            img_path = session_dir / f"{sequence_number:04d}.{img_ext}"
             img_path.write_bytes(img_data)
             # Path relative to screenshots mount; accessible via /screenshots/...
-            screenshot_path = f"/screenshots/{session_id}/{sequence_number:04d}.png"
+            screenshot_path = f"/screenshots/{session_id}/{sequence_number:04d}.{img_ext}"
         except Exception as e:
             logger.warning("Screenshot save failed: %s", e)
 
@@ -580,6 +584,29 @@ async def advance_test_progress(
 ):
     """Advance test progress counter without creating an observation row."""
     _validate_session_id(session_id)
+
+    # Verify session exists, belongs to user, and is in a valid state
+    result = await db.execute(
+        text("SELECT id, status FROM audit_sessions WHERE id = :sid AND initiated_by = :uid"),
+        {"sid": session_id, "uid": user.id},
+    )
+    session_row = result.fetchone()
+    if not session_row and user.role in ('admin', 'analyst'):
+        result = await db.execute(
+            text("SELECT id, status FROM audit_sessions WHERE id = :sid"),
+            {"sid": session_id},
+        )
+        session_row = result.fetchone()
+    if not session_row:
+        raise HTTPException(404, f"セッションが見つかりません: {session_id}")
+    if session_row[1] not in ("running", "pending"):
+        raise HTTPException(400, f"セッションは現在 {session_row[1]} 状態です。進捗を更新できません。")
+
+    # Store response_time_ms for the test case if provided
+    response_time_ms = body.get("response_time_ms", 0)
+    test_case_id = body.get("test_case_id")
+    test_index = body.get("test_index")
+
     await db.execute(text("""
         UPDATE audit_sessions
         SET total_executed = COALESCE(total_executed, 0) + 1,
