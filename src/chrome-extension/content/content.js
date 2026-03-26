@@ -187,6 +187,7 @@
             <span class="timer-value" id="timerDisplay">00:00.0</span>
             <button class="btn btn-timer-start" id="startTimerBtn">開始</button>
             <button class="btn btn-timer-stop" id="stopTimerBtn">停止</button>
+            <button class="btn btn-timer-reset" id="resetTimerBtn" title="タイマーをリセット">↺</button>
           </div>
 
           <!-- Screenshots -->
@@ -208,7 +209,8 @@
 
           <!-- Session end -->
           <div class="session-end">
-            <button class="btn btn-text btn-danger" id="endProtocolBtn">セッションを終了する</button>
+            <div class="shortcut-hint">Alt+A でパネルの表示/非表示</div>
+          <button class="btn btn-text btn-danger" id="endProtocolBtn">セッションを終了する</button>
           </div>
         </div>
 
@@ -312,7 +314,7 @@
 
       /* Body */
       .panel-body {
-        max-height: 520px;
+        max-height: calc(100vh - 100px);
         overflow-y: auto;
         transition: max-height 0.2s ease;
       }
@@ -521,6 +523,31 @@
         cursor: not-allowed;
       }
 
+      .btn-timer-reset {
+        font-size: 13px;
+        padding: 3px 8px;
+        background: #f8fafc;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.15s;
+        width: auto;
+        font-family: inherit;
+        line-height: 1;
+      }
+      .btn-timer-reset:hover {
+        background: #f1f5f9;
+        color: #334155;
+      }
+
+      .shortcut-hint {
+        font-size: 10px;
+        color: #94a3b8;
+        text-align: center;
+        margin-bottom: 4px;
+      }
+
       /* Screenshots */
       .screenshot-row {
         display: flex;
@@ -700,6 +727,8 @@
         border: 1px solid #e2e8f0;
         border-radius: 8px;
         padding: 10px;
+        max-height: 280px;
+        overflow-y: auto;
       }
 
       .test-card-top {
@@ -1293,9 +1322,19 @@
     const prompt = shadow.getElementById("testPrompt").textContent;
     navigator.clipboard.writeText(prompt).then(() => {
       const btn = shadow.getElementById("copyPromptBtn");
-      btn.textContent = "コピー済み!";
-      setTimeout(() => (btn.textContent = "コピー"), 1500);
-    }).catch(() => {});
+      btn.textContent = "✓ コピー済み";
+      btn.style.background = "#dcfce7";
+      btn.style.color = "#16a34a";
+      btn.style.borderColor = "#86efac";
+      setTimeout(() => {
+        btn.textContent = "コピー";
+        btn.style.background = "";
+        btn.style.color = "";
+        btn.style.borderColor = "";
+      }, 2000);
+    }).catch(() => {
+      showError("クリップボードへのコピーに失敗しました");
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -1919,6 +1958,10 @@
     shadow.getElementById("copyPromptBtn").addEventListener("click", copyPrompt);
     shadow.getElementById("startTimerBtn").addEventListener("click", startTimer);
     shadow.getElementById("stopTimerBtn").addEventListener("click", stopTimer);
+    shadow.getElementById("resetTimerBtn").addEventListener("click", async () => {
+      await sendBg({ type: "TIMER_RESET" });
+      resetTimer();
+    });
     shadow.getElementById("fullScreenshotBtn").addEventListener("click", captureFullScreenshot);
     shadow.getElementById("partialScreenshotBtn").addEventListener("click", capturePartialScreenshot);
     shadow.getElementById("prevTestBtn").addEventListener("click", prevTest);
