@@ -98,6 +98,9 @@ async function handleMessage(message, sender) {
     case "GET_TEST_SCREENSHOTS":
       return getTestScreenshots(message.testIndex);
 
+    case "DELETE_SCREENSHOT":
+      return deleteScreenshot(message.index);
+
     case "RESET_SESSION":
       return resetSession();
 
@@ -279,6 +282,27 @@ function goToPrevTest() {
 function getTestScreenshots(testIndex) {
   const idx = testIndex ?? state.currentTestIndex;
   return { screenshots: state.testScreenshots[idx] || [] };
+}
+
+function deleteScreenshot(index) {
+  const idx = state.currentTestIndex;
+  const screenshots = state.testScreenshots[idx] || [];
+
+  if (index < 0 || index >= screenshots.length) {
+    return { error: "無効なインデックスです" };
+  }
+
+  // Remove from array
+  screenshots.splice(index, 1);
+  state.testScreenshots[idx] = screenshots;
+  state.captureCount = screenshots.length;
+  persistState();
+
+  return {
+    ok: true,
+    captureCount: state.captureCount,
+    screenshots: screenshots,
+  };
 }
 
 async function advanceTest({ observation }) {

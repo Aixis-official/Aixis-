@@ -603,6 +603,28 @@
         padding: 0 2px;
         border-radius: 2px;
       }
+      .thumb-item .thumb-delete {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #ef4444;
+        color: #fff;
+        border: none;
+        font-size: 9px;
+        line-height: 14px;
+        text-align: center;
+        cursor: pointer;
+        padding: 0;
+        opacity: 0;
+        transition: opacity 0.15s;
+        pointer-events: auto;
+      }
+      .thumb-item:hover .thumb-delete {
+        opacity: 1;
+      }
 
       /* Navigation */
       .nav-row {
@@ -1653,16 +1675,43 @@
       return `<div class="thumb-item ${hasThumb ? 'has-preview' : ''}" data-idx="${i}" title="${s.pageTitle || ''}">
         ${hasThumb ? `<img src="${s.thumbDataUrl}" class="thumb-img" alt="">` : `<span class="thumb-type">📷${i + 1}</span>`}
         <span class="thumb-time">${time}</span>
+        <button class="thumb-delete" data-idx="${i}" title="削除">×</button>
       </div>`;
     }).join("");
 
-    // Add click handlers for preview
-    container.querySelectorAll(".thumb-item.has-preview").forEach(el => {
-      el.addEventListener("click", () => {
+    // Add click handlers for preview (on the image/text, not the delete button)
+    container.querySelectorAll(".thumb-item").forEach(el => {
+      el.addEventListener("click", (e) => {
+        if (e.target.classList.contains("thumb-delete")) return; // handled separately
         const idx = parseInt(el.dataset.idx);
-        showScreenshotPreview(_currentScreenshots[idx]);
+        if (_currentScreenshots[idx]?.thumbDataUrl) {
+          showScreenshotPreview(_currentScreenshots[idx]);
+        }
       });
     });
+
+    // Add click handlers for delete
+    container.querySelectorAll(".thumb-delete").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx);
+        await deleteScreenshot(idx);
+      });
+    });
+  }
+
+  async function deleteScreenshot(idx) {
+    try {
+      const result = await sendBg({ type: "DELETE_SCREENSHOT", index: idx });
+      if (result.error) {
+        showError(result.error);
+        return;
+      }
+      updateCaptureCount(result.captureCount || 0);
+      renderScreenshotThumbs(result.screenshots || []);
+    } catch (err) {
+      showError(err.message);
+    }
   }
 
   function showScreenshotPreview(screenshot) {
