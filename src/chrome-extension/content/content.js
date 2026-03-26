@@ -1128,6 +1128,28 @@
     renderTimer(0);
   }
 
+  // Restore timer display from background state (used when navigating between tests)
+  async function restoreTimerFromState() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    try {
+      const bgState = await sendBg({ type: "GET_STATE" });
+      const elapsed = bgState.timerElapsedMs || 0;
+      renderTimer(elapsed);
+      shadow.getElementById("timerDisplay").classList.remove("running");
+      shadow.getElementById("startTimerBtn").disabled = false;
+      shadow.getElementById("stopTimerBtn").disabled = true;
+      if (bgState.timerRunning) {
+        shadow.getElementById("timerDisplay").classList.add("running");
+        shadow.getElementById("startTimerBtn").disabled = true;
+        shadow.getElementById("stopTimerBtn").disabled = false;
+        startTimerDisplay();
+      }
+    } catch (err) {
+      renderTimer(0);
+    }
+  }
+
   function startTimerDisplay() {
     clearInterval(timerInterval);
     timerInterval = setInterval(async () => {
@@ -1543,12 +1565,12 @@
         },
       });
 
-      resetTimer();
-
       if (result.done) {
+        resetTimer();
         await endSessionDirect();
       } else {
         showProtocolTest(result);
+        await restoreTimerFromState();
         await refreshScreenshotThumbs();
       }
     } catch (err) {
@@ -1567,11 +1589,10 @@
     try {
       const result = await sendBg({ type: "PREV_TEST" });
       if (result.error) {
-        // Already at first test — just ignore
         return;
       }
-      resetTimer();
       showProtocolTest(result);
+      await restoreTimerFromState();
       await refreshScreenshotThumbs();
     } catch (err) {
       showError(err.message);
@@ -1585,13 +1606,13 @@
     btn.disabled = true;
 
     try {
-      resetTimer();
-
       const result = await sendBg({ type: "SKIP_TEST", reason: "テスターがスキップ" });
       if (result.done) {
+        resetTimer();
         await endSessionDirect();
       } else {
         showProtocolTest(result);
+        await restoreTimerFromState();
         await refreshScreenshotThumbs();
       }
     } catch (err) {
