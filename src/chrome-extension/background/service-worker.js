@@ -46,8 +46,14 @@ function persistState() {
 // ---------------------------------------------------------------------------
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // Ignore messages targeted at the offscreen document
-  if (message.target === "offscreen") return false;
+  // Ignore messages targeted at the offscreen document — don't intercept
+  if (message.target === "offscreen") {
+    return false; // Let offscreen document handle this
+  }
+  // Ignore messages from offscreen document (responses)
+  if (sender.url && sender.url.includes("offscreen")) {
+    return false;
+  }
 
   handleMessage(message, sender)
     .then(sendResponse)
@@ -167,6 +173,9 @@ async function createSession({ toolId, profileId, recordingMode }) {
 
   persistState();
   broadcastToContentScripts({ type: "RECORDING_STARTED" });
+
+  // Pre-create offscreen document for partial screenshot cropping
+  ensureOffscreenDocument().catch(() => {});
 
   return {
     session: state.currentSession,
@@ -450,17 +459,29 @@ async function handlePartialCaptureCoords({ rect, devicePixelRatio }) {
     return { error: "スクリーンショットの取得に失敗しました" };
   }
 
-  // Crop via offscreen document
+  // Crop via offscreen document (with retry for initialization delay)
   let croppedBase64 = fullImageBase64;
   try {
     await ensureOffscreenDocument();
-    const cropResult = await chrome.runtime.sendMessage({
-      type: "CROP_IMAGE",
-      target: "offscreen",
-      imageBase64: fullImageBase64,
-      rect: rect,
-      devicePixelRatio: devicePixelRatio || 1,
-    });
+    // Small delay to ensure offscreen document listener is ready
+    await new Promise(r => setTimeout(r, 200));
+
+    let cropResult = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        cropResult = await chrome.runtime.sendMessage({
+          type: "CROP_IMAGE",
+          target: "offscreen",
+          imageBase64: fullImageBase64,
+          rect: rect,
+          devicePixelRatio: devicePixelRatio || 1,
+        });
+        if (cropResult?.croppedBase64) break;
+      } catch (retryErr) {
+        console.warn(`Crop attempt ${attempt + 1} failed:`, retryErr);
+        if (attempt < 2) await new Promise(r => setTimeout(r, 300));
+      }
+    }
     if (cropResult?.croppedBase64) {
       croppedBase64 = cropResult.croppedBase64;
     }
