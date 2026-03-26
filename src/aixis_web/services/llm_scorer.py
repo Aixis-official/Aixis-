@@ -304,13 +304,11 @@ class LLMScorer:
             await db.execute(text("""
                 UPDATE axis_scores
                 SET score = LEAST(score * :factor, 2.0),
-                    confidence = LEAST(confidence * :factor, 30),
-                    details = details || :suffix
+                    confidence = LEAST(confidence * :factor, 30)
                 WHERE session_id = :sid
             """), {
                 "factor": penalty_factor,
                 "sid": session_id,
-                "suffix": json.dumps({"completion_penalty": True, "completion_rate": completion_rate}),
             })
             # Update in-memory scores to reflect penalty
             for s in all_scores:
