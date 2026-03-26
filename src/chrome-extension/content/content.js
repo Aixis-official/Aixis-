@@ -1162,27 +1162,39 @@
   // Timer
   // -------------------------------------------------------------------------
 
-  function startTimer() {
-    sendBg({ type: "TIMER_START" }).catch(err => {
-      console.warn("Timer start failed:", err);
-      showError("タイマーの開始に失敗しました");
-    });
+  async function startTimer() {
     const timerDisplay = shadow.getElementById("timerDisplay");
     const startBtn = shadow.getElementById("startTimerBtn");
     const stopBtn = shadow.getElementById("stopTimerBtn");
-    if (timerDisplay) timerDisplay.classList.add("running");
+    // Disable button immediately to prevent double-click
     if (startBtn) startBtn.disabled = true;
-    if (stopBtn) stopBtn.disabled = false;
-    startTimerDisplay();
+    try {
+      await sendBg({ type: "TIMER_START" });
+      if (timerDisplay) timerDisplay.classList.add("running");
+      if (stopBtn) stopBtn.disabled = false;
+      startTimerDisplay();
+    } catch (err) {
+      console.warn("Timer start failed:", err);
+      showError("タイマーの開始に失敗しました");
+      // Re-enable start button on failure
+      if (startBtn) startBtn.disabled = false;
+    }
   }
 
   async function stopTimer() {
-    await sendBg({ type: "TIMER_STOP" });
+    try {
+      await sendBg({ type: "TIMER_STOP" });
+    } catch (err) {
+      console.warn("Timer stop failed:", err);
+    }
     clearInterval(timerInterval);
     timerInterval = null;
-    shadow.getElementById("timerDisplay").classList.remove("running");
-    shadow.getElementById("startTimerBtn").disabled = false;
-    shadow.getElementById("stopTimerBtn").disabled = true;
+    const timerDisplay = shadow.getElementById("timerDisplay");
+    const startBtn = shadow.getElementById("startTimerBtn");
+    const stopBtn = shadow.getElementById("stopTimerBtn");
+    if (timerDisplay) timerDisplay.classList.remove("running");
+    if (startBtn) startBtn.disabled = false;
+    if (stopBtn) stopBtn.disabled = true;
     // Update display one final time from background state
     try {
       const bgState = await sendBg({ type: "GET_STATE" });
@@ -1968,8 +1980,7 @@
     shadow.getElementById("copyPromptBtn").addEventListener("click", copyPrompt);
     shadow.getElementById("startTimerBtn").addEventListener("click", startTimer);
     shadow.getElementById("stopTimerBtn").addEventListener("click", stopTimer);
-    shadow.getElementById("resetTimerBtn").addEventListener("click", async () => {
-      await sendBg({ type: "TIMER_RESET" });
+    shadow.getElementById("resetTimerBtn").addEventListener("click", () => {
       resetTimer();
     });
     shadow.getElementById("fullScreenshotBtn").addEventListener("click", captureFullScreenshot);

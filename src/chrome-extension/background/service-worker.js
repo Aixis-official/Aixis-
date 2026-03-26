@@ -475,6 +475,8 @@ async function advanceTest({ observation }) {
         response_time_ms: elapsed,
       });
       state.submittedTests[testKey] = true;
+      // Persist immediately after marking submitted to prevent double-submit on crash
+      persistState();
     } catch (err) {
       // Non-fatal — screenshots are already uploaded
       console.warn("Progress update failed:", err);
@@ -532,6 +534,8 @@ async function skipTest({ reason }) {
     await AixisAPI.uploadObservation(state.currentSession.id, obsData);
     state.observationCount++;
     state.submittedTests[testKey] = true;
+    // Persist immediately to prevent double-submit on crash
+    persistState();
   } catch (err) {
     console.error("Skip observation upload failed:", err);
   }
