@@ -1645,9 +1645,19 @@
     if (!test) {
       updateProgress(index, total);
       shadow.getElementById("testCategory").textContent = "---";
-      shadow.getElementById("testPrompt").textContent = total === 0
-        ? "テストケースの読み込みに失敗しました。セッションを終了して再試行してください。"
-        : "すべてのテストが完了しました。";
+      let msg;
+      if (total === 0) {
+        msg = "テストケースの読み込みに失敗しました。セッションを終了して再試行してください。";
+      } else if (index >= total) {
+        msg = "すべてのテストが完了しました。「セッションを終了する」を押してください。";
+      } else {
+        msg = "テストデータの読み込み中です。しばらくお待ちください...";
+        // Try to reload test data
+        sendBg({ type: "GET_CURRENT_TEST" }).then(data => {
+          if (data && data.test) showProtocolTest(data);
+        }).catch(() => {});
+      }
+      shadow.getElementById("testPrompt").textContent = msg;
       shadow.getElementById("testExpected").innerHTML = "";
       return;
     }

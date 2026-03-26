@@ -56,8 +56,8 @@ let _stateReady = new Promise((resolve) => {
       if (data && data.sessionState) {
         try {
           Object.assign(state, data.sessionState);
-          // testCases are NOT persisted — re-fetch if needed
-          if (!state.testCases || !state.testCases.length) {
+          // Ensure testCases is always an array
+          if (!Array.isArray(state.testCases)) {
             state.testCases = [];
           }
           // Restore screenshot metadata from persisted stripped data
@@ -82,12 +82,14 @@ let _stateReady = new Promise((resolve) => {
   }
 });
 
-// Re-fetch test cases from API if session exists but testCases is empty
+// Re-fetch test cases from API ONLY if session exists AND testCases is empty
+// This is a fallback — testCases are now persisted in storage
 async function ensureTestCases() {
   if (!state.currentSession || state.testCases.length > 0) return;
 
-  // Retry up to 3 times with 1s delay
-  for (let attempt = 0; attempt < 3; attempt++) {
+  console.log("testCases empty, attempting re-fetch from API...");
+  // Retry up to 2 times with 500ms delay
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const cases = await AixisAPI.getTestCases(state.currentSession.id);
       if (cases && cases.length > 0) {
@@ -97,18 +99,23 @@ async function ensureTestCases() {
         return;
       }
     } catch (err) {
-      console.warn(`Failed to fetch test cases (attempt ${attempt + 1}/3):`, err);
+      console.warn(`Failed to fetch test cases (attempt ${attempt + 1}/2):`, err);
     }
-    if (attempt < 2) await new Promise(r => setTimeout(r, 1000));
+    if (attempt < 1) await new Promise(r => setTimeout(r, 500));
   }
-  console.error("Could not load test cases after 3 attempts");
+  // Non-fatal: testCases stays empty, getCurrentTest will return {test: null}
+  // but advanceTest will NOT auto-complete (has explicit length check)
+  console.warn("Could not load test cases from API — using persisted state");
 }
 
 function persistState() {
-  // ONLY save small essential data — never save testCases or testScreenshots
-  const minimal = {
+  // Save all essential state including testCases (text only, ~50KB for 17 tests)
+  // Strip ONLY the large binary data (screenshot thumbnails)
+  const toSave = {
     currentSession: state.currentSession,
+    testCases: state.testCases, // ~50KB text, safe to persist
     currentTestIndex: state.currentTestIndex,
+    totalTestCases: state.testCases.length || state.totalTestCases || 0,
     isRecording: state.isRecording,
     observationCount: state.observationCount,
     captureCount: state.captureCount,
@@ -117,16 +124,18 @@ function persistState() {
     timerRunning: state.timerRunning,
     timerStartedAt: state.timerStartedAt,
     timerElapsedMs: state.timerElapsedMs,
-    // Preserve totalTestCases: use current array length if available, else keep previously saved value
-    totalTestCases: state.testCases.length > 0 ? state.testCases.length : (state.totalTestCases || 0),
-    // testCases: NOT saved (re-fetched from API on wake)
-    // testScreenshots: Save minimal metadata (strip thumbDataUrl to avoid storage bloat)
+    // Screenshots: save metadata without thumbDataUrl (the large base64 data)
     testScreenshotsMeta: _stripScreenshotThumbs(state.testScreenshots),
   };
 
   try {
-    return chrome.storage.local.set({ sessionState: minimal }).catch(err => {
+    return chrome.storage.local.set({ sessionState: toSave }).catch(err => {
       console.error("persistState failed:", err);
+      // If still too large, try without testCases as last resort
+      if (err.message && err.message.includes("QUOTA")) {
+        const fallback = { ...toSave, testCases: [], testScreenshotsMeta: {} };
+        return chrome.storage.local.set({ sessionState: fallback }).catch(() => {});
+      }
     });
   } catch (err) {
     console.error("persistState sync error:", err);
