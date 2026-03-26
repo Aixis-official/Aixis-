@@ -1255,7 +1255,7 @@
     btn.textContent = "\u2702 選択中...";
 
     // Hide panel temporarily so it's not in the screenshot
-    if (panelHost) panelHost.style.visibility = "hidden";
+    if (panelHost) panelHost.style.display = "none";
 
     injectSelectionOverlay();
 
@@ -1331,7 +1331,7 @@
       removeSelectionOverlay();
 
       // Show panel again
-      if (panelHost) panelHost.style.visibility = "visible";
+      if (panelHost) panelHost.style.display = "";
 
       if (rect.w > 10 && rect.h > 10) {
         chrome.runtime.sendMessage({
@@ -1345,7 +1345,7 @@
     function onKeyDown(e) {
       if (e.key === "Escape") {
         removeSelectionOverlay();
-        if (panelHost) panelHost.style.visibility = "visible";
+        if (panelHost) panelHost.style.display = "";
       }
     }
 
@@ -1793,6 +1793,14 @@
       case "PARTIAL_CAPTURE_DONE":
         updateCaptureCount(message.captureCount || 0);
         if (message.screenshots) renderScreenshotThumbs(message.screenshots);
+        break;
+
+      case "HIDE_PANEL":
+        if (panelHost) panelHost.style.display = "none";
+        break;
+
+      case "SHOW_PANEL":
+        if (panelHost) panelHost.style.display = "";
         break;
 
       case "RECORDING_STARTED":

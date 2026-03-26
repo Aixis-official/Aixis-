@@ -387,13 +387,31 @@ async function captureFullScreenshot() {
     if (tab) {
       pageUrl = tab.url;
       pageTitle = tab.title;
-      const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "png" });
-      screenshotBase64 = dataUrl.replace(/^data:image\/png;base64,/, "");
-      // Also capture a low-quality JPEG thumbnail for preview
-      thumbDataUrl = await chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality: 15 });
+
+      // Hide the floating panel before capture
+      try {
+        await chrome.tabs.sendMessage(tab.id, { type: "HIDE_PANEL" });
+        await new Promise(r => setTimeout(r, 50)); // Brief wait for DOM update
+      } catch {}
+
+      // Single capture as JPEG (faster than PNG, good enough for evaluation)
+      const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality: 85 });
+      screenshotBase64 = dataUrl.replace(/^data:image\/jpeg;base64,/, "");
+      // Use same capture for thumbnail (no second call)
+      thumbDataUrl = dataUrl;
+
+      // Show panel again
+      try {
+        await chrome.tabs.sendMessage(tab.id, { type: "SHOW_PANEL" });
+      } catch {}
     }
   } catch (err) {
     console.warn("Screenshot capture failed:", err);
+    // Ensure panel is shown even on error
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab) await chrome.tabs.sendMessage(tab.id, { type: "SHOW_PANEL" });
+    } catch {}
     return { error: "スクリーンショットの取得に失敗しました" };
   }
 
