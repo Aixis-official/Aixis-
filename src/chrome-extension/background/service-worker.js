@@ -45,7 +45,22 @@ let _stateReady = new Promise((resolve) => {
 });
 
 function persistState() {
-  return chrome.storage.local.set({ sessionState: { ...state } });
+  // Strip large thumbnail data before saving to chrome.storage.local (10MB quota)
+  const stateToSave = { ...state };
+
+  // Remove thumbDataUrl from screenshots to prevent quota exceeded
+  if (stateToSave.testScreenshots) {
+    const stripped = {};
+    for (const [key, shots] of Object.entries(stateToSave.testScreenshots)) {
+      stripped[key] = shots.map(s => ({
+        ...s,
+        thumbDataUrl: null,  // Don't persist base64 thumbnails
+      }));
+    }
+    stateToSave.testScreenshots = stripped;
+  }
+
+  return chrome.storage.local.set({ sessionState: stateToSave });
 }
 
 // ---------------------------------------------------------------------------
