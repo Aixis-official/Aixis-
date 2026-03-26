@@ -82,6 +82,10 @@ const AixisAPI = {
     return this.request("GET", `/sessions/${sessionId}/progress`);
   },
 
+  async advanceProgress(sessionId, data) {
+    return this.request("POST", `/sessions/${sessionId}/advance`, data);
+  },
+
   // --- Tool APIs ---
 
   async listTools() {

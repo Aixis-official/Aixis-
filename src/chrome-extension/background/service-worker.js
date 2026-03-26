@@ -324,32 +324,22 @@ async function advanceTest({ observation }) {
 
   const currentTest = state.testCases[state.currentTestIndex];
 
-  // Track which tests have been submitted to prevent duplicate uploads
+  // Don't upload empty observations — screenshots are the evidence.
+  // Just update server-side progress counter
   if (!state.submittedTests) state.submittedTests = {};
   const testKey = String(state.currentTestIndex);
 
-  // Only upload observation if this test hasn't been submitted before
   if (!state.submittedTests[testKey]) {
-    const obsData = {
-      test_case_id: currentTest?.id || null,
-      prompt_text: currentTest?.prompt || "",
-      response_text: observation?.responseText || null,
-      response_time_ms: observation?.responseTimeMs || elapsed || 0,
-      page_url: null,
-      screenshot_base64: null,
-      metadata: {
-        category: currentTest?.category || "protocol",
-        test_index: state.currentTestIndex,
-      },
-    };
-
     try {
-      await AixisAPI.uploadObservation(state.currentSession.id, obsData);
-      state.observationCount++;
+      await AixisAPI.advanceProgress(state.currentSession.id, {
+        test_index: state.currentTestIndex,
+        test_case_id: currentTest?.id || null,
+        response_time_ms: elapsed,
+      });
       state.submittedTests[testKey] = true;
     } catch (err) {
-      console.error("Observation upload failed:", err);
-      return { error: err.message };
+      // Non-fatal — screenshots are already uploaded
+      console.warn("Progress update failed:", err);
     }
   }
 

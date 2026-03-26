@@ -852,6 +852,10 @@
             if (typeof details === 'string') {
                 try { details = JSON.parse(details); } catch (e) { return ''; }
             }
+            // Handle nested structure: { rule_results: [...], confidence_dimensions: {...} }
+            if (details && details.rule_results) {
+                details = details.rule_results;
+            }
             if (!details || !Array.isArray(details) || details.length === 0) return '';
             var html = '<div class="mt-2 space-y-1.5 border-t border-gray-100 dark:border-gray-700/50 pt-2">';
             details.forEach(function(d) {
@@ -890,7 +894,7 @@
                     ? '<div class="text-[10px] text-amber-500 dark:text-amber-400 mt-1 font-jp">手動評価待ち</div>'
                     : '<div class="mt-2"><div class="score-bar"><div class="score-bar-fill ' + level + '" style="width:' + barPct + '%"></div></div></div>'
                 ) +
-                confidenceBar(s.confidence, s.metadata) +
+                confidenceBar(s.confidence, s.details) +
                 (mix.auto !== undefined
                     ? '<div class="text-[9px] text-gray-400 dark:text-gray-500 mt-1 font-jp">自動' + mix.auto + '% / 手動' + mix.manual + '%</div>'
                     : '') +

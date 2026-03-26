@@ -568,6 +568,29 @@ async def upload_file(
 
 
 # ---------------------------------------------------------------------------
+# POST /sessions/{id}/advance — Advance test progress (no observation created)
+# ---------------------------------------------------------------------------
+
+@router.post("/sessions/{session_id}/advance")
+async def advance_test_progress(
+    session_id: str,
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_agent_key),
+):
+    """Advance test progress counter without creating an observation row."""
+    _validate_session_id(session_id)
+    await db.execute(text("""
+        UPDATE audit_sessions
+        SET total_executed = COALESCE(total_executed, 0) + 1,
+            started_at = COALESCE(started_at, :now)
+        WHERE id = :sid
+    """), {"now": datetime.utcnow(), "sid": session_id})
+    await db.commit()
+    return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
 # POST /sessions/{id}/complete — Mark session complete, trigger scoring
 # ---------------------------------------------------------------------------
 
