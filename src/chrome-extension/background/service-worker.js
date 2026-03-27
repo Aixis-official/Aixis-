@@ -462,24 +462,34 @@ async function advanceTest({ observation }) {
 
   const currentTest = state.testCases[state.currentTestIndex];
 
-  // Don't upload empty observations — screenshots are the evidence.
-  // Just update server-side progress counter
+  // Upload a test completion record (primary entry for this test)
   if (!state.submittedTests) state.submittedTests = {};
   const testKey = String(state.currentTestIndex);
 
   if (!state.submittedTests[testKey]) {
-    try {
-      await AixisAPI.advanceProgress(state.currentSession.id, {
+    const obsData = {
+      test_case_id: currentTest?.id || null,
+      prompt_text: currentTest?.prompt || "",
+      response_text: null,
+      response_time_ms: elapsed,
+      page_url: null,
+      screenshot_base64: null,
+      metadata: {
+        type: "test_completion",
+        category: currentTest?.category || "protocol",
         test_index: state.currentTestIndex,
-        test_case_id: currentTest?.id || null,
-        response_time_ms: elapsed,
-      });
+        expected_behaviors: currentTest?.expected_behaviors || [],
+      },
+    };
+
+    try {
+      await AixisAPI.uploadObservation(state.currentSession.id, obsData);
       state.submittedTests[testKey] = true;
-      // Persist immediately after marking submitted to prevent double-submit on crash
+      state.observationCount++;
       persistState();
     } catch (err) {
-      // Non-fatal — screenshots are already uploaded
-      console.warn("Progress update failed:", err);
+      console.error("Test completion upload failed:", err);
+      return { error: "テスト記録のアップロードに失敗しました: " + err.message };
     }
   }
 
@@ -524,7 +534,13 @@ async function skipTest({ reason }) {
     prompt_text: currentTest?.prompt || "(スキップ)",
     response_text: null,
     response_time_ms: 0,
-    metadata: { skipped: true, reason: reason || "" },
+    metadata: {
+      type: "test_completion",
+      skipped: true,
+      reason: reason || "",
+      category: currentTest?.category || "protocol",
+      test_index: state.currentTestIndex,
+    },
   };
 
   if (!state.submittedTests) state.submittedTests = {};

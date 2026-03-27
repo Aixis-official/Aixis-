@@ -923,29 +923,58 @@
             manual_screenshot: '手動スクショ'
         };
 
-        // Filter out manual screenshots from test results display
-        var testResults = results.filter(function(r) { return r.category !== 'manual_screenshot'; });
-        var manualScreenshots = results.filter(function(r) { return r.category === 'manual_screenshot'; });
+        // Separate test completions from screenshot evidence
+        var testCompletions = results.filter(function(r) {
+            var meta = {};
+            try { meta = typeof r.metadata_json === 'string' ? JSON.parse(r.metadata_json) : (r.metadata_json || {}); } catch(e) {}
+            return meta.type === 'test_completion' || (r.category !== 'screenshot_evidence' && r.category !== 'manual_screenshot');
+        });
+        var screenshots = results.filter(function(r) {
+            return r.category === 'screenshot_evidence' || r.category === 'manual_screenshot';
+        });
 
-        body.innerHTML = testResults.map(function(r) {
-            var hasError = !!r.error;
-            var hasResponse = !!r.response_raw;
-            var hasScreenshot = !!r.screenshot_path;
-            var statusLabel = hasError ? 'エラー' : (hasResponse ? '成功' : (hasScreenshot ? 'スクショ記録' : '応答なし'));
-            var statusClass = hasError ? 'text-red-500' : (hasResponse ? 'text-emerald-500' : (hasScreenshot ? 'text-blue-500' : 'text-gray-400'));
+        // Group screenshots by test_case_id for association
+        var screenshotsByTest = {};
+        screenshots.forEach(function(s) {
+            var key = s.test_case_id || '_none';
+            if (!screenshotsByTest[key]) screenshotsByTest[key] = [];
+            screenshotsByTest[key].push(s);
+        });
 
-            var responseCell = '';
-            if (hasError) {
-                responseCell = '<span class="text-red-500">' + escapeHtml(r.error) + '</span>';
-            } else if (hasResponse) {
-                responseCell = escapeHtml(r.response_raw);
-            } else if (hasScreenshot) {
-                responseCell = '<a href="' + escapeHtml(r.screenshot_path) + '" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline">' +
-                    '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5z"/></svg>' +
-                    '\ud83d\udcf7 スクショあり</a>';
-            } else {
-                responseCell = '<span class="text-gray-400">---</span>';
+        // Deduplicate test completions by test_case_id (keep first)
+        var seen = {};
+        var uniqueTests = [];
+        testCompletions.forEach(function(r) {
+            var key = r.test_case_id || r.prompt_sent;
+            if (!seen[key]) {
+                seen[key] = true;
+                uniqueTests.push(r);
             }
+        });
+
+        // Update count display
+        var countEl = document.getElementById('results-count');
+        if (countEl) countEl.textContent = uniqueTests.length + ' 件';
+
+        body.innerHTML = uniqueTests.map(function(r, idx) {
+            var hasError = !!r.error;
+            var timeStr = r.response_time_ms ? (r.response_time_ms / 1000).toFixed(1) + 's' : '---';
+            var relatedScreenshots = screenshotsByTest[r.test_case_id] || [];
+            var screenshotCount = relatedScreenshots.length;
+
+            var screenshotLinks = '';
+            if (screenshotCount > 0) {
+                screenshotLinks = relatedScreenshots.map(function(s) {
+                    if (s.screenshot_path) {
+                        return '<a href="' + escapeHtml(s.screenshot_path) + '" target="_blank" class="inline-flex items-center gap-0.5 text-indigo-600 dark:text-indigo-400 hover:underline text-[10px]">' +
+                            '\ud83d\udcf7</a>';
+                    }
+                    return '';
+                }).join(' ');
+            }
+
+            var statusLabel = hasError ? 'エラー' : (screenshotCount > 0 ? screenshotCount + '枚記録' : 'スクショなし');
+            var statusClass = hasError ? 'text-red-500' : (screenshotCount > 0 ? 'text-emerald-500' : 'text-amber-500');
 
             return '<tr class="border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">' +
                 '<td class="px-4 py-3 text-xs font-medium text-gray-600 dark:text-gray-400">' +
@@ -953,11 +982,11 @@
                         (CATEGORY_NAMES[r.category] || r.category) +
                     '</span>' +
                 '</td>' +
-                '<td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-300 max-w-xs truncate">' + escapeHtml(r.prompt_sent || '') + '</td>' +
-                '<td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 max-w-sm truncate">' + responseCell + '</td>' +
-                '<td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 tabular-nums">' +
-                    (r.response_time_ms ? (r.response_time_ms / 1000).toFixed(1) + 's' : '---') +
+                '<td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-300 max-w-xs truncate" title="' + escapeHtml(r.prompt_sent || '') + '">' + escapeHtml(r.prompt_sent || '') + '</td>' +
+                '<td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">' +
+                    (screenshotCount > 0 ? screenshotLinks : '<span class="text-gray-400">---</span>') +
                 '</td>' +
+                '<td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 tabular-nums">' + timeStr + '</td>' +
                 '<td class="px-4 py-3 text-xs font-medium ' + statusClass + '">' + statusLabel + '</td>' +
             '</tr>';
         }).join('');
