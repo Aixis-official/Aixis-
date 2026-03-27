@@ -599,7 +599,7 @@ async def rescore_audit(
     session_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
-    background_tasks: BackgroundTasks = Depends(),
+    background_tasks: BackgroundTasks,
 ):
     """Re-run LLM scoring for an existing session."""
 
