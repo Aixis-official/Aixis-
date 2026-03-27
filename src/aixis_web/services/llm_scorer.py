@@ -135,8 +135,13 @@ class LLMScorer:
 
         # 2. Ask Claude to research the tool using its knowledge
         # (Claude has knowledge of major AI tools up to its training cutoff)
-        research_prompt = f"""以下のAIツールについて、公式情報のみに基づいて簡潔にまとめてください。
-二次情報や推測は含めないでください。知らない場合は「情報なし」と記載してください。
+        research_prompt = f"""以下のAIツールについて、公式サイト・公式ドキュメントから確認できる情報のみをまとめてください。
+
+重要なルール:
+- 公式情報（公式サイト、公式ドキュメント、公式ブログ）のみを使用すること
+- レビューサイト、比較サイト、個人ブログなどの二次情報は絶対に使用しないこと
+- 確認できない情報は「公式情報で確認できず」と正直に記載すること
+- 推測や憶測は一切含めないこと
 
 ツール名: {tool_name}
 公式URL: {tool_url}
@@ -149,9 +154,8 @@ class LLMScorer:
 3. 日本語対応状況
 4. エクスポート対応形式
 5. セキュリティ・プライバシーポリシー
-6. 競合との差別化ポイント
 
-各項目を2-3行で簡潔に。"""
+各項目を2-3行で簡潔に。不明な項目は「公式情報で確認できず」と記載。"""
 
         try:
             import asyncio
@@ -526,65 +530,34 @@ class LLMScorer:
             "intelligibility": round(intelligibility, 3),
         }
 
-    def _select_representative_screenshots(
-        self,
-        observations: list[dict],
-        max_total: int = 15,
-    ) -> list[str]:
-        """Select the most representative screenshots across all observations.
+    def _collect_all_screenshots(self, observations: list[dict]) -> list[str]:
+        """Collect ALL unique screenshot paths from observations. No cap."""
+        seen: set[str] = set()
+        paths: list[str] = []
 
-        Cap is 15 to stay within Claude API's 20-image-per-message limit
-        while leaving room for future additions.
-
-        Strategy:
-        - 1 screenshot from each test category (ensuring diversity)
-        - Fill remaining slots from tests with the most screenshots
-        - Deduplicate by path
-        """
-        seen_paths: set[str] = set()
-        selected: list[str] = []
-
-        # Group observations by category
+        # Prioritize diversity: 1 per category first, then all remaining
         by_category: dict[str, list[dict]] = defaultdict(list)
         for obs in observations:
-            cat = obs.get("category", "unknown")
-            by_category[cat].append(obs)
+            by_category[obs.get("category", "unknown")].append(obs)
 
-        # Phase 1: Pick 1 screenshot per category for diversity
+        # Phase 1: 1 screenshot per category (ensures diversity)
         for _cat, cat_obs in by_category.items():
-            if len(selected) >= max_total:
-                break
             for obs in cat_obs:
-                found = False
                 for ss_path in obs.get("screenshots", []):
-                    if ss_path and ss_path not in seen_paths:
-                        seen_paths.add(ss_path)
-                        selected.append(ss_path)
-                        found = True
-                        break  # 1 per category
-                if found:
-                    break
-
-        # Phase 2: Fill remaining slots from tests with the most screenshots
-        remaining = max_total - len(selected)
-        if remaining > 0:
-            obs_by_ss_count = sorted(
-                observations,
-                key=lambda o: len(o.get("screenshots", [])),
-                reverse=True,
-            )
-            for obs in obs_by_ss_count:
-                if remaining <= 0:
-                    break
-                for ss_path in obs.get("screenshots", []):
-                    if remaining <= 0:
+                    if ss_path and ss_path not in seen:
+                        seen.add(ss_path)
+                        paths.append(ss_path)
                         break
-                    if ss_path and ss_path not in seen_paths:
-                        seen_paths.add(ss_path)
-                        selected.append(ss_path)
-                        remaining -= 1
+                break
 
-        return selected
+        # Phase 2: ALL remaining screenshots
+        for obs in observations:
+            for ss_path in obs.get("screenshots", []):
+                if ss_path and ss_path not in seen:
+                    seen.add(ss_path)
+                    paths.append(ss_path)
+
+        return paths
 
     @staticmethod
     def _resize_screenshot(img_data: bytes, max_width: int = 1024) -> bytes:
@@ -627,60 +600,106 @@ class LLMScorer:
         """
         prompt_text = self._build_rubric_prompt(axis, rubric, observations)
 
-        # Prepend tool's official info for better scoring context
+        # Prepend tool's official info as BACKGROUND CONTEXT ONLY
+        # Evaluation criteria are IDENTICAL for all tools — tool info is for reference
         if tool_info:
-            prompt_text = f"## ツール公式情報\n{tool_info}\n\n" + prompt_text
+            prompt_text = (
+                "## ツール公式情報（背景情報のみ — 評価基準への影響なし）\n"
+                "以下はこのツールの公式情報です。評価の参考として使用してください。\n"
+                "ただし、評価基準と採点方法は全ツール共通の統一基準です。\n"
+                "このツールが公式に謳っている機能があるからといって加点したり、\n"
+                "公式情報にない機能がないからといって減点しないでください。\n"
+                "あくまでもスクリーンショットから確認できる実際の品質のみを評価してください。\n\n"
+                f"{tool_info}\n\n"
+            ) + prompt_text
 
         # Build multimodal content: text prompt + screenshot images
         content = []
 
-        # Select representative screenshots across all observations (max 15, deduplicated)
-        # Cap at 15 to stay within Claude API's 20-image-per-message limit
-        selected_paths = self._select_representative_screenshots(observations, max_total=15)
-        for ss_path in selected_paths:
+        # Collect ALL screenshots (no cap) and load them
+        all_paths = self._collect_all_screenshots(observations)
+        loaded_images = []
+        for ss_path in all_paths:
             image_data = self._load_screenshot(ss_path)
             if image_data:
-                # Detect media type from actual content (magic bytes)
                 import base64 as _b64
-                media_type = "image/png"  # default
+                media_type = "image/png"
                 try:
                     raw_head = _b64.b64decode(image_data[:32])
                     if raw_head[:3] == b'\xff\xd8\xff':
                         media_type = "image/jpeg"
                     elif raw_head[:8] == b'\x89PNG\r\n\x1a\n':
                         media_type = "image/png"
-                    elif raw_head[:4] == b'RIFF':
-                        media_type = "image/webp"
                 except Exception:
                     pass
-                content.append({
+                loaded_images.append({
                     "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": media_type,
-                        "data": image_data,
-                    },
+                    "source": {"type": "base64", "media_type": media_type, "data": image_data},
                 })
 
-        # Add text prompt
-        content.append({"type": "text", "text": prompt_text})
+        logger.info("Scoring axis %s with %d screenshots (from %d paths)", axis, len(loaded_images), len(all_paths))
 
-        # Run synchronous Anthropic API call in a thread to avoid blocking
-        # the asyncio event loop (this method is called from async context)
         import asyncio
         import functools
-
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(
-            None,
-            functools.partial(
-                self.client.messages.create,
-                model=self.model,
-                max_tokens=2000,
-                temperature=0.0,
-                messages=[{"role": "user", "content": content}],
-            ),
-        )
+
+        # If <= 18 images, send all in one API call
+        # If > 18, batch into multiple calls and combine results
+        BATCH_SIZE = 18  # Claude API max is 20 per message; leave room for text
+
+        if len(loaded_images) <= BATCH_SIZE:
+            content = loaded_images + [{"type": "text", "text": prompt_text}]
+            response = await loop.run_in_executor(
+                None,
+                functools.partial(
+                    self.client.messages.create,
+                    model=self.model,
+                    max_tokens=2000,
+                    temperature=0.0,
+                    messages=[{"role": "user", "content": content}],
+                ),
+            )
+        else:
+            # Batch: split images, score each batch, then merge
+            batch_responses = []
+            for i in range(0, len(loaded_images), BATCH_SIZE):
+                batch = loaded_images[i:i + BATCH_SIZE]
+                batch_num = i // BATCH_SIZE + 1
+                total_batches = (len(loaded_images) + BATCH_SIZE - 1) // BATCH_SIZE
+                batch_note = f"\n\n[バッチ {batch_num}/{total_batches}: スクリーンショット {i+1}〜{min(i+BATCH_SIZE, len(loaded_images))} / 全{len(loaded_images)}枚]"
+                batch_content = batch + [{"type": "text", "text": prompt_text + batch_note}]
+                batch_resp = await loop.run_in_executor(
+                    None,
+                    functools.partial(
+                        self.client.messages.create,
+                        model=self.model,
+                        max_tokens=2000,
+                        temperature=0.0,
+                        messages=[{"role": "user", "content": batch_content}],
+                    ),
+                )
+                batch_responses.append(batch_resp)
+
+            # Merge batch results: take the LAST batch's response as final
+            # (it has the most context and should provide the final assessment)
+            # But if multiple batches, ask LLM to synthesize
+            if len(batch_responses) == 1:
+                response = batch_responses[0]
+            else:
+                # Synthesize from all batch results
+                synthesis_prompt = f"以下は同一ツールの{axis}軸評価の複数バッチ結果です。全バッチの情報を統合して最終評価を出してください。同じJSON形式で回答してください。\n\n"
+                for j, br in enumerate(batch_responses):
+                    synthesis_prompt += f"--- バッチ{j+1}の結果 ---\n{br.content[0].text}\n\n"
+                response = await loop.run_in_executor(
+                    None,
+                    functools.partial(
+                        self.client.messages.create,
+                        model=self.model,
+                        max_tokens=2000,
+                        temperature=0.0,
+                        messages=[{"role": "user", "content": synthesis_prompt}],
+                    ),
+                )
 
         response_text = response.content[0].text
         return self._parse_score_response(axis, rubric, response_text)
