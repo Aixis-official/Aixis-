@@ -302,15 +302,40 @@ class LLMScorer:
                 })
 
             except Exception as e:
-                logger.error("Failed to score axis %s for session %s: %s", axis, session_id, e)
-                all_scores.append({
+                logger.exception("Failed to score axis %s for session %s: %s", axis, session_id, e)
+                error_score = {
                     "axis": axis,
                     "score": 0.0,
                     "confidence": 0.0,
                     "details": [],
                     "strengths": [],
-                    "risks": [f"スコアリングエラー: {str(e)}"],
-                })
+                    "risks": [f"スコアリングエラー: {str(e)[:200]}"],
+                }
+                all_scores.append(error_score)
+                # Also write error score to DB so the dashboard shows something
+                try:
+                    err_id = str(uuid.uuid4())
+                    await db.execute(text("""
+                        INSERT INTO axis_scores
+                        (id, session_id, tool_id, axis, axis_name_jp, score, confidence,
+                         source, details, strengths, risks, scored_at, scored_by)
+                        VALUES (:id, :sid, :tid, :axis, :name, :score, :conf,
+                                :source, :details, :strengths, :risks, :scored_at, NULL)
+                        ON CONFLICT (session_id, axis) DO UPDATE SET
+                            score = EXCLUDED.score, confidence = EXCLUDED.confidence,
+                            details = EXCLUDED.details, risks = EXCLUDED.risks,
+                            scored_at = EXCLUDED.scored_at
+                    """), {
+                        "id": err_id, "sid": session_id, "tid": tool_id,
+                        "axis": axis, "name": rubric["name_jp"],
+                        "score": 0.0, "conf": 0.0, "source": "error",
+                        "details": json.dumps({"error": str(e)[:500]}),
+                        "strengths": "[]",
+                        "risks": json.dumps([f"スコアリングエラー: {str(e)[:200]}"], ensure_ascii=False),
+                        "scored_at": datetime.utcnow(),
+                    })
+                except Exception:
+                    logger.warning("Failed to write error score for %s/%s", session_id, axis)
 
         # --- Apply completion rate penalty ---
         # Fetch total_planned / total_executed from session to compute real completion rate

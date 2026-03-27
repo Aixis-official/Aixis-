@@ -600,11 +600,26 @@ async def rescore_audit(
             from ...services.llm_scorer import LLMScorer
             async with async_session() as scoring_db:
                 scorer = LLMScorer()
-                await scorer.score_session(session_id, tool_id, scoring_db)
-                await scoring_db.execute(
-                    text("UPDATE audit_sessions SET status = 'awaiting_manual' WHERE id = :sid"),
+                scores = await scorer.score_session(session_id, tool_id, scoring_db)
+                logger.info("Re-scoring produced %d scores for %s", len(scores), session_id)
+
+                # Check if any scores were actually written
+                count_result = await scoring_db.execute(
+                    text("SELECT COUNT(*) FROM axis_scores WHERE session_id = :sid"),
                     {"sid": session_id},
                 )
+                score_count = count_result.scalar() or 0
+
+                if score_count > 0:
+                    await scoring_db.execute(
+                        text("UPDATE audit_sessions SET status = 'awaiting_manual' WHERE id = :sid"),
+                        {"sid": session_id},
+                    )
+                else:
+                    await scoring_db.execute(
+                        text("UPDATE audit_sessions SET status = 'failed', error_message = :err WHERE id = :sid"),
+                        {"sid": session_id, "err": f"LLMスコアリングが0件のスコアを返しました（observations: {len(scores)}）"},
+                    )
                 await scoring_db.commit()
         except Exception as e:
             logger.exception("Re-scoring failed for %s: %s", session_id, e)
