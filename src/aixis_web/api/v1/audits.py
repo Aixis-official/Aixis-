@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 
 logger = logging.getLogger(__name__)
 from fastapi.responses import JSONResponse
@@ -599,74 +599,76 @@ async def rescore_audit(
     session_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
+    background_tasks: BackgroundTasks = Depends(),
 ):
     """Re-run LLM scoring for an existing session."""
-    import traceback as _tb
-    try:
-        session = (await db.execute(
-            select(AuditSession).where(AuditSession.id == session_id)
-        )).scalar_one_or_none()
-        if not session:
-            raise HTTPException(404, "セッションが見つかりません")
 
-        tool_id = session.tool_id
+    session = (await db.execute(
+        select(AuditSession).where(AuditSession.id == session_id)
+    )).scalar_one_or_none()
+    if not session:
+        raise HTTPException(404, "セッションが見つかりません")
 
-        # Delete existing axis scores for this session
-        await db.execute(text("DELETE FROM axis_scores WHERE session_id = :sid"), {"sid": session_id})
-        await db.execute(text("""
-            UPDATE audit_sessions SET status = 'scoring' WHERE id = :sid
-        """), {"sid": session_id})
-        await db.commit()
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("Rescore setup failed: %s\n%s", e, _tb.format_exc())
-        raise HTTPException(500, f"再スコアリングの準備に失敗: {type(e).__name__}: {e}")
+    tool_id = session.tool_id
 
-    # Trigger re-scoring in background
-    import asyncio
+    # Delete existing axis scores for this session
+    await db.execute(text("DELETE FROM axis_scores WHERE session_id = :sid"), {"sid": session_id})
+    await db.execute(text("""
+        UPDATE audit_sessions SET status = 'scoring', error_message = NULL WHERE id = :sid
+    """), {"sid": session_id})
+    await db.commit()
 
-    async def _rescore_bg():
-        from ...db.base import async_session
-        try:
-            from ...services.llm_scorer import LLMScorer
-            async with async_session() as scoring_db:
-                scorer = LLMScorer()
-                scores = await scorer.score_session(session_id, tool_id, scoring_db)
-                logger.info("Re-scoring produced %d scores for %s", len(scores), session_id)
-
-                # Check if any scores were actually written
-                count_result = await scoring_db.execute(
-                    text("SELECT COUNT(*) FROM axis_scores WHERE session_id = :sid"),
-                    {"sid": session_id},
-                )
-                score_count = count_result.scalar() or 0
-
-                if score_count > 0:
-                    await scoring_db.execute(
-                        text("UPDATE audit_sessions SET status = 'awaiting_manual' WHERE id = :sid"),
-                        {"sid": session_id},
-                    )
-                else:
-                    await scoring_db.execute(
-                        text("UPDATE audit_sessions SET status = 'failed', error_message = :err WHERE id = :sid"),
-                        {"sid": session_id, "err": f"LLMスコアリングが0件のスコアを返しました（observations: {len(scores)}）"},
-                    )
-                await scoring_db.commit()
-        except Exception as e:
-            logger.exception("Re-scoring failed for %s: %s", session_id, e)
-            try:
-                async with async_session() as err_db:
-                    await err_db.execute(text("""
-                        UPDATE audit_sessions SET status = 'failed', error_message = :err WHERE id = :sid
-                    """), {"err": str(e)[:2000], "sid": session_id})
-                    await err_db.commit()
-            except Exception:
-                pass
-
-    asyncio.ensure_future(_rescore_bg())
+    # Schedule re-scoring via FastAPI BackgroundTasks (reliable execution)
+    background_tasks.add_task(_run_rescore_bg, session_id, tool_id)
 
     return {"status": "scoring", "message": "再スコアリングを開始しました"}
+
+
+async def _run_rescore_bg(session_id: str, tool_id: str):
+    """Background task for re-scoring. Runs after response is sent."""
+    from ...db.base import async_session
+
+    logger.info("=== Re-scoring START for session %s (tool %s) ===", session_id, tool_id)
+    try:
+        from ...services.llm_scorer import LLMScorer
+
+        async with async_session() as scoring_db:
+            scorer = LLMScorer()
+            scores = await scorer.score_session(session_id, tool_id, scoring_db)
+            logger.info("Re-scoring produced %d axis scores for %s", len(scores), session_id)
+
+            # Check if any scores were actually written
+            count_result = await scoring_db.execute(
+                text("SELECT COUNT(*) FROM axis_scores WHERE session_id = :sid"),
+                {"sid": session_id},
+            )
+            score_count = count_result.scalar() or 0
+
+            if score_count > 0:
+                await scoring_db.execute(
+                    text("UPDATE audit_sessions SET status = 'completed' WHERE id = :sid"),
+                    {"sid": session_id},
+                )
+                logger.info("=== Re-scoring COMPLETED for session %s: %d axes scored ===", session_id, score_count)
+            else:
+                err_msg = f"LLMスコアリングが0件のスコアを返しました（scores returned: {len(scores)}）"
+                await scoring_db.execute(
+                    text("UPDATE audit_sessions SET status = 'failed', error_message = :err WHERE id = :sid"),
+                    {"sid": session_id, "err": err_msg},
+                )
+                logger.error("=== Re-scoring FAILED for session %s: 0 scores written ===", session_id)
+            await scoring_db.commit()
+
+    except Exception as e:
+        logger.exception("=== Re-scoring CRASHED for session %s: %s ===", session_id, e)
+        try:
+            async with async_session() as err_db:
+                await err_db.execute(text("""
+                    UPDATE audit_sessions SET status = 'failed', error_message = :err WHERE id = :sid
+                """), {"err": str(e)[:2000], "sid": session_id})
+                await err_db.commit()
+        except Exception as e2:
+            logger.error("Failed to write error status for session %s: %s", session_id, e2)
 
 
 @router.post("/{session_id}/finalize")

@@ -16,7 +16,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -662,6 +662,7 @@ async def advance_test_progress(
 @router.post("/sessions/{session_id}/complete")
 async def complete_session(
     session_id: str,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_agent_key),
 ):
@@ -707,11 +708,10 @@ async def complete_session(
     })
     await db.commit()
 
-    # Trigger LLM scoring as asyncio task (same event loop, avoids cross-loop DB issues)
-    import asyncio
-    asyncio.ensure_future(_run_llm_scoring_background(session_id, tool_id))
+    # Schedule LLM scoring via FastAPI BackgroundTasks (reliable execution)
+    background_tasks.add_task(_run_llm_scoring_background, session_id, tool_id)
 
-    logger.info("Session %s marked complete, scoring started (observations=%d)", session_id, total_executed)
+    logger.info("Session %s marked complete, scoring scheduled (observations=%d)", session_id, total_executed)
     return {
         "status": "scoring",
         "session_id": session_id,
@@ -722,8 +722,10 @@ async def complete_session(
 
 
 async def _run_llm_scoring_background(session_id: str, tool_id: str) -> None:
-    """Run LLM scoring as a background asyncio task (same event loop as FastAPI)."""
+    """Background task for LLM scoring. Runs after response is sent."""
     from ...db.base import async_session
+
+    logger.info("=== LLM scoring START for session %s (tool %s) ===", session_id, tool_id)
 
     try:
         from ...services.audit_runner import register_job, update_job, cleanup_job
@@ -738,14 +740,14 @@ async def _run_llm_scoring_background(session_id: str, tool_id: str) -> None:
             scorer = LLMScorer()
             await scorer.score_session(session_id, tool_id, db)
 
-            # After LLM scoring, set to awaiting_manual for human checklist evaluation
+            # Set to completed after scoring
             await db.execute(
-                text("UPDATE audit_sessions SET status = 'awaiting_manual' WHERE id = :sid"),
+                text("UPDATE audit_sessions SET status = 'completed' WHERE id = :sid"),
                 {"sid": session_id},
             )
             await db.commit()
 
-        logger.info("LLM scoring completed for session %s", session_id)
+        logger.info("=== LLM scoring COMPLETED for session %s ===", session_id)
 
         try:
             from ...services.audit_runner import update_job, cleanup_job
@@ -755,7 +757,7 @@ async def _run_llm_scoring_background(session_id: str, tool_id: str) -> None:
             pass
 
     except Exception as e:
-        logger.exception("LLM scoring failed for session %s: %s", session_id, e)
+        logger.exception("=== LLM scoring CRASHED for session %s: %s ===", session_id, e)
 
         # Update session status to failed
         try:
@@ -766,8 +768,8 @@ async def _run_llm_scoring_background(session_id: str, tool_id: str) -> None:
                     WHERE id = :sid
                 """), {"error": str(e)[:2000], "sid": session_id})
                 await db.commit()
-        except Exception:
-            logger.error("Failed to update session status for %s", session_id)
+        except Exception as e2:
+            logger.error("Failed to update session status for %s: %s", session_id, e2)
 
         try:
             from ...services.audit_runner import update_job, cleanup_job

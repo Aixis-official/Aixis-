@@ -102,7 +102,8 @@
                     </div>
                     <div class="flex-1">
                         <h3 class="text-base font-semibold text-purple-800 dark:text-purple-300 font-jp mb-2">LLMスコアリング中...</h3>
-                        <p class="text-sm text-purple-700 dark:text-purple-400 font-jp">LLMスコアリングを実行中です。完了までお待ちください。</p>
+                        <p class="text-sm text-purple-700 dark:text-purple-400 font-jp" id="scoring-status-detail">5軸の評価をLLMで分析しています。通常1〜3分で完了します。</p>
+                        <p class="text-xs text-purple-500 dark:text-purple-500 font-mono mt-2" id="scoring-elapsed"></p>
                     </div>
                 </div>
             </div>
@@ -297,6 +298,9 @@
     var pollingInterval = null;
     var auditStartedAt = null;
     var elapsedTimer = null;
+    var scoringStartTime = null;
+    var scoringElapsedTimer = null;
+    var scoringPollCount = 0;
 
     var loadingInProgress = false;
 
@@ -628,13 +632,56 @@
         if (data.status === 'scoring') {
             document.getElementById('scoring-section').classList.remove('hidden');
             document.getElementById('progress-section').classList.add('hidden');
-            // Poll to check when scoring completes
+
+            // Start scoring-specific elapsed timer
+            if (!scoringStartTime) {
+                scoringStartTime = Date.now();
+            }
+            if (!scoringElapsedTimer) {
+                scoringElapsedTimer = setInterval(function() {
+                    var elapsed = Math.floor((Date.now() - scoringStartTime) / 1000);
+                    var mins = Math.floor(elapsed / 60);
+                    var secs = elapsed % 60;
+                    var el = document.getElementById('scoring-elapsed');
+                    if (el) el.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs + ' 経過';
+
+                    // After 5 minutes, show a warning
+                    var detail = document.getElementById('scoring-status-detail');
+                    if (elapsed > 300 && detail) {
+                        detail.textContent = 'スコアリングに時間がかかっています。問題がある場合はページを再読み込みしてください。';
+                    }
+                }, 1000);
+            }
+
+            // Update progress with scored axis count
+            scoringPollCount++;
+            var scoredAxes = (data.axis_scores || []).filter(function(s) {
+                return s.source !== 'error' && s.score > 0;
+            }).length;
+            if (scoredAxes > 0) {
+                var detail = document.getElementById('scoring-status-detail');
+                if (detail) detail.textContent = 'スコアリング中... (' + scoredAxes + '/5 軸完了)';
+            }
+
+            // Poll to check when scoring completes (max 120 attempts = ~6 min)
             if (!pollingInterval) {
                 pollingInterval = setInterval(loadAudit, 3000);
             }
-            startElapsedTimer(data.started_at);
+            if (scoringPollCount >= 120) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                var detail = document.getElementById('scoring-status-detail');
+                if (detail) detail.textContent = 'タイムアウトしました。ページを再読み込みしてください。';
+            }
         } else {
             document.getElementById('scoring-section').classList.add('hidden');
+            // Clean up scoring timer when leaving scoring state
+            if (scoringElapsedTimer) {
+                clearInterval(scoringElapsedTimer);
+                scoringElapsedTimer = null;
+                scoringStartTime = null;
+                scoringPollCount = 0;
+            }
         }
 
         // Progress section (show for running, pending, aborting)
