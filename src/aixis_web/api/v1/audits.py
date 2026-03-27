@@ -569,20 +569,27 @@ async def rescore_audit(
     _user: Annotated[User, Depends(require_analyst)],
 ):
     """Re-run LLM scoring for an existing session."""
-    session = (await db.execute(
-        select(AuditSession).where(AuditSession.id == session_id)
-    )).scalar_one_or_none()
-    if not session:
-        raise HTTPException(404, "セッションが見つかりません")
+    import traceback as _tb
+    try:
+        session = (await db.execute(
+            select(AuditSession).where(AuditSession.id == session_id)
+        )).scalar_one_or_none()
+        if not session:
+            raise HTTPException(404, "セッションが見つかりません")
 
-    tool_id = session.tool_id
+        tool_id = session.tool_id
 
-    # Delete existing axis scores for this session
-    await db.execute(text("DELETE FROM axis_scores WHERE session_id = :sid"), {"sid": session_id})
-    await db.execute(text("""
-        UPDATE audit_sessions SET status = 'scoring' WHERE id = :sid
-    """), {"sid": session_id})
-    await db.commit()
+        # Delete existing axis scores for this session
+        await db.execute(text("DELETE FROM axis_scores WHERE session_id = :sid"), {"sid": session_id})
+        await db.execute(text("""
+            UPDATE audit_sessions SET status = 'scoring' WHERE id = :sid
+        """), {"sid": session_id})
+        await db.commit()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Rescore setup failed: %s\n%s", e, _tb.format_exc())
+        raise HTTPException(500, f"再スコアリングの準備に失敗: {type(e).__name__}: {e}")
 
     # Trigger re-scoring in background
     import asyncio
