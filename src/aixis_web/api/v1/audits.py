@@ -157,6 +157,44 @@ async def list_audits(
         return {"items": [], "total": 0}
 
 
+@router.get("/deleted", response_model=AuditListResponse)
+async def list_deleted_audits(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[User, Depends(require_analyst)],
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+):
+    """List soft-deleted audit sessions (for recovery)."""
+    query = select(AuditSession).where(AuditSession.deleted_at.isnot(None))
+    count_query = select(func.count()).select_from(AuditSession).where(AuditSession.deleted_at.isnot(None))
+
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    offset = (page - 1) * page_size
+    query = query.order_by(AuditSession.deleted_at.desc()).offset(offset).limit(page_size)
+    result = await db.execute(query)
+    items = result.scalars().all()
+
+    tool_ids = list({item.tool_id for item in items if item.tool_id})
+    tool_names = {}
+    if tool_ids:
+        tools_result = await db.execute(select(Tool).where(Tool.id.in_(tool_ids)))
+        for t in tools_result.scalars().all():
+            tool_names[t.id] = t.name_jp or t.name
+
+    response_items = []
+    for item in items:
+        try:
+            data = AuditResponse.model_validate(item)
+            data.tool_name = tool_names.get(item.tool_id)
+            response_items.append(data)
+        except Exception as e:
+            logger.warning("Skipping deleted audit %s: %s", getattr(item, 'id', '?'), e)
+
+    return AuditListResponse(items=response_items, total=total)
+
+
 @router.get("/{session_id}", response_model=AuditDetailResponse)
 async def get_audit(
     session_id: str,
@@ -418,44 +456,6 @@ async def delete_audit(
         pass
 
 
-@router.get("/deleted", response_model=AuditListResponse)
-async def list_deleted_audits(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    _user: Annotated[User, Depends(require_analyst)],
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
-):
-    """List soft-deleted audit sessions (for recovery)."""
-    query = select(AuditSession).where(AuditSession.deleted_at.isnot(None))
-    count_query = select(func.count()).select_from(AuditSession).where(AuditSession.deleted_at.isnot(None))
-
-    total_result = await db.execute(count_query)
-    total = total_result.scalar() or 0
-
-    offset = (page - 1) * page_size
-    query = query.order_by(AuditSession.deleted_at.desc()).offset(offset).limit(page_size)
-    result = await db.execute(query)
-    items = result.scalars().all()
-
-    tool_ids = list({item.tool_id for item in items if item.tool_id})
-    tool_names = {}
-    if tool_ids:
-        tools_result = await db.execute(select(Tool).where(Tool.id.in_(tool_ids)))
-        for t in tools_result.scalars().all():
-            tool_names[t.id] = t.name_jp or t.name
-
-    response_items = []
-    for item in items:
-        try:
-            data = AuditResponse.model_validate(item)
-            data.tool_name = tool_names.get(item.tool_id)
-            response_items.append(data)
-        except Exception as e:
-            logger.warning("Skipping deleted audit %s: %s", getattr(item, 'id', '?'), e)
-
-    return AuditListResponse(items=response_items, total=total)
-
-
 @router.post("/{session_id}/restore")
 async def restore_audit(
     session_id: str,
@@ -677,6 +677,12 @@ async def submit_manual_scores(
             detail="監査セッションが見つかりません",
         )
 
+    if session.status in ("scoring", "running", "pending"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"セッションは「{session.status}」状態です。自動評価完了後に手動評価を送信してください。",
+        )
+
     for item in body.items:
         # Upsert: update existing entry or create new one
         existing = await db.execute(
@@ -752,6 +758,11 @@ async def rescore_audit(
     )).scalar_one_or_none()
     if not session:
         raise HTTPException(404, "セッションが見つかりません")
+
+    if session.status == "scoring":
+        raise HTTPException(400, "すでにスコアリング中です。完了をお待ちください。")
+    if session.status in ("running", "pending"):
+        raise HTTPException(400, "監査がまだ実行中です。完了後に再スコアリングしてください。")
 
     tool_id = session.tool_id
 

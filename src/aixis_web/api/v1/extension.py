@@ -73,7 +73,7 @@ async def create_extension_session(
 
 async def _create_session_impl(body, db, user):
     session_id = str(uuid.uuid4())
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Generate session code
     hash_input = f"{now.isoformat()}-{session_id}"
@@ -286,7 +286,7 @@ async def upload_observation(
     if session_row[2] not in ("running", "pending"):
         raise HTTPException(400, f"セッションは現在 {session_row[2]} 状態です。観察データを追加できません。")
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Get actual observation count (including manual screenshots) for sequence numbering
     count_result = await db.execute(
@@ -542,7 +542,7 @@ async def upload_file(
         extracted_text = f"(テキスト抽出に失敗しました: {e})"
 
     # Store extracted text as a special observation
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     file_case_id = f"file-{session_id[:8]}-{safe_filename}"
     await db.execute(text("""
         INSERT INTO db_test_cases
@@ -629,7 +629,7 @@ async def advance_test_progress(
     test_case_id = body.get("test_case_id")
     test_index = body.get("test_index")
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Backfill response_time_ms onto db_test_results for this test_case_id
     if response_time_ms and response_time_ms > 0 and test_case_id:
@@ -692,7 +692,7 @@ async def complete_session(
     total_executed = session_row[4] or 0
     completeness = int(total_executed / total_planned * 100) if total_planned > 0 else 0
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Update session to "scoring" status
     await db.execute(text("""

@@ -711,6 +711,8 @@
 
         // Progress section (show for running, pending, aborting)
         var isActive = ['running', 'pending', 'aborting'].includes(data.status);
+        // States that need polling but don't show the progress bar
+        var needsPolling = ['running', 'pending', 'aborting', 'scoring', 'waiting_login'].includes(data.status);
         if (isActive) {
             document.getElementById('progress-section').classList.remove('hidden');
             // Use DB values as initial fallback only — pollProgress() will overwrite with real-time data
@@ -725,15 +727,18 @@
             }
 
             startElapsedTimer(data.started_at);
-
-            // Poll for updates
-            if (!pollingInterval) {
-                pollingInterval = setInterval(loadAudit, 3000);
-            }
         } else {
             document.getElementById('progress-section').classList.add('hidden');
             document.getElementById('progress-bar')._hasRealtimeData = false;
             stopElapsedTimer();
+        }
+
+        // Polling: keep polling for any state that needs live updates
+        if (needsPolling) {
+            if (!pollingInterval) {
+                pollingInterval = setInterval(loadAudit, 3000);
+            }
+        } else {
             if (pollingInterval) {
                 clearInterval(pollingInterval);
                 pollingInterval = null;

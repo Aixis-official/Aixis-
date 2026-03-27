@@ -195,6 +195,7 @@ class LLMScorer:
                 max_tokens=1000,
                 messages=[{"role": "user", "content": research_prompt}],
             ))
+            self._track_usage(response)
             return response.content[0].text if response.content else ""
         except Exception as e:
             logger.warning("Tool research failed for %s: %s", tool_id, e)
@@ -354,25 +355,17 @@ class LLMScorer:
                     axis_observations = observations
                 confidence_dimensions = self._calculate_confidence_dimensions(axis_observations)
 
-                # Apply per-axis auto/manual split (from score_service.AXIS_MIX)
+                # Store the raw LLM auto score — AXIS_MIX blending is done
+                # exclusively in merge_and_publish() to avoid double-blending.
                 auto_score = score_data["score"]
                 mix = AXIS_MIX.get(axis, {"auto": 0.6, "manual": 0.4})
                 auto_ratio = mix["auto"]
                 manual_ratio = mix["manual"]
+                manual_score = manual_scores.get(axis, {}).get("avg") if axis in manual_scores else None
+                source = "llm"
 
-                if axis in manual_scores:
-                    manual_score = manual_scores[axis]["avg"]
-                    final_score = (auto_score * auto_ratio) + (manual_score * manual_ratio)
-                    source = "hybrid"
-                else:
-                    # Manual not yet available — use auto only, lower confidence
-                    final_score = auto_score
-                    manual_score = None
-                    source = "llm"
-                    # Penalize confidence when manual component is missing
-                    score_data["confidence"] = score_data["confidence"] * 0.8
-
-                score_data["score"] = max(0.0, min(5.0, final_score))
+                # Store the raw auto score (not blended) in the DB
+                score_data["score"] = max(0.0, min(5.0, auto_score))
 
                 # Merge per-axis confidence dimensions into score metadata
                 score_data["confidence_dimensions"] = confidence_dimensions
@@ -418,7 +411,7 @@ class LLMScorer:
                     "details": json.dumps(details_with_meta, ensure_ascii=False),
                     "strengths": json.dumps(score_data["strengths"], ensure_ascii=False),
                     "risks": json.dumps(score_data["risks"], ensure_ascii=False),
-                    "scored_at": datetime.utcnow(),
+                    "scored_at": datetime.now(timezone.utc),
                     "scored_by": None,  # NULL = automated LLM scoring
                 })
 
@@ -433,7 +426,8 @@ class LLMScorer:
                     "risks": [f"スコアリングエラー: {str(e)[:200]}"],
                 }
                 all_scores.append(error_score)
-                # Also write error score to DB so the dashboard shows something
+                # Write error score to DB ONLY if no valid score exists for this axis
+                # (never overwrite a good score with an error)
                 try:
                     err_id = str(uuid.uuid4())
                     await db.execute(text("""
@@ -442,10 +436,7 @@ class LLMScorer:
                          source, details, strengths, risks, scored_at, scored_by)
                         VALUES (:id, :sid, :tid, :axis, :name, :score, :conf,
                                 :source, :details, :strengths, :risks, :scored_at, NULL)
-                        ON CONFLICT (session_id, axis) DO UPDATE SET
-                            score = EXCLUDED.score, confidence = EXCLUDED.confidence,
-                            details = EXCLUDED.details, risks = EXCLUDED.risks,
-                            scored_at = EXCLUDED.scored_at
+                        ON CONFLICT (session_id, axis) DO NOTHING
                     """), {
                         "id": err_id, "sid": session_id, "tid": tool_id,
                         "axis": axis, "name": rubric["name_jp"],
@@ -453,7 +444,7 @@ class LLMScorer:
                         "details": json.dumps({"error": str(e)[:500]}, ensure_ascii=False),
                         "strengths": "[]",
                         "risks": json.dumps([f"スコアリングエラー: {str(e)[:200]}"], ensure_ascii=False),
-                        "scored_at": datetime.utcnow(),
+                        "scored_at": datetime.now(timezone.utc),
                     })
                 except Exception:
                     logger.warning("Failed to write error score for %s/%s", session_id, axis)

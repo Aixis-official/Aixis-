@@ -20,12 +20,14 @@ AXIS_MIX = {
 }
 
 
-async def get_auto_scores(db: AsyncSession, session_id: str) -> dict[str, float]:
+async def get_auto_scores(db: AsyncSession, session_id: str) -> tuple[dict[str, float], set[str]]:
     """Get automated scores for all axes from a session.
+
+    Returns (scores_dict, manual_edit_axes) where manual_edit_axes contains
+    axes that were directly edited (should bypass AXIS_MIX blending).
 
     The LLM scorer stores scores with source='llm' or 'hybrid', while the
     legacy agent scorer uses source='auto'. The manual editor uses 'manual_edit'.
-    Accept all non-checklist-manual sources.
     """
     result = await db.execute(
         select(AxisScoreRecord).where(
@@ -34,7 +36,14 @@ async def get_auto_scores(db: AsyncSession, session_id: str) -> dict[str, float]
         )
     )
     scores = {}
+    manual_edit_axes = set()
     for record in result.scalars():
+        if record.source == "manual_edit":
+            # Manual edits are final scores — no blending needed
+            scores[record.axis] = record.score
+            manual_edit_axes.add(record.axis)
+            continue
+
         # Use the raw auto_score if available in details (stored by LLM scorer),
         # otherwise use the record score directly
         auto_score = record.score
@@ -47,7 +56,7 @@ async def get_auto_scores(db: AsyncSession, session_id: str) -> dict[str, float]
             except (TypeError, ValueError, _json.JSONDecodeError):
                 pass
         scores[record.axis] = auto_score
-    return scores
+    return scores, manual_edit_axes
 
 
 async def get_manual_scores(db: AsyncSession, session_id: str) -> dict[str, float]:
@@ -70,11 +79,17 @@ async def get_manual_scores(db: AsyncSession, session_id: str) -> dict[str, floa
 
 async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, published_by: str | None = None) -> ToolPublishedScore:
     """Merge auto + manual scores and publish to tool_scores."""
-    auto_scores = await get_auto_scores(db, session_id)
+    auto_scores, manual_edit_axes = await get_auto_scores(db, session_id)
     manual_scores = await get_manual_scores(db, session_id)
 
     final = {}
     for axis, mix in AXIS_MIX.items():
+        # Manual edits are final — bypass AXIS_MIX blending entirely
+        if axis in manual_edit_axes:
+            final[axis] = auto_scores[axis]
+            final[axis] = max(0.0, min(5.0, round(final[axis], 1)))
+            continue
+
         has_auto = axis in auto_scores and mix["auto"] > 0
         has_manual = axis in manual_scores and mix["manual"] > 0
 
@@ -189,7 +204,7 @@ async def generate_score_diff(db: AsyncSession, tool_id: str, current_session_id
     Returns a diff report dict or None if no previous audit exists.
     """
     # Get current session's auto scores
-    current_scores = await get_auto_scores(db, current_session_id)
+    current_scores, _ = await get_auto_scores(db, current_session_id)
     if not current_scores:
         return None
 
@@ -209,7 +224,7 @@ async def generate_score_diff(db: AsyncSession, tool_id: str, current_session_id
     if not prev_session:
         return None
 
-    prev_scores = await get_auto_scores(db, prev_session.id)
+    prev_scores, _ = await get_auto_scores(db, prev_session.id)
     if not prev_scores:
         return None
 
