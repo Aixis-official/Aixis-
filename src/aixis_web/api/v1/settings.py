@@ -238,11 +238,30 @@ async def gdrive_status(
     return get_export_status()
 
 
+@router.post("/gdrive/test-connection")
+async def gdrive_test_connection(user: Annotated[User, Depends(require_admin)]):
+    """Test Google Drive connection by listing files in the configured folder."""
+    try:
+        from ...services.gdrive_export_service import list_gdrive_files
+        files = list_gdrive_files(max_results=1)
+        return {"status": "ok", "message": "Google Driveに正常に接続できました"}
+    except Exception as e:
+        raise HTTPException(400, f"接続テストに失敗しました: {str(e)[:200]}")
+
+
+_last_manual_export_time = 0
+
+
 @router.post("/gdrive/export")
 async def gdrive_export_now(
     user: Annotated[User, Depends(require_admin)],
 ):
     """Manually trigger a Google Drive export."""
+    import time
+    global _last_manual_export_time
+    if time.time() - _last_manual_export_time < 300:  # 5 minutes
+        raise HTTPException(429, "手動エクスポートは5分に1回までです")
+    _last_manual_export_time = time.time()
     from ...services.gdrive_export_service import export_to_gdrive
     result = export_to_gdrive()
     if "error" in result:
@@ -395,14 +414,22 @@ async def update_gdrive_settings(
 
     if body.folder_id is not None:
         val = body.folder_id.strip()
+        if val:
+            # Validate folder exists
+            try:
+                from ...services.gdrive_export_service import _get_drive_service
+                service = _get_drive_service()
+                service.files().get(fileId=val, supportsAllDrives=True).execute()
+            except Exception as e:
+                raise HTTPException(400, f"指定されたフォルダIDが無効です: {str(e)[:100]}")
         _write_env_key("AIXIS_GDRIVE_FOLDER_ID", val)
         os.environ["AIXIS_GDRIVE_FOLDER_ID"] = val
         settings.gdrive_folder_id = val
         changes.append("folder_id")
 
     if body.interval_hours is not None:
-        if body.interval_hours < 1 or body.interval_hours > 168:
-            raise HTTPException(400, "エクスポート間隔は1〜168時間で指定してください")
+        if body.interval_hours < 6 or body.interval_hours > 168:
+            raise HTTPException(400, "エクスポート間隔は6〜168時間で指定してください")
         val = str(body.interval_hours)
         _write_env_key("AIXIS_GDRIVE_EXPORT_INTERVAL_HOURS", val)
         os.environ["AIXIS_GDRIVE_EXPORT_INTERVAL_HOURS"] = val
