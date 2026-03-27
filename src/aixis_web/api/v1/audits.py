@@ -584,10 +584,33 @@ async def rescore_audit(
     """), {"sid": session_id})
     await db.commit()
 
-    # Trigger re-scoring
+    # Trigger re-scoring in background
     import asyncio
-    from .extension import _run_llm_scoring_background
-    asyncio.ensure_future(_run_llm_scoring_background(session_id, tool_id))
+
+    async def _rescore_bg():
+        from ...db.base import async_session
+        try:
+            from ...services.llm_scorer import LLMScorer
+            async with async_session() as scoring_db:
+                scorer = LLMScorer()
+                await scorer.score_session(session_id, tool_id, scoring_db)
+                await scoring_db.execute(
+                    text("UPDATE audit_sessions SET status = 'awaiting_manual' WHERE id = :sid"),
+                    {"sid": session_id},
+                )
+                await scoring_db.commit()
+        except Exception as e:
+            logger.exception("Re-scoring failed for %s: %s", session_id, e)
+            try:
+                async with async_session() as err_db:
+                    await err_db.execute(text("""
+                        UPDATE audit_sessions SET status = 'failed', error_message = :err WHERE id = :sid
+                    """), {"err": str(e)[:2000], "sid": session_id})
+                    await err_db.commit()
+            except Exception:
+                pass
+
+    asyncio.ensure_future(_rescore_bg())
 
     return {"status": "scoring", "message": "再スコアリングを開始しました"}
 
