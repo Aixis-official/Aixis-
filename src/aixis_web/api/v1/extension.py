@@ -239,10 +239,10 @@ async def get_session_test_cases(
             id=row[0],
             category=row[1],
             prompt=row[2],
-            metadata=json.loads(row[3]) if row[3] else {},
-            expected_behaviors=json.loads(row[4]) if row[4] else [],
-            failure_indicators=json.loads(row[5]) if row[5] else [],
-            tags=json.loads(row[6]) if row[6] else [],
+            metadata=row[3] if isinstance(row[3], dict) else (json.loads(row[3]) if row[3] else {}),
+            expected_behaviors=row[4] if isinstance(row[4], list) else (json.loads(row[4]) if row[4] else []),
+            failure_indicators=row[5] if isinstance(row[5], list) else (json.loads(row[5]) if row[5] else []),
+            tags=row[6] if isinstance(row[6], list) else (json.loads(row[6]) if row[6] else []),
         ))
     return cases
 

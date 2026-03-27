@@ -218,8 +218,8 @@ class LLMScorer:
                 "response_time_ms": row[4] or 0,
                 "error": row[5],
                 "screenshot_path": screenshot_path,
-                "expected_behaviors": json.loads(row[7]) if row[7] else [],
-                "failure_indicators": json.loads(row[8]) if row[8] else [],
+                "expected_behaviors": row[7] if isinstance(row[7], list) else (json.loads(row[7]) if row[7] else []),
+                "failure_indicators": row[8] if isinstance(row[8], list) else (json.loads(row[8]) if row[8] else []),
             })
 
         # Attach grouped screenshots to their test observations
