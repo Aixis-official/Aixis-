@@ -117,6 +117,55 @@ class LLMScorer:
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = settings.ai_scoring_model or settings.ai_agent_model or "claude-haiku-4-5-20251001"
 
+    async def _research_tool_info(self, tool_id: str, db: AsyncSession) -> str:
+        """Fetch tool's official info for scoring context."""
+        # 1. Get tool details from DB
+        result = await db.execute(
+            text("SELECT name, name_jp, url, vendor, description FROM tools WHERE id = :tid"),
+            {"tid": tool_id}
+        )
+        tool = result.fetchone()
+        if not tool:
+            return ""
+
+        tool_name = tool[1] or tool[0] or "不明"
+        tool_url = tool[2] or ""
+        tool_vendor = tool[3] or ""
+        tool_desc = tool[4] or ""
+
+        # 2. Ask Claude to research the tool using its knowledge
+        # (Claude has knowledge of major AI tools up to its training cutoff)
+        research_prompt = f"""以下のAIツールについて、公式情報のみに基づいて簡潔にまとめてください。
+二次情報や推測は含めないでください。知らない場合は「情報なし」と記載してください。
+
+ツール名: {tool_name}
+公式URL: {tool_url}
+ベンダー: {tool_vendor}
+概要: {tool_desc}
+
+以下の項目について公式情報をまとめてください:
+1. 主な機能と特徴
+2. 料金プラン（無料/有料の区分、価格帯）
+3. 日本語対応状況
+4. エクスポート対応形式
+5. セキュリティ・プライバシーポリシー
+6. 競合との差別化ポイント
+
+各項目を2-3行で簡潔に。"""
+
+        try:
+            import asyncio
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(None, lambda: self.client.messages.create(
+                model=self.model,
+                max_tokens=1000,
+                messages=[{"role": "user", "content": research_prompt}],
+            ))
+            return response.content[0].text if response.content else ""
+        except Exception as e:
+            logger.warning("Tool research failed for %s: %s", tool_id, e)
+            return ""
+
     async def score_session(
         self,
         session_id: str,
@@ -205,6 +254,9 @@ class LLMScorer:
                 logger.warning("No observations or screenshots for session %s", session_id)
                 return []
 
+        # 1b. Research tool's official information for scoring context
+        tool_info = await self._research_tool_info(tool_id, db)
+
         # 2. Fetch any existing manual checklist scores for 60/40 blending
         try:
             manual_result = await db.execute(text("""
@@ -230,7 +282,7 @@ class LLMScorer:
         all_scores = []
         for axis, rubric in AXIS_RUBRICS.items():
             try:
-                score_data = await self._score_axis(axis, rubric, observations)
+                score_data = await self._score_axis(axis, rubric, observations, tool_info=tool_info)
 
                 # Apply per-axis auto/manual split (from score_service.AXIS_MIX)
                 from .score_service import AXIS_MIX
@@ -477,9 +529,12 @@ class LLMScorer:
     def _select_representative_screenshots(
         self,
         observations: list[dict],
-        max_total: int = 10,
+        max_total: int = 15,
     ) -> list[str]:
         """Select the most representative screenshots across all observations.
+
+        Cap is 15 to stay within Claude API's 20-image-per-message limit
+        while leaving room for future additions.
 
         Strategy:
         - 1 screenshot from each test category (ensuring diversity)
@@ -562,19 +617,26 @@ class LLMScorer:
         axis: str,
         rubric: dict,
         observations: list[dict],
+        tool_info: str = "",
     ) -> dict:
         """Score a single axis using Claude with multimodal (text + screenshots).
 
-        Screenshots are selected once (max 10 total, deduplicated, diverse by
-        category) and resized to reduce API token cost.
+        Screenshots are selected once (max 15 total, deduplicated, diverse by
+        category) and resized to reduce API token cost. The cap of 15 stays
+        within Claude API's 20-image-per-message limit.
         """
         prompt_text = self._build_rubric_prompt(axis, rubric, observations)
+
+        # Prepend tool's official info for better scoring context
+        if tool_info:
+            prompt_text = f"## ツール公式情報\n{tool_info}\n\n" + prompt_text
 
         # Build multimodal content: text prompt + screenshot images
         content = []
 
-        # Select representative screenshots across all observations (max 10, deduplicated)
-        selected_paths = self._select_representative_screenshots(observations, max_total=10)
+        # Select representative screenshots across all observations (max 15, deduplicated)
+        # Cap at 15 to stay within Claude API's 20-image-per-message limit
+        selected_paths = self._select_representative_screenshots(observations, max_total=15)
         for ss_path in selected_paths:
             image_data = self._load_screenshot(ss_path)
             if image_data:
