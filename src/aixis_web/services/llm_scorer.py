@@ -873,34 +873,64 @@ class LLMScorer:
         response_text: str,
     ) -> dict:
         """Parse Claude's structured scoring response."""
-        # Extract JSON from response (handle markdown code blocks)
+        # Extract JSON from response — try multiple strategies
         text = response_text.strip()
-        if text.startswith("```"):
-            lines = text.split("\n")
-            # Remove first and last lines (``` markers)
-            json_lines = []
-            in_block = False
-            for line in lines:
-                if line.strip().startswith("```") and not in_block:
-                    in_block = True
-                    continue
-                elif line.strip() == "```" and in_block:
-                    break
-                elif in_block:
-                    json_lines.append(line)
-            text = "\n".join(json_lines)
 
+        data = None
+
+        # Strategy 1: Direct JSON parse
         try:
             data = json.loads(text)
         except json.JSONDecodeError:
-            logger.error("Failed to parse LLM score response for axis %s: %s", axis, text[:200])
+            pass
+
+        # Strategy 2: Extract from markdown code block
+        if data is None and "```" in text:
+            import re
+            json_match = re.search(r'```(?:json)?\s*\n?(.*?)\n?```', text, re.DOTALL)
+            if json_match:
+                try:
+                    data = json.loads(json_match.group(1).strip())
+                except json.JSONDecodeError:
+                    pass
+
+        # Strategy 3: Find JSON object anywhere in text
+        if data is None:
+            import re
+            json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', text, re.DOTALL)
+            if json_match:
+                try:
+                    data = json.loads(json_match.group(0))
+                except json.JSONDecodeError:
+                    pass
+
+        # Strategy 4: Find the largest JSON-like structure
+        if data is None:
+            start = text.find('{')
+            if start >= 0:
+                # Find matching closing brace
+                depth = 0
+                for i in range(start, len(text)):
+                    if text[i] == '{':
+                        depth += 1
+                    elif text[i] == '}':
+                        depth -= 1
+                        if depth == 0:
+                            try:
+                                data = json.loads(text[start:i+1])
+                            except json.JSONDecodeError:
+                                pass
+                            break
+
+        if data is None:
+            logger.error("Failed to parse LLM score response for axis %s: %s", axis, text[:500])
             return {
                 "axis": axis,
                 "score": 0.0,
                 "confidence": 0.0,
                 "details": [],
                 "strengths": [],
-                "risks": ["LLM応答のパースに失敗しました"],
+                "risks": [f"LLM応答のパースに失敗しました: {text[:100]}"],
             }
 
         # Validate and normalize — all scores must be on 0.0-5.0 scale
