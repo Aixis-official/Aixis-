@@ -948,7 +948,9 @@
             if (details && details.rule_results) {
                 details = details.rule_results;
             }
-            if (!details || !Array.isArray(details) || details.length === 0) return '';
+            if (!details || !Array.isArray(details) || details.length === 0) {
+                return '<div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700/50 text-[10px] text-gray-400 dark:text-gray-500 font-jp italic">詳細スコアは次回の再スコアリングで生成されます</div>';
+            }
             var html = '<div class="mt-2 space-y-1.5 border-t border-gray-100 dark:border-gray-700/50 pt-2">';
             details.forEach(function(d) {
                 var dScore = typeof d.score === 'number' ? d.score : 0;
