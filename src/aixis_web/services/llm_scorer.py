@@ -108,7 +108,11 @@ AXIS_RUBRICS = {
 
 
 class LLMScorer:
-    """LLM-based rubric scoring for Chrome extension audit data."""
+    """LLM-based rubric scoring for Chrome extension audit data.
+
+    Budget enforcement: tracks API calls and estimated cost per session.
+    Stops scoring if budget limits are exceeded.
+    """
 
     def __init__(self):
         api_key = settings.anthropic_api_key
@@ -116,6 +120,32 @@ class LLMScorer:
             raise ValueError("ANTHROPIC_API_KEY が設定されていません")
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = settings.ai_scoring_model or settings.ai_agent_model or "claude-haiku-4-5-20251001"
+        # Budget tracking per session
+        self.api_calls = 0
+        self.total_input_tokens = 0
+        self.total_output_tokens = 0
+        self.max_calls = settings.ai_budget_max_calls
+        self.max_cost_jpy = settings.ai_budget_max_cost_jpy
+
+    def _estimated_cost_jpy(self) -> float:
+        """Estimate cost in JPY (Haiku: $1/MTok input, $4/MTok output, ~150 JPY/$)."""
+        usd = (self.total_input_tokens / 1_000_000 * 1.0) + (self.total_output_tokens / 1_000_000 * 4.0)
+        return usd * 150  # approximate USD to JPY
+
+    def _check_budget(self, axis: str) -> None:
+        """Raise if budget is exceeded."""
+        if self.api_calls >= self.max_calls:
+            raise RuntimeError(f"API呼び出し上限({self.max_calls}回)に到達しました（現在{self.api_calls}回）")
+        cost = self._estimated_cost_jpy()
+        if cost >= self.max_cost_jpy:
+            raise RuntimeError(f"コスト上限({self.max_cost_jpy}円)に到達しました（現在{cost:.1f}円）")
+
+    def _track_usage(self, response) -> None:
+        """Track token usage from API response."""
+        self.api_calls += 1
+        if hasattr(response, 'usage'):
+            self.total_input_tokens += getattr(response.usage, 'input_tokens', 0)
+            self.total_output_tokens += getattr(response.usage, 'output_tokens', 0)
 
     async def _research_tool_info(self, tool_id: str, db: AsyncSession) -> str:
         """Fetch tool's official info for scoring context."""
@@ -453,6 +483,10 @@ class LLMScorer:
             session_id,
             {s["axis"]: s["score"] for s in all_scores},
         )
+        logger.info(
+            "Scoring complete for %s: %d API calls, %d input tokens, %d output tokens, estimated cost %.1f JPY",
+            session_id, self.api_calls, self.total_input_tokens, self.total_output_tokens, self._estimated_cost_jpy(),
+        )
         return all_scores
 
     def _calculate_confidence_dimensions(
@@ -560,7 +594,7 @@ class LLMScorer:
         return paths
 
     @staticmethod
-    def _resize_screenshot(img_data: bytes, max_width: int = 1024) -> bytes:
+    def _resize_screenshot(img_data: bytes, max_width: int = 768) -> bytes:
         """Resize screenshot to reduce API token cost.
 
         Retina screenshots from Chrome's captureVisibleTab are often 2x resolution.
@@ -637,7 +671,11 @@ class LLMScorer:
                     "source": {"type": "base64", "media_type": media_type, "data": image_data},
                 })
 
-        logger.info("Scoring axis %s with %d screenshots (from %d paths)", axis, len(loaded_images), len(all_paths))
+        # Budget check before API call
+        self._check_budget(axis)
+
+        logger.info("Scoring axis %s with %d screenshots (from %d paths), budget: %d calls / %.1f JPY",
+                     axis, len(loaded_images), len(all_paths), self.api_calls, self._estimated_cost_jpy())
 
         import asyncio
         import functools
@@ -654,15 +692,17 @@ class LLMScorer:
                 functools.partial(
                     self.client.messages.create,
                     model=self.model,
-                    max_tokens=2000,
+                    max_tokens=1500,
                     temperature=0.0,
                     messages=[{"role": "user", "content": content}],
                 ),
             )
+            self._track_usage(response)
         else:
             # Batch: split images, score each batch, then merge
             batch_responses = []
             for i in range(0, len(loaded_images), BATCH_SIZE):
+                self._check_budget(axis)  # Check budget before each batch
                 batch = loaded_images[i:i + BATCH_SIZE]
                 batch_num = i // BATCH_SIZE + 1
                 total_batches = (len(loaded_images) + BATCH_SIZE - 1) // BATCH_SIZE
@@ -673,20 +713,18 @@ class LLMScorer:
                     functools.partial(
                         self.client.messages.create,
                         model=self.model,
-                        max_tokens=2000,
+                        max_tokens=1500,
                         temperature=0.0,
                         messages=[{"role": "user", "content": batch_content}],
                     ),
                 )
+                self._track_usage(batch_resp)
                 batch_responses.append(batch_resp)
 
-            # Merge batch results: take the LAST batch's response as final
-            # (it has the most context and should provide the final assessment)
-            # But if multiple batches, ask LLM to synthesize
             if len(batch_responses) == 1:
                 response = batch_responses[0]
             else:
-                # Synthesize from all batch results
+                self._check_budget(axis)
                 synthesis_prompt = f"以下は同一ツールの{axis}軸評価の複数バッチ結果です。全バッチの情報を統合して最終評価を出してください。同じJSON形式で回答してください。\n\n"
                 for j, br in enumerate(batch_responses):
                     synthesis_prompt += f"--- バッチ{j+1}の結果 ---\n{br.content[0].text}\n\n"
@@ -700,8 +738,11 @@ class LLMScorer:
                         messages=[{"role": "user", "content": synthesis_prompt}],
                     ),
                 )
+                self._track_usage(response)
 
         response_text = response.content[0].text
+        logger.info("Axis %s scored. Total budget: %d calls, %.1f JPY",
+                     axis, self.api_calls, self._estimated_cost_jpy())
         return self._parse_score_response(axis, rubric, response_text)
 
     def _load_screenshot(self, screenshot_path: str) -> str | None:
