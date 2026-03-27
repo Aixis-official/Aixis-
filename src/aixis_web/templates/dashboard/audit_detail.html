@@ -805,9 +805,11 @@
         var totalScore = 0;
         var totalWeight = 0;
         scores.forEach(function(s) {
-            if (s.confidence > 0) {
-                totalScore += s.score * s.confidence;
-                totalWeight += s.confidence;
+            // Include all non-error scores in overall calculation
+            if (s.source !== 'error') {
+                var weight = Math.max(s.confidence, 0.1);  // minimum weight to avoid zero-division
+                totalScore += s.score * weight;
+                totalWeight += weight;
             }
         });
         var overall = totalWeight > 0 ? totalScore / totalWeight : 0;
@@ -925,7 +927,7 @@
             var sc = s.score.toFixed(1);
             var barPct = (s.score / 5.0 * 100).toFixed(1);
             var level = scoreLevel(s.score);
-            var needsManual = s.confidence === 0;
+            var needsManual = s.confidence === 0 && s.score === 0 && s.source === 'error';
             var mix = AIXIS.AXIS_MIX[s.axis] || {};
             return '<div class="p-4 rounded-lg border border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-[#161929]">' +
                 '<div class="flex items-center justify-between mb-2">' +
