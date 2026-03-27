@@ -36,7 +36,7 @@ async def run_llm_scoring(ctx, session_id: str, tool_id: str):
             await scorer.score_session(session_id, tool_id, db)
 
             await db.execute(
-                text("UPDATE audit_sessions SET status = 'completed' WHERE id = :sid"),
+                text("UPDATE audit_sessions SET status = 'awaiting_manual' WHERE id = :sid"),
                 {"sid": session_id},
             )
             await db.commit()

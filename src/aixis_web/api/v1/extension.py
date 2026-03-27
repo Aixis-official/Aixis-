@@ -740,9 +740,9 @@ async def _run_llm_scoring_background(session_id: str, tool_id: str) -> None:
             scorer = LLMScorer()
             await scorer.score_session(session_id, tool_id, db)
 
-            # Set to completed after scoring
+            # Set to awaiting_manual for human checklist evaluation
             await db.execute(
-                text("UPDATE audit_sessions SET status = 'completed' WHERE id = :sid"),
+                text("UPDATE audit_sessions SET status = 'awaiting_manual' WHERE id = :sid"),
                 {"sid": session_id},
             )
             await db.commit()

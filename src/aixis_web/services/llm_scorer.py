@@ -1070,6 +1070,28 @@ class LLMScorer:
                 "severity": d.get("severity", "medium"),
             })
 
+        # Fallback: if LLM returned no details (or fewer than expected),
+        # generate entries from the rubric criteria so the UI always has data.
+        expected_rule_ids = {c["rule_id"] for c in rubric.get("criteria", [])}
+        returned_rule_ids = {d["rule_id"] for d in details}
+        missing = expected_rule_ids - returned_rule_ids
+
+        if missing:
+            logger.warning(
+                "Axis %s: LLM returned %d/%d detail entries, generating %d fallback(s)",
+                axis, len(details), len(expected_rule_ids), len(missing),
+            )
+            for c in rubric.get("criteria", []):
+                if c["rule_id"] in missing:
+                    details.append({
+                        "rule_id": c["rule_id"],
+                        "rule_name_jp": c["name_jp"],
+                        "score": score,  # Use overall axis score as estimate
+                        "weight": c["weight"],
+                        "evidence": "（LLMが個別評価を返さなかったため、軸スコアを暫定適用）",
+                        "severity": "info",
+                    })
+
         return {
             "axis": axis,
             "score": score,

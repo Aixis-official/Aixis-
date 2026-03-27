@@ -646,10 +646,10 @@ async def _run_rescore_bg(session_id: str, tool_id: str):
 
             if score_count > 0:
                 await scoring_db.execute(
-                    text("UPDATE audit_sessions SET status = 'completed' WHERE id = :sid"),
+                    text("UPDATE audit_sessions SET status = 'awaiting_manual' WHERE id = :sid"),
                     {"sid": session_id},
                 )
-                logger.info("=== Re-scoring COMPLETED for session %s: %d axes scored ===", session_id, score_count)
+                logger.info("=== Re-scoring COMPLETED for session %s: %d axes scored, awaiting manual ===", session_id, score_count)
             else:
                 err_msg = f"LLMスコアリングが0件のスコアを返しました（scores returned: {len(scores)}）"
                 await scoring_db.execute(
