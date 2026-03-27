@@ -324,6 +324,18 @@ class LLMScorer:
                             axis, AXIS_MIX.get(axis, {}).get("auto", 0.6) * 100)
                 score_data = await self._score_axis(axis, rubric, observations, tool_info=tool_info)
 
+                # Retry once if LLM returned no details (likely truncation)
+                expected_count = len(rubric.get("criteria", []))
+                actual_count = len(score_data.get("details", []))
+                if actual_count == 0 and expected_count > 0:
+                    logger.warning(
+                        "Axis %s: 0/%d details returned, retrying with higher token budget",
+                        axis, expected_count,
+                    )
+                    score_data = await self._score_axis(axis, rubric, observations, tool_info=tool_info)
+                    retry_count = len(score_data.get("details", []))
+                    logger.info("Axis %s retry: %d/%d details returned", axis, retry_count, expected_count)
+
                 # Calculate per-axis confidence dimensions using axis-relevant observations
                 relevance = self.AXIS_RELEVANT_CATEGORIES.get(axis, {})
                 primary_cats = set(relevance.get("primary", []))
@@ -758,6 +770,11 @@ class LLMScorer:
         # If > 18, batch into multiple calls and combine results
         BATCH_SIZE = 18  # Claude API max is 20 per message; leave room for text
 
+        # Token budget: details array with 4-5 rules × Japanese evidence needs ~2500 tokens
+        SINGLE_MAX_TOKENS = 2500
+        SYNTHESIS_MAX_TOKENS = 3500
+        SYSTEM_PROMPT = "あなたはAIツール品質評価の専門家です。必ずJSON形式のみで回答してください。JSONの前後に説明文や装飾は一切含めないでください。"
+
         if len(loaded_images) <= BATCH_SIZE:
             content = loaded_images + [{"type": "text", "text": prompt_text}]
             response = await loop.run_in_executor(
@@ -765,9 +782,9 @@ class LLMScorer:
                 functools.partial(
                     self.client.messages.create,
                     model=self.model,
-                    max_tokens=1500,
+                    max_tokens=SINGLE_MAX_TOKENS,
                     temperature=0.0,
-                    system="あなたはAIツール品質評価の専門家です。必ずJSON形式のみで回答してください。JSONの前後に説明文や装飾は一切含めないでください。",
+                    system=SYSTEM_PROMPT,
                     messages=[{"role": "user", "content": content}],
                 ),
             )
@@ -787,9 +804,9 @@ class LLMScorer:
                     functools.partial(
                         self.client.messages.create,
                         model=self.model,
-                        max_tokens=1500,
+                        max_tokens=SINGLE_MAX_TOKENS,
                         temperature=0.0,
-                        system="あなたはAIツール品質評価の専門家です。必ずJSON形式のみで回答してください。JSONの前後に説明文や装飾は一切含めないでください。",
+                        system=SYSTEM_PROMPT,
                         messages=[{"role": "user", "content": batch_content}],
                     ),
                 )
@@ -800,7 +817,15 @@ class LLMScorer:
                 response = batch_responses[0]
             else:
                 self._check_budget(axis)
-                synthesis_prompt = f"以下は同一ツールの{axis}軸評価の複数バッチ結果です。全バッチの情報を統合して最終評価を出してください。同じJSON形式で回答してください。\n\n"
+                # Synthesis prompt: explicitly require details preservation
+                criteria_list = ", ".join(c["rule_id"] for c in rubric["criteria"])
+                synthesis_prompt = (
+                    f"以下は同一ツールの{axis}軸評価の複数バッチ結果です。\n"
+                    f"全バッチの情報を統合して最終評価を出してください。\n\n"
+                    f"【重要】以下のルールIDに対応する details エントリを必ず全て含めてください: {criteria_list}\n"
+                    f"各 details エントリには rule_id, rule_name_jp, score (0.0-5.0), weight, evidence (日本語), severity を含めてください。\n"
+                    f"strengths と risks もそれぞれ最低2項目含めてください。\n\n"
+                )
                 for j, br in enumerate(batch_responses):
                     synthesis_prompt += f"--- バッチ{j+1}の結果 ---\n{br.content[0].text}\n\n"
                 response = await loop.run_in_executor(
@@ -808,17 +833,17 @@ class LLMScorer:
                     functools.partial(
                         self.client.messages.create,
                         model=self.model,
-                        max_tokens=2000,
+                        max_tokens=SYNTHESIS_MAX_TOKENS,
                         temperature=0.0,
-                        system="あなたはAIツール品質評価の専門家です。必ずJSON形式のみで回答してください。JSONの前後に説明文や装飾は一切含めないでください。",
+                        system=SYSTEM_PROMPT,
                         messages=[{"role": "user", "content": synthesis_prompt}],
                     ),
                 )
                 self._track_usage(response)
 
         response_text = response.content[0].text
-        logger.info("Axis %s scored. Total budget: %d calls, %.1f JPY",
-                     axis, self.api_calls, self._estimated_cost_jpy())
+        logger.info("Axis %s scored (%d chars response). Total budget: %d calls, %.1f JPY",
+                     axis, len(response_text), self.api_calls, self._estimated_cost_jpy())
         return self._parse_score_response(axis, rubric, response_text)
 
     def _load_screenshot(self, screenshot_path: str) -> str | None:
@@ -1013,21 +1038,14 @@ class LLMScorer:
                 except json.JSONDecodeError:
                     pass
 
-        # Strategy 3: Find JSON object anywhere in text
+        # Strategy 3: Find JSON object by balanced brace matching
+        # Try every '{' position until we find valid JSON (handles leading text)
         if data is None:
-            import re
-            json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', text, re.DOTALL)
-            if json_match:
-                try:
-                    data = json.loads(json_match.group(0))
-                except json.JSONDecodeError:
-                    pass
-
-        # Strategy 4: Find the largest JSON-like structure
-        if data is None:
-            start = text.find('{')
-            if start >= 0:
-                # Find matching closing brace
+            search_start = 0
+            while search_start < len(text):
+                start = text.find('{', search_start)
+                if start < 0:
+                    break
                 depth = 0
                 for i in range(start, len(text)):
                     if text[i] == '{':
@@ -1036,10 +1054,16 @@ class LLMScorer:
                         depth -= 1
                         if depth == 0:
                             try:
-                                data = json.loads(text[start:i+1])
+                                candidate = json.loads(text[start:i+1])
+                                # Validate it looks like a score response (has score key)
+                                if isinstance(candidate, dict) and "score" in candidate:
+                                    data = candidate
                             except json.JSONDecodeError:
                                 pass
                             break
+                if data is not None:
+                    break
+                search_start = start + 1
 
         if data is None:
             logger.error("Failed to parse LLM score response for axis %s. Full response (%d chars): %s", axis, len(text), text[:1000])

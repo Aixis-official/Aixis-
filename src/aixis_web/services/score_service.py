@@ -98,8 +98,8 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
     _completion_rate = _total_executed / _total_planned if _total_planned > 0 else 1.0
 
     if _completion_rate < 0.3 and _total_planned > 0:
-        # Insufficient completion: override grade to N/A
-        grade_value = "N/A"
+        # Insufficient completion: override grade to D (lowest valid grade)
+        grade_value = "D"
     else:
         grade = OverallGrade.from_score(overall)
         grade_value = grade.value

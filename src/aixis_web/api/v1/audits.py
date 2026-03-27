@@ -611,8 +611,9 @@ async def rescore_audit(
 
     tool_id = session.tool_id
 
-    # Delete existing axis scores for this session
-    await db.execute(text("DELETE FROM axis_scores WHERE session_id = :sid"), {"sid": session_id})
+    # Only update status here — scores are deleted in background task
+    # right before new scores are written (ON CONFLICT handles upsert).
+    # This prevents data loss if background task fails.
     await db.execute(text("""
         UPDATE audit_sessions SET status = 'scoring', error_message = NULL WHERE id = :sid
     """), {"sid": session_id})
@@ -633,6 +634,14 @@ async def _run_rescore_bg(session_id: str, tool_id: str):
         from ...services.llm_scorer import LLMScorer
 
         async with async_session() as scoring_db:
+            # Delete old scores right before generating new ones (not in foreground)
+            # so data is preserved if this task never runs
+            await scoring_db.execute(
+                text("DELETE FROM axis_scores WHERE session_id = :sid"),
+                {"sid": session_id},
+            )
+            await scoring_db.commit()
+
             scorer = LLMScorer()
             scores = await scorer.score_session(session_id, tool_id, scoring_db)
             logger.info("Re-scoring produced %d axis scores for %s", len(scores), session_id)
