@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.egg-info
+dist
+build
+.venv
+venv
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Backups
+*.bak
+*.yaml.bak
+
+# Screenshots (stored on Railway Volume, not in image)
+src/aixis_web/static/screenshots/
+
+# Chrome extension (not needed in server image)
+src/chrome-extension/
+
+# Documentation
+*.md
+LICENSE
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local env
+.env
+.env.local
