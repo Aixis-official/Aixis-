@@ -923,15 +923,53 @@
             manual_screenshot: '手動スクショ'
         };
 
+        // Parse metadata for each result
+        results.forEach(function(r) {
+            try {
+                r._meta = typeof r.metadata_json === 'string' ? JSON.parse(r.metadata_json) : (r.metadata_json || {});
+            } catch(e) { r._meta = {}; }
+        });
+
         // Separate test completions from screenshot evidence
         var testCompletions = results.filter(function(r) {
-            var meta = {};
-            try { meta = typeof r.metadata_json === 'string' ? JSON.parse(r.metadata_json) : (r.metadata_json || {}); } catch(e) {}
-            return meta.type === 'test_completion' || (r.category !== 'screenshot_evidence' && r.category !== 'manual_screenshot');
+            return r._meta.type === 'test_completion';
         });
         var screenshots = results.filter(function(r) {
-            return r.category === 'screenshot_evidence' || r.category === 'manual_screenshot';
+            return r.category === 'screenshot_evidence' || r.category === 'manual_screenshot' ||
+                   r._meta.capture_type === 'full_screenshot' || r._meta.capture_type === 'partial_screenshot';
         });
+
+        // If no explicit test_completion records exist (legacy sessions),
+        // group screenshots by test_case_id and create virtual test entries
+        if (testCompletions.length === 0 && screenshots.length > 0) {
+            var byTestCase = {};
+            screenshots.forEach(function(s) {
+                var key = s.test_case_id || '_none';
+                if (!byTestCase[key]) byTestCase[key] = { screenshots: [], first: s };
+                byTestCase[key].screenshots.push(s);
+            });
+            // Also include non-screenshot, non-test_completion results
+            results.forEach(function(r) {
+                if (r._meta.type !== 'test_completion' && !r._meta.capture_type &&
+                    r.category !== 'screenshot_evidence' && r.category !== 'manual_screenshot') {
+                    var key = r.test_case_id || '_none';
+                    if (!byTestCase[key]) byTestCase[key] = { screenshots: [], first: r };
+                    else byTestCase[key].first = r; // prefer non-screenshot as primary
+                }
+            });
+            Object.keys(byTestCase).forEach(function(key) {
+                if (key === '_none') return;
+                var group = byTestCase[key];
+                testCompletions.push({
+                    test_case_id: key,
+                    category: group.first.category === 'screenshot_evidence' ? 'protocol' : group.first.category,
+                    prompt_sent: group.first.prompt_sent,
+                    response_time_ms: group.first.response_time_ms,
+                    error: group.first.error,
+                    _screenshotCount: group.screenshots.length,
+                });
+            });
+        }
 
         // Group screenshots by test_case_id for association
         var screenshotsByTest = {};
@@ -945,7 +983,7 @@
         var seen = {};
         var uniqueTests = [];
         testCompletions.forEach(function(r) {
-            var key = r.test_case_id || r.prompt_sent;
+            var key = r.test_case_id || r.prompt_sent || Math.random();
             if (!seen[key]) {
                 seen[key] = true;
                 uniqueTests.push(r);
@@ -960,7 +998,7 @@
             var hasError = !!r.error;
             var timeStr = r.response_time_ms ? (r.response_time_ms / 1000).toFixed(1) + 's' : '---';
             var relatedScreenshots = screenshotsByTest[r.test_case_id] || [];
-            var screenshotCount = relatedScreenshots.length;
+            var screenshotCount = r._screenshotCount || relatedScreenshots.length;
 
             var screenshotLinks = '';
             if (screenshotCount > 0) {
@@ -991,13 +1029,13 @@
             '</tr>';
         }).join('');
 
-        // Show manual screenshots count if any
-        if (manualScreenshots.length > 0) {
+        // Show total screenshot count
+        var totalScreenshots = screenshots.length;
+        if (totalScreenshots > 0) {
             body.innerHTML += '<tr class="border-b border-gray-50 dark:border-gray-700/30 bg-gray-50/30 dark:bg-gray-800/20">' +
                 '<td colspan="5" class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">' +
                     '<span class="inline-flex items-center gap-1">' +
-                        '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>' +
-                        '手動スクリーンショット: ' + manualScreenshots.length + ' 枚（補足資料）' +
+                        '\ud83d\udcf7 スクリーンショット合計: ' + totalScreenshots + ' 枚' +
                     '</span>' +
                 '</td>' +
             '</tr>';
