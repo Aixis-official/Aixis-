@@ -467,12 +467,59 @@
 
         try {
             await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/rescore', { method: 'POST' });
-            alert('再スコアリングを開始しました。数分後にページをリロードしてください。');
-            window.location.reload();
+
+            // Show progress indicator in the action buttons area
+            var actions = document.getElementById('action-buttons');
+            var progressId = 'rescore-progress';
+            var progressHtml = '<div id="' + progressId + '" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 font-jp">' +
+                '<svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">' +
+                    '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>' +
+                    '<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>' +
+                '</svg>' +
+                '<span id="rescore-status-text">スコアリング中...</span>' +
+            '</div>';
+            actions.innerHTML = progressHtml;
+
+            // Poll for scoring completion
+            pollScoringStatus(sessionId);
         } catch (e) {
             alert('再スコアリングに失敗しました: ' + (e.message || '不明なエラー'));
         }
     };
+
+    function pollScoringStatus(sid) {
+        var pollCount = 0;
+        var interval = setInterval(async function() {
+            pollCount++;
+            try {
+                var data = await aixisAPI('/audits/' + encodeURIComponent(sid));
+                var statusText = document.getElementById('rescore-status-text');
+
+                // Update progress text with axis count if available
+                var scoredAxes = (data.axis_scores || []).filter(function(s) {
+                    return s.source !== 'error' && s.score > 0;
+                }).length;
+                if (statusText) {
+                    statusText.textContent = 'スコアリング中... (' + scoredAxes + '/5 軸完了)';
+                }
+
+                if (data.status !== 'scoring') {
+                    clearInterval(interval);
+                    // Reload the page to show updated results
+                    window.location.reload();
+                }
+            } catch (e) {
+                // On error, keep polling up to 60 attempts (~5 minutes)
+                if (pollCount >= 60) {
+                    clearInterval(interval);
+                    var statusText = document.getElementById('rescore-status-text');
+                    if (statusText) {
+                        statusText.textContent = 'タイムアウト — ページをリロードしてください';
+                    }
+                }
+            }
+        }, 5000);
+    }
 
     window.finalizeAudit = async function() {
         if (!confirm('この監査結果を公開しますか？公開すると利用者ページの監査データベースに反映されます。')) return;

@@ -309,17 +309,40 @@ class LLMScorer:
             except Exception:
                 pass
 
-        # 3. Calculate confidence dimensions from observations
-        confidence_dimensions = self._calculate_confidence_dimensions(observations)
-
-        # 4. Score each axis
+        # 3. Score each axis
+        # IMPORTANT: ALL 5 axes get LLM analysis regardless of auto_ratio.
+        # Even axes with auto_ratio=0 (cost_performance, uniqueness) need LLM
+        # scoring because it produces valuable analysis text (strengths, risks,
+        # details). The auto_ratio only affects the final blended score, NOT
+        # whether the LLM analysis is performed.
+        from .score_service import AXIS_MIX
         all_scores = []
         for axis, rubric in AXIS_RUBRICS.items():
             try:
+                # Always call LLM scoring — never skip based on auto_ratio
+                logger.info("Scoring axis %s (auto_ratio=%.0f%%) — LLM analysis always performed",
+                            axis, AXIS_MIX.get(axis, {}).get("auto", 0.6) * 100)
                 score_data = await self._score_axis(axis, rubric, observations, tool_info=tool_info)
 
+                # Calculate per-axis confidence dimensions using axis-relevant observations
+                relevance = self.AXIS_RELEVANT_CATEGORIES.get(axis, {})
+                primary_cats = set(relevance.get("primary", []))
+                secondary_cats = set(relevance.get("secondary", []))
+                relevant_cats = primary_cats | secondary_cats
+                if relevant_cats:
+                    axis_observations = [
+                        obs for obs in observations
+                        if obs.get("category", "unknown") in relevant_cats
+                           or obs.get("category", "unknown") == "protocol"
+                    ]
+                else:
+                    axis_observations = observations
+                # Fall back to all observations if filtering yields nothing
+                if not axis_observations:
+                    axis_observations = observations
+                confidence_dimensions = self._calculate_confidence_dimensions(axis_observations)
+
                 # Apply per-axis auto/manual split (from score_service.AXIS_MIX)
-                from .score_service import AXIS_MIX
                 auto_score = score_data["score"]
                 mix = AXIS_MIX.get(axis, {"auto": 0.6, "manual": 0.4})
                 auto_ratio = mix["auto"]
@@ -339,7 +362,7 @@ class LLMScorer:
 
                 score_data["score"] = max(0.0, min(5.0, final_score))
 
-                # Merge confidence dimensions into score metadata
+                # Merge per-axis confidence dimensions into score metadata
                 score_data["confidence_dimensions"] = confidence_dimensions
                 score_data["auto_ratio"] = auto_ratio
                 score_data["manual_ratio"] = manual_ratio
