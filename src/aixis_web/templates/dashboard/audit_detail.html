@@ -623,13 +623,34 @@
         // Scores section
         if (data.axis_scores && data.axis_scores.length > 0) {
             document.getElementById('scores-section').classList.remove('hidden');
-            renderScores(data.axis_scores);
+            try {
+                renderScores(data.axis_scores);
+            } catch (scoreErr) {
+                console.error('Score rendering error:', scoreErr);
+                document.getElementById('axis-cards').innerHTML =
+                    '<div class="col-span-5 text-center text-red-500 py-4">スコア表示エラー: ' + scoreErr.message + '</div>';
+            }
+        } else {
+            // Show section with "scoring pending" message if session is in scoring/awaiting_manual
+            if (['scoring', 'awaiting_manual', 'completed'].includes(data.status)) {
+                document.getElementById('scores-section').classList.remove('hidden');
+                if (!data.axis_scores || data.axis_scores.length === 0) {
+                    document.getElementById('axis-cards').innerHTML =
+                        '<div class="col-span-5 text-center text-amber-500 py-4 font-jp">スコアデータがありません。LLMスコアリングが正常に完了していない可能性があります。</div>';
+                }
+            }
         }
 
         // Results section
         if (data.test_results && data.test_results.length > 0) {
             document.getElementById('results-section').classList.remove('hidden');
-            renderResults(data.test_results);
+            try {
+                renderResults(data.test_results);
+            } catch (resultErr) {
+                console.error('Results rendering error:', resultErr);
+                document.getElementById('results-body').innerHTML =
+                    '<tr><td colspan="5" class="text-center text-red-500 py-4">テスト結果表示エラー: ' + resultErr.message + '</td></tr>';
+            }
         }
     }
 
