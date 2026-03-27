@@ -653,6 +653,7 @@ class LLMScorer:
         # Collect ALL screenshots (no cap) and load them
         all_paths = self._collect_all_screenshots(observations)
         loaded_images = []
+        failed_paths = []
         for ss_path in all_paths:
             image_data = self._load_screenshot(ss_path)
             if image_data:
@@ -670,12 +671,18 @@ class LLMScorer:
                     "type": "image",
                     "source": {"type": "base64", "media_type": media_type, "data": image_data},
                 })
+            else:
+                failed_paths.append(ss_path)
+
+        if failed_paths:
+            logger.warning("Failed to load %d/%d screenshots for axis %s: %s",
+                          len(failed_paths), len(all_paths), axis, failed_paths[:5])
 
         # Budget check before API call
         self._check_budget(axis)
 
-        logger.info("Scoring axis %s with %d screenshots (from %d paths), budget: %d calls / %.1f JPY",
-                     axis, len(loaded_images), len(all_paths), self.api_calls, self._estimated_cost_jpy())
+        logger.info("Scoring axis %s with %d screenshots loaded (%d failed, %d total paths), budget: %d calls / %.1f JPY",
+                     axis, len(loaded_images), len(failed_paths), len(all_paths), self.api_calls, self._estimated_cost_jpy())
 
         import asyncio
         import functools
@@ -694,6 +701,7 @@ class LLMScorer:
                     model=self.model,
                     max_tokens=1500,
                     temperature=0.0,
+                    system="あなたはAIツール品質評価の専門家です。必ずJSON形式のみで回答してください。JSONの前後に説明文や装飾は一切含めないでください。",
                     messages=[{"role": "user", "content": content}],
                 ),
             )
@@ -715,6 +723,7 @@ class LLMScorer:
                         model=self.model,
                         max_tokens=1500,
                         temperature=0.0,
+                        system="あなたはAIツール品質評価の専門家です。必ずJSON形式のみで回答してください。JSONの前後に説明文や装飾は一切含めないでください。",
                         messages=[{"role": "user", "content": batch_content}],
                     ),
                 )
@@ -964,7 +973,7 @@ class LLMScorer:
                             break
 
         if data is None:
-            logger.error("Failed to parse LLM score response for axis %s: %s", axis, text[:500])
+            logger.error("Failed to parse LLM score response for axis %s. Full response (%d chars): %s", axis, len(text), text[:1000])
             return {
                 "axis": axis,
                 "score": 0.0,
