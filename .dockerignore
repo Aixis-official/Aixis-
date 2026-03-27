@@ -32,8 +32,9 @@ src/aixis_web/static/screenshots/
 # Chrome extension (not needed in server image)
 src/chrome-extension/
 
-# Documentation
-*.md
+# Documentation (keep README.md for pyproject.toml)
+CHANGELOG.md
+CONTRIBUTING.md
 LICENSE
 
 # OS
