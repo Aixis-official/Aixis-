@@ -40,12 +40,12 @@ window.AIXIS = {
     '#8b5cf6', '#06b6d4', '#f43f5e', '#84cc16'
   ],
 
-  // Grade thresholds
+  // Grade thresholds (must match enums.py OverallGrade.from_score)
   GRADES: [
     { min: 4.5, grade: 'S', label: 'S', color: '#d4af37' },
-    { min: 4.0, grade: 'A', label: 'A', color: '#38a169' },
-    { min: 3.0, grade: 'B', label: 'B', color: '#2b6cb0' },
-    { min: 2.0, grade: 'C', label: 'C', color: '#ed8936' },
+    { min: 3.5, grade: 'A', label: 'A', color: '#38a169' },
+    { min: 2.5, grade: 'B', label: 'B', color: '#2b6cb0' },
+    { min: 1.5, grade: 'C', label: 'C', color: '#ed8936' },
     { min: 0,   grade: 'D', label: 'D', color: '#e53e3e' }
   ],
 
