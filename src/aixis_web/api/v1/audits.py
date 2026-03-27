@@ -200,6 +200,16 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
     results_result = await db.execute(results_query)
     test_results = []
     for r in results_result.scalars().all():
+        # Parse metadata_json for frontend consumption
+        _metadata = r.metadata_json
+        if isinstance(_metadata, str):
+            try:
+                _metadata = _json.loads(_metadata)
+            except (ValueError, TypeError):
+                _metadata = {}
+        elif _metadata is None:
+            _metadata = {}
+
         test_results.append({
             "id": r.id,
             "test_case_id": r.test_case_id,
@@ -212,6 +222,7 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
             "executed_at": r.executed_at.isoformat() if r.executed_at else None,
             "ai_steps_taken": r.ai_steps_taken or 0,
             "ai_calls_used": r.ai_calls_used or 0,
+            "metadata_json": _metadata,
         })
 
     # Get axis scores
@@ -779,8 +790,8 @@ async def export_audit(
                     "score": s.score,
                     "confidence": s.confidence,
                     "source": s.source,
-                    "strengths": s.strengths or [],
-                    "risks": s.risks or [],
+                    "strengths": (_json.loads(s.strengths) if isinstance(s.strengths, str) else s.strengths) or [],
+                    "risks": (_json.loads(s.risks) if isinstance(s.risks, str) else s.risks) or [],
                 }
                 for s in axis_scores
             ],

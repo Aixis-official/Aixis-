@@ -810,6 +810,7 @@ class LLMScorer:
                         model=self.model,
                         max_tokens=2000,
                         temperature=0.0,
+                        system="あなたはAIツール品質評価の専門家です。必ずJSON形式のみで回答してください。JSONの前後に説明文や装飾は一切含めないでください。",
                         messages=[{"role": "user", "content": synthesis_prompt}],
                     ),
                 )
