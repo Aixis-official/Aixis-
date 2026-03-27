@@ -584,10 +584,19 @@ class LLMScorer:
         for ss_path in selected_paths:
             image_data = self._load_screenshot(ss_path)
             if image_data:
-                # Detect media type from file extension
-                media_type = "image/png"
-                if ss_path.lower().endswith((".jpg", ".jpeg")):
-                    media_type = "image/jpeg"
+                # Detect media type from actual content (magic bytes)
+                import base64 as _b64
+                media_type = "image/png"  # default
+                try:
+                    raw_head = _b64.b64decode(image_data[:32])
+                    if raw_head[:3] == b'\xff\xd8\xff':
+                        media_type = "image/jpeg"
+                    elif raw_head[:8] == b'\x89PNG\r\n\x1a\n':
+                        media_type = "image/png"
+                    elif raw_head[:4] == b'RIFF':
+                        media_type = "image/webp"
+                except Exception:
+                    pass
                 content.append({
                     "type": "image",
                     "source": {
