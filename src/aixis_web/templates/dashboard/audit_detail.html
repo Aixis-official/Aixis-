@@ -228,7 +228,32 @@
         <!-- 5-Axis Scores -->
         <div id="scores-section" class="hidden">
             <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6 font-jp">5軸スコア</h2>
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">5軸スコア</h2>
+                    <button id="edit-scores-btn" onclick="toggleScoreEditor()" class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors font-jp">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z"/></svg>
+                        スコア編集
+                    </button>
+                </div>
+
+                <!-- Inline score editor (hidden by default) -->
+                <div id="score-editor" class="hidden mb-6 p-4 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-700/50 rounded-lg">
+                    <h3 class="text-sm font-semibold text-indigo-800 dark:text-indigo-300 mb-3 font-jp">軸スコア編集（臨時）</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-3" id="score-editor-inputs"></div>
+                    <div class="flex items-center justify-between mt-3 pt-3 border-t border-indigo-200 dark:border-indigo-700/50">
+                        <div class="text-sm font-jp">
+                            <span class="text-gray-500 dark:text-gray-400">総合スコア: </span>
+                            <span id="editor-overall-score" class="font-bold text-gray-900 dark:text-white tabular-nums">--</span>
+                            <span class="text-gray-400 dark:text-gray-500"> / 5.0</span>
+                            <span class="ml-3 text-gray-500 dark:text-gray-400">グレード: </span>
+                            <span id="editor-overall-grade" class="font-bold tabular-nums">--</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="toggleScoreEditor()" class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors font-jp">キャンセル</button>
+                            <button onclick="saveEditedScores()" id="save-scores-btn" class="px-4 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm font-jp">保存</button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Overall grade -->
                 <div class="flex items-center gap-6 mb-8 pb-6 border-b border-gray-100 dark:border-gray-700/50">
@@ -895,6 +920,14 @@
     }
 
     function renderScores(scores) {
+        // Cache current scores for the editor
+        _currentAxisScores = {};
+        scores.forEach(function(s) { _currentAxisScores[s.axis] = s.score; });
+
+        // Show the edit button
+        var editBtn = document.getElementById('edit-scores-btn');
+        if (editBtn) editBtn.classList.remove('hidden');
+
         // Calculate overall (weighted by confidence)
         var totalScore = 0;
         var totalWeight = 0;
@@ -1245,6 +1278,88 @@
             window.location.href = '/dashboard';
         } catch (e) {
             alert('削除に失敗しました: ' + (e.message || '不明なエラー'));
+        }
+    };
+
+    // ===== Inline Score Editor =====
+    var _currentAxisScores = {};  // cached from last render
+
+    window.toggleScoreEditor = function() {
+        var editor = document.getElementById('score-editor');
+        var isHidden = editor.classList.contains('hidden');
+        editor.classList.toggle('hidden');
+
+        if (isHidden) {
+            // Populate inputs with current scores
+            var container = document.getElementById('score-editor-inputs');
+            var html = '';
+            AIXIS.AXIS_KEYS.forEach(function(axis) {
+                var label = AIXIS.AXIS_LABELS[axis];
+                var current = _currentAxisScores[axis] || 0;
+                html += '<div class="flex flex-col gap-1">' +
+                    '<label class="text-xs font-medium text-gray-600 dark:text-gray-400 font-jp">' + label + '</label>' +
+                    '<input type="number" id="score-input-' + axis + '" ' +
+                        'value="' + current.toFixed(1) + '" ' +
+                        'min="0" max="5" step="0.1" ' +
+                        'oninput="updateEditorOverall()" ' +
+                        'class="w-full px-3 py-2 text-sm font-mono tabular-nums bg-white dark:bg-[#161929] border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-white">' +
+                '</div>';
+            });
+            container.innerHTML = html;
+            updateEditorOverall();
+        }
+    };
+
+    window.updateEditorOverall = function() {
+        var total = 0;
+        var count = 0;
+        AIXIS.AXIS_KEYS.forEach(function(axis) {
+            var input = document.getElementById('score-input-' + axis);
+            if (input) {
+                var val = parseFloat(input.value);
+                if (!isNaN(val)) {
+                    total += Math.max(0, Math.min(5, val));
+                    count++;
+                }
+            }
+        });
+        var overall = count > 0 ? total / count : 0;
+        var grade = getGrade(overall);
+        document.getElementById('editor-overall-score').textContent = overall.toFixed(1);
+        var gradeEl = document.getElementById('editor-overall-grade');
+        gradeEl.textContent = grade.grade;
+        gradeEl.style.color = grade.color;
+    };
+
+    window.saveEditedScores = async function() {
+        var scores = {};
+        AIXIS.AXIS_KEYS.forEach(function(axis) {
+            var input = document.getElementById('score-input-' + axis);
+            if (input) {
+                var val = parseFloat(input.value);
+                if (!isNaN(val)) {
+                    scores[axis] = Math.max(0, Math.min(5, val));
+                }
+            }
+        });
+
+        var btn = document.getElementById('save-scores-btn');
+        btn.disabled = true;
+        btn.textContent = '保存中...';
+
+        try {
+            var result = await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/axis-scores', {
+                method: 'PUT',
+                body: JSON.stringify({ scores: scores })
+            });
+            // Hide editor and reload
+            document.getElementById('score-editor').classList.add('hidden');
+            loadAudit();
+        } catch (e) {
+            alert('スコア保存に失敗しました: ' + (e.message || '不明なエラー'));
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '保存';
         }
     };
 

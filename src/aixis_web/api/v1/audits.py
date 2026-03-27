@@ -535,6 +535,97 @@ async def update_audit_status(
     return {"status": new_status, "session_id": session_id}
 
 
+class _EditAxisScoresBody(BaseModel):
+    """Body for direct axis score editing (temporary admin feature)."""
+    scores: dict[str, float]  # axis -> score (0.0-5.0)
+
+
+AXIS_NAMES_JP = {
+    "practicality": "実務適性",
+    "cost_performance": "費用対効果",
+    "localization": "日本語能力",
+    "safety": "信頼性・安全性",
+    "uniqueness": "革新性",
+}
+
+
+@router.put("/{session_id}/axis-scores")
+async def edit_axis_scores(
+    session_id: str,
+    body: _EditAxisScoresBody,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(require_analyst)],
+):
+    """Directly edit axis scores for a session (admin/temporary feature).
+
+    Upserts into axis_scores table. Overall score and grade are auto-calculated
+    from the 5-axis equal-weight average.
+    """
+    session = (await db.execute(
+        select(AuditSession).where(AuditSession.id == session_id)
+    )).scalar_one_or_none()
+    if not session:
+        raise HTTPException(404, "セッションが見つかりません")
+
+    valid_axes = set(AXIS_NAMES_JP.keys())
+    updated = []
+
+    for axis, score in body.scores.items():
+        if axis not in valid_axes:
+            raise HTTPException(400, f"無効な軸: {axis}")
+        score = max(0.0, min(5.0, round(score, 1)))
+
+        # Upsert: find existing or create
+        existing = (await db.execute(
+            select(AxisScoreRecord).where(
+                AxisScoreRecord.session_id == session_id,
+                AxisScoreRecord.axis == axis,
+            )
+        )).scalar_one_or_none()
+
+        if existing:
+            existing.score = score
+            existing.scored_at = datetime.now(timezone.utc)
+            existing.scored_by = user.id
+            # Keep existing source/details — only update score
+        else:
+            db.add(AxisScoreRecord(
+                session_id=session_id,
+                tool_id=session.tool_id,
+                axis=axis,
+                axis_name_jp=AXIS_NAMES_JP[axis],
+                score=score,
+                confidence=0.5,
+                source="manual_edit",
+                details=[],
+                strengths=[],
+                risks=[],
+                scored_by=user.id,
+            ))
+
+        updated.append({"axis": axis, "score": score})
+
+    await db.commit()
+
+    # Calculate overall from all current axis scores
+    all_scores_result = await db.execute(
+        select(AxisScoreRecord).where(AxisScoreRecord.session_id == session_id)
+    )
+    all_scores = {r.axis: r.score for r in all_scores_result.scalars()}
+    overall = round(sum(all_scores.values()) / len(all_scores), 1) if all_scores else 0.0
+
+    from aixis_agent.core.enums import OverallGrade
+    grade = OverallGrade.from_score(overall)
+
+    return {
+        "status": "ok",
+        "updated": updated,
+        "overall_score": overall,
+        "overall_grade": grade.value,
+        "all_scores": all_scores,
+    }
+
+
 @router.post("/{session_id}/manual-scores", status_code=status.HTTP_201_CREATED)
 async def submit_manual_scores(
     session_id: str,

@@ -28,10 +28,10 @@ window.AIXIS = {
   // Auto:Manual ratio per axis (must match score_service.py AXIS_MIX)
   AXIS_MIX: {
     practicality: { auto: 40, manual: 60 },
-    cost_performance: { auto: 0, manual: 100 },
+    cost_performance: { auto: 30, manual: 70 },
     localization: { auto: 70, manual: 30 },
     safety: { auto: 35, manual: 65 },
-    uniqueness: { auto: 0, manual: 100 }
+    uniqueness: { auto: 40, manual: 60 }
   },
 
   // Colors for up to 8 tools in comparison charts

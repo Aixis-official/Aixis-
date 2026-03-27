@@ -13,10 +13,10 @@ from aixis_agent.core.enums import OverallGrade, ScoreAxis
 # Auto/manual mix ratios per axis
 AXIS_MIX = {
     "practicality":     {"auto": 0.4, "manual": 0.6},
-    "cost_performance": {"auto": 0.0, "manual": 1.0},
+    "cost_performance": {"auto": 0.3, "manual": 0.7},
     "localization":     {"auto": 0.7, "manual": 0.3},
     "safety":           {"auto": 0.35, "manual": 0.65},
-    "uniqueness":       {"auto": 0.0, "manual": 1.0},
+    "uniqueness":       {"auto": 0.4, "manual": 0.6},
 }
 
 
@@ -24,12 +24,13 @@ async def get_auto_scores(db: AsyncSession, session_id: str) -> dict[str, float]
     """Get automated scores for all axes from a session.
 
     The LLM scorer stores scores with source='llm' or 'hybrid', while the
-    legacy agent scorer uses source='auto'. Accept all non-manual sources.
+    legacy agent scorer uses source='auto'. The manual editor uses 'manual_edit'.
+    Accept all non-checklist-manual sources.
     """
     result = await db.execute(
         select(AxisScoreRecord).where(
             AxisScoreRecord.session_id == session_id,
-            AxisScoreRecord.source.in_(["auto", "llm", "hybrid"]),
+            AxisScoreRecord.source.in_(["auto", "llm", "hybrid", "manual_edit"]),
         )
     )
     scores = {}
