@@ -40,5 +40,5 @@ templates:
       - "ヘルプが英語のみ"
 
 generation:
-  mode: static
+  mode: cartesian
   max_variants: 1

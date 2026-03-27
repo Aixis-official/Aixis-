@@ -131,7 +131,11 @@ async def _create_session_impl(body, db, user):
             total_planned = len(cases)
 
         except Exception as e:
-            logger.warning("Test case generation failed: %s", e)
+            logger.exception("Test case generation failed: %s", e)
+            raise HTTPException(500, f"テストケース生成に失敗しました: {type(e).__name__}: {e}")
+
+    if not cases:
+        raise HTTPException(500, "テストケースが0件です。パターンファイルの設定を確認してください。")
 
     # 1. Create session FIRST (test cases have FK to audit_sessions)
     await db.execute(text("""

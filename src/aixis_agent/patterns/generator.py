@@ -21,7 +21,7 @@ def generate_from_pattern(pattern_data: dict) -> list[TestCase]:
     max_variants = generation.get("max_variants", 10000)
     mode = generation.get("mode", "cartesian")
 
-    if mode == "cartesian":
+    if mode in ("cartesian", "static"):
         return _generate_cartesian(category, parameters, templates, max_variants, pattern_data)
     elif mode == "scaling":
         return _generate_scaling(category, parameters, templates, max_variants, pattern_data)
