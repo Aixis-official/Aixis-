@@ -564,32 +564,75 @@ class LLMScorer:
             "intelligibility": round(intelligibility, 3),
         }
 
-    def _collect_all_screenshots(self, observations: list[dict]) -> list[str]:
-        """Collect ALL unique screenshot paths from observations. No cap."""
+    # Axis-to-category relevance mapping:
+    # Each axis gets the test categories most relevant to its evaluation criteria.
+    # All screenshots ARE analyzed — just each goes to the axis(es) where it matters most.
+    AXIS_RELEVANT_CATEGORIES = {
+        "practicality": {
+            "primary": ["slide_basic", "slide_structure", "slide_accuracy", "slide_advanced"],
+            "secondary": ["ui_evaluation"],
+        },
+        "cost_performance": {
+            "primary": ["ui_evaluation", "slide_advanced"],
+            "secondary": ["slide_basic"],
+        },
+        "localization": {
+            "primary": ["slide_japanese", "slide_basic", "ui_evaluation"],
+            "secondary": ["slide_structure", "slide_accuracy"],
+        },
+        "safety": {
+            "primary": ["slide_accuracy", "ui_evaluation"],
+            "secondary": ["slide_basic", "slide_advanced"],
+        },
+        "uniqueness": {
+            "primary": ["slide_advanced", "ui_evaluation", "slide_structure"],
+            "secondary": ["slide_basic"],
+        },
+    }
+
+    def _select_screenshots_for_axis(self, axis: str, observations: list[dict]) -> list[str]:
+        """Select screenshots relevant to this specific axis.
+
+        Every screenshot is analyzed by at least one axis. Primary categories
+        get all their screenshots included; secondary categories get up to 3.
+        This ensures comprehensive coverage while reducing redundant API calls.
+        """
+        relevance = self.AXIS_RELEVANT_CATEGORIES.get(axis, {})
+        primary_cats = set(relevance.get("primary", []))
+        secondary_cats = set(relevance.get("secondary", []))
+
         seen: set[str] = set()
         paths: list[str] = []
 
-        # Prioritize diversity: 1 per category first, then all remaining
-        by_category: dict[str, list[dict]] = defaultdict(list)
+        # Phase 1: ALL screenshots from primary categories
         for obs in observations:
-            by_category[obs.get("category", "unknown")].append(obs)
-
-        # Phase 1: 1 screenshot per category (ensures diversity)
-        for _cat, cat_obs in by_category.items():
-            for obs in cat_obs:
+            cat = obs.get("category", "unknown")
+            if cat in primary_cats or cat == "protocol":
+                # "protocol" is a fallback category — include based on test index
                 for ss_path in obs.get("screenshots", []):
                     if ss_path and ss_path not in seen:
                         seen.add(ss_path)
                         paths.append(ss_path)
-                        break
-                break
 
-        # Phase 2: ALL remaining screenshots
-        for obs in observations:
-            for ss_path in obs.get("screenshots", []):
-                if ss_path and ss_path not in seen:
-                    seen.add(ss_path)
-                    paths.append(ss_path)
+        # Phase 2: Up to 3 screenshots per secondary category
+        for cat in secondary_cats:
+            count = 0
+            for obs in observations:
+                if obs.get("category") == cat:
+                    for ss_path in obs.get("screenshots", []):
+                        if ss_path and ss_path not in seen and count < 3:
+                            seen.add(ss_path)
+                            paths.append(ss_path)
+                            count += 1
+
+        # If no screenshots were selected (e.g., all categories are "protocol"),
+        # fall back to selecting all unique screenshots
+        if not paths:
+            for obs in observations:
+                for ss_path in obs.get("screenshots", []):
+                    if ss_path and ss_path not in seen:
+                        seen.add(ss_path)
+                        paths.append(ss_path)
 
         return paths
 
@@ -650,8 +693,8 @@ class LLMScorer:
         # Build multimodal content: text prompt + screenshot images
         content = []
 
-        # Collect ALL screenshots (no cap) and load them
-        all_paths = self._collect_all_screenshots(observations)
+        # Select screenshots relevant to this axis (smart selection for cost optimization)
+        all_paths = self._select_screenshots_for_axis(axis, observations)
         loaded_images = []
         failed_paths = []
         for ss_path in all_paths:
