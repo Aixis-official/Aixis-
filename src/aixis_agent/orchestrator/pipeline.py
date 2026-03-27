@@ -44,6 +44,7 @@ CATEGORY_PRIORITY = {
     TestCategory.SLIDE_STRUCTURE: 2,
     TestCategory.SLIDE_ACCURACY: 3,
     TestCategory.SLIDE_ADVANCED: 4,
+    TestCategory.UI_EVALUATION: 5,
     # Legacy categories
     TestCategory.CONTRADICTORY: 10,
     TestCategory.BUSINESS_JP: 11,
@@ -61,11 +62,23 @@ def sort_by_priority(test_cases: list[TestCase]) -> list[TestCase]:
     """Round-robin interleave test cases across categories by priority.
 
     Ensures partial results cover all categories when budget is limited.
+    UI evaluation tests are always appended AFTER all protocol tests
+    so they form a distinct phase at the end.
     """
     from collections import defaultdict
 
-    by_category: dict[str, list[TestCase]] = defaultdict(list)
+    # Separate UI evaluation tests from protocol tests
+    TAIL_CATEGORIES = {TestCategory.UI_EVALUATION}
+    protocol_cases = []
+    tail_cases = []
     for tc in test_cases:
+        if tc.category in TAIL_CATEGORIES:
+            tail_cases.append(tc)
+        else:
+            protocol_cases.append(tc)
+
+    by_category: dict[str, list[TestCase]] = defaultdict(list)
+    for tc in protocol_cases:
         by_category[tc.category].append(tc)
 
     sorted_categories = sorted(
@@ -85,5 +98,8 @@ def sort_by_priority(test_cases: list[TestCase]) -> list[TestCase]:
         if not added_any:
             break
         round_idx += 1
+
+    # Append UI evaluation tests at the end (after all protocol tests)
+    result.extend(tail_cases)
 
     return result

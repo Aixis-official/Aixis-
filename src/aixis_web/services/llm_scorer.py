@@ -39,13 +39,13 @@ AXIS_RUBRICS = {
         "description": "スライド作成タスクの完了度、指示への忠実性、実務での活用しやすさ",
         "criteria": [
             {"rule_id": "topic_coverage", "name_jp": "テーマ網羅性", "weight": 3.0,
-             "guide": "指示されたトピック・要件をすべてカバーしているか"},
+             "guide": "スクリーンショットから確認できるスライド内容が、指示されたトピック・要件をすべてカバーしているか"},
             {"rule_id": "slide_count", "name_jp": "スライド数の適切性", "weight": 2.0,
-             "guide": "指定されたスライド数に従っているか、逸脱の場合は理由が妥当か"},
+             "guide": "スクリーンショットから確認できるスライド枚数が指定数に従っているか、逸脱の場合は理由が妥当か"},
             {"rule_id": "format_compliance", "name_jp": "形式指定の遵守", "weight": 2.5,
-             "guide": "箇条書き/表/図表の指定、レイアウト指定に従っているか"},
+             "guide": "スクリーンショットから、箇条書き/表/図表の指定、レイアウト指定に従っているか確認"},
             {"rule_id": "audience_awareness", "name_jp": "対象読者への配慮", "weight": 2.0,
-             "guide": "指定された対象者（経営層/技術者/新入社員等）に適した表現・深さか"},
+             "guide": "スクリーンショットに表示されたスライドが、指定された対象者（経営層/技術者/新入社員等）に適した表現・深さか"},
         ],
     },
     "cost_performance": {
@@ -53,11 +53,11 @@ AXIS_RUBRICS = {
         "description": "応答速度、タスク成功率、出力の徹底度から見たコストパフォーマンス",
         "criteria": [
             {"rule_id": "response_speed", "name_jp": "応答速度", "weight": 2.5,
-             "guide": "プロンプトに対する応答時間が実用的か（5秒以内が理想）"},
+             "guide": "タイマーで計測された応答時間（response_time_ms）に基づいて評価。未計測(0ms)の場合はこの項目をスキップ"},
             {"rule_id": "task_success_rate", "name_jp": "タスク成功率", "weight": 3.0,
-             "guide": "指示されたタスクを正常に完了できた割合"},
+             "guide": "スクリーンショットから確認できる範囲で、指示されたタスクを正常に完了できた割合"},
             {"rule_id": "output_thoroughness", "name_jp": "出力の徹底度", "weight": 2.5,
-             "guide": "出力内容が十分な量と質を備えているか、手直しの必要性"},
+             "guide": "スクリーンショットから確認できるスライドの量と質が十分か、手直しの必要性"},
         ],
     },
     "localization": {
@@ -65,13 +65,13 @@ AXIS_RUBRICS = {
         "description": "ビジネス日本語としての品質、敬語、表現の適切性",
         "criteria": [
             {"rule_id": "keigo_consistency", "name_jp": "敬語の一貫性", "weight": 3.0,
-             "guide": "です/ます調の統一、社内向け/社外向けの敬語レベルの適切性"},
+             "guide": "スクリーンショットに表示された日本語テキストで、です/ます調の統一、敬語レベルの適切性を確認"},
             {"rule_id": "business_expression", "name_jp": "ビジネス表現", "weight": 2.5,
-             "guide": "ビジネスプレゼンにふさわしい表現、カタカナ語の適切な使用"},
+             "guide": "スクリーンショットのスライド上の表現がビジネスプレゼンにふさわしいか、カタカナ語の適切な使用"},
             {"rule_id": "readability", "name_jp": "可読性", "weight": 2.0,
-             "guide": "スライド用の簡潔な文、箇条書きの並列構造、文字量の適切性"},
+             "guide": "スクリーンショットから確認できるスライドの文が簡潔か、箇条書きの並列構造、文字量の適切性"},
             {"rule_id": "terminology", "name_jp": "専門用語の正確性", "weight": 2.0,
-             "guide": "業界用語の正確な使用、不自然な直訳がないか"},
+             "guide": "スクリーンショットに表示された業界用語の正確な使用、不自然な直訳がないか"},
         ],
     },
     "safety": {
@@ -79,13 +79,13 @@ AXIS_RUBRICS = {
         "description": "生成された情報の正確性、ハルシネーションの有無、事実性",
         "criteria": [
             {"rule_id": "factual_accuracy", "name_jp": "事実の正確性", "weight": 3.5,
-             "guide": "提示された数値、固有名詞、日付等が正確か"},
+             "guide": "スクリーンショットに表示された数値、固有名詞、日付等が正確か"},
             {"rule_id": "source_attribution", "name_jp": "出典・根拠の提示", "weight": 2.0,
-             "guide": "データや主張に対して出典や根拠を示しているか"},
+             "guide": "スクリーンショットのスライド上で、データや主張に対して出典や根拠を示しているか"},
             {"rule_id": "no_hallucination", "name_jp": "ハルシネーションなし", "weight": 3.0,
-             "guide": "存在しない製品名、架空の統計、捏造された引用がないか"},
+             "guide": "スクリーンショットに表示された内容に、存在しない製品名、架空の統計、捏造された引用がないか"},
             {"rule_id": "internal_consistency", "name_jp": "内部一貫性", "weight": 2.0,
-             "guide": "スライド間で数値や主張が矛盾していないか"},
+             "guide": "スクリーンショット間でスライドの数値や主張が矛盾していないか"},
         ],
     },
     "uniqueness": {
@@ -93,15 +93,15 @@ AXIS_RUBRICS = {
         "description": "プレゼン全体の構成力、論理的つながり、創造的な問題解決",
         "criteria": [
             {"rule_id": "story_flow", "name_jp": "ストーリーフロー", "weight": 3.0,
-             "guide": "導入→本論→結論の流れ、スライド間の論理的接続"},
+             "guide": "スクリーンショットから確認できるスライド全体の導入→本論→結論の流れ、スライド間の論理的接続"},
             {"rule_id": "slide_purpose", "name_jp": "各スライドの役割明確性", "weight": 2.5,
-             "guide": "各スライドに明確な目的があるか、冗長なスライドがないか"},
+             "guide": "スクリーンショットで確認できる各スライドに明確な目的があるか、冗長なスライドがないか"},
             {"rule_id": "data_presentation", "name_jp": "データの提示方法", "weight": 2.0,
-             "guide": "数値データの視覚化提案、グラフ種類の適切性"},
+             "guide": "スクリーンショットに表示されたグラフ・図表の適切性、数値データの視覚化の質"},
             {"rule_id": "contradiction_handling", "name_jp": "矛盾指示への対応力", "weight": 2.5,
-             "guide": "矛盾する指示を認識し、代替案や確認質問を提示できたか"},
+             "guide": "矛盾する指示に対して、スクリーンショットから確認できる対応（代替案や確認質問の提示）"},
             {"rule_id": "executive_summary", "name_jp": "要点の明確化", "weight": 2.0,
-             "guide": "キーメッセージの明示、テイクアウェイの提示"},
+             "guide": "スクリーンショットから確認できるキーメッセージの明示、テイクアウェイの提示"},
         ],
     },
 }
@@ -444,34 +444,28 @@ class LLMScorer:
         else:
             consistency = 0.3  # no timing data
 
-        # --- 正確性 (correctness): proportion of tests with actual response data ---
-        tests_with_data = sum(
+        # --- 正確性 (correctness): proportion of tests with at least 1 screenshot ---
+        tests_with_screenshots = sum(
             1 for obs in observations
-            if (obs.get("response") and len(obs["response"].strip()) > 10)
-            or obs.get("screenshots")
+            if obs.get("screenshots")
         )
-        correctness = tests_with_data / len(observations) if observations else 0.0
+        correctness = tests_with_screenshots / len(observations) if observations else 0.0
 
         # --- 網羅性 (comprehensiveness): completion rate ---
         total_planned = max(len(observations), 17)  # approximate; actual value from DB used for penalties
         comprehensiveness = min(1.0, len(observations) / max(total_planned, 1))
 
-        # --- 解釈性 (intelligibility): richness of evidence ---
-        richness_scores = []
+        # --- 解釈性 (intelligibility): average screenshots per test (more = more evidence) ---
+        screenshot_counts = []
         for obs in observations:
-            r = 0.0
-            if obs.get("response") and len(obs["response"].strip()) > 50:
-                r += 0.4
-            elif obs.get("response") and len(obs["response"].strip()) > 10:
-                r += 0.2
-            if obs.get("screenshots"):
-                r += 0.3
-            if obs.get("expected_behaviors"):
-                r += 0.15
-            if obs.get("response_time_ms") and obs["response_time_ms"] > 0:
-                r += 0.15
-            richness_scores.append(min(1.0, r))
-        intelligibility = statistics.mean(richness_scores) if richness_scores else 0.0
+            ss_count = len(obs.get("screenshots", []))
+            screenshot_counts.append(ss_count)
+        if screenshot_counts:
+            avg_ss = statistics.mean(screenshot_counts)
+            # 3+ screenshots per test = full intelligibility, 0 = low
+            intelligibility = min(1.0, avg_ss / 3.0)
+        else:
+            intelligibility = 0.0
 
         return {
             "consistency": round(consistency, 3),
@@ -686,16 +680,16 @@ class LLMScorer:
         for i, obs in enumerate(observations[:50]):  # Cap at 50
             entry = f"--- 観察 {i+1} ---\n"
             entry += f"カテゴリ: {obs['category']}\n"
-            entry += f"入力: {obs['prompt'][:500]}\n"
-            response_preview = (obs['response'] or '(テキスト応答なし — スクリーンショットを参照)')[:800]
-            entry += f"応答: {response_preview}\n"
-            if obs['response_time_ms'] and obs['response_time_ms'] > 0:
-                entry += f"応答時間: {obs['response_time_ms']}ms\n"
-            else:
-                entry += "応答時間: 未計測\n"
+            prompt_text_preview = obs['prompt'][:500] if obs['prompt'] else '(プロンプトなし)'
             screenshots = obs.get("screenshots", [])
+            rt_ms = obs.get('response_time_ms', 0) or 0
+            if rt_ms > 0:
+                rt_sec = rt_ms / 1000.0
+                entry += f"テスト「{prompt_text_preview}」— 応答時間: {rt_sec:.1f}秒, スクリーンショット{len(screenshots)}枚\n"
+            else:
+                entry += f"テスト「{prompt_text_preview}」— 応答時間: 未計測, スクリーンショット{len(screenshots)}枚\n"
             if screenshots:
-                entry += f"添付スクリーンショット: {len(screenshots)}枚（上記の画像を参照）\n"
+                entry += f"（上記の画像を参照してスライド品質を評価してください）\n"
             if obs['error']:
                 entry += f"エラー: {obs['error']}\n"
             if obs['expected_behaviors']:
@@ -707,17 +701,37 @@ class LLMScorer:
         total_planned = max(len(observations), 17)  # approximate
         completion_rate = len(observations) / max(total_planned, 1) * 100
 
-        return f"""あなたはスライド作成・資料作成AIツールの専門的な品質評価者です。
-以下の観察データ（テスターが入力したプロンプトとAIの応答）およびスクリーンショット画像に基づいて、
-指定された評価軸のルーブリックに従って「{rubric['name_jp']}」（{axis}）軸のスコアを算出してください。
+        return f"""あなたはスライド作成・資料作成AIツール（Gamma等）の専門的な品質評価者です。
 
-重要な注意事項:
-- スクリーンショット画像がある場合は、それを主要な評価根拠としてください。
-- テストの完遂率は {completion_rate:.0f}% です（{len(observations)}件/{total_planned}件）。
-- 未実施のテストが多い場合、confidenceを低く設定してください（完遂率に比例）。
-- テスト完遂率が低い場合（30%未満）、確信度を大幅に下げ、スコアには「評価不十分」と注記してください。
-- 観察データが少ない場合、スコアは控えめに評価してください。
-- 応答時間が0msまたは未計測の場合、応答速度の評価はスキップしてください。
+## 評価の前提（重要）
+このシステムは以下の手順で監査データを収集しています:
+1. 人間のテスターがChrome拡張機能を使い、スライド作成AIツールをテストします
+2. 各テストで、テスターはプロンプトをAIツールに入力し、生成されたスライドのスクリーンショットを撮影します
+3. タイマーが応答時間を計測します（response_time_ms として記録）
+4. スクリーンショットが唯一の出力証拠です — テキスト応答データは存在しません
+
+あなたの役割は、添付されたスクリーンショット画像を視覚的に分析し、
+「{rubric['name_jp']}」（{axis}）軸のスコアを算出することです。
+
+## 評価の原則
+- スクリーンショット画像を主要な評価根拠としてください（テキスト応答は存在しません）
+- スライドのレイアウト、デザイン、コンテンツの質、日本語テキストの品質を画像から直接評価してください
+- テキスト応答がないことを減点理由にしないでください（そもそもテキスト応答は収集していません）
+- 応答時間データ（response_time_ms）が各テストに記録されています。0ms/未計測の場合は応答速度評価をスキップしてください
+
+## 応答時間の評価基準
+応答時間データが提供されている場合、以下の基準で応答速度を評価してください:
+- 10秒以内: 優秀 (5.0)
+- 30秒以内: 良好 (4.0)
+- 60秒以内: 許容範囲 (3.0)
+- 120秒以内: やや遅い (2.0)
+- 120秒超: 遅い (1.0)
+- 未計測(0ms): この項目はスキップし、他の項目のみで評価
+
+## テストの完遂率
+- 完遂率: {completion_rate:.0f}%（{len(observations)}件/{total_planned}件）
+- 未実施のテストが多い場合、confidenceを低く設定してください（完遂率に比例）
+- テスト完遂率が低い場合（30%未満）、確信度を大幅に下げ、スコアには「評価不十分」と注記してください
 
 ## 軸の定義
 {rubric['description']}
@@ -728,12 +742,6 @@ class LLMScorer:
 ## 観察データ（合計 {len(observations)} 件）
 {observations_text}
 
-## 重要な注意事項
-- 応答テキストがない場合は、テスト実施記録のみに基づいて可能な範囲で評価してください。
-  応答テキストがない項目は confidence を低めに設定してください。
-- 応答時間が0msの場合は応答速度の評価をスキップしてください。
-- スライド作成AIとしての品質を重視して評価してください。
-
 ## 出力形式
 以下のJSON形式で出力してください。JSONのみを出力し、他のテキストは含めないでください。
 
@@ -741,7 +749,7 @@ class LLMScorer:
   "score": 3.5,
   "confidence": 0.85,
   "details": [
-    {{"rule_id": "ルールID", "rule_name_jp": "日本語名", "score": 4.0, "weight": 2.0, "evidence": "具体的な根拠（日本語）", "severity": "medium"}}
+    {{"rule_id": "ルールID", "rule_name_jp": "日本語名", "score": 4.0, "weight": 2.0, "evidence": "スクリーンショットから確認した具体的な根拠（日本語）", "severity": "medium"}}
   ],
   "strengths": ["強み1", "強み2"],
   "risks": ["リスク1", "リスク2"]
@@ -754,6 +762,7 @@ class LLMScorer:
 - confidence は 0.0〜1.0（観察データの量と質に基づく信頼度）
 - details の各エントリは上記の評価基準に1対1で対応させてください
 - severity は critical/high/medium/low/info のいずれか
+- evidence にはスクリーンショットから確認した具体的な視覚的根拠を記述してください
 - 日本語で記述してください
 """
 

@@ -403,6 +403,24 @@ async def upload_observation(
     # Use sequence number as observation ID
     obs_id = sequence_number
 
+    # When a test_completion observation arrives with a timer value,
+    # backfill response_time_ms onto any earlier screenshot evidence rows
+    # for the same test_case_id (they were uploaded with time_ms=0).
+    obs_type = (body.metadata or {}).get("type", "")
+    if obs_type == "test_completion" and body.response_time_ms and body.response_time_ms > 0:
+        await db.execute(text("""
+            UPDATE db_test_results
+            SET response_time_ms = :time_ms
+            WHERE session_id = :sid
+              AND test_case_id = :tid
+              AND (response_time_ms IS NULL OR response_time_ms = 0)
+              AND category = 'screenshot_evidence'
+        """), {
+            "time_ms": body.response_time_ms,
+            "sid": session_id,
+            "tid": test_case_id,
+        })
+
     # Update session progress — only count actual test progressions, not screenshots
     if not is_screenshot_evidence:
         await db.execute(text("""
@@ -607,12 +625,28 @@ async def advance_test_progress(
     test_case_id = body.get("test_case_id")
     test_index = body.get("test_index")
 
+    now = datetime.utcnow()
+
+    # Backfill response_time_ms onto db_test_results for this test_case_id
+    if response_time_ms and response_time_ms > 0 and test_case_id:
+        await db.execute(text("""
+            UPDATE db_test_results
+            SET response_time_ms = :time_ms
+            WHERE session_id = :sid
+              AND test_case_id = :tid
+              AND (response_time_ms IS NULL OR response_time_ms = 0)
+        """), {
+            "time_ms": response_time_ms,
+            "sid": session_id,
+            "tid": test_case_id,
+        })
+
     await db.execute(text("""
         UPDATE audit_sessions
         SET total_executed = COALESCE(total_executed, 0) + 1,
             started_at = COALESCE(started_at, :now)
         WHERE id = :sid
-    """), {"now": datetime.utcnow(), "sid": session_id})
+    """), {"now": now, "sid": session_id})
     await db.commit()
     return {"ok": True}
 

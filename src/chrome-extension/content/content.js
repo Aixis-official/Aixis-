@@ -33,6 +33,7 @@
     broken_grammar: "文法破壊",
     freeform: "フリー",
     protocol: "プロトコル",
+    ui_evaluation: "UI評価",
   };
 
   const CATEGORY_COLORS = {
@@ -50,6 +51,7 @@
     business_jp: "#ca8a04",
     multi_step: "#2563eb",
     broken_grammar: "#e11d48",
+    ui_evaluation: "#0ea5e9",
     freeform: "#64748b",
     protocol: "#475569",
   };

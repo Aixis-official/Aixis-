@@ -11,6 +11,8 @@ class TestCategory(str, Enum):
     SLIDE_JAPANESE = "slide_japanese"
     SLIDE_ACCURACY = "slide_accuracy"
     SLIDE_ADVANCED = "slide_advanced"
+    # UI evaluation category
+    UI_EVALUATION = "ui_evaluation"
     # Legacy categories (kept for backward compatibility)
     DIALECT = "dialect"
     LONG_INPUT = "long_input"
