@@ -626,6 +626,36 @@ async def edit_axis_scores(
     }
 
 
+@router.get("/{session_id}/manual-scores")
+async def get_manual_scores(
+    session_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[User, Depends(require_analyst)],
+):
+    """Return saved manual checklist entries for a session."""
+    result = await db.execute(
+        select(ManualChecklistRecord).where(
+            ManualChecklistRecord.session_id == session_id
+        )
+    )
+    records = result.scalars().all()
+    return {
+        "items": [
+            {
+                "checklist_item_id": r.checklist_item_id,
+                "axis": r.axis,
+                "item_name_jp": r.item_name_jp,
+                "passed": r.passed,
+                "score": r.score,
+                "weight": r.weight,
+                "evidence": r.evidence or "",
+                "evidence_url": r.evidence_url or "",
+            }
+            for r in records
+        ]
+    }
+
+
 @router.post("/{session_id}/manual-scores", status_code=status.HTTP_201_CREATED)
 async def submit_manual_scores(
     session_id: str,
@@ -633,7 +663,10 @@ async def submit_manual_scores(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(require_analyst)],
 ):
-    """Submit manual checklist scores for an audit session."""
+    """Submit manual checklist scores for an audit session.
+
+    After saving, automatically merges with auto scores and publishes.
+    """
     result = await db.execute(
         select(AuditSession).where(AuditSession.id == session_id)
     )
@@ -682,7 +715,27 @@ async def submit_manual_scores(
             db.add(record)
 
     await db.commit()
-    return {"status": "ok", "count": len(body.items)}
+
+    # Auto-merge: combine auto + manual scores and publish
+    from ...services.score_service import merge_and_publish
+
+    try:
+        published = await merge_and_publish(
+            db=db,
+            session_id=session_id,
+            tool_id=session.tool_id,
+            published_by=user.id,
+        )
+        return {
+            "status": "ok",
+            "count": len(body.items),
+            "merged": True,
+            "overall_score": published.overall_score,
+            "overall_grade": published.overall_grade,
+        }
+    except Exception as e:
+        logger.warning("Auto-merge after manual scores failed for %s: %s", session_id, e)
+        return {"status": "ok", "count": len(body.items), "merged": False}
 
 
 @router.post("/{session_id}/rescore")

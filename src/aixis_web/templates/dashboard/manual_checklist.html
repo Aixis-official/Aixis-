@@ -116,10 +116,52 @@ const CHECKLISTS = {
     ],
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     renderChecklists();
+    await loadSavedEntries();
     renderRadarChart();
 });
+
+/* ===== Load Saved Entries ===== */
+async function loadSavedEntries() {
+    try {
+        const data = await aixisAPI('/audits/' + sessionId + '/manual-scores');
+        if (!data || !data.items || data.items.length === 0) return;
+
+        data.items.forEach(item => {
+            // Find the number input for this checklist item
+            const numInput = document.querySelector(
+                'input[type="number"][data-item="' + item.checklist_item_id + '"]'
+            );
+            if (!numInput) return;
+
+            // Set score value
+            const val = item.score || 0;
+            numInput.value = val.toFixed(1);
+            applyScoreStyle(numInput, val);
+
+            // Sync the range slider
+            const container = numInput.closest('.flex');
+            const rangeInput = container ? container.querySelector('input[type="range"]') : null;
+            if (rangeInput) rangeInput.value = val;
+
+            // Set evidence
+            const textarea = document.querySelector(
+                'textarea[data-item="' + item.checklist_item_id + '"]'
+            );
+            if (textarea && item.evidence) {
+                textarea.value = item.evidence;
+            }
+
+            // Update dot color
+            updateItemDot(item.checklist_item_id, val);
+        });
+
+        updateProgress();
+    } catch (e) {
+        console.warn('Failed to load saved entries:', e);
+    }
+}
 
 /* ===== Render Accordion ===== */
 function renderChecklists() {
@@ -402,15 +444,23 @@ document.getElementById('submit-scores').addEventListener('click', async () => {
     });
 
     try {
-        await aixisAPI(`/audits/${sessionId}/manual-scores`, {
+        const result = await aixisAPI(`/audits/${sessionId}/manual-scores`, {
             method: 'POST',
             body: JSON.stringify({ items }),
         });
         const msg = document.createElement('div');
-        msg.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg text-sm font-medium';
-        msg.innerHTML = '手動スコアが送信されました。 <a href="/dashboard/audits/' + sessionId + '" class="underline font-bold ml-2">監査詳細に戻る</a>';
+        msg.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg text-sm font-medium font-jp';
+        if (result.merged) {
+            msg.innerHTML = '手動スコアを送信し、自動評価と統合しました（総合グレード: ' +
+                (result.overall_grade || '--') + ' / ' + (result.overall_score || 0).toFixed(1) + '）。' +
+                '<a href="/dashboard/audits/' + sessionId + '" class="underline font-bold ml-2">監査詳細に戻る</a>';
+        } else {
+            msg.innerHTML = '手動スコアが送信されました。 <a href="/dashboard/audits/' + sessionId + '" class="underline font-bold ml-2">監査詳細に戻る</a>';
+        }
         document.body.appendChild(msg);
         btn.textContent = '送信完了';
+        // Auto-redirect after 3 seconds
+        setTimeout(() => { window.location.href = '/dashboard/audits/' + sessionId; }, 3000);
     } catch (e) {
         alert('エラー: ' + e.message);
         btn.disabled = false;

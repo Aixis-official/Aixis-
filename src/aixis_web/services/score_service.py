@@ -75,16 +75,21 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
 
     final = {}
     for axis, mix in AXIS_MIX.items():
-        auto = auto_scores.get(axis, 0.0) if mix["auto"] > 0 else 0.0
-        manual = manual_scores.get(axis, 0.0) if mix["manual"] > 0 else 0.0
+        has_auto = axis in auto_scores and mix["auto"] > 0
+        has_manual = axis in manual_scores and mix["manual"] > 0
 
-        # If manual portion is required but not provided, use auto only
-        if mix["manual"] > 0 and axis not in manual_scores:
-            final[axis] = auto  # Partial score
-        elif mix["auto"] > 0 and axis not in auto_scores:
-            final[axis] = manual
+        if has_auto and has_manual:
+            # Both available: weighted blend
+            final[axis] = auto_scores[axis] * mix["auto"] + manual_scores[axis] * mix["manual"]
+        elif has_auto and not has_manual:
+            # Only auto available: use auto score directly (not scaled down)
+            final[axis] = auto_scores[axis]
+        elif has_manual and not has_auto:
+            # Only manual available: use manual score directly
+            final[axis] = manual_scores[axis]
         else:
-            final[axis] = auto * mix["auto"] + manual * mix["manual"]
+            # Neither available
+            final[axis] = 0.0
 
         final[axis] = max(0.0, min(5.0, round(final[axis], 1)))
 
