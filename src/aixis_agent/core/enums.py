@@ -84,11 +84,11 @@ class OverallGrade(str, Enum):
         """Map 0.0-5.0 overall score to letter grade."""
         if score >= 4.5:
             return cls.S
-        if score >= 3.5:
+        if score >= 4.0:
             return cls.A
-        if score >= 2.5:
+        if score >= 3.0:
             return cls.B
-        if score >= 1.5:
+        if score >= 2.0:
             return cls.C
         return cls.D
 

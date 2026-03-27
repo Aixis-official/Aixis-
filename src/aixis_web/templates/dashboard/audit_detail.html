@@ -852,7 +852,7 @@
 
         // Source label helper
         function sourceLabel(source, confidence) {
-            if (confidence === 0) return '<span class="text-amber-500 dark:text-amber-400">手動評価待ち</span>';
+            if (source === 'error') return '<span class="text-red-500 dark:text-red-400">エラー</span>';
             if (source === 'auto') return '<span class="text-emerald-600 dark:text-emerald-400">自動</span>';
             if (source === 'llm') return '<span class="text-blue-600 dark:text-blue-400">LLM自動</span>';
             if (source === 'hybrid') return '<span class="text-indigo-600 dark:text-indigo-400">ハイブリッド</span>';
@@ -869,7 +869,6 @@
         ];
 
         function confidenceBar(confidence, metadata) {
-            if (confidence === 0) return '';
             // Parse JSON string if needed
             if (typeof metadata === 'string') {
                 try { metadata = JSON.parse(metadata); } catch (e) { metadata = null; }
@@ -945,12 +944,23 @@
                 (mix.auto !== undefined
                     ? '<div class="text-[9px] text-gray-400 dark:text-gray-500 mt-1 font-jp">自動' + mix.auto + '% / 手動' + mix.manual + '%</div>'
                     : '') +
-                (s.strengths && s.strengths.length > 0
-                    ? '<div class="mt-2 text-[10px] text-emerald-600 dark:text-emerald-400 font-jp">' + escapeHtml(s.strengths[0]) + '</div>'
-                    : '') +
-                (s.risks && s.risks.length > 0
-                    ? '<div class="mt-1 text-[10px] text-red-500 dark:text-red-400 font-jp">' + escapeHtml(s.risks[0]) + '</div>'
-                    : '') +
+                (function() {
+                    // Parse strengths if still a JSON string
+                    var strs = s.strengths;
+                    if (typeof strs === 'string') { try { strs = JSON.parse(strs); } catch(e) { strs = strs ? [strs] : []; } }
+                    if (!Array.isArray(strs)) strs = [];
+                    return strs.length > 0
+                        ? '<div class="mt-2 space-y-0.5">' + strs.map(function(st) { return '<div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-jp flex items-start gap-1"><span class="shrink-0 mt-px">+</span><span>' + escapeHtml(st) + '</span></div>'; }).join('') + '</div>'
+                        : '';
+                })() +
+                (function() {
+                    var rsks = s.risks;
+                    if (typeof rsks === 'string') { try { rsks = JSON.parse(rsks); } catch(e) { rsks = rsks ? [rsks] : []; } }
+                    if (!Array.isArray(rsks)) rsks = [];
+                    return rsks.length > 0
+                        ? '<div class="mt-1 space-y-0.5">' + rsks.map(function(rk) { return '<div class="text-[10px] text-red-500 dark:text-red-400 font-jp flex items-start gap-1"><span class="shrink-0 mt-px">!</span><span>' + escapeHtml(rk) + '</span></div>'; }).join('') + '</div>'
+                        : '';
+                })() +
                 detailsHtml(s.details) +
             '</div>';
         }).join('');

@@ -221,15 +221,36 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
     scores_result = await db.execute(scores_query)
     axis_scores = []
     for s in scores_result.scalars().all():
+        # Defensively parse JSON fields — they may come back as strings
+        # from the ORM depending on the DB driver (SQLite vs PostgreSQL).
+        _details = s.details
+        if isinstance(_details, str):
+            try:
+                _details = _json.loads(_details)
+            except (ValueError, TypeError):
+                _details = []
+        _strengths = s.strengths
+        if isinstance(_strengths, str):
+            try:
+                _strengths = _json.loads(_strengths)
+            except (ValueError, TypeError):
+                _strengths = []
+        _risks = s.risks
+        if isinstance(_risks, str):
+            try:
+                _risks = _json.loads(_risks)
+            except (ValueError, TypeError):
+                _risks = []
+
         axis_scores.append({
             "axis": s.axis,
             "axis_name_jp": s.axis_name_jp,
             "score": s.score,
             "confidence": s.confidence,
             "source": s.source,
-            "strengths": s.strengths or [],
-            "risks": s.risks or [],
-            "details": s.details or [],
+            "strengths": _strengths if isinstance(_strengths, list) else [],
+            "risks": _risks if isinstance(_risks, list) else [],
+            "details": _details if isinstance(_details, (dict, list)) else [],
         })
 
     # Build volume metrics
