@@ -350,9 +350,9 @@ class LLMScorer:
                     "score": score_data["score"],
                     "confidence": score_data["confidence"],
                     "source": source,
-                    "details": json.dumps(details_with_meta, ensure_ascii=False),
-                    "strengths": json.dumps(score_data["strengths"], ensure_ascii=False),
-                    "risks": json.dumps(score_data["risks"], ensure_ascii=False),
+                    "details": details_with_meta,
+                    "strengths": score_data["strengths"],
+                    "risks": score_data["risks"],
                     "scored_at": datetime.utcnow(),
                     "scored_by": None,  # NULL = automated LLM scoring
                 })
@@ -385,9 +385,9 @@ class LLMScorer:
                         "id": err_id, "sid": session_id, "tid": tool_id,
                         "axis": axis, "name": rubric["name_jp"],
                         "score": 0.0, "conf": 0.0, "source": "error",
-                        "details": json.dumps({"error": str(e)[:500]}),
-                        "strengths": "[]",
-                        "risks": json.dumps([f"スコアリングエラー: {str(e)[:200]}"], ensure_ascii=False),
+                        "details": {"error": str(e)[:500]},
+                        "strengths": [],
+                        "risks": [f"スコアリングエラー: {str(e)[:200]}"],
                         "scored_at": datetime.utcnow(),
                     })
                 except Exception:
