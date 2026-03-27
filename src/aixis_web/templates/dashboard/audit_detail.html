@@ -461,6 +461,18 @@
         alert('再試行機能はChrome拡張に移行されました。Chrome拡張から新しい監査セッションを開始してください。');
     };
 
+    window.rescoreAudit = async function() {
+        if (!confirm('LLMスコアリングを再実行しますか？')) return;
+
+        try {
+            await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/rescore', { method: 'POST' });
+            alert('再スコアリングを開始しました。数分後にページをリロードしてください。');
+            window.location.reload();
+        } catch (e) {
+            alert('再スコアリングに失敗しました: ' + (e.message || '不明なエラー'));
+        }
+    };
+
     window.finalizeAudit = async function() {
         if (!confirm('この監査結果を公開しますか？公開すると利用者ページの監査データベースに反映されます。')) return;
 
@@ -636,7 +648,10 @@
                 document.getElementById('scores-section').classList.remove('hidden');
                 if (!data.axis_scores || data.axis_scores.length === 0) {
                     document.getElementById('axis-cards').innerHTML =
-                        '<div class="col-span-5 text-center text-amber-500 py-4 font-jp">スコアデータがありません。LLMスコアリングが正常に完了していない可能性があります。</div>';
+                        '<div class="col-span-5 text-center py-4">' +
+                            '<p class="text-amber-500 font-jp mb-3">スコアデータがありません。LLMスコアリングが正常に完了していない可能性があります。</p>' +
+                            '<button onclick="rescoreAudit()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-jp">再スコアリングを実行</button>' +
+                        '</div>';
                 }
             }
         }

@@ -176,8 +176,34 @@ class LLMScorer:
                 obs["screenshots"].insert(0, obs["screenshot_path"])
 
         if not observations:
-            logger.warning("No test observations found for session %s (only screenshots)", session_id)
-            return []
+            # Legacy sessions may only have screenshot_evidence entries
+            # Create virtual observations from screenshot groups
+            if screenshot_map:
+                logger.info("Creating virtual observations from %d screenshot groups for session %s",
+                           len(screenshot_map), session_id)
+                for test_case_id, paths in screenshot_map.items():
+                    if test_case_id and test_case_id != '_none':
+                        # Look up test case info
+                        tc_result = await db.execute(text(
+                            "SELECT category, prompt FROM db_test_cases WHERE id = :tid AND session_id = :sid"
+                        ), {"tid": test_case_id, "sid": session_id})
+                        tc_row = tc_result.fetchone()
+                        observations.append({
+                            "test_case_id": test_case_id,
+                            "category": tc_row[0] if tc_row else "protocol",
+                            "prompt": tc_row[1] if tc_row else "",
+                            "response": "",
+                            "response_time_ms": 0,
+                            "error": None,
+                            "screenshot_path": paths[0] if paths else None,
+                            "screenshots": paths,
+                            "expected_behaviors": [],
+                            "failure_indicators": [],
+                        })
+
+            if not observations:
+                logger.warning("No observations or screenshots for session %s", session_id)
+                return []
 
         # 2. Fetch any existing manual checklist scores for 60/40 blending
         try:

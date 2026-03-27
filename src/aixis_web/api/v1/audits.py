@@ -562,6 +562,36 @@ async def submit_manual_scores(
     return {"status": "ok", "count": len(body.items)}
 
 
+@router.post("/{session_id}/rescore")
+async def rescore_audit(
+    session_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[User, Depends(require_analyst)],
+):
+    """Re-run LLM scoring for an existing session."""
+    session = (await db.execute(
+        select(AuditSession).where(AuditSession.id == session_id)
+    )).scalar_one_or_none()
+    if not session:
+        raise HTTPException(404, "セッションが見つかりません")
+
+    tool_id = session.tool_id
+
+    # Delete existing axis scores for this session
+    await db.execute(text("DELETE FROM axis_scores WHERE session_id = :sid"), {"sid": session_id})
+    await db.execute(text("""
+        UPDATE audit_sessions SET status = 'scoring' WHERE id = :sid
+    """), {"sid": session_id})
+    await db.commit()
+
+    # Trigger re-scoring
+    import asyncio
+    from .extension import _run_llm_scoring_background
+    asyncio.ensure_future(_run_llm_scoring_background(session_id, tool_id))
+
+    return {"status": "scoring", "message": "再スコアリングを開始しました"}
+
+
 @router.post("/{session_id}/finalize")
 async def finalize_audit(
     session_id: str,
