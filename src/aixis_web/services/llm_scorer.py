@@ -594,7 +594,7 @@ class LLMScorer:
         return paths
 
     @staticmethod
-    def _resize_screenshot(img_data: bytes, max_width: int = 768) -> bytes:
+    def _resize_screenshot(img_data: bytes, max_width: int = 1024) -> bytes:
         """Resize screenshot to reduce API token cost.
 
         Retina screenshots from Chrome's captureVisibleTab are often 2x resolution.
