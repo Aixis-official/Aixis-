@@ -1,7 +1,7 @@
 """Scoring engine orchestrator: runs all 5 axis scorers and aggregates results.
 
 Refactored for the 5-axis scoring model (0.0-5.0 scale).
-Grade thresholds: S>=4.5, A>=3.5, B>=2.5, C>=1.5, D<1.5.
+Grade thresholds: S>=4.5, A>=3.8, B>=3.0, C>=2.0, D<2.0.
 """
 
 from collections import defaultdict

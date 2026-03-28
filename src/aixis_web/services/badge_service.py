@@ -45,14 +45,17 @@ def _text_width(text: str) -> int:
 
 
 def _score_to_grade(score: float) -> str:
-    """Convert a numeric score (0-5) to a letter grade."""
+    """Convert a numeric score (0-5) to a letter grade.
+
+    Must match enums.py OverallGrade.from_score thresholds.
+    """
     if score >= 4.5:
         return "S"
-    elif score >= 3.5:
+    elif score >= 3.8:
         return "A"
-    elif score >= 2.5:
+    elif score >= 3.0:
         return "B"
-    elif score >= 1.5:
+    elif score >= 2.0:
         return "C"
     else:
         return "D"

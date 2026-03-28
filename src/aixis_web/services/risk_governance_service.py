@@ -11,13 +11,14 @@ from ..db.models.risk_governance import ToolRiskGovernance, RegulatoryFramework
 # --- Grade computation (same scale as 5-axis) ---
 
 def _grade_from_score(score: float) -> str:
+    """Must match enums.py OverallGrade.from_score thresholds."""
     if score >= 4.5:
         return "S"
-    if score >= 3.5:
+    if score >= 3.8:
         return "A"
-    if score >= 2.5:
+    if score >= 3.0:
         return "B"
-    if score >= 1.5:
+    if score >= 2.0:
         return "C"
     return "D"
 
