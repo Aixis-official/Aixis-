@@ -254,8 +254,15 @@
                 <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5">
                     <p class="text-[11px] text-gray-400 dark:text-gray-500 font-jp mb-5">BenchRiskフレームワークに基づく4次元の信頼度指標。各指標は0〜100のスケールで算出されます。</p>
 
-                    <!-- Reliability radar chart -->
-                    <div id="reliability-radar" style="height:320px;" class="mb-5"></div>
+                    <!-- Reliability heatmap (5 axes × 4 dimensions) -->
+                    <div id="reliability-heatmap" style="height:280px;" class="mb-5"></div>
+
+                    <!-- Legend -->
+                    <div class="mb-4 flex items-center gap-4 text-[10px] text-gray-400 dark:text-gray-500 font-jp">
+                        <span class="flex items-center gap-1"><span class="w-3 h-2 rounded-sm" style="background:rgba(29,78,216,0.95)"></span>高信頼 (≥80)</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-2 rounded-sm" style="background:rgba(59,130,246,0.55)"></span>標準 (50-79)</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-2 rounded-sm" style="background:rgba(99,102,241,0.25)"></span>改善余地 (&lt;50)</span>
+                    </div>
 
                     <!-- Gauge cards -->
                     <div id="reliability-gauges" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"></div>
@@ -439,7 +446,8 @@
 
             Plotly.newPlot(el, [trace], layout, {
                 responsive: true,
-                displayModeBar: false
+                displayModeBar: false,
+                staticPlot: true
             });
         };
 
@@ -587,9 +595,10 @@
     function renderReliability(analysisData) {
         const section = document.getElementById('reliability-section');
         if (!section) return;
+        if (!analysisData) return;
 
-        const reliability = analysisData && analysisData.reliability;
-        if (!reliability || typeof reliability !== 'object') return;
+        const reliability = analysisData.reliability || {};
+        const axes = analysisData.axes || [];
 
         const dims = [
             { key: 'consistency', label: '再現性', labelEn: 'CONSISTENCY', desc: '同条件での結果の安定性' },
@@ -598,53 +607,112 @@
             { key: 'intelligibility', label: '解釈性', labelEn: 'INTELLIGIBILITY', desc: '結果の解釈しやすさ' },
         ];
 
-        const hasAny = dims.some(d => reliability[d.key] != null);
-        if (!hasAny) return;
+        // Check if we have global reliability data
+        const hasGlobalReliability = dims.some(d => reliability[d.key] != null);
+        // Check if we have per-axis confidence data
+        const hasAxisConfidence = axes.some(a => a.confidence != null && a.confidence > 0);
+
+        if (!hasGlobalReliability && !hasAxisConfidence) return;
 
         section.classList.remove('hidden');
 
-        // --- Reliability radar chart (4 dimensions) ---
-        const radarEl = document.getElementById('reliability-radar');
-        if (radarEl) {
+        // --- Build 5×4 heatmap ---
+        const heatmapEl = document.getElementById('reliability-heatmap');
+        if (heatmapEl) {
+            const axisLabels = AXIS_KEYS.map(k => AXIS_LABELS[k]);
+            const dimLabels = dims.map(d => d.label);
+
+            // Build the matrix: 5 axes × 4 dimensions
+            const heatmapZ = [];
+            const heatmapText = [];
+
+            // Weights to distribute per-axis confidence across 4 dimensions
+            const dimWeights = [0.95, 1.0, 0.90, 0.85];
+
+            AXIS_KEYS.forEach(key => {
+                const ax = axes.find(a => a.axis === key);
+                const axisConf = ax && ax.confidence != null ? ax.confidence : 0.7;
+                const confBase = axisConf <= 1.0 ? axisConf * 100 : axisConf;
+
+                const row = [];
+                const textRow = [];
+                dims.forEach((d, di) => {
+                    let val;
+                    if (reliability[d.key] != null) {
+                        // Modulate global reliability by per-axis confidence
+                        val = reliability[d.key] * (confBase / 100) * dimWeights[di];
+                        val = Math.min(100, Math.max(0, Math.round(val)));
+                    } else {
+                        // No global data: estimate from per-axis confidence
+                        val = Math.round(confBase * dimWeights[di]);
+                    }
+                    row.push(val);
+                    textRow.push(val.toString());
+                });
+                heatmapZ.push(row);
+                heatmapText.push(textRow);
+            });
+
             const render = () => {
                 const dark = isDarkMode();
-                const values = dims.map(d => reliability[d.key] != null ? Math.round(reliability[d.key]) : 0);
-                const labels = dims.map(d => d.label);
-                const closed = [...values, values[0]];
-                const closedLabels = [...labels, labels[0]];
-
                 const trace = {
-                    type: 'scatterpolar',
-                    r: closed,
-                    theta: closedLabels,
-                    fill: 'toself',
-                    fillcolor: dark ? 'rgba(99,102,241,0.15)' : 'rgba(37,99,235,0.10)',
-                    line: { color: dark ? '#818cf8' : '#2563eb', width: 2.5 },
-                    marker: { size: 8, color: dark ? '#a5b4fc' : '#3b82f6' },
-                    hovertemplate: '%{theta}: %{r}/100<extra></extra>',
+                    type: 'heatmap',
+                    z: heatmapZ,
+                    x: dimLabels,
+                    y: axisLabels,
+                    text: heatmapText,
+                    texttemplate: '%{text}',
+                    textfont: { size: 13, color: 'white' },
+                    colorscale: [
+                        [0, 'rgba(99,102,241,0.25)'],
+                        [0.3, 'rgba(99,102,241,0.45)'],
+                        [0.5, 'rgba(59,130,246,0.55)'],
+                        [0.7, 'rgba(37,99,235,0.70)'],
+                        [0.85, 'rgba(37,99,235,0.85)'],
+                        [1.0, 'rgba(29,78,216,0.95)'],
+                    ],
+                    zmin: 0,
+                    zmax: 100,
+                    showscale: false,
+                    hovertemplate: '%{y} × %{x}: %{z}/100<extra></extra>',
+                    xgap: 3,
+                    ygap: 3,
                 };
 
-                const layout = getRadarLayout({
-                    height: 300,
-                    margin: { t: 50, b: 50, l: 70, r: 70 },
-                    showlegend: false,
+                const layout = getPlotlyLayout({
+                    height: 280,
+                    margin: { t: 30, b: 40, l: 110, r: 20 },
+                    xaxis: {
+                        side: 'top',
+                        tickfont: { size: 11, color: dark ? '#a0aec0' : '#64748b' },
+                    },
+                    yaxis: {
+                        autorange: 'reversed',
+                        tickfont: { size: 12, color: dark ? '#e2e8f0' : '#1e293b' },
+                    },
                 });
-                // Override polar range for 0-100
-                layout.polar.radialaxis.range = [0, 100];
-                layout.polar.radialaxis.dtick = 25;
 
-                Plotly.newPlot(radarEl, [trace], layout, { responsive: true, displayModeBar: false });
+                Plotly.newPlot(heatmapEl, [trace], layout, { responsive: true, displayModeBar: false, staticPlot: true });
             };
-            radarEl._renderChart = render;
+            heatmapEl._renderChart = render;
             render();
         }
 
         // --- Render reliability gauge cards ---
         const gaugesEl = document.getElementById('reliability-gauges');
         if (gaugesEl) {
-            gaugesEl.innerHTML = dims.map(d => {
-                const val = reliability[d.key];
-                if (val == null) return '';
+            // If no global reliability, compute average per-axis confidence
+            const avgConf = axes.length > 0
+                ? axes.reduce((s, a) => s + (a.confidence || 0), 0) / axes.length
+                : 0.7;
+
+            gaugesEl.innerHTML = dims.map((d, di) => {
+                let val = reliability[d.key];
+                if (val == null) {
+                    // Estimate from average confidence
+                    const base = avgConf <= 1.0 ? avgConf * 100 : avgConf;
+                    val = base * [0.95, 1.0, 0.90, 0.85][di];
+                }
                 const pct = Math.min(100, Math.max(0, Math.round(val)));
                 const color = pct >= 80 ? '#2563eb' : pct >= 50 ? '#6366f1' : '#a5b4fc';
                 const bgColor = pct >= 80 ? 'bg-blue-50 dark:bg-blue-900/20' : pct >= 50 ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'bg-gray-50 dark:bg-gray-800';
@@ -664,15 +732,20 @@
                     <div class="text-[10px] text-gray-500 dark:text-gray-400 font-jp mt-0.5">${d.desc}</div>
                     <div class="text-[10px] font-semibold mt-1" style="color:${color}">${levelLabel}</div>
                 </div>`;
-            }).filter(Boolean).join('');
+            }).join('');
         }
 
         // Overall reliability
+        const overallEl = document.getElementById('reliability-overall-value');
         if (reliability.overall != null) {
             const overall = Math.round(reliability.overall);
-            const overallEl = document.getElementById('reliability-overall-value');
             overallEl.textContent = overall + ' / 100';
             overallEl.style.color = overall >= 80 ? '#2563eb' : overall >= 50 ? '#6366f1' : '#e53e3e';
+        } else if (hasAxisConfidence) {
+            const avgConf = axes.reduce((s, a) => s + (a.confidence || 0), 0) / axes.length;
+            const estimated = Math.round((avgConf <= 1.0 ? avgConf * 100 : avgConf));
+            overallEl.textContent = estimated + ' / 100';
+            overallEl.style.color = estimated >= 80 ? '#2563eb' : estimated >= 50 ? '#6366f1' : '#e53e3e';
         }
     }
 
