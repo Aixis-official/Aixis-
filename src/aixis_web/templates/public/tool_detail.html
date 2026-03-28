@@ -165,16 +165,20 @@
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">5軸詳細スコア</h2>
             <div class="relative">
                 {% if user %}
-                <!-- Logged-in: radar chart (staticPlot + mousemove hover) -->
+                <!-- Logged-in: interactive radar chart -->
                 <div>
                     <div class="max-w-lg mx-auto relative" id="radar-wrapper">
                         <div id="radar-chart" class="chart-container" style="min-height:420px;"></div>
-                        <!-- Transparent overlay captures mouse events -->
-                        <div id="radar-overlay" class="absolute inset-0 z-10" style="cursor:crosshair;"></div>
-                        <!-- Tooltip (follows cursor near vertices) -->
-                        <div id="radar-tooltip" class="hidden absolute z-20 pointer-events-none px-3 py-2 rounded-sm text-xs font-jp shadow-sm border border-gray-200 dark:border-aixis-600/40 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 whitespace-nowrap" style="transform:translate(-50%,-130%);">
-                            <span id="radar-tooltip-label" class="font-semibold"></span>
-                            <span id="radar-tooltip-value" class="ml-1.5 tabular-nums"></span>
+                        <!-- Axis detail panel (shown on click) -->
+                        <div id="radar-detail-panel" class="hidden absolute z-20 pointer-events-none left-1/2 bottom-2 w-56 px-4 py-3 rounded-sm text-xs font-jp shadow-lg border border-gray-200 dark:border-aixis-600/40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm text-gray-800 dark:text-gray-100" style="transform:translateX(-50%);">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span id="radar-detail-label" class="font-bold text-sm"></span>
+                                <span id="radar-detail-score" class="text-sm font-bold tabular-nums text-indigo-600 dark:text-indigo-400"></span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mb-1.5">
+                                <div id="radar-detail-bar" class="h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 transition-all duration-500" style="width:0%"></div>
+                            </div>
+                            <div id="radar-detail-grade" class="text-[10px] text-gray-500 dark:text-gray-400"></div>
                         </div>
                     </div>
                 </div>
@@ -536,6 +540,8 @@
         const values = AXIS_KEYS.map(k => scores[k] || 0);
         const closedValues = [...values, values[0]];
         const closedLabels = [...AXIS_LABELS_ORDERED, AXIS_LABELS_ORDERED[0]];
+        // Immutable copy for restyle guard
+        const frozenR = [...closedValues];
 
         const render = () => {
             const dark = isDarkMode();
@@ -552,9 +558,18 @@
                 name: '',
                 showlegend: false,
                 line: { color: lineColor, width: 2.5 },
-                marker: { size: 9, color: markerColor, symbol: 'circle',
+                marker: { size: 10, color: markerColor, symbol: 'circle',
                           line: { color: dark ? '#1e1b4b' : '#ffffff', width: 2 } },
-                hoverinfo: 'skip',
+                hoverinfo: 'text',
+                text: closedLabels.slice(0, 5).map((label, i) =>
+                    '<b>' + label + '</b><br>' + values[i].toFixed(1) + ' / 5.0'
+                ).concat(['']), // empty for closing point
+                hoverlabel: {
+                    bgcolor: dark ? '#1e293b' : '#ffffff',
+                    bordercolor: dark ? '#475569' : '#e2e8f0',
+                    font: { color: dark ? '#e2e8f0' : '#1e293b', size: 13, family: 'Noto Sans JP, sans-serif' },
+                    align: 'left',
+                },
             };
 
             const layout = getRadarLayout({
@@ -567,111 +582,98 @@
                 layout.polar.angularaxis.tickfont = { size: 13, color: dark ? '#cbd5e1' : '#334155' };
             }
 
-            // staticPlot: true — prevents all editing/dragging
             Plotly.newPlot(el, [trace], layout, {
                 responsive: true,
                 displayModeBar: false,
-                staticPlot: true,
+                scrollZoom: false,
+                editable: false,
             });
 
-            // Setup mousemove hover after Plotly renders
-            setupRadarMouseHover(el, values);
+            // === RESTYLE GUARD: revert ANY data changes immediately ===
+            el._restyleGuard = true;
+            el.on('plotly_restyle', (evtData) => {
+                if (el._restyleGuard && evtData && evtData[0] && evtData[0].r) {
+                    el._restyleGuard = false; // prevent recursion
+                    Plotly.restyle(el, { r: [frozenR] }, [0]);
+                    setTimeout(() => { el._restyleGuard = true; }, 50);
+                }
+            });
+
+            // === CLICK INTERACTION: show axis detail panel ===
+            el.on('plotly_click', (evtData) => {
+                if (!evtData || !evtData.points || !evtData.points[0]) return;
+                const pt = evtData.points[0];
+                const idx = pt.pointIndex;
+                if (idx >= 5) return; // skip closing point
+
+                const panel = document.getElementById('radar-detail-panel');
+                const labelEl = document.getElementById('radar-detail-label');
+                const scoreEl = document.getElementById('radar-detail-score');
+                const barEl = document.getElementById('radar-detail-bar');
+                const gradeEl = document.getElementById('radar-detail-grade');
+                if (!panel) return;
+
+                const axisLabel = AXIS_LABELS_ORDERED[idx];
+                const val = values[idx];
+                const pct = (val / 5 * 100);
+                const grade = val >= 4.5 ? 'S' : val >= 4.0 ? 'A' : val >= 3.5 ? 'B' : val >= 3.0 ? 'C' : val >= 2.0 ? 'D' : 'E';
+                const gradeDesc = { S: '卓越', A: '優秀', B: '良好', C: '標準', D: '改善推奨', E: '要注意' };
+
+                labelEl.textContent = axisLabel;
+                scoreEl.textContent = val.toFixed(1) + ' / 5.0';
+                barEl.style.width = '0%';
+                gradeEl.textContent = grade + ' — ' + (gradeDesc[grade] || '');
+
+                panel.classList.remove('hidden');
+                panel.style.pointerEvents = 'auto';
+
+                // Animate bar
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => { barEl.style.width = pct + '%'; });
+                });
+
+                // Highlight the clicked marker
+                const markerColors = closedLabels.map((_, i) =>
+                    i === idx ? (isDarkMode() ? '#f59e0b' : '#f59e0b') : markerColor
+                );
+                const markerSizes = closedLabels.map((_, i) => i === idx ? 14 : 10);
+                Plotly.restyle(el, {
+                    'marker.color': [markerColors],
+                    'marker.size': [markerSizes],
+                }, [0]);
+
+                // Reset after 3 seconds
+                clearTimeout(el._detailTimeout);
+                el._detailTimeout = setTimeout(() => {
+                    panel.classList.add('hidden');
+                    Plotly.restyle(el, {
+                        'marker.color': [closedLabels.map(() => markerColor)],
+                        'marker.size': [closedLabels.map(() => 10)],
+                    }, [0]);
+                }, 3500);
+            });
+
+            // === HOVER: enlarge point on hover ===
+            el.on('plotly_hover', (evtData) => {
+                if (!evtData || !evtData.points || !evtData.points[0]) return;
+                const idx = evtData.points[0].pointIndex;
+                if (idx >= 5) return;
+                const sizes = closedLabels.map((_, i) => i === idx ? 14 : 10);
+                el._restyleGuard = false;
+                Plotly.restyle(el, { 'marker.size': [sizes] }, [0]);
+                setTimeout(() => { el._restyleGuard = true; }, 50);
+                el.style.cursor = 'pointer';
+            });
+            el.on('plotly_unhover', () => {
+                el._restyleGuard = false;
+                Plotly.restyle(el, { 'marker.size': [closedLabels.map(() => 10)] }, [0]);
+                setTimeout(() => { el._restyleGuard = true; }, 50);
+                el.style.cursor = 'default';
+            });
         };
 
         el._renderChart = render;
         render();
-    }
-
-    // Robust mousemove-based hover: detect proximity to SVG marker circles
-    function setupRadarMouseHover(chartEl, values) {
-        const overlay = document.getElementById('radar-overlay');
-        const tooltip = document.getElementById('radar-tooltip');
-        const tooltipLabel = document.getElementById('radar-tooltip-label');
-        const tooltipValue = document.getElementById('radar-tooltip-value');
-        if (!overlay || !tooltip) return;
-
-        // Find the actual SVG marker positions from Plotly's rendered DOM
-        function getMarkerPositions() {
-            const points = [];
-            // Plotly renders scatterpolar points as <circle> or <path> inside .scatterpolar
-            const wrapper = chartEl.parentElement;
-            const wrapperRect = wrapper.getBoundingClientRect();
-            const circles = chartEl.querySelectorAll('.scatterpolar .point');
-
-            if (circles.length >= 5) {
-                // Use actual rendered positions from SVG
-                for (let i = 0; i < 5; i++) {
-                    const circle = circles[i];
-                    const rect = circle.getBoundingClientRect();
-                    points.push({
-                        x: rect.left + rect.width / 2 - wrapperRect.left,
-                        y: rect.top + rect.height / 2 - wrapperRect.top,
-                        label: AXIS_LABELS_ORDERED[i],
-                        value: values[i],
-                    });
-                }
-            } else {
-                // Fallback: calculate from chart geometry
-                const plotW = chartEl.offsetWidth;
-                const plotH = chartEl.offsetHeight;
-                const cx = plotW / 2;
-                const cy = plotH / 2;
-                const maxR = Math.min(plotW, plotH) / 2 * 0.62;
-                for (let i = 0; i < 5; i++) {
-                    const angle = (-90 + 72 * i) * Math.PI / 180;
-                    const r = (values[i] / 5) * maxR;
-                    points.push({
-                        x: cx + r * Math.cos(angle),
-                        y: cy + r * Math.sin(angle),
-                        label: AXIS_LABELS_ORDERED[i],
-                        value: values[i],
-                    });
-                }
-            }
-            return points;
-        }
-
-        let cachedPositions = null;
-        const HOVER_RADIUS = 30; // px proximity threshold
-
-        // Remove previous listeners by replacing the overlay
-        const newOverlay = overlay.cloneNode(false);
-        overlay.parentNode.replaceChild(newOverlay, overlay);
-
-        newOverlay.addEventListener('mousemove', (e) => {
-            if (!cachedPositions) cachedPositions = getMarkerPositions();
-            const rect = newOverlay.getBoundingClientRect();
-            const mx = e.clientX - rect.left;
-            const my = e.clientY - rect.top;
-
-            // Find closest point within threshold
-            let closest = null;
-            let minDist = Infinity;
-            for (const pt of cachedPositions) {
-                const dist = Math.sqrt((mx - pt.x) ** 2 + (my - pt.y) ** 2);
-                if (dist < minDist && dist < HOVER_RADIUS) {
-                    minDist = dist;
-                    closest = pt;
-                }
-            }
-
-            if (closest) {
-                tooltip.classList.remove('hidden');
-                tooltipLabel.textContent = closest.label;
-                tooltipValue.textContent = closest.value.toFixed(1) + ' / 5.0';
-                tooltip.style.left = closest.x + 'px';
-                tooltip.style.top = closest.y + 'px';
-                newOverlay.style.cursor = 'pointer';
-            } else {
-                tooltip.classList.add('hidden');
-                newOverlay.style.cursor = 'crosshair';
-            }
-        });
-
-        newOverlay.addEventListener('mouseleave', () => {
-            tooltip.classList.add('hidden');
-            cachedPositions = null; // Recalculate on next hover (handles resize)
-        });
     }
 
     // ⑤ Category Positioning
