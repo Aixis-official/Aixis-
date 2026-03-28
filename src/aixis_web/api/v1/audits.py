@@ -303,13 +303,64 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
         })
 
     # Build score breakdown: auto / manual / final per axis
-    # This gives the frontend full transparency into the blending process.
+    # Always compute final scores LIVE from current auto + manual data using AXIS_MIX.
+    # Never rely on stale ToolPublishedScore — it may have been computed with old data.
     from ...services.score_service import get_auto_scores, get_manual_scores, AXIS_MIX
+    from aixis_agent.core.enums import OverallGrade
 
     auto_scores_raw, manual_edit_axes = await get_auto_scores(db, session_id)
     manual_scores_raw = await get_manual_scores(db, session_id)
 
-    # Overlay published (merged) scores if available
+    # Compute final blended scores live using AXIS_MIX ratios
+    score_breakdown = {}
+    live_final_scores = {}
+    has_any_manual = False
+
+    for axis, mix in AXIS_MIX.items():
+        auto_val = auto_scores_raw.get(axis)
+        manual_val = manual_scores_raw.get(axis)
+
+        if manual_val is not None:
+            has_any_manual = True
+
+        # Apply the same blending logic as merge_and_publish
+        if axis in manual_edit_axes:
+            final_val = auto_val if auto_val is not None else 0.0
+        elif auto_val is not None and manual_val is not None:
+            final_val = auto_val * mix["auto"] + manual_val * mix["manual"]
+        elif auto_val is not None:
+            final_val = auto_val
+        elif manual_val is not None:
+            final_val = manual_val
+        else:
+            final_val = 0.0
+
+        final_val = max(0.0, min(5.0, round(final_val, 1)))
+        live_final_scores[axis] = final_val
+
+        score_breakdown[axis] = {
+            "auto_score": round(auto_val, 2) if auto_val is not None else None,
+            "manual_score": round(manual_val, 2) if manual_val is not None else None,
+            "final_score": final_val,
+            "auto_ratio": int(mix["auto"] * 100),
+            "manual_ratio": int(mix["manual"] * 100),
+            "is_manual_edit": axis in manual_edit_axes,
+            "has_manual": manual_val is not None,
+            "has_auto": auto_val is not None,
+        }
+
+    # Overlay live-computed final scores onto axis_scores for display
+    for item in axis_scores:
+        if item["axis"] in live_final_scores:
+            item["score"] = live_final_scores[item["axis"]]
+            if has_any_manual and item["source"] not in ("manual_edit", "error"):
+                item["source"] = "hybrid"
+
+    # Compute live overall score and grade
+    live_overall = round(sum(live_final_scores.values()) / len(live_final_scores), 1) if live_final_scores else 0.0
+    live_grade = OverallGrade.from_score(live_overall).value
+
+    # Check for published record (for reference only, not for score values)
     published_result = await db.execute(
         select(ToolPublishedScore)
         .where(ToolPublishedScore.source_session_id == session_id)
@@ -317,38 +368,6 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
         .limit(1)
     )
     published = published_result.scalar_one_or_none()
-
-    score_breakdown = {}
-    if published:
-        published_scores = {
-            "practicality": published.practicality,
-            "cost_performance": published.cost_performance,
-            "localization": published.localization,
-            "safety": published.safety,
-            "uniqueness": published.uniqueness,
-        }
-        for item in axis_scores:
-            if item["axis"] in published_scores:
-                item["score"] = published_scores[item["axis"]]
-                if item["source"] not in ("manual_edit", "error"):
-                    item["source"] = "hybrid"
-
-    # Build per-axis breakdown for UI transparency
-    for axis, mix in AXIS_MIX.items():
-        auto_val = auto_scores_raw.get(axis)
-        manual_val = manual_scores_raw.get(axis)
-        final_val = published_scores.get(axis) if published else (auto_val if auto_val is not None else None)
-
-        score_breakdown[axis] = {
-            "auto_score": round(auto_val, 2) if auto_val is not None else None,
-            "manual_score": round(manual_val, 2) if manual_val is not None else None,
-            "final_score": round(final_val, 2) if final_val is not None else None,
-            "auto_ratio": int(mix["auto"] * 100),
-            "manual_ratio": int(mix["manual"] * 100),
-            "is_manual_edit": axis in manual_edit_axes,
-            "has_manual": manual_val is not None,
-            "has_auto": auto_val is not None,
-        }
 
     # Build volume metrics
     volume_metrics = VolumeMetrics(
@@ -399,8 +418,8 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
         volume_metrics=volume_metrics,
         reliability_scores=reliability,
         score_diff=score_diff,
-        published_overall_score=published.overall_score if published else None,
-        published_overall_grade=published.overall_grade if published else None,
+        published_overall_score=live_overall,
+        published_overall_grade=live_grade,
         score_breakdown=score_breakdown if score_breakdown else None,
     )
 
