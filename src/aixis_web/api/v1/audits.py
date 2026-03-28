@@ -962,12 +962,11 @@ async def finalize_audit(
     # Idempotency: if already completed with a published score from this session,
     # return existing score without creating a new version
     if session.status == "completed":
-        from ..db.models.score import ToolPublishedScore as TPS
         existing_pub = (await db.execute(
-            select(TPS).where(
-                TPS.tool_id == session.tool_id,
-                TPS.source_session_id == session_id,
-            ).order_by(TPS.version.desc())
+            select(ToolPublishedScore).where(
+                ToolPublishedScore.tool_id == session.tool_id,
+                ToolPublishedScore.source_session_id == session_id,
+            ).order_by(ToolPublishedScore.version.desc()).limit(1)
         )).scalar_one_or_none()
         if existing_pub:
             return {
@@ -988,15 +987,13 @@ async def finalize_audit(
             published_by=user.id,
         )
     except Exception as e:
+        logger.error("merge_and_publish failed for session %s: %s", session_id, e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"スコア公開に失敗しました: {e}",
         )
 
-    session.status = "completed"
-    session.completed_at = datetime.now(timezone.utc)
-    await db.commit()
-
+    # Note: merge_and_publish already sets status="completed" and commits
     return {
         "message": "監査結果を公開しました",
         "overall_score": published_score.overall_score,

@@ -140,7 +140,7 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
 
     # Determine next version
     existing = await db.execute(
-        select(ToolPublishedScore).where(ToolPublishedScore.tool_id == tool_id).order_by(ToolPublishedScore.version.desc())
+        select(ToolPublishedScore).where(ToolPublishedScore.tool_id == tool_id).order_by(ToolPublishedScore.version.desc()).limit(1)
     )
     latest = existing.scalar_one_or_none()
     next_version = (latest.version + 1) if latest else 1
