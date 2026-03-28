@@ -109,7 +109,7 @@ class Tool(Base):
     category = relationship("ToolCategory", back_populates="tools")
     target_configs = relationship("ToolTargetConfig", back_populates="tool")
     audit_sessions = relationship("AuditSession", back_populates="tool")
-    scores = relationship("ToolPublishedScore", back_populates="tool")
+    scores = relationship("ToolPublishedScore", back_populates="tool", order_by="ToolPublishedScore.version.desc()")
     industry_mappings = relationship("ToolIndustryMapping", back_populates="tool")
     use_case_mappings = relationship("ToolUseCaseMapping", back_populates="tool")
     risk_governance = relationship("ToolRiskGovernance", back_populates="tool")

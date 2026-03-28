@@ -58,11 +58,11 @@ async def get_platform_stats(db: Annotated[AsyncSession, Depends(get_db)]):
         last_updated_dt = last_score.scalar()
         last_updated = last_updated_dt.strftime("%Y年%m月%d日") if last_updated_dt else None
 
-        # New this month
+        # New this month (distinct tools that got a new published score)
         now = datetime.now(timezone.utc)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         new_month = await db.execute(
-            select(func.count()).select_from(ToolPublishedScore).where(
+            select(func.count(func.distinct(ToolPublishedScore.tool_id))).where(
                 ToolPublishedScore.published_at >= month_start
             )
         )

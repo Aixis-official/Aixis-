@@ -140,6 +140,9 @@
 (function() {
     'use strict';
 
+    // ── Auth state from server ──
+    const isLoggedIn = {{ 'true' if user else 'false' }};
+
     // ── State ──
     let currentPage = 1;
     const pageSize = 12;
@@ -367,7 +370,12 @@
                         ${categoryName}
                     </span>` : ''}
 
-                    <!-- 5 axis score bars (blurred for free users) -->
+                    <!-- 5 axis score bars -->
+                    ${isLoggedIn ? `
+                    <div class="space-y-1 mt-1">
+                        ${scoreBars}
+                    </div>
+                    ` : `
                     <div class="relative">
                         <div class="space-y-1 mt-1" style="filter: blur(6px); pointer-events: none;">
                             ${scoreBars}
@@ -381,6 +389,7 @@
                             </div>
                         </div>
                     </div>
+                    `}
 
                     <!-- Overall score -->
                     <div class="mt-2.5 pt-2.5 border-t border-gray-100 dark:border-aixis-600/30 flex items-center justify-between">
