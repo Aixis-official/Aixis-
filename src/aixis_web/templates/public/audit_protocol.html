@@ -285,29 +285,29 @@
                             <td class="px-6 py-3"><span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-black bg-grade-s">S</span></td>
                             <td class="px-6 py-3 text-gray-700 font-medium">4.5 - 5.0</td>
                             <td class="px-6 py-3 text-gray-500">業界最高水準</td>
-                            <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">全軸3.5以上 かつ 総合4.5以上</td>
+                            <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">全軸3.0以上 かつ 総合4.5以上</td>
                         </tr>
                         <tr>
                             <td class="px-6 py-3"><span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-black bg-grade-a">A</span></td>
-                            <td class="px-6 py-3 text-gray-700 font-medium">3.5 - 4.4</td>
+                            <td class="px-6 py-3 text-gray-700 font-medium">3.8 - 4.4</td>
                             <td class="px-6 py-3 text-gray-500">高品質・推奨</td>
-                            <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">全軸2.5以上 かつ 総合3.5以上</td>
+                            <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">全軸2.0以上 かつ 総合3.8以上</td>
                         </tr>
                         <tr>
                             <td class="px-6 py-3"><span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-black bg-grade-b">B</span></td>
-                            <td class="px-6 py-3 text-gray-700 font-medium">2.5 - 3.4</td>
+                            <td class="px-6 py-3 text-gray-700 font-medium">3.0 - 3.7</td>
                             <td class="px-6 py-3 text-gray-500">標準的</td>
-                            <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">致命的欠陥なし かつ 総合2.5以上</td>
+                            <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">致命的欠陥なし かつ 総合3.0以上</td>
                         </tr>
                         <tr>
                             <td class="px-6 py-3"><span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-black bg-grade-c">C</span></td>
-                            <td class="px-6 py-3 text-gray-700 font-medium">1.5 - 2.4</td>
+                            <td class="px-6 py-3 text-gray-700 font-medium">2.0 - 2.9</td>
                             <td class="px-6 py-3 text-gray-500">改善の余地あり</td>
                             <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">複数軸で基準未達</td>
                         </tr>
                         <tr>
                             <td class="px-6 py-3"><span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-black bg-grade-d">D</span></td>
-                            <td class="px-6 py-3 text-gray-700 font-medium">0.0 - 1.4</td>
+                            <td class="px-6 py-3 text-gray-700 font-medium">0.0 - 1.9</td>
                             <td class="px-6 py-3 text-gray-500">要注意</td>
                             <td class="px-6 py-3 text-gray-500 text-xs hidden sm:table-cell">重大な品質問題あり</td>
                         </tr>
@@ -388,72 +388,71 @@
             BenchRiskフレームワークに着想を得た4次元の信頼度指標を、各監査セッションに対して自動算出します。
         </p>
 
-        <!-- Heatmap: 5 axes × 4 reliability dimensions -->
-        <div class="mt-8 border border-gray-200 rounded-sm overflow-x-auto bg-white -mx-4 sm:mx-0">
-            <table class="w-full text-xs min-w-[520px]">
-                <thead>
-                    <tr class="border-b border-gray-200 bg-gray-50">
-                        <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">評価軸</th>
-                        <th class="px-3 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider">
-                            <div>再現性</div><div class="font-normal text-[10px] text-gray-400 mt-0.5">Consistency</div>
-                        </th>
-                        <th class="px-3 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider">
-                            <div>正確性</div><div class="font-normal text-[10px] text-gray-400 mt-0.5">Correctness</div>
-                        </th>
-                        <th class="px-3 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider">
-                            <div>網羅性</div><div class="font-normal text-[10px] text-gray-400 mt-0.5">Comprehensiveness</div>
-                        </th>
-                        <th class="px-3 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider">
-                            <div>解釈性</div><div class="font-normal text-[10px] text-gray-400 mt-0.5">Intelligibility</div>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <tr>
-                        <td class="px-4 py-3 font-semibold text-gray-900">実務適性</td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.80)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.65)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.85)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.70)"></span></td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 py-3 font-semibold text-gray-900">費用対効果</td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(99,102,241,0.40)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.80)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.60)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.75)"></span></td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 py-3 font-semibold text-gray-900">日本語能力</td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.90)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.70)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.85)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.65)"></span></td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 py-3 font-semibold text-gray-900">信頼性・安全性</td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.60)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(99,102,241,0.45)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.65)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.75)"></span></td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 py-3 font-semibold text-gray-900">革新性</td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(99,102,241,0.35)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(99,102,241,0.40)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(99,102,241,0.35)"></span></td>
-                        <td class="px-3 py-3 text-center"><span class="inline-block w-10 h-6 rounded" style="background:rgba(37,99,235,0.60)"></span></td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- 4-dimension gauge cards (matching tool_detail.html design) -->
+        <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Consistency -->
+            <div class="text-center bg-gray-50 rounded-sm p-3">
+                <div class="relative mx-auto" style="width:90px;height:55px;">
+                    <svg viewBox="0 0 100 55" class="w-full">
+                        <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#e2e8f0" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#374151" stroke-width="8" stroke-linecap="round"
+                              stroke-dasharray="75.4 999" />
+                        <text x="50" y="46" text-anchor="middle" font-size="18" font-weight="800" fill="#1e293b">60</text>
+                    </svg>
+                </div>
+                <div class="text-[11px] font-semibold text-gray-700 font-jp mt-1">再現性</div>
+                <div class="text-[9px] text-gray-400 tracking-wider">Consistency</div>
+                <div class="text-[10px] text-gray-500 font-jp mt-0.5">スコア安定性</div>
+                <div class="text-[10px] font-semibold mt-1" style="color:#6b7280">標準</div>
+            </div>
+            <!-- Correctness -->
+            <div class="text-center bg-gray-50 rounded-sm p-3">
+                <div class="relative mx-auto" style="width:90px;height:55px;">
+                    <svg viewBox="0 0 100 55" class="w-full">
+                        <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#e2e8f0" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#374151" stroke-width="8" stroke-linecap="round"
+                              stroke-dasharray="100.5 999" />
+                        <text x="50" y="46" text-anchor="middle" font-size="18" font-weight="800" fill="#1e293b">80</text>
+                    </svg>
+                </div>
+                <div class="text-[11px] font-semibold text-gray-700 font-jp mt-1">正確性</div>
+                <div class="text-[9px] text-gray-400 tracking-wider">Correctness</div>
+                <div class="text-[10px] text-gray-500 font-jp mt-0.5">エビデンス品質</div>
+                <div class="text-[10px] font-semibold mt-1" style="color:#374151">高信頼</div>
+            </div>
+            <!-- Comprehensiveness -->
+            <div class="text-center bg-gray-50 rounded-sm p-3">
+                <div class="relative mx-auto" style="width:90px;height:55px;">
+                    <svg viewBox="0 0 100 55" class="w-full">
+                        <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#e2e8f0" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#374151" stroke-width="8" stroke-linecap="round"
+                              stroke-dasharray="87.9 999" />
+                        <text x="50" y="46" text-anchor="middle" font-size="18" font-weight="800" fill="#1e293b">70</text>
+                    </svg>
+                </div>
+                <div class="text-[11px] font-semibold text-gray-700 font-jp mt-1">網羅性</div>
+                <div class="text-[9px] text-gray-400 tracking-wider">Comprehensiveness</div>
+                <div class="text-[10px] text-gray-500 font-jp mt-0.5">テスト網羅率</div>
+                <div class="text-[10px] font-semibold mt-1" style="color:#6b7280">標準</div>
+            </div>
+            <!-- Intelligibility -->
+            <div class="text-center bg-gray-50 rounded-sm p-3">
+                <div class="relative mx-auto" style="width:90px;height:55px;">
+                    <svg viewBox="0 0 100 55" class="w-full">
+                        <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#e2e8f0" stroke-width="8" stroke-linecap="round"/>
+                        <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#374151" stroke-width="8" stroke-linecap="round"
+                              stroke-dasharray="94.2 999" />
+                        <text x="50" y="46" text-anchor="middle" font-size="18" font-weight="800" fill="#1e293b">75</text>
+                    </svg>
+                </div>
+                <div class="text-[11px] font-semibold text-gray-700 font-jp mt-1">解釈性</div>
+                <div class="text-[9px] text-gray-400 tracking-wider">Intelligibility</div>
+                <div class="text-[10px] text-gray-500 font-jp mt-0.5">結果の解釈容易性</div>
+                <div class="text-[10px] font-semibold mt-1" style="color:#6b7280">標準</div>
+            </div>
         </div>
 
-        <div class="mt-4 flex items-center gap-4 text-[10px] text-gray-500">
-            <span class="font-semibold text-gray-700">凡例:</span>
-            <span class="flex items-center gap-1"><span class="w-4 h-3 rounded" style="background:rgba(37,99,235,0.85)"></span> 高信頼 (&ge;80)</span>
-            <span class="flex items-center gap-1"><span class="w-4 h-3 rounded" style="background:rgba(37,99,235,0.60)"></span> 標準 (50-79)</span>
-            <span class="flex items-center gap-1"><span class="w-4 h-3 rounded" style="background:rgba(99,102,241,0.40)"></span> 改善余地 (&lt;50)</span>
-        </div>
+        <p class="mt-4 text-[10px] text-gray-400">※ 上記は信頼度指標の例示です。実際の値は各監査セッションごとに自動算出されます。</p>
 
         <div class="mt-6 space-y-3 text-sm text-gray-600 leading-relaxed">
             <div class="border border-gray-200 rounded-sm p-5 bg-white">

@@ -207,7 +207,7 @@
                 {% if user %}
                 <!-- Logged-in: interactive radar chart -->
                 <div>
-                    <div class="relative mx-auto" id="radar-wrapper" style="max-width:520px;">
+                    <div class="relative" id="radar-wrapper">
                         <style>
                             #radar-chart,
                             #radar-chart *,
@@ -221,7 +221,7 @@
                             #radar-chart .main-svg { cursor: default !important; }
                             #radar-chart .scatterpolar .point { cursor: pointer !important; }
                         </style>
-                        <div id="radar-chart" class="chart-container" style="min-height:420px;cursor:default;"></div>
+                        <div id="radar-chart" style="height:460px;cursor:default;"></div>
                         <!-- Axis detail panel (shown on click) -->
                         <div id="radar-detail-panel" class="hidden absolute z-20 pointer-events-none left-1/2 bottom-2 w-56 px-4 py-3 rounded-sm text-xs font-jp shadow-lg border border-gray-200 dark:border-aixis-600/40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm text-gray-800 dark:text-gray-100" style="transform:translateX(-50%);">
                             <div class="flex items-center justify-between mb-1.5">
@@ -338,20 +338,8 @@
             <div class="section-line"></div>
             <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100 font-jp mb-5">詳細分析レポート</h2>
 
-            <!-- 7a. Per-axis analysis cards (5 cards: 3+2 centered, equal width) -->
-            <div id="report-axis-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <style>
-                    /* Bottom row (cards 4-5): center within grid when only 2 of 3 cols filled */
-                    @media (min-width: 1024px) {
-                        #report-axis-cards { display: flex; flex-wrap: wrap; justify-content: center; }
-                        #report-axis-cards > div { width: calc(33.333% - 0.667rem); min-width: calc(33.333% - 0.667rem); }
-                    }
-                    @media (min-width: 768px) and (max-width: 1023.98px) {
-                        #report-axis-cards { display: flex; flex-wrap: wrap; justify-content: center; }
-                        #report-axis-cards > div { width: calc(50% - 0.5rem); min-width: calc(50% - 0.5rem); }
-                    }
-                </style>
-            </div>
+            <!-- 7a. Per-axis analysis cards (stacked, uniform width) -->
+            <div id="report-axis-cards" class="space-y-4 mb-6"></div>
 
             <!-- 7b. Reliability Indicators (⑨ 説明改善) -->
             <div id="reliability-section" class="hidden">
@@ -630,14 +618,12 @@
             };
 
             const layout = getRadarLayout({
-                height: 440,
-                margin: { t: 60, b: 60, l: 60, r: 60 },
+                height: 460,
+                margin: { t: 40, b: 40, l: 40, r: 40 },
                 showlegend: false,
                 dragmode: false,
             });
             if (layout.polar) {
-                // Center the polar chart within its container
-                layout.polar.domain = { x: [0.05, 0.95], y: [0.05, 0.95] };
                 if (layout.polar.angularaxis) {
                     layout.polar.angularaxis.tickfont = { size: 13, color: dark ? '#cbd5e1' : '#334155' };
                 }
