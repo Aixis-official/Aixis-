@@ -18,7 +18,7 @@ from starlette.responses import Response
 
 from ...db.base import get_db
 from ...db.models.audit import AuditSession, DBTestResult
-from ...db.models.score import AxisScoreRecord, ManualChecklistRecord
+from ...db.models.score import AxisScoreRecord, ManualChecklistRecord, ToolPublishedScore
 from ...db.models.tool import Tool
 from ...db.models.user import User
 from ...schemas.audit import (
@@ -302,6 +302,31 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
             "details": _details if isinstance(_details, (dict, list)) else [],
         })
 
+    # Overlay published (merged) scores if available
+    # merge_and_publish writes final blended scores to ToolPublishedScore,
+    # so we use those when they exist to reflect the auto+manual merged result.
+    published_result = await db.execute(
+        select(ToolPublishedScore)
+        .where(ToolPublishedScore.source_session_id == session_id)
+        .order_by(ToolPublishedScore.version.desc())
+        .limit(1)
+    )
+    published = published_result.scalar_one_or_none()
+    if published:
+        published_scores = {
+            "practicality": published.practicality,
+            "cost_performance": published.cost_performance,
+            "localization": published.localization,
+            "safety": published.safety,
+            "uniqueness": published.uniqueness,
+        }
+        for item in axis_scores:
+            if item["axis"] in published_scores:
+                item["score"] = published_scores[item["axis"]]
+                # Mark source as hybrid if it was blended
+                if item["source"] not in ("manual_edit", "error"):
+                    item["source"] = "hybrid"
+
     # Build volume metrics
     volume_metrics = VolumeMetrics(
         executor_type=session.executor_type or "extension",
@@ -351,6 +376,8 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
         volume_metrics=volume_metrics,
         reliability_scores=reliability,
         score_diff=score_diff,
+        published_overall_score=published.overall_score if published else None,
+        published_overall_grade=published.overall_grade if published else None,
     )
 
 

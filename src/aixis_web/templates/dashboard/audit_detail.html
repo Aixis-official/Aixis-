@@ -583,6 +583,9 @@
         if (data.status === 'awaiting_manual') {
             btns += '<a href="/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors font-jp">手動評価を入力</a>';
         }
+        if (data.status === 'completed') {
+            btns += '<a href="/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors font-jp"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z"/></svg>手動評価をやり直す</a>';
+        }
         if (data.status === 'completed' || data.status === 'awaiting_manual') {
             btns += '<button id="finalize-btn" onclick="finalizeAudit()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm font-jp"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>監査結果を公開</button>';
         }
@@ -764,7 +767,7 @@
         if (data.axis_scores && data.axis_scores.length > 0) {
             document.getElementById('scores-section').classList.remove('hidden');
             try {
-                renderScores(data.axis_scores);
+                renderScores(data.axis_scores, data.published_overall_score, data.published_overall_grade);
             } catch (scoreErr) {
                 console.error('Score rendering error:', scoreErr);
                 document.getElementById('axis-cards').innerHTML =
@@ -924,7 +927,7 @@
         overall.textContent = dStr + ' (' + (diff.overall_previous || 0).toFixed(1) + ' → ' + (diff.overall_current || 0).toFixed(1) + ')';
     }
 
-    function renderScores(scores) {
+    function renderScores(scores, publishedOverall, publishedGrade) {
         // Cache current scores for the editor
         _currentAxisScores = {};
         scores.forEach(function(s) { _currentAxisScores[s.axis] = s.score; });
@@ -933,19 +936,25 @@
         var editBtn = document.getElementById('edit-scores-btn');
         if (editBtn) editBtn.classList.remove('hidden');
 
-        // Calculate overall (weighted by confidence)
-        var totalScore = 0;
-        var totalWeight = 0;
-        scores.forEach(function(s) {
-            // Include all non-error scores in overall calculation
-            if (s.source !== 'error') {
-                var weight = Math.max(s.confidence, 0.1);  // minimum weight to avoid zero-division
-                totalScore += s.score * weight;
-                totalWeight += weight;
-            }
-        });
-        var overall = totalWeight > 0 ? totalScore / totalWeight : 0;
-        var grade = getGrade(overall);
+        // Use published overall score/grade if available (from merge_and_publish),
+        // otherwise fall back to weighted calculation from axis scores
+        var overall, grade;
+        if (publishedOverall != null && publishedGrade) {
+            overall = publishedOverall;
+            grade = { grade: publishedGrade, color: getGrade(publishedOverall).color };
+        } else {
+            var totalScore = 0;
+            var totalWeight = 0;
+            scores.forEach(function(s) {
+                if (s.source !== 'error') {
+                    var weight = Math.max(s.confidence, 0.1);
+                    totalScore += s.score * weight;
+                    totalWeight += weight;
+                }
+            });
+            overall = totalWeight > 0 ? totalScore / totalWeight : 0;
+            grade = getGrade(overall);
+        }
 
         document.getElementById('overall-score').textContent = overall.toFixed(1);
         var gradeEl = document.getElementById('overall-grade');

@@ -97,6 +97,8 @@ class AuditDetailResponse(AuditResponse):
     volume_metrics: VolumeMetrics | None = None
     reliability_scores: dict[str, Any] | None = None
     score_diff: dict[str, Any] | None = None
+    published_overall_score: float | None = None
+    published_overall_grade: str | None = None
 
 
 class AuditListResponse(BaseModel):
