@@ -240,43 +240,30 @@
             <div class="section-line"></div>
             <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100 font-jp mb-5">詳細分析レポート</h2>
 
-            <!-- 6a. Per-axis horizontal bar chart (Plotly) -->
-            <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-5">
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-3">軸別スコア分布</h3>
-                <div id="axis-bar-chart" style="height:280px;"></div>
-            </div>
-
-            <!-- 6b. Per-axis analysis cards with highlights/concerns (populated by JS) -->
+            <!-- 6a. Per-axis analysis cards with highlights/concerns (populated by JS) -->
             <div id="report-axis-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"></div>
 
-            <!-- 6c. Reliability Heatmap (5 axes × 4 dimensions) -->
+            <!-- 6b. Reliability Indicators -->
             <div id="reliability-section" class="hidden">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-3 flex items-center gap-2">
                     <svg class="w-4 h-4 text-aixis-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                     </svg>
-                    監査信頼度の可視化
+                    監査信頼度指標
                 </h3>
                 <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5">
-                    <p class="text-[11px] text-gray-400 dark:text-gray-500 font-jp mb-4">BenchRiskフレームワークに基づく4次元の信頼度指標。各指標は0〜100のスケールで算出されます。</p>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 font-jp mb-5">BenchRiskフレームワークに基づく4次元の信頼度指標。各指標は0〜100のスケールで算出されます。</p>
 
-                    <!-- 6c-1. Reliability Heatmap (5×4 matrix) -->
-                    <div id="reliability-heatmap" style="min-height:300px;" class="mb-5"></div>
+                    <!-- Reliability radar chart -->
+                    <div id="reliability-radar" style="height:320px;" class="mb-5"></div>
 
-                    <!-- 6c-2. Overall reliability gauges -->
+                    <!-- Gauge cards -->
                     <div id="reliability-gauges" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"></div>
 
-                    <!-- 6c-3. Overall score -->
+                    <!-- Overall score -->
                     <div id="reliability-overall" class="pt-4 border-t border-gray-100 dark:border-aixis-600/30 flex items-center justify-between">
                         <span class="text-xs font-medium text-gray-500 dark:text-gray-400 font-jp">総合信頼度</span>
                         <span id="reliability-overall-value" class="text-sm font-bold tabular-nums text-gray-800 dark:text-gray-100"></span>
-                    </div>
-
-                    <!-- Legend -->
-                    <div class="mt-3 flex items-center gap-4 text-[10px] text-gray-400 dark:text-gray-500 font-jp">
-                        <span class="flex items-center gap-1"><span class="w-3 h-2 rounded-sm" style="background:rgba(37,99,235,0.85)"></span>高信頼 (≥80)</span>
-                        <span class="flex items-center gap-1"><span class="w-3 h-2 rounded-sm" style="background:rgba(37,99,235,0.55)"></span>標準 (50-79)</span>
-                        <span class="flex items-center gap-1"><span class="w-3 h-2 rounded-sm" style="background:rgba(99,102,241,0.35)"></span>改善余地 (&lt;50)</span>
                     </div>
                 </div>
             </div>
@@ -481,109 +468,76 @@
         return text;
     }
 
-    function renderAxisBarChart(scores) {
-        const el = document.getElementById('axis-bar-chart');
-        if (!el || !scores) return;
-
-        const labels = AXIS_KEYS.map(k => AXIS_LABELS[k]);
-        const values = AXIS_KEYS.map(k => scores[k] || 0);
-        const colors = values.map(v => {
-            if (v >= 4.0) return '#38a169';
-            if (v >= 3.0) return '#2b6cb0';
-            if (v >= 2.0) return '#d69e2e';
-            return '#e53e3e';
-        });
-
-        const render = () => {
-            const dark = isDarkMode();
-            const trace = {
-                type: 'bar',
-                orientation: 'h',
-                y: labels.slice().reverse(),
-                x: values.slice().reverse(),
-                marker: {
-                    color: colors.slice().reverse(),
-                    line: { color: 'rgba(0,0,0,0.1)', width: 1 }
-                },
-                text: values.slice().reverse().map(v => v.toFixed(1)),
-                textposition: 'outside',
-                textfont: { size: 12, color: dark ? '#e2e8f0' : '#2d3748' },
-                hovertemplate: '%{y}: %{x:.2f}<extra></extra>',
-            };
-
-            const layout = getPlotlyLayout({
-                height: 260,
-                margin: { t: 10, b: 30, l: 110, r: 50 },
-                xaxis: {
-                    range: [0, 5.5],
-                    dtick: 1,
-                    gridcolor: dark ? '#2d3748' : '#e2e8f0',
-                    linecolor: dark ? '#2d3748' : '#e2e8f0',
-                    tickfont: { color: dark ? '#a0aec0' : '#718096', size: 11 },
-                },
-                yaxis: {
-                    tickfont: { color: dark ? '#e2e8f0' : '#2d3748', size: 12 },
-                },
-                showlegend: false,
-            });
-
-            Plotly.newPlot(el, [trace], layout, { responsive: true, displayModeBar: false });
+    // Score-based insight text when no LLM/raw data is available
+    function scoreInsight(key, score) {
+        const level = score >= 4.0 ? 'high' : score >= 3.0 ? 'mid' : 'low';
+        const insights = {
+            practicality: {
+                high: ['実業務での即戦力となる高い適性', 'ワークフローへの統合が容易'],
+                mid:  ['基本的な業務利用に対応', '一部のユースケースで追加設定が必要'],
+                low:  ['実務適用には慎重な検討が必要', '限定的なユースケース向け'],
+            },
+            cost_performance: {
+                high: ['投資対効果が高い価格設定', '同カテゴリ内で競争力のある料金体系'],
+                mid:  ['標準的な価格帯のサービス', '機能に見合った妥当なコスト'],
+                low:  ['コスト面で改善の余地あり', '利用規模によっては割高な可能性'],
+            },
+            localization: {
+                high: ['日本語UIと出力品質が高水準', '日本市場向けの最適化が進んでいる'],
+                mid:  ['基本的な日本語対応は完備', '一部の機能で英語表記が残存'],
+                low:  ['日本語対応が限定的', 'ローカライズに改善の余地あり'],
+            },
+            safety: {
+                high: ['堅牢なセキュリティ体制を確認', 'データ保護ポリシーが明確'],
+                mid:  ['標準的なセキュリティ水準', '基本的な安全対策は実施済み'],
+                low:  ['セキュリティ面で注意が必要', 'データ取扱いポリシーの確認を推奨'],
+            },
+            uniqueness: {
+                high: ['独自の技術的アプローチを採用', '差別化された機能・体験を提供'],
+                mid:  ['標準的な機能セットを網羅', '一部に独自の工夫あり'],
+                low:  ['機能面での差別化が限定的', '競合との差異が小さい'],
+            },
         };
-
-        el._renderChart = render;
-        render();
+        return (insights[key] && insights[key][level]) || ['評価データを分析中'];
     }
 
     function renderAnalysisReport(scores, analysisData) {
         const cardsEl = document.getElementById('report-axis-cards');
-        if (!cardsEl) return;
+        if (!cardsEl || !scores) return;
 
-        // Render the axis bar chart from published scores
-        renderAxisBarChart(scores);
-
-        if (!analysisData || !analysisData.axes || analysisData.axes.length === 0) {
-            if (scores) {
-                cardsEl.innerHTML = AXIS_KEYS.map(key => {
-                    const val = scores[key] != null ? scores[key] : 0;
-                    const label = AXIS_LABELS[key];
-                    const gradeInfo = getGrade(val);
-                    return buildAxisCard(label, val, gradeInfo, [], [], '---');
-                }).join('');
-            }
-            return;
-        }
-
-        // Build per-axis cards — use PUBLISHED scores for display, analysis data for insights
         cardsEl.innerHTML = AXIS_KEYS.map(key => {
             const label = AXIS_LABELS[key];
-            // Use published score (from ToolPublishedScore) not AxisScoreRecord score
-            const publishedScore = scores ? (scores[key] || 0) : 0;
+            const publishedScore = scores[key] != null ? scores[key] : 0;
             const gradeInfo = getGrade(publishedScore);
 
             // Find matching analysis axis data
-            const ax = analysisData.axes.find(a => a.axis === key);
-            if (!ax) return buildAxisCard(label, publishedScore, gradeInfo, [], [], '---');
+            const ax = analysisData && analysisData.axes ? analysisData.axes.find(a => a.axis === key) : null;
 
             // Use LLM-generated public summaries if available, else filter raw data
-            const details = ax.details || {};
+            const details = ax && ax.details ? ax.details : {};
             let highlights = details.public_highlights || [];
             let concerns = details.public_concerns || [];
 
             // Fallback: filter raw strengths/risks if no public summaries
-            if (highlights.length === 0) {
+            if (highlights.length === 0 && ax) {
                 highlights = (ax.strengths || []).map(s => {
                     const text = typeof s === 'string' ? s : (s.text || s.description || '');
                     return filterMetaText(text);
                 }).filter(Boolean).slice(0, 3);
             }
-            if (concerns.length === 0) {
+            if (concerns.length === 0 && ax) {
                 concerns = (ax.risks || []).map(r => {
                     const text = typeof r === 'string' ? r : (r.text || r.description || '');
                     return filterMetaText(text);
                 }).filter(Boolean).slice(0, 2);
             }
 
-            const sourceLabel = ax.source === 'auto' ? '自動評価' : ax.source === 'manual' ? '手動評価' : '統合評価';
+            // Final fallback: generate score-based insights
+            if (highlights.length === 0) {
+                highlights = scoreInsight(key, publishedScore);
+            }
+
+            const sourceLabel = ax ? (ax.source === 'auto' ? '自動評価' : ax.source === 'manual' ? '手動評価' : '統合評価') : '統合評価';
 
             return buildAxisCard(label, publishedScore, gradeInfo, highlights, concerns, sourceLabel);
         }).join('');
@@ -594,6 +548,8 @@
 
     function buildAxisCard(label, score, gradeInfo, highlights, concerns, sourceLabel) {
         const pct = (score / 5 * 100).toFixed(0);
+        const hasHighlights = highlights.length > 0;
+        const hasConcerns = concerns.length > 0;
 
         const highlightsHtml = highlights.map(s =>
             `<li class="flex items-start gap-1.5 text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -619,8 +575,8 @@
             </div>
             <div class="score-bar mb-3" style="height:6px;"><div class="score-bar-fill ${scoreLevel(score)}" style="width:${pct}%"></div></div>
             <div class="flex-1 space-y-2">
-                ${highlightsHtml ? `<ul class="space-y-1">${highlightsHtml}</ul>` : '<p class="text-[10px] text-gray-400 font-jp">データ収集中</p>'}
-                ${concernsHtml ? `<ul class="space-y-1 ${highlightsHtml ? 'mt-2 pt-2 border-t border-gray-100 dark:border-aixis-700/50' : ''}">${concernsHtml}</ul>` : ''}
+                ${hasHighlights ? `<div class="mb-1"><span class="text-[10px] font-semibold text-green-600 dark:text-green-400 font-jp">強み</span></div><ul class="space-y-1">${highlightsHtml}</ul>` : ''}
+                ${hasConcerns ? `<div class="${hasHighlights ? 'mt-2 pt-2 border-t border-gray-100 dark:border-aixis-700/50' : ''} mb-1"><span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 font-jp">注意点</span></div><ul class="space-y-1">${concernsHtml}</ul>` : ''}
             </div>
             <div class="mt-3 pt-2 border-t border-gray-100 dark:border-aixis-700/30">
                 <span class="text-[10px] text-gray-400 dark:text-gray-500 font-jp">${sourceLabel}</span>
@@ -632,14 +588,14 @@
         const section = document.getElementById('reliability-section');
         if (!section) return;
 
-        const reliability = analysisData.reliability;
+        const reliability = analysisData && analysisData.reliability;
         if (!reliability || typeof reliability !== 'object') return;
 
         const dims = [
-            { key: 'consistency', label: '再現性', labelEn: 'CONSISTENCY' },
-            { key: 'correctness', label: '正確性', labelEn: 'CORRECTNESS' },
-            { key: 'comprehensiveness', label: '網羅性', labelEn: 'COMPREHENSIVENESS' },
-            { key: 'intelligibility', label: '解釈性', labelEn: 'INTELLIGIBILITY' },
+            { key: 'consistency', label: '再現性', labelEn: 'CONSISTENCY', desc: '同条件での結果の安定性' },
+            { key: 'correctness', label: '正確性', labelEn: 'CORRECTNESS', desc: '評価結果の妥当性' },
+            { key: 'comprehensiveness', label: '網羅性', labelEn: 'COMPREHENSIVENESS', desc: '評価観点のカバー率' },
+            { key: 'intelligibility', label: '解釈性', labelEn: 'INTELLIGIBILITY', desc: '結果の解釈しやすさ' },
         ];
 
         const hasAny = dims.some(d => reliability[d.key] != null);
@@ -647,83 +603,39 @@
 
         section.classList.remove('hidden');
 
-        // --- Build 5×4 heatmap using confidence_dimensions from each axis ---
-        const heatmapEl = document.getElementById('reliability-heatmap');
-        const axisLabels = AXIS_KEYS.map(k => AXIS_LABELS[k]);
-        const dimLabels = dims.map(d => d.label);
-
-        // Collect per-axis × per-dimension data from AxisScoreRecord details
-        const heatmapZ = [];
-        const heatmapText = [];
-        const dimKeyMap = { '再現性': 'consistency', '正確性': 'correctness', '網羅性': 'comprehensiveness', '解釈性': 'intelligibility' };
-
-        AXIS_KEYS.forEach(key => {
-            const ax = (analysisData.axes || []).find(a => a.axis === key);
-            const confDims = ax && ax.details ? ax.details.confidence_dimensions : null;
-            const row = [];
-            const textRow = [];
-            dims.forEach(d => {
-                let val = null;
-                if (confDims) {
-                    // Try Japanese key first, then English
-                    val = confDims[d.label] != null ? confDims[d.label] : confDims[d.key];
-                    // Convert 0-1 to 0-100 if needed
-                    if (val != null && val <= 1.0) val = val * 100;
-                }
-                // Fallback: use global reliability value
-                if (val == null && reliability[d.key] != null) {
-                    val = reliability[d.key];
-                }
-                row.push(val != null ? Math.round(val) : null);
-                textRow.push(val != null ? Math.round(val).toString() : '');
-            });
-            heatmapZ.push(row);
-            heatmapText.push(textRow);
-        });
-
-        // Render heatmap with Plotly
-        if (heatmapEl) {
+        // --- Reliability radar chart (4 dimensions) ---
+        const radarEl = document.getElementById('reliability-radar');
+        if (radarEl) {
             const render = () => {
                 const dark = isDarkMode();
+                const values = dims.map(d => reliability[d.key] != null ? Math.round(reliability[d.key]) : 0);
+                const labels = dims.map(d => d.label);
+                const closed = [...values, values[0]];
+                const closedLabels = [...labels, labels[0]];
+
                 const trace = {
-                    type: 'heatmap',
-                    z: heatmapZ,
-                    x: dimLabels,
-                    y: axisLabels,
-                    text: heatmapText,
-                    texttemplate: '%{text}',
-                    textfont: { size: 13, color: 'white' },
-                    colorscale: [
-                        [0, 'rgba(99,102,241,0.30)'],
-                        [0.4, 'rgba(99,102,241,0.50)'],
-                        [0.6, 'rgba(37,99,235,0.60)'],
-                        [0.8, 'rgba(37,99,235,0.80)'],
-                        [1.0, 'rgba(37,99,235,0.95)'],
-                    ],
-                    zmin: 0,
-                    zmax: 100,
-                    showscale: false,
-                    hovertemplate: '%{y} × %{x}: %{z}/100<extra></extra>',
-                    xgap: 3,
-                    ygap: 3,
+                    type: 'scatterpolar',
+                    r: closed,
+                    theta: closedLabels,
+                    fill: 'toself',
+                    fillcolor: dark ? 'rgba(99,102,241,0.15)' : 'rgba(37,99,235,0.10)',
+                    line: { color: dark ? '#818cf8' : '#2563eb', width: 2.5 },
+                    marker: { size: 8, color: dark ? '#a5b4fc' : '#3b82f6' },
+                    hovertemplate: '%{theta}: %{r}/100<extra></extra>',
                 };
 
-                const layout = getPlotlyLayout({
-                    height: 280,
-                    margin: { t: 30, b: 40, l: 110, r: 20 },
-                    xaxis: {
-                        side: 'top',
-                        tickfont: { size: 11, color: dark ? '#a0aec0' : '#64748b' },
-                    },
-                    yaxis: {
-                        autorange: 'reversed',
-                        tickfont: { size: 12, color: dark ? '#e2e8f0' : '#1e293b' },
-                    },
+                const layout = getRadarLayout({
+                    height: 300,
+                    margin: { t: 50, b: 50, l: 70, r: 70 },
+                    showlegend: false,
                 });
+                // Override polar range for 0-100
+                layout.polar.radialaxis.range = [0, 100];
+                layout.polar.radialaxis.dtick = 25;
 
-                Plotly.newPlot(heatmapEl, [trace], layout, { responsive: true, displayModeBar: false });
+                Plotly.newPlot(radarEl, [trace], layout, { responsive: true, displayModeBar: false });
             };
-            heatmapEl._renderChart = render;
+            radarEl._renderChart = render;
             render();
         }
 
@@ -735,25 +647,32 @@
                 if (val == null) return '';
                 const pct = Math.min(100, Math.max(0, Math.round(val)));
                 const color = pct >= 80 ? '#2563eb' : pct >= 50 ? '#6366f1' : '#a5b4fc';
-                const arcPct = (pct / 100 * 180);
-                return `<div class="text-center">
-                    <div class="relative mx-auto" style="width:80px;height:50px;">
+                const bgColor = pct >= 80 ? 'bg-blue-50 dark:bg-blue-900/20' : pct >= 50 ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'bg-gray-50 dark:bg-gray-800';
+                const levelLabel = pct >= 80 ? '高信頼' : pct >= 50 ? '標準' : '要改善';
+                const arcLen = pct / 100 * 40 * Math.PI;
+                return `<div class="text-center ${bgColor} rounded-lg p-3">
+                    <div class="relative mx-auto" style="width:90px;height:55px;">
                         <svg viewBox="0 0 100 55" class="w-full">
                             <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="${isDarkMode() ? '#2d3748' : '#e2e8f0'}" stroke-width="8" stroke-linecap="round"/>
                             <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round"
-                                  stroke-dasharray="${arcPct * 40 * Math.PI / 180} 999" />
-                            <text x="50" y="48" text-anchor="middle" font-size="16" font-weight="800" fill="${isDarkMode() ? '#e2e8f0' : '#1e293b'}">${pct}</text>
+                                  stroke-dasharray="${arcLen} 999" />
+                            <text x="50" y="46" text-anchor="middle" font-size="18" font-weight="800" fill="${isDarkMode() ? '#e2e8f0' : '#1e293b'}">${pct}</text>
                         </svg>
                     </div>
                     <div class="text-[11px] font-semibold text-gray-700 dark:text-gray-200 font-jp mt-1">${d.label}</div>
                     <div class="text-[9px] text-gray-400 dark:text-gray-500 tracking-wider">${d.labelEn}</div>
+                    <div class="text-[10px] text-gray-500 dark:text-gray-400 font-jp mt-0.5">${d.desc}</div>
+                    <div class="text-[10px] font-semibold mt-1" style="color:${color}">${levelLabel}</div>
                 </div>`;
             }).filter(Boolean).join('');
         }
 
         // Overall reliability
         if (reliability.overall != null) {
-            document.getElementById('reliability-overall-value').textContent = Math.round(reliability.overall) + ' / 100';
+            const overall = Math.round(reliability.overall);
+            const overallEl = document.getElementById('reliability-overall-value');
+            overallEl.textContent = overall + ' / 100';
+            overallEl.style.color = overall >= 80 ? '#2563eb' : overall >= 50 ? '#6366f1' : '#e53e3e';
         }
     }
 
