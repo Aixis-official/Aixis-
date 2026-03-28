@@ -31,10 +31,46 @@
     </div>
 
     <!-- ================================================================
-         2. Search & Filter Bar
+         2. Stats Row – refined KPIs
+         ================================================================ -->
+    <div id="stats-row" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mb-6">
+        <div class="text-center py-4">
+            <div id="stat-tools" class="text-3xl sm:text-4xl font-light text-gray-900 dark:text-white tabular-nums tracking-tight font-serif">--</div>
+            <div class="text-[10px] uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500 mt-1.5 font-sans">評価済みツール</div>
+        </div>
+        <div class="text-center py-4">
+            <div id="stat-categories" class="text-3xl sm:text-4xl font-light text-gray-900 dark:text-white tabular-nums tracking-tight font-serif">--</div>
+            <div class="text-[10px] uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500 mt-1.5 font-sans">カテゴリ</div>
+        </div>
+        <div class="text-center py-4">
+            <div id="stat-avg-score" class="text-3xl sm:text-4xl font-light text-gray-900 dark:text-white tabular-nums tracking-tight font-serif">--</div>
+            <div class="text-[10px] uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500 mt-1.5 font-sans">平均スコア</div>
+        </div>
+        <div class="text-center py-4">
+            <div id="stat-audits" class="text-3xl sm:text-4xl font-light text-gray-900 dark:text-white tabular-nums tracking-tight font-serif">--</div>
+            <div class="text-[10px] uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500 mt-1.5 font-sans">総監査回数</div>
+        </div>
+    </div>
+
+    <!-- ================================================================
+         2.5 Free/Paid Info Banner (hidden for logged-in users)
+         ================================================================ -->
+    {% if not user %}
+    <div class="mb-6 border-t-2 border-aixis-400/60 dark:border-aixis-500/40 bg-white dark:bg-aixis-800/50 rounded-b-sm px-4 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+            総合グレードは無料で閲覧可能です。5軸詳細スコア・分析レポートは有料プランで提供しています。
+        </p>
+        <a href="/contact"
+           class="shrink-0 text-xs font-medium text-aixis-500 dark:text-aixis-400 hover:text-aixis-600 dark:hover:text-aixis-300 transition-colors duration-150">
+            詳細 &rarr;
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- ================================================================
+         3. Search & Filter Bar
          ================================================================ -->
     <div class="mb-5">
-        <!-- Search input -->
         <div class="relative mb-3">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                 <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -47,18 +83,13 @@
                    class="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/50 rounded-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-aixis-400 dark:focus:border-aixis-400 focus:ring-1 focus:ring-aixis-400/30 dark:focus:ring-aixis-400/20 outline-none transition-all duration-150">
         </div>
 
-        <!-- Category pills + Sort + Result count -->
         <div class="flex flex-col sm:flex-row sm:items-center gap-2.5">
-            <!-- Category pills (horizontal scroll) -->
             <div id="category-pills" class="flex-1 flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
                 <button data-category=""
                         class="category-pill shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 bg-aixis-500 dark:bg-aixis-400 text-white dark:text-aixis-900">
                     すべて
                 </button>
-                <!-- Categories loaded dynamically -->
             </div>
-
-            <!-- Sort dropdown -->
             <div class="flex items-center gap-2.5 shrink-0">
                 <select id="sort-select"
                         class="px-2.5 py-1 text-xs bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/50 rounded-md text-gray-600 dark:text-gray-300 outline-none focus:border-aixis-400 dark:focus:border-aixis-400 transition-colors duration-150 cursor-pointer">
@@ -75,45 +106,6 @@
     </div>
 
     <hr class="divider-thin">
-
-    <!-- ================================================================
-         3. Stats Row (4 cards) – Bloomberg-style compact KPIs
-         ================================================================ -->
-    <div id="stats-row" class="hidden grid grid-cols-4 gap-2 sm:gap-3 mb-6">
-        <!-- 評価済みツール -->
-        <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm px-3 py-2.5 text-center">
-            <div id="stat-tools" class="stat-number text-lg sm:text-xl font-bold text-gray-900 dark:text-white tabular-nums" style="font-size:36px" data-countup>--</div>
-            <div class="stat-unit text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5 uppercase tracking-wide">評価済み</div>
-        </div>
-        <!-- カテゴリ数 -->
-        <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm px-3 py-2.5 text-center">
-            <div id="stat-categories" class="stat-number text-lg sm:text-xl font-bold text-gray-900 dark:text-white tabular-nums" style="font-size:36px" data-countup>--</div>
-            <div class="stat-unit text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5 uppercase tracking-wide">カテゴリ</div>
-        </div>
-        <!-- 平均スコア -->
-        <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm px-3 py-2.5 text-center">
-            <div id="stat-avg-score" class="stat-number text-lg sm:text-xl font-bold text-gray-900 dark:text-white tabular-nums" style="font-size:36px" data-countup>--</div>
-            <div class="stat-unit text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5 uppercase tracking-wide">平均スコア</div>
-        </div>
-        <!-- 総監査回数 -->
-        <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm px-3 py-2.5 text-center">
-            <div id="stat-audits" class="stat-number text-lg sm:text-xl font-bold text-gray-900 dark:text-white tabular-nums" style="font-size:36px" data-countup>--</div>
-            <div class="stat-unit text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5 uppercase tracking-wide">総監査回数</div>
-        </div>
-    </div>
-
-    <!-- ================================================================
-         3.5 Free/Paid Info Banner – thin top-border style
-         ================================================================ -->
-    <div class="mb-6 border-t-2 border-aixis-400/60 dark:border-aixis-500/40 bg-white dark:bg-aixis-800/50 rounded-b-sm px-4 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
-        <p class="text-xs text-gray-500 dark:text-gray-400">
-            総合グレードは無料で閲覧可能です。5軸詳細スコア・分析レポートは有料プランで提供しています。
-        </p>
-        <a href="/contact"
-           class="shrink-0 text-xs font-medium text-aixis-500 dark:text-aixis-400 hover:text-aixis-600 dark:hover:text-aixis-300 transition-colors duration-150">
-            詳細 &rarr;
-        </a>
-    </div>
 
     <!-- ================================================================
          4. Tool Grid
@@ -137,6 +129,26 @@
 
 {% block scripts %}
 <script>
+// Count-up animation utility
+function animateCountUp(elId, target, opts) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    opts = opts || {};
+    var duration = opts.duration || 1200;
+    var decimals = opts.decimals || 0;
+    var start = 0;
+    var startTime = null;
+    function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+    function step(ts) {
+        if (!startTime) startTime = ts;
+        var progress = Math.min((ts - startTime) / duration, 1);
+        var val = start + (target - start) * ease(progress);
+        el.textContent = decimals > 0 ? val.toFixed(decimals) : Math.round(val);
+        if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
 (function() {
     'use strict';
 
@@ -207,7 +219,7 @@
             const cats = await aixisAPI('/tools/categories');
             allCategories = cats;
             renderCategoryPills(cats);
-            document.getElementById('stat-categories').textContent = cats.length;
+            animateCountUp('stat-categories', cats.length);
         } catch (e) {
             console.warn('カテゴリ取得失敗:', e);
         }
@@ -260,7 +272,7 @@
             const tools = data.items || [];
 
             resultCount.textContent = `${totalItems}件のツール`;
-            document.getElementById('stat-tools').textContent = totalItems;
+            animateCountUp('stat-tools', totalItems);
 
             var statsRow = document.getElementById('stats-row');
             if (statsRow && tools.length > 0) {
@@ -531,9 +543,9 @@
             else if (tool.audit_sessions) totalAudits += (Array.isArray(tool.audit_sessions) ? tool.audit_sessions.length : 0);
         });
 
-        const avg = countScore > 0 ? (sumScore / countScore).toFixed(2) : '--';
-        document.getElementById('stat-avg-score').textContent = avg;
-        document.getElementById('stat-audits').textContent = totalAudits || '--';
+        const avg = countScore > 0 ? parseFloat((sumScore / countScore).toFixed(2)) : 0;
+        animateCountUp('stat-avg-score', avg, { decimals: 2 });
+        animateCountUp('stat-audits', totalAudits || 0);
     }
 
     // ── Event listeners ──

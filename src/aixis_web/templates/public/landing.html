@@ -368,25 +368,24 @@
 
 <!-- ===== PLATFORM STATS BAR (inside viewport wrapper) ===== -->
 <section class="relative bg-[#0a0f1a] border-t border-white/5 lg:border-t-0 lg:flex-shrink-0 z-20">
-    <!-- Subtle divider line (desktop only, replaces border) -->
-    <div class="hidden lg:block mx-auto" style="max-width: 600px; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.08) 70%, transparent);"></div>
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+    <div class="hidden lg:block mx-auto" style="max-width: 600px; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06) 30%, rgba(255,255,255,0.06) 70%, transparent);"></div>
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-12 text-center">
             <div>
-                <div id="stat-audited" class="text-2xl sm:text-3xl font-bold text-white font-sans">--</div>
-                <div class="text-xs text-slate-500 mt-1">監査済みツール</div>
+                <div id="stat-audited" class="text-4xl sm:text-5xl font-light text-white tracking-tight font-serif" data-countup="0" data-countup-type="int">--</div>
+                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">監査済みツール</div>
             </div>
             <div>
-                <div id="stat-categories" class="text-2xl sm:text-3xl font-bold text-white font-sans">--</div>
-                <div class="text-xs text-slate-500 mt-1">対応カテゴリ</div>
+                <div id="stat-categories" class="text-4xl sm:text-5xl font-light text-white tracking-tight font-serif" data-countup="0" data-countup-type="int">--</div>
+                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">対応カテゴリ</div>
             </div>
             <div>
-                <div id="stat-updated" class="text-2xl sm:text-3xl font-bold text-white font-sans">--</div>
-                <div class="text-xs text-slate-500 mt-1">最終更新</div>
+                <div id="stat-updated" class="text-4xl sm:text-5xl font-light text-white tracking-tight font-serif" data-countup-type="date">--</div>
+                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">最終更新</div>
             </div>
             <div>
-                <div id="stat-new" class="text-2xl sm:text-3xl font-bold text-white font-sans">--</div>
-                <div class="text-xs text-slate-500 mt-1">今月の新規追加</div>
+                <div id="stat-new" class="text-4xl sm:text-5xl font-light text-white tracking-tight font-serif" data-countup="0" data-countup-type="int">--</div>
+                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">今月の新規追加</div>
             </div>
         </div>
     </div>
@@ -918,6 +917,28 @@
 
 {% block scripts %}
 <script>
+// ===== Count-up animation (shared) =====
+function animateCountUp(elId, target, opts) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    opts = opts || {};
+    var duration = opts.duration || 1200;
+    var decimals = opts.decimals || 0;
+    var start = 0;
+    var startTime = null;
+
+    function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; } // easeInOutQuad
+
+    function step(ts) {
+        if (!startTime) startTime = ts;
+        var progress = Math.min((ts - startTime) / duration, 1);
+        var val = start + (target - start) * ease(progress);
+        el.textContent = decimals > 0 ? val.toFixed(decimals) : Math.round(val);
+        if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
 // ===== Platform Stats =====
 (function() {
     fetch('/api/v1/stats')
@@ -926,15 +947,18 @@
             return resp.json();
         })
         .then(function(data) {
-            var el;
-            el = document.getElementById('stat-audited');
-            if (el) el.textContent = data.audited_tools || '0';
-            el = document.getElementById('stat-categories');
-            if (el) el.textContent = data.categories || '0';
-            el = document.getElementById('stat-updated');
-            if (el) el.textContent = data.last_updated || '—';
-            el = document.getElementById('stat-new');
-            if (el) el.textContent = data.new_this_month || '0';
+            animateCountUp('stat-audited', parseInt(data.audited_tools) || 0);
+            animateCountUp('stat-categories', parseInt(data.categories) || 0);
+            animateCountUp('stat-new', parseInt(data.new_this_month) || 0);
+            // Date: animate by typing effect
+            var updEl = document.getElementById('stat-updated');
+            if (updEl) {
+                var dateStr = data.last_updated || '—';
+                updEl.textContent = '';
+                dateStr.split('').forEach(function(ch, i) {
+                    setTimeout(function() { updEl.textContent += ch; }, 60 * i + 400);
+                });
+            }
         })
         .catch(function() {
             // Stats will show '--' on error, which is fine
