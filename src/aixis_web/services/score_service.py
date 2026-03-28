@@ -7,6 +7,7 @@ import yaml
 
 from ..db.models.score import AxisScoreRecord, ToolPublishedScore, ScoreHistory, ManualChecklistRecord
 from ..db.models.audit import AuditSession
+from ..db.models.tool import Tool
 from ..config import settings
 from aixis_agent.core.enums import OverallGrade, ScoreAxis
 
@@ -178,6 +179,12 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
     if session_obj:
         session_obj.status = "completed"
         session_obj.completed_at = datetime.now(timezone.utc)
+
+    # Mark tool as public so it appears in the public database
+    tool_result = await db.execute(select(Tool).where(Tool.id == tool_id))
+    tool_obj = tool_result.scalar_one_or_none()
+    if tool_obj and not tool_obj.is_public:
+        tool_obj.is_public = True
 
     await db.commit()
     await db.refresh(published)

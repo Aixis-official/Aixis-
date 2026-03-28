@@ -100,6 +100,7 @@ class AuditDetailResponse(AuditResponse):
     published_overall_score: float | None = None
     published_overall_grade: str | None = None
     score_breakdown: dict[str, Any] | None = None  # per-axis auto/manual/final breakdown
+    is_published: bool = False  # whether scores have been published to public DB
 
 
 class AuditListResponse(BaseModel):

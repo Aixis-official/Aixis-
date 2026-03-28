@@ -600,7 +600,9 @@
         if (data.status === 'awaiting_manual') {
             btns += '<a href="/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors shadow-sm font-jp">手動評価を入力</a>';
         }
-        if (data.status === 'completed' || data.status === 'awaiting_manual') {
+        if (data.is_published) {
+            btns += '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 rounded-lg shadow-sm font-jp cursor-default"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>公開済</span>';
+        } else if (data.status === 'completed' || data.status === 'awaiting_manual') {
             btns += '<button id="finalize-btn" onclick="finalizeAudit()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm font-jp"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>公開</button>';
         }
 

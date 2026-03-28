@@ -421,6 +421,7 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
         published_overall_score=live_overall,
         published_overall_grade=live_grade,
         score_breakdown=score_breakdown if score_breakdown else None,
+        is_published=bool(tool and tool.is_public and published),
     )
 
 
@@ -959,24 +960,8 @@ async def finalize_audit(
             detail=f"セッションは {session.status} 状態です。完了済みまたは手動評価待ちのセッションのみファイナライズできます。",
         )
 
-    # Idempotency: if already completed with a published score from this session,
-    # return existing score without creating a new version
-    if session.status == "completed":
-        existing_pub = (await db.execute(
-            select(ToolPublishedScore).where(
-                ToolPublishedScore.tool_id == session.tool_id,
-                ToolPublishedScore.source_session_id == session_id,
-            ).order_by(ToolPublishedScore.version.desc()).limit(1)
-        )).scalar_one_or_none()
-        if existing_pub:
-            return {
-                "message": "監査結果は既に公開済みです",
-                "overall_score": existing_pub.overall_score,
-                "overall_grade": existing_pub.overall_grade,
-                "version": existing_pub.version,
-            }
-
-    # Merge auto + manual scores and publish to ToolPublishedScore
+    # Always re-merge from current auto + manual data to ensure the latest scores
+    # are published. merge_and_publish handles versioning internally.
     from ...services.score_service import merge_and_publish
 
     try:
