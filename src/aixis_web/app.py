@@ -61,7 +61,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             if not is_exempt and not has_bearer:
                 cookie_token = request.cookies.get(_CSRF_COOKIE)
                 header_token = request.headers.get(_CSRF_HEADER)
-                if not cookie_token or not header_token or cookie_token != header_token:
+                if not cookie_token or not header_token or not secrets.compare_digest(cookie_token, header_token):
                     return JSONResponse(
                         status_code=403,
                         content={"detail": "CSRF token missing or invalid"},

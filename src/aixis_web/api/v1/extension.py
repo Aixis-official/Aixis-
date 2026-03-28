@@ -134,7 +134,7 @@ async def _create_session_impl(body, db, user):
             logger.exception("Test case generation failed: %s", e)
             raise HTTPException(500, f"テストケース生成に失敗しました: {type(e).__name__}: {e}")
 
-    if not cases:
+    if body.recording_mode == "protocol" and not cases:
         raise HTTPException(500, "テストケースが0件です。パターンファイルの設定を確認してください。")
 
     # 1. Create session FIRST (test cases have FK to audit_sessions)

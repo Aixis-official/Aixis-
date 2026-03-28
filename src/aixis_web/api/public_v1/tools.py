@@ -189,7 +189,7 @@ async def get_tool_scores(
     """Get published scores for a tool (latest version)."""
     # Find tool
     tool_result = await db.execute(
-        select(Tool).where(Tool.slug == tool_slug, Tool.is_public.is_(True))
+        select(Tool).where(Tool.slug == tool_slug, Tool.is_public.is_(True), Tool.is_active.is_(True))
     )
     tool = tool_result.scalar_one_or_none()
     if not tool:
@@ -234,7 +234,7 @@ async def get_score_history(
 ):
     """Get score history timeline for a tool (paginated)."""
     tool_result = await db.execute(
-        select(Tool).where(Tool.slug == tool_slug, Tool.is_public.is_(True))
+        select(Tool).where(Tool.slug == tool_slug, Tool.is_public.is_(True), Tool.is_active.is_(True))
     )
     tool = tool_result.scalar_one_or_none()
     if not tool:
@@ -313,6 +313,10 @@ async def get_rankings(
         if cat:
             query = query.where(Tool.category_id == cat.id)
 
+    # Count total ranked tools before applying limit
+    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    ranking_total = count_result.scalar() or 0
+
     query = query.order_by(ToolPublishedScore.overall_score.desc()).limit(limit)
 
     result = await db.execute(query)
@@ -334,7 +338,7 @@ async def get_rankings(
             )
         )
 
-    return RankingResponse(items=items, total=len(items))
+    return RankingResponse(items=items, total=ranking_total)
 
 
 @router.get("/compare", response_model=CompareResponse)
@@ -356,38 +360,51 @@ async def compare_tools(
             detail="Maximum 10 tools can be compared at once",
         )
 
+    # Batch query: fetch all matching tools + latest scores in one query
+    latest_scores = (
+        select(
+            ToolPublishedScore.tool_id,
+            func.max(ToolPublishedScore.version).label("max_version"),
+        )
+        .group_by(ToolPublishedScore.tool_id)
+        .subquery()
+    )
+
+    batch_result = await db.execute(
+        select(Tool, ToolPublishedScore)
+        .join(ToolPublishedScore, ToolPublishedScore.tool_id == Tool.id)
+        .join(
+            latest_scores,
+            (ToolPublishedScore.tool_id == latest_scores.c.tool_id)
+            & (ToolPublishedScore.version == latest_scores.c.max_version),
+        )
+        .where(
+            Tool.slug.in_(slugs),
+            Tool.is_public.is_(True),
+            Tool.is_active.is_(True),
+        )
+    )
+    rows = batch_result.all()
+
+    # Preserve original slug order
+    tool_map = {tool.slug: (tool, score) for tool, score in rows}
     result_tools = []
     for slug in slugs:
-        tool_result = await db.execute(
-            select(Tool).where(Tool.slug == slug, Tool.is_public.is_(True))
-        )
-        tool = tool_result.scalar_one_or_none()
-        if not tool:
-            continue
-
-        score_result = await db.execute(
-            select(ToolPublishedScore)
-            .where(ToolPublishedScore.tool_id == tool.id)
-            .order_by(ToolPublishedScore.version.desc())
-            .limit(1)
-        )
-        score = score_result.scalar_one_or_none()
-        if not score:
-            continue
-
-        result_tools.append(
-            CompareToolScore(
-                slug=tool.slug,
-                name=tool.name,
-                name_jp=tool.name_jp,
-                practicality=score.practicality,
-                cost_performance=score.cost_performance,
-                localization=score.localization,
-                safety=score.safety,
-                uniqueness=score.uniqueness,
-                overall_score=score.overall_score,
-                overall_grade=score.overall_grade,
+        if slug in tool_map:
+            tool, score = tool_map[slug]
+            result_tools.append(
+                CompareToolScore(
+                    slug=tool.slug,
+                    name=tool.name,
+                    name_jp=tool.name_jp,
+                    practicality=score.practicality,
+                    cost_performance=score.cost_performance,
+                    localization=score.localization,
+                    safety=score.safety,
+                    uniqueness=score.uniqueness,
+                    overall_score=score.overall_score,
+                    overall_grade=score.overall_grade,
+                )
             )
-        )
 
     return CompareResponse(tools=result_tools)

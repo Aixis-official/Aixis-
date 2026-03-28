@@ -2,7 +2,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...db.base import get_db
@@ -26,9 +26,24 @@ async def get_rankings(
     limit: int = Query(20, ge=1, le=100),
 ):
     """Get category rankings (public)."""
+    # Subquery: latest version per tool to avoid duplicate entries
+    latest_scores = (
+        select(
+            ToolPublishedScore.tool_id,
+            func.max(ToolPublishedScore.version).label("max_version"),
+        )
+        .group_by(ToolPublishedScore.tool_id)
+        .subquery()
+    )
+
     query = (
         select(ToolPublishedScore, Tool)
         .join(Tool, ToolPublishedScore.tool_id == Tool.id)
+        .join(
+            latest_scores,
+            (ToolPublishedScore.tool_id == latest_scores.c.tool_id)
+            & (ToolPublishedScore.version == latest_scores.c.max_version),
+        )
         .where(Tool.is_public.is_(True), Tool.is_active.is_(True))
     )
 

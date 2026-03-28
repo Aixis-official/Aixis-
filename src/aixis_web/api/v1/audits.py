@@ -509,7 +509,7 @@ async def update_audit_status(
 ):
     """Update the status of an audit session (for manual corrections)."""
     result = await db.execute(
-        select(AuditSession).where(AuditSession.id == session_id)
+        select(AuditSession).where(AuditSession.id == session_id, AuditSession.deleted_at.is_(None))
     )
     session = result.scalar_one_or_none()
     if not session:
@@ -562,7 +562,7 @@ async def edit_axis_scores(
     from the 5-axis equal-weight average.
     """
     session = (await db.execute(
-        select(AuditSession).where(AuditSession.id == session_id)
+        select(AuditSession).where(AuditSession.id == session_id, AuditSession.deleted_at.is_(None))
     )).scalar_one_or_none()
     if not session:
         raise HTTPException(404, "セッションが見つかりません")
@@ -668,7 +668,7 @@ async def submit_manual_scores(
     After saving, automatically merges with auto scores and publishes.
     """
     result = await db.execute(
-        select(AuditSession).where(AuditSession.id == session_id)
+        select(AuditSession).where(AuditSession.id == session_id, AuditSession.deleted_at.is_(None))
     )
     session = result.scalar_one_or_none()
     if not session:
@@ -754,7 +754,7 @@ async def rescore_audit(
     """Re-run LLM scoring for an existing session."""
 
     session = (await db.execute(
-        select(AuditSession).where(AuditSession.id == session_id)
+        select(AuditSession).where(AuditSession.id == session_id, AuditSession.deleted_at.is_(None))
     )).scalar_one_or_none()
     if not session:
         raise HTTPException(404, "セッションが見つかりません")
@@ -843,7 +843,7 @@ async def finalize_audit(
 ):
     """Finalize audit: merge auto+manual scores and publish."""
     result = await db.execute(
-        select(AuditSession).where(AuditSession.id == session_id)
+        select(AuditSession).where(AuditSession.id == session_id, AuditSession.deleted_at.is_(None))
     )
     session = result.scalar_one_or_none()
     if not session:
@@ -915,7 +915,7 @@ async def export_audit(
         raise HTTPException(status_code=400, detail="サポートされるフォーマット: csv, json")
 
     # Get session
-    result = await db.execute(select(AuditSession).where(AuditSession.id == session_id))
+    result = await db.execute(select(AuditSession).where(AuditSession.id == session_id, AuditSession.deleted_at.is_(None)))
     session = result.scalar_one_or_none()
     if not session:
         raise HTTPException(status_code=404, detail="セッションが見つかりません")

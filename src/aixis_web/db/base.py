@@ -142,8 +142,8 @@ def _auto_migrate_columns(conn):
                     conn.execute(
                         text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {col_type}{default}')
                     )
-                except Exception:
-                    pass  # Column may already exist or have type incompatibility
+                except Exception as e:
+                    _log.debug("Auto-migrate: skipping column %s.%s: %s", table.name, col.name, e)
 
         # Add missing indexes
         existing_indexes = {idx["name"] for idx in inspector.get_indexes(table.name) if idx["name"]}
@@ -151,5 +151,5 @@ def _auto_migrate_columns(conn):
             if idx.name and idx.name not in existing_indexes:
                 try:
                     idx.create(conn)
-                except Exception:
-                    pass  # Index may already exist under a different name
+                except Exception as e:
+                    _log.debug("Auto-migrate: skipping index %s: %s", idx.name, e)

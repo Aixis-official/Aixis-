@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -206,6 +206,7 @@ async def evaluated_badge_svg(
 @router.get("/evaluated/{tool_slug}/snippet")
 async def evaluated_badge_snippet(
     tool_slug: str,
+    request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     format: str = Query("html", pattern="^(html|markdown)$"),
 ):
@@ -218,8 +219,9 @@ async def evaluated_badge_snippet(
             detail="No published scores found",
         )
 
-    badge_url = f"/api/public/v1/evaluated/{tool_slug}.svg"
-    tool_url = f"/tools/{tool_slug}"
+    base = str(request.base_url).rstrip("/")
+    badge_url = f"{base}/api/public/v1/evaluated/{tool_slug}.svg"
+    tool_url = f"{base}/tools/{tool_slug}"
 
     if format == "markdown":
         snippet = f"[![Aixis Evaluated]({badge_url})]({tool_url})"
