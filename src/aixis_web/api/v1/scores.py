@@ -5,7 +5,7 @@ from typing import Annotated
 
 logger = logging.getLogger(__name__)
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -145,11 +145,17 @@ async def get_score_history(
 async def get_tool_analysis(
     tool_slug: str,
     db: Annotated[AsyncSession, Depends(get_db)],
+    response: Response = None,
 ):
     """Get per-axis analysis data (strengths, risks, details) from the latest audit.
 
     Returns analysis from the most recent completed audit session for public tools.
     """
+    # Prevent browser/CDN caching — always serve fresh calculation
+    if response:
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+
     tool_result = await db.execute(
         select(Tool).where(Tool.slug == tool_slug, Tool.is_public.is_(True))
     )
@@ -212,8 +218,9 @@ async def get_tool_analysis(
             "details": details if isinstance(details, dict) else {},
         })
 
-    # Always calculate reliability from actual audit data
+    # Always calculate reliability from actual audit data (v2: 2026-03-28)
     reliability = {}
+    _reliability_debug = {"version": "2026-03-28-v2"}
     try:
         from ...services.reliability_service import calculate_reliability
         from sqlalchemy import text as sa_text
@@ -240,9 +247,20 @@ async def get_tool_analysis(
             "risks": a.get("risks"),
         } for a in axes]
 
+        _reliability_debug.update({
+            "results_count": len(results_rows),
+            "cases_count": len(cases_rows),
+            "total_planned": total_planned,
+            "total_executed": total_executed,
+            "session_total_planned": session.total_planned,
+            "session_total_executed": session.total_executed,
+            "has_explicit_plan": has_explicit_plan,
+            "axes_count": len(axis_scores_data),
+        })
+
         logger.info(
-            "Reliability calc inputs: session=%s, results=%d, cases=%d, planned=%d, executed=%d, axes=%d",
-            session.id, len(results_rows), len(cases_rows), total_planned, total_executed, len(axis_scores_data),
+            "Reliability calc inputs (v2): session=%s, results=%d, cases=%d, planned=%d, executed=%d, axes=%d, explicit_plan=%s",
+            session.id, len(results_rows), len(cases_rows), total_planned, total_executed, len(axis_scores_data), has_explicit_plan,
         )
 
         reliability = calculate_reliability(
@@ -250,7 +268,9 @@ async def get_tool_analysis(
             total_planned, total_executed,
         )
 
-        logger.info("Reliability calculated: %s", {k: v for k, v in reliability.items() if k != "details"})
+        _reliability_debug["calc_result"] = {k: v for k, v in reliability.items() if k != "details"}
+
+        logger.info("Reliability calculated (v2): %s", _reliability_debug["calc_result"])
 
         # Persist via raw SQL to avoid ORM session conflicts
         try:
@@ -261,10 +281,10 @@ async def get_tool_analysis(
             await db.commit()
         except Exception as persist_err:
             logger.warning("Failed to persist reliability scores: %s", persist_err)
-            # Calculation succeeded even if persistence failed — use the computed values
 
     except Exception as e:
         logger.error("Reliability calculation failed for session %s: %s", session.id, e, exc_info=True)
+        _reliability_debug["error"] = str(e)
         reliability = {}  # Return empty, never stale data
 
     # --- Audit metadata (date, version) ---
@@ -361,4 +381,5 @@ async def get_tool_analysis(
         "reliability": reliability,
         "audit_meta": audit_meta,
         "positioning": positioning,
+        "_debug": _reliability_debug,
     }

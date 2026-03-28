@@ -165,10 +165,17 @@
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">5軸詳細スコア</h2>
             <div class="relative">
                 {% if user %}
-                <!-- Logged-in: interactive radar chart -->
+                <!-- Logged-in: interactive radar chart (staticPlot + custom hover) -->
                 <div>
-                    <div class="max-w-lg mx-auto">
+                    <div class="max-w-lg mx-auto relative">
                         <div id="radar-chart" class="chart-container" style="min-height:420px;"></div>
+                        <!-- Custom hover tooltip (positioned absolutely over chart) -->
+                        <div id="radar-tooltip" class="hidden absolute z-20 pointer-events-none px-3 py-2 rounded-sm text-xs font-jp shadow-sm border border-gray-200 dark:border-aixis-600/40 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 whitespace-nowrap" style="transform:translate(-50%,-120%);">
+                            <span id="radar-tooltip-label" class="font-semibold"></span>
+                            <span id="radar-tooltip-value" class="ml-1.5 tabular-nums"></span>
+                        </div>
+                        <!-- Invisible hover zones over each axis vertex -->
+                        <div id="radar-hover-zones" class="absolute inset-0" style="pointer-events:none;"></div>
                     </div>
                 </div>
                 {% else %}
@@ -526,6 +533,10 @@
 
     function renderRadarChart(scores) {
         const el = document.getElementById('radar-chart');
+        const tooltip = document.getElementById('radar-tooltip');
+        const tooltipLabel = document.getElementById('radar-tooltip-label');
+        const tooltipValue = document.getElementById('radar-tooltip-value');
+        const hoverZones = document.getElementById('radar-hover-zones');
         const values = AXIS_KEYS.map(k => scores[k] || 0);
         const closedValues = [...values, values[0]];
         const closedLabels = [...AXIS_LABELS_ORDERED, AXIS_LABELS_ORDERED[0]];
@@ -547,36 +558,85 @@
                 line: { color: lineColor, width: 2.5 },
                 marker: { size: 9, color: markerColor, symbol: 'circle',
                           line: { color: dark ? '#1e1b4b' : '#ffffff', width: 2 } },
-                hoverinfo: 'text',
-                text: AXIS_LABELS_ORDERED.map((label, i) => label + ': ' + values[i].toFixed(1) + ' / 5.0'),
-                hoverlabel: {
-                    bgcolor: dark ? '#1e293b' : '#ffffff',
-                    bordercolor: dark ? '#475569' : '#e2e8f0',
-                    font: { color: dark ? '#e2e8f0' : '#1e293b', size: 13, family: 'Noto Sans JP, sans-serif' },
-                },
+                hoverinfo: 'skip',
             };
 
             const layout = getRadarLayout({
                 height: 420,
                 margin: { t: 50, b: 50, l: 90, r: 90 },
                 showlegend: false,
+                dragmode: false,
             });
-            // Make axis labels larger
             if (layout.polar && layout.polar.angularaxis) {
                 layout.polar.angularaxis.tickfont = { size: 13, color: dark ? '#cbd5e1' : '#334155' };
             }
 
+            // staticPlot: true — absolutely prevents editing, dragging, all user modification
             Plotly.newPlot(el, [trace], layout, {
                 responsive: true,
                 displayModeBar: false,
-                scrollZoom: false,
-                editable: false,
-                edits: { shapePosition: false, axisTitleText: false, titleText: false },
+                staticPlot: true,
             });
+
+            // Build custom hover zones over each axis vertex
+            setupRadarHoverZones(el, values);
         };
 
         el._renderChart = render;
         render();
+    }
+
+    // Custom hover system: invisible zones over each radar vertex
+    function setupRadarHoverZones(chartEl, values) {
+        const hoverZones = document.getElementById('radar-hover-zones');
+        const tooltip = document.getElementById('radar-tooltip');
+        const tooltipLabel = document.getElementById('radar-tooltip-label');
+        const tooltipValue = document.getElementById('radar-tooltip-value');
+        if (!hoverZones || !tooltip) return;
+
+        hoverZones.innerHTML = '';
+        // Container stays pointer-events:none; only individual zones get pointer-events:auto
+
+        // Calculate polar chart geometry from chart dimensions and Plotly margins
+        const plotW = chartEl.offsetWidth;
+        const plotH = chartEl.offsetHeight;
+        const marginL = 90, marginR = 90, marginT = 50, marginB = 50;
+        const plotAreaW = plotW - marginL - marginR;
+        const plotAreaH = plotH - marginT - marginB;
+        const cx = marginL + plotAreaW / 2;
+        const cy = marginT + plotAreaH / 2;
+        const maxRadius = Math.min(plotAreaW, plotAreaH) / 2 * 0.82;
+
+        // 5 axes starting from top (−90°), clockwise (matches Plotly direction:'clockwise')
+        const numAxes = 5;
+        for (let i = 0; i < numAxes; i++) {
+            const angleDeg = -90 + (360 / numAxes) * i;
+            const angleRad = angleDeg * Math.PI / 180;
+            const r = (values[i] / 5) * maxRadius;
+
+            const px = cx + r * Math.cos(angleRad);
+            const py = cy + r * Math.sin(angleRad);
+
+            const zone = document.createElement('div');
+            zone.className = 'absolute rounded-full';
+            zone.style.cssText = `width:40px;height:40px;left:${px - 20}px;top:${py - 20}px;pointer-events:auto;cursor:pointer;`;
+
+            const axisLabel = AXIS_LABELS_ORDERED[i];
+            const axisValue = values[i].toFixed(1);
+
+            zone.addEventListener('mouseenter', () => {
+                tooltip.classList.remove('hidden');
+                tooltipLabel.textContent = axisLabel;
+                tooltipValue.textContent = axisValue + ' / 5.0';
+                tooltip.style.left = px + 'px';
+                tooltip.style.top = (py - 8) + 'px';
+            });
+            zone.addEventListener('mouseleave', () => {
+                tooltip.classList.add('hidden');
+            });
+
+            hoverZones.appendChild(zone);
+        }
     }
 
     // ⑤ Category Positioning
@@ -800,6 +860,11 @@
         const section = document.getElementById('reliability-section');
         if (!section) return;
         if (!analysisData) return;
+
+        // Debug: log API version and reliability debug info to console
+        const _debug = analysisData._debug || {};
+        console.log('[Aixis] Analysis API debug:', JSON.stringify(_debug));
+        console.log('[Aixis] Reliability raw:', JSON.stringify(analysisData.reliability));
 
         const reliability = analysisData.reliability || {};
 

@@ -134,21 +134,25 @@ def _consistency_details(results: list) -> dict:
 def _calc_comprehensiveness(results: list, cases: list, total_planned: int, total_executed: int) -> float:
     """Score 0-100. Full test plan completion + diverse category coverage.
 
-    Uses a conservative approach: when total_planned equals total_executed
-    (i.e., no explicit test plan with headroom), completion is capped at 80%
-    because a truly comprehensive audit should have more planned tests than
-    what was actually executed (accounting for edge cases, retries, etc.).
+    Conservative scoring approach:
+    - When no explicit test plan was set (inferred from data), completion is
+      capped at 70% because a truly comprehensive audit requires upfront planning.
+    - Category coverage penalizes narrow testing.
+    - Depth requires sufficient tests per category (target: 5+ per category).
     """
     if total_planned == 0:
         return 0.0
 
-    # Completion ratio (0-100)
-    # When planned == executed exactly, it likely means the plan was derived
-    # from results (fallback), not explicitly set. Cap at 80 in that case.
-    if total_planned == total_executed:
-        completion = 80.0
+    # Detect whether the plan was explicitly set vs. derived from results
+    # If planned ≈ executed (within 10%), it's likely auto-derived
+    ratio = total_executed / total_planned if total_planned > 0 else 0
+    is_likely_auto_derived = abs(ratio - 1.0) < 0.15  # within 15%
+
+    if is_likely_auto_derived:
+        # No explicit plan → cap completion at 70%
+        completion = 70.0
     else:
-        completion = min(100, (total_executed / total_planned) * 100)
+        completion = min(95, (total_executed / total_planned) * 100)
 
     # Category coverage: how many distinct categories were tested?
     planned_cats = set()
@@ -164,19 +168,20 @@ def _calc_comprehensiveness(results: list, cases: list, total_planned: int, tota
     if planned_cats:
         cat_coverage = len(executed_cats) / len(planned_cats) * 100
     else:
-        cat_coverage = 100 if executed_cats else 0
+        # No planned categories = less reliable
+        cat_coverage = min(80, len(executed_cats) * 20)  # Up to 80 if 4+ categories
 
-    # Minimum tests per category: target is 5+ per category for excellence
+    # Minimum tests per category: target is 8+ per category for excellence
     tests_per_cat = {}
     for r in results:
         cat = r.category.value if hasattr(r.category, "value") else str(r.category)
         tests_per_cat[cat] = tests_per_cat.get(cat, 0) + 1
 
     if tests_per_cat:
-        min_tests = min(tests_per_cat.values())
         avg_tests = sum(tests_per_cat.values()) / len(tests_per_cat)
-        # Use average tests per category; need 5+ for full depth score
-        depth_score = min(100, avg_tests / 5 * 100)
+        min_tests = min(tests_per_cat.values())
+        # Penalize if any category has very few tests
+        depth_score = min(100, avg_tests / 8 * 80 + min_tests / 3 * 20)
     else:
         depth_score = 0
 
