@@ -1151,12 +1151,16 @@
   function closePanel() {
     if (panelHost) {
       panelHost.style.display = "none";
+      // Persist closed state so panel stays hidden across page reloads
+      chrome.storage.local.set({ panelClosed: true });
     }
   }
 
   function showPanel() {
     if (panelHost) {
       panelHost.style.display = "";
+      // Clear closed state
+      chrome.storage.local.set({ panelClosed: false });
     }
   }
 
@@ -2049,6 +2053,14 @@
 
   async function init() {
     createPanel();
+
+    // Check if panel was explicitly closed by user — keep it hidden
+    try {
+      const stored = await chrome.storage.local.get("panelClosed");
+      if (stored.panelClosed === true) {
+        panelHost.style.display = "none";
+      }
+    } catch {}
 
     try {
       const bgState = await sendBg({ type: "GET_STATE" });
