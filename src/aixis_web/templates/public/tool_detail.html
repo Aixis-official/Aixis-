@@ -165,47 +165,17 @@
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">5軸詳細スコア</h2>
             <div class="relative">
                 {% if user %}
-                <!-- Logged-in: show full dashboard -->
+                <!-- Logged-in: interactive radar chart -->
                 <div>
-                    <div class="flex flex-col lg:flex-row gap-6 items-start">
-                        <div class="w-full lg:w-1/2">
-                            <div id="radar-chart" class="chart-container" style="min-height:360px;"></div>
-                        </div>
-                        <div class="w-full lg:w-1/2">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th class="font-jp">評価軸</th>
-                                        <th class="font-jp">スコア</th>
-                                        <th class="font-jp" style="width:40%;">レベル</th>
-                                        <th class="font-jp">評価</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="score-table-body"></tbody>
-                            </table>
-                        </div>
+                    <div class="max-w-lg mx-auto">
+                        <div id="radar-chart" class="chart-container" style="min-height:420px;"></div>
                     </div>
                 </div>
                 {% else %}
                 <!-- Not logged in: blurred with paywall -->
                 <div style="filter: blur(8px); pointer-events: none; user-select: none;">
-                    <div class="flex flex-col lg:flex-row gap-6 items-start">
-                        <div class="w-full lg:w-1/2">
-                            <div id="radar-chart" class="chart-container" style="min-height:360px;"></div>
-                        </div>
-                        <div class="w-full lg:w-1/2">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th class="font-jp">評価軸</th>
-                                        <th class="font-jp">スコア</th>
-                                        <th class="font-jp" style="width:40%;">レベル</th>
-                                        <th class="font-jp">評価</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="score-table-body"></tbody>
-                            </table>
-                        </div>
+                    <div class="max-w-lg mx-auto">
+                        <div id="radar-chart" class="chart-container" style="min-height:420px;"></div>
                     </div>
                 </div>
                 <div class="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm rounded-sm z-10">
@@ -502,7 +472,7 @@
             const badge = document.getElementById('hero-grade-badge');
             badge.textContent = scores.overall_grade || gradeInfo.grade;
             badge.className = 'grade-badge grade-badge-lg grade-' + (scores.overall_grade || gradeInfo.grade);
-            document.getElementById('hero-score-value').textContent = scores.overall_score.toFixed(2) + ' / 5.0';
+            document.getElementById('hero-score-value').textContent = scores.overall_score.toFixed(1) + ' / 5.0';
         } else {
             gradeArea.innerHTML = '<div class="text-white/50 text-lg font-jp">未評価</div>';
         }
@@ -533,68 +503,16 @@
         }
     }
 
-    // ① Executive Summary — qualitative, no numbers
-    function renderExecutiveSummary(tool, scores, analysisData, govData, industries) {
+    // ① Executive Summary — manually written by analyst
+    function renderExecutiveSummary(tool) {
         const section = document.getElementById('executive-summary');
-        if (!section || !scores) return;
+        if (!section) return;
 
-        const toolName = tool.name || tool.name_jp || slug;
-        const categoryName = tool.category_name_jp || 'AIツール';
-        const axes = analysisData && analysisData.axes ? analysisData.axes : [];
+        const summary = tool.executive_summary_jp;
+        if (!summary || !summary.trim()) return;
 
-        // Collect real strengths & risks text from analysis
-        const allStrengths = [];
-        const allRisks = [];
-        axes.forEach(a => {
-            (a.strengths || []).forEach(s => {
-                const txt = typeof s === 'string' ? s : (s.text || s.description || '');
-                if (txt) allStrengths.push(txt);
-            });
-            (a.risks || []).forEach(r => {
-                const txt = typeof r === 'string' ? r : (r.text || r.description || '');
-                if (txt) allRisks.push(txt);
-            });
-        });
-
-        let parts = [];
-
-        // Line 1: What is this tool (qualitative description, no scores)
-        const desc = tool.description_jp || tool.description || '';
-        if (desc && desc.length > 10) {
-            // Use the tool's own description as the opening
-            parts.push(desc.length > 120 ? desc.substring(0, 120).replace(/[。、]$/, '') + '。' : desc);
-        } else {
-            parts.push((tool.vendor ? tool.vendor + 'が提供する' : '') + categoryName + '。');
-        }
-
-        // Line 2: Key strength — from actual analysis data
-        if (allStrengths.length > 0) {
-            const topStrength = allStrengths[0].length > 80
-                ? allStrengths[0].substring(0, 80).replace(/[。、]$/, '')
-                : allStrengths[0].replace(/。$/, '');
-            parts.push('特に' + topStrength + 'が評価されている。');
-        }
-
-        // Line 3: Key concern — from actual analysis data
-        if (allRisks.length > 0) {
-            const topRisk = allRisks[0].length > 80
-                ? allRisks[0].substring(0, 80).replace(/[。、]$/, '')
-                : allRisks[0].replace(/。$/, '');
-            parts.push('一方、' + topRisk + 'には留意が必要。');
-        }
-
-        // Line 4: Industry fit (if available)
-        if (industries && industries.length > 0) {
-            const topIndustries = industries.slice(0, 3).map(m => m.industry ? m.industry.name_jp : '').filter(Boolean);
-            if (topIndustries.length > 0) {
-                parts.push(topIndustries.join('・') + '分野での活用に向く。');
-            }
-        }
-
-        if (parts.length > 0) {
-            document.getElementById('executive-summary-text').textContent = parts.join(' ');
-            section.classList.remove('hidden');
-        }
+        document.getElementById('executive-summary-text').textContent = summary;
+        section.classList.remove('hidden');
     }
 
     function renderScoreDashboard(scores) {
@@ -603,21 +521,6 @@
             section.classList.add('hidden');
             return;
         }
-
-        // Score table
-        const tbody = document.getElementById('score-table-body');
-        tbody.innerHTML = AXIS_KEYS.map(key => {
-            const val = scores[key] != null ? scores[key] : 0;
-            const label = AXIS_LABELS[key];
-            return `<tr>
-                <td class="font-semibold font-jp">${label}</td>
-                <td class="font-bold text-lg" style="min-width:60px;">${val.toFixed(2)}</td>
-                <td>${createScoreBar(val)}</td>
-                <td>${evaluationTag(val)}</td>
-            </tr>`;
-        }).join('');
-
-        // Radar chart
         renderRadarChart(scores);
     }
 
@@ -630,7 +533,7 @@
         const render = () => {
             const dark = isDarkMode();
             const lineColor = dark ? '#818cf8' : '#4f46e5';
-            const fillColor = dark ? 'rgba(129,140,248,0.15)' : 'rgba(79,70,229,0.12)';
+            const fillColor = dark ? 'rgba(129,140,248,0.18)' : 'rgba(79,70,229,0.10)';
             const markerColor = dark ? '#a5b4fc' : '#6366f1';
 
             const trace = {
@@ -640,20 +543,30 @@
                 fill: 'toself',
                 fillcolor: fillColor,
                 line: { color: lineColor, width: 2.5 },
-                marker: { size: 7, color: markerColor },
-                hovertemplate: '%{theta}: %{r:.2f}<extra></extra>'
+                marker: { size: 9, color: markerColor, symbol: 'circle',
+                          line: { color: dark ? '#1e1b4b' : '#ffffff', width: 2 } },
+                hovertemplate: '<b>%{theta}</b><br>スコア: %{r:.1f} / 5.0<extra></extra>',
+                hoverlabel: {
+                    bgcolor: dark ? '#1e293b' : '#ffffff',
+                    bordercolor: dark ? '#475569' : '#e2e8f0',
+                    font: { color: dark ? '#e2e8f0' : '#1e293b', size: 13 },
+                },
             };
 
             const layout = getRadarLayout({
-                height: 360,
-                margin: { t: 40, b: 40, l: 80, r: 80 },
+                height: 420,
+                margin: { t: 50, b: 50, l: 90, r: 90 },
                 showlegend: false,
             });
+            // Make axis labels larger
+            if (layout.polar && layout.polar.angularaxis) {
+                layout.polar.angularaxis.tickfont = { size: 13, color: dark ? '#cbd5e1' : '#334155' };
+            }
 
             Plotly.newPlot(el, [trace], layout, {
                 responsive: true,
                 displayModeBar: false,
-                staticPlot: true
+                staticPlot: false,
             });
         };
 
@@ -864,7 +777,7 @@
                     <span class="grade-badge grade-${gradeInfo.grade}" style="width:26px;height:26px;font-size:0.75rem;">${gradeInfo.grade}</span>
                     <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">${label}</span>
                 </div>
-                <span class="text-sm font-bold tabular-nums text-gray-700 dark:text-gray-300">${score.toFixed(2)}</span>
+                <span class="text-sm font-bold tabular-nums text-gray-700 dark:text-gray-300">${score.toFixed(1)}</span>
             </div>
             <div class="score-bar mb-3" style="height:6px;"><div class="score-bar-fill ${scoreLevel(score)}" style="width:${pct}%"></div></div>
             <div class="flex-1 space-y-1">
@@ -1246,7 +1159,7 @@
             gb.className = 'grade-badge grade-' + govData.governance_grade;
         }
         if (govData.governance_score != null) {
-            document.getElementById('gov-score-value').textContent = govData.governance_score.toFixed(2) + ' / 5.0';
+            document.getElementById('gov-score-value').textContent = govData.governance_score.toFixed(1) + ' / 5.0';
         }
 
         // Compliance status items
@@ -1337,7 +1250,7 @@
             // Render all sections in new order
             renderHero(tool, scores);
             renderAuditMeta(analysisData);
-            renderExecutiveSummary(tool, scores, analysisData, govData, industries);
+            renderExecutiveSummary(tool);
             renderToolInfo(tool);
             renderPrerequisites(tool, govData);
             renderIndustryFit(industries, useCaseTags);

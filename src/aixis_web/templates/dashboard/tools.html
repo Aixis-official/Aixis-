@@ -127,6 +127,12 @@
                             </label>
                         </div>
 
+                        <!-- Executive Summary -->
+                        <div>
+                            <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">エグゼクティブサマリー</label>
+                            <textarea id="f-executive-summary" rows="3" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="企業担当者向けの概要。数値を使わず、ツールの本質・強み・注意点を3-4行で。"></textarea>
+                        </div>
+
                         <!-- SEO Content Fields (collapsible) -->
                         <details class="border border-gray-100 dark:border-gray-700/50 rounded-lg">
                             <summary class="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 font-jp cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg">SEO・記事コンテンツ項目</summary>
@@ -355,6 +361,7 @@
         var targetCompanyJp = document.getElementById('f-target-company-jp').value.trim();
         var targetSizes = document.getElementById('f-target-sizes').value.trim();
         var pricingDetailJp = document.getElementById('f-pricing-detail-jp').value.trim();
+        var executiveSummary = document.getElementById('f-executive-summary').value.trim();
         var seoTitle = document.getElementById('f-seo-title').value.trim();
         var seoDesc = document.getElementById('f-seo-desc').value.trim();
         var seoKw = document.getElementById('f-seo-keywords').value.trim();
@@ -366,6 +373,7 @@
         if (vendor) body.vendor = vendor;
         if (url) body.url = url;
         if (descJp) body.description_jp = descJp;
+        if (executiveSummary) body.executive_summary_jp = executiveSummary;
         // SEO fields
         if (prosText) body.pros_jp = prosText.split('\n').map(function(s){return s.trim();}).filter(Boolean);
         if (consText) body.cons_jp = consText.split('\n').map(function(s){return s.trim();}).filter(Boolean);
@@ -419,6 +427,7 @@
         // SEO fields
         document.getElementById('f-pros-jp').value = (tool.pros_jp || []).join('\n');
         document.getElementById('f-cons-jp').value = (tool.cons_jp || []).join('\n');
+        document.getElementById('f-executive-summary').value = tool.executive_summary_jp || '';
         document.getElementById('f-risks-jp').value = tool.risks_jp || '';
         document.getElementById('f-target-company-jp').value = tool.target_company_profile_jp || '';
         document.getElementById('f-target-sizes').value = (tool.target_company_sizes || []).join(',');
@@ -470,6 +479,7 @@
         // Clear SEO fields
         document.getElementById('f-pros-jp').value = '';
         document.getElementById('f-cons-jp').value = '';
+        document.getElementById('f-executive-summary').value = '';
         document.getElementById('f-risks-jp').value = '';
         document.getElementById('f-target-company-jp').value = '';
         document.getElementById('f-target-sizes').value = '';

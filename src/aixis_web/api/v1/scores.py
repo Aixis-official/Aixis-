@@ -227,8 +227,11 @@ async def get_tool_analysis(
         )
         cases_rows = cases_q.scalars().all()
 
-        total_planned = session.total_planned or len(cases_rows)
-        total_executed = session.total_executed or len(results_rows)
+        # Use explicit session values if set; otherwise derive from data
+        # Apply penalty flag when using fallback values (metadata was not explicitly set)
+        has_explicit_plan = bool(session.total_planned and session.total_planned > 0)
+        total_planned = session.total_planned if has_explicit_plan else len(cases_rows)
+        total_executed = session.total_executed if (session.total_executed and session.total_executed > 0) else len(results_rows)
 
         axis_scores_data = [{
             "axis": a["axis"], "score": a["score"],

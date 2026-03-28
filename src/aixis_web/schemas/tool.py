@@ -42,6 +42,7 @@ class ToolCreate(BaseModel):
     cons_jp: list[str] | None = None
     cons_en: list[str] | None = None
     alternatives_slugs: list[str] | None = None
+    executive_summary_jp: str | None = None
     seo_title_jp: str | None = None
     seo_description_jp: str | None = None
     seo_keywords_jp: list[str] | None = None
@@ -85,6 +86,7 @@ class ToolUpdate(BaseModel):
     cons_jp: list[str] | None = None
     cons_en: list[str] | None = None
     alternatives_slugs: list[str] | None = None
+    executive_summary_jp: str | None = None
     seo_title_jp: str | None = None
     seo_description_jp: str | None = None
     seo_keywords_jp: list[str] | None = None
@@ -159,6 +161,7 @@ class ToolResponse(BaseModel):
     cons_jp: list[str] | None = None
     cons_en: list[str] | None = None
     alternatives_slugs: list[str] | None = None
+    executive_summary_jp: str | None = None
     seo_title_jp: str | None = None
     seo_description_jp: str | None = None
     seo_keywords_jp: list[str] | None = None

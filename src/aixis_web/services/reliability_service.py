@@ -132,12 +132,23 @@ def _consistency_details(results: list) -> dict:
 # ---------------------------------------------------------------------------
 
 def _calc_comprehensiveness(results: list, cases: list, total_planned: int, total_executed: int) -> float:
-    """Score 0-100. Full test plan completion + diverse category coverage."""
+    """Score 0-100. Full test plan completion + diverse category coverage.
+
+    Uses a conservative approach: when total_planned equals total_executed
+    (i.e., no explicit test plan with headroom), completion is capped at 80%
+    because a truly comprehensive audit should have more planned tests than
+    what was actually executed (accounting for edge cases, retries, etc.).
+    """
     if total_planned == 0:
         return 0.0
 
     # Completion ratio (0-100)
-    completion = min(100, (total_executed / total_planned) * 100)
+    # When planned == executed exactly, it likely means the plan was derived
+    # from results (fallback), not explicitly set. Cap at 80 in that case.
+    if total_planned == total_executed:
+        completion = 80.0
+    else:
+        completion = min(100, (total_executed / total_planned) * 100)
 
     # Category coverage: how many distinct categories were tested?
     planned_cats = set()
@@ -155,7 +166,7 @@ def _calc_comprehensiveness(results: list, cases: list, total_planned: int, tota
     else:
         cat_coverage = 100 if executed_cats else 0
 
-    # Minimum tests per category: at least 2 per category = excellent
+    # Minimum tests per category: target is 5+ per category for excellence
     tests_per_cat = {}
     for r in results:
         cat = r.category.value if hasattr(r.category, "value") else str(r.category)
@@ -163,7 +174,9 @@ def _calc_comprehensiveness(results: list, cases: list, total_planned: int, tota
 
     if tests_per_cat:
         min_tests = min(tests_per_cat.values())
-        depth_score = min(100, min_tests / 3 * 100)
+        avg_tests = sum(tests_per_cat.values()) / len(tests_per_cat)
+        # Use average tests per category; need 5+ for full depth score
+        depth_score = min(100, avg_tests / 5 * 100)
     else:
         depth_score = 0
 

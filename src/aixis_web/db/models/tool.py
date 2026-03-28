@@ -87,6 +87,9 @@ class Tool(Base):
     # 競合ツール (Alternatives)
     alternatives_slugs = Column(JSON)  # list of tool slugs
 
+    # Executive summary (manually written by analyst)
+    executive_summary_jp = Column(Text)
+
     # SEO metadata
     seo_title_jp = Column(String(200))
     seo_description_jp = Column(String(500))
