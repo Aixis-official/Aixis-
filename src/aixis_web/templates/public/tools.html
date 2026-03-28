@@ -340,22 +340,26 @@
                     </div>`;
             }).join('');
 
+            // Logo: use logo_url if available, otherwise initial letter
+            const logoHtml = tool.logo_url
+                ? `<img src="${tool.logo_url}" alt="${tool.name_jp || tool.name}" class="w-10 h-10 rounded-lg object-contain bg-white border border-gray-100 dark:border-aixis-600/30 shrink-0" onerror="this.outerHTML='<div class=\\'w-10 h-10 rounded-lg ${color} flex items-center justify-center text-white font-semibold text-sm shrink-0\\'>${initial}</div>'">`
+                : `<div class="w-10 h-10 rounded-lg ${color} flex items-center justify-center text-white font-semibold text-sm shrink-0">${initial}</div>`;
+
             return `
                 <a href="/tools/${tool.slug}"
-                   class="group relative block bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:border-gray-300 dark:hover:border-aixis-500/50 fade-in hover-lift card-hover-primary"
+                   class="tool-card group relative block bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-4 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:border-gray-300 dark:hover:border-aixis-500/50 fade-in hover-lift card-hover-primary"
+                   data-grade="${overallGrade || ''}"
                    style="animation-delay:${idx * 30}ms">
 
-                    <!-- Grade badge (top-right, compact) -->
+                    <!-- Grade badge (top-right) -->
                     ${gradeObj ? `
                     <div class="absolute top-3 right-3">
-                        <span class="inline-flex items-center justify-center w-7 h-7 rounded text-xs font-bold ${gradeBgClass(gradeObj.grade)} text-white">${gradeObj.grade}</span>
+                        <span class="grade-badge grade-${gradeObj.grade}">${gradeObj.grade}</span>
                     </div>` : ''}
 
-                    <!-- Header: logo square + name + vendor -->
-                    <div class="flex items-center gap-2.5 mb-3 pr-10">
-                        <div class="w-9 h-9 rounded-md ${color} flex items-center justify-center text-white font-semibold text-sm shrink-0">
-                            ${initial}
-                        </div>
+                    <!-- Header: logo + name + vendor -->
+                    <div class="flex items-center gap-3 mb-3 pr-10">
+                        ${logoHtml}
                         <div class="min-w-0">
                             <div class="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-aixis-500 dark:group-hover:text-aixis-300 transition-colors duration-150">
                                 ${tool.name_jp || tool.name}
@@ -372,12 +376,12 @@
 
                     <!-- 5 axis score bars -->
                     ${isLoggedIn ? `
-                    <div class="space-y-1 mt-1">
+                    <div class="space-y-1.5 mt-1">
                         ${scoreBars}
                     </div>
                     ` : `
                     <div class="relative">
-                        <div class="space-y-1 mt-1" style="filter: blur(6px); pointer-events: none;">
+                        <div class="space-y-1.5 mt-1" style="filter: blur(6px); pointer-events: none;">
                             ${scoreBars}
                         </div>
                         <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;" class="bg-white/80 dark:bg-gray-900/80 rounded">
@@ -385,17 +389,17 @@
                                 <svg class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                                 </svg>
-                                <span class="text-[10px] text-gray-400 dark:text-gray-500">詳細スコアは有料プラン</span>
+                                <span class="text-[10px] text-gray-400 dark:text-gray-500 font-jp">ログインして詳細を見る</span>
                             </div>
                         </div>
                     </div>
                     `}
 
                     <!-- Overall score -->
-                    <div class="mt-2.5 pt-2.5 border-t border-gray-100 dark:border-aixis-600/30 flex items-center justify-between">
-                        <span class="text-[10px] text-gray-400 dark:text-gray-500">総合スコア</span>
-                        <span class="text-xs font-bold tabular-nums ${overallScore != null ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}">
-                            ${overallScore != null ? overallScore.toFixed(2) : '---'} <span class="text-[10px] font-normal text-gray-400 dark:text-gray-500">/ 5.00</span>
+                    <div class="mt-3 pt-3 border-t border-gray-100 dark:border-aixis-600/30 flex items-center justify-between">
+                        <span class="text-[10px] text-gray-400 dark:text-gray-500 font-jp">総合スコア</span>
+                        <span class="text-sm font-bold tabular-nums ${overallScore != null ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}">
+                            ${overallScore != null ? overallScore.toFixed(1) : '---'} <span class="text-[10px] font-normal text-gray-400 dark:text-gray-500">/ 5.0</span>
                         </span>
                     </div>
                 </a>`;

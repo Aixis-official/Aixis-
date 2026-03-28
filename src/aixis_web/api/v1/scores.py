@@ -6,7 +6,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...db.base import get_db
-from ...db.models.score import ScoreHistory, ToolPublishedScore
+from ...db.models.audit import AuditSession
+from ...db.models.score import AxisScoreRecord, ScoreHistory, ToolPublishedScore
 from ...db.models.tool import Tool, ToolCategory
 from ...schemas.score import (
     RankingEntry,
@@ -133,3 +134,70 @@ async def get_score_history(
     items = history_result.scalars().all()
 
     return ScoreHistoryResponse(tool_id=tool.id, items=items)
+
+
+@router.get("/{tool_slug}/analysis")
+async def get_tool_analysis(
+    tool_slug: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Get per-axis analysis data (strengths, risks, details) from the latest audit.
+
+    Returns analysis from the most recent completed audit session for public tools.
+    """
+    tool_result = await db.execute(
+        select(Tool).where(Tool.slug == tool_slug, Tool.is_public.is_(True))
+    )
+    tool = tool_result.scalar_one_or_none()
+    if not tool:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="ツールが見つかりません"
+        )
+
+    # Find the latest completed audit session for this tool
+    session_result = await db.execute(
+        select(AuditSession)
+        .where(
+            AuditSession.tool_id == tool.id,
+            AuditSession.status == "completed",
+            AuditSession.deleted_at.is_(None),
+        )
+        .order_by(AuditSession.completed_at.desc())
+        .limit(1)
+    )
+    session = session_result.scalar_one_or_none()
+    if not session:
+        return {"tool_id": tool.id, "axes": []}
+
+    # Get per-axis score records with analysis data
+    axis_result = await db.execute(
+        select(AxisScoreRecord).where(AxisScoreRecord.session_id == session.id)
+    )
+    axes = []
+    for record in axis_result.scalars():
+        strengths = record.strengths or []
+        risks = record.risks or []
+        if isinstance(strengths, str):
+            import json
+            try:
+                strengths = json.loads(strengths)
+            except Exception:
+                strengths = []
+        if isinstance(risks, str):
+            import json
+            try:
+                risks = json.loads(risks)
+            except Exception:
+                risks = []
+
+        axes.append({
+            "axis": record.axis,
+            "axis_name_jp": record.axis_name_jp,
+            "score": record.score,
+            "confidence": record.confidence,
+            "source": record.source,
+            "strengths": strengths if isinstance(strengths, list) else [],
+            "risks": risks if isinstance(risks, list) else [],
+        })
+
+    return {"tool_id": tool.id, "session_id": session.id, "axes": axes}

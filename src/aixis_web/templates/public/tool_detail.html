@@ -156,6 +156,14 @@
             </div>
         </section>
 
+        <!-- 4b. Per-Axis Analysis (from audit data) -->
+        {% if user %}
+        <section id="axis-analysis-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-8 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">軸別詳細分析</h2>
+            <div id="axis-analysis-content" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </section>
+        {% endif %}
+
         <!-- 5. Tool Information Table -->
         <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-8">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">ツール情報</h2>
@@ -458,56 +466,94 @@
         render();
     }
 
-    function renderStrengthsWeaknesses(scores) {
+    function renderStrengthsWeaknesses(scores, analysisData) {
         const section = document.getElementById('strengths-weaknesses');
         if (!scores) {
             section.classList.add('hidden');
             return;
         }
 
-        const strengths = [];
-        const weaknesses = [];
-
-        AXIS_KEYS.forEach(key => {
-            const val = scores[key] != null ? scores[key] : 0;
-            const label = AXIS_LABELS[key];
-            if (val >= 4.0) {
-                strengths.push(label);
-            }
-            if (val < 2.5) {
-                weaknesses.push(label);
-            }
-        });
-
         const strengthsList = document.getElementById('strengths-list');
         const weaknessesList = document.getElementById('weaknesses-list');
 
-        // Show brief summary text only (no individual axis scores)
+        // If we have real analysis data, show per-axis strengths and risks
+        if (analysisData && analysisData.axes && analysisData.axes.length > 0) {
+            const allStrengths = [];
+            const allRisks = [];
+            analysisData.axes.forEach(ax => {
+                const label = AXIS_LABELS[ax.axis] || ax.axis_name_jp || ax.axis;
+                if (ax.strengths && ax.strengths.length > 0) {
+                    ax.strengths.forEach(s => {
+                        const text = typeof s === 'string' ? s : (s.text || s.description || JSON.stringify(s));
+                        allStrengths.push({ label: label, text: text });
+                    });
+                }
+                if (ax.risks && ax.risks.length > 0) {
+                    ax.risks.forEach(r => {
+                        const text = typeof r === 'string' ? r : (r.text || r.description || JSON.stringify(r));
+                        allRisks.push({ label: label, text: text });
+                    });
+                }
+            });
+
+            if (allStrengths.length > 0) {
+                strengthsList.innerHTML = allStrengths.slice(0, 5).map(s =>
+                    `<li class="flex items-start gap-2 text-gray-700 dark:text-gray-300 text-xs leading-relaxed">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-green-500 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        <span>${s.text}</span>
+                    </li>`
+                ).join('');
+            } else {
+                strengthsList.innerHTML = '<li class="text-xs text-gray-400 dark:text-gray-500 font-jp">バランスの取れた評価です</li>';
+            }
+
+            if (allRisks.length > 0) {
+                weaknessesList.innerHTML = allRisks.slice(0, 5).map(r =>
+                    `<li class="flex items-start gap-2 text-gray-700 dark:text-gray-300 text-xs leading-relaxed">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+                        </svg>
+                        <span>${r.text}</span>
+                    </li>`
+                ).join('');
+            } else {
+                weaknessesList.innerHTML = '<li class="text-xs text-gray-400 dark:text-gray-500 font-jp">特に注意が必要な点はありません</li>';
+            }
+            return;
+        }
+
+        // Fallback: generate from scores only
+        const strengths = [];
+        const weaknesses = [];
+        AXIS_KEYS.forEach(key => {
+            const val = scores[key] != null ? scores[key] : 0;
+            const label = AXIS_LABELS[key];
+            if (val >= 4.0) strengths.push(label);
+            if (val < 2.5) weaknesses.push(label);
+        });
+
         if (strengths.length > 0) {
-            const summary = strengths.join('と') + 'に優れています';
             strengthsList.innerHTML = `<li class="flex items-start gap-2 text-gray-700 dark:text-gray-300 text-xs leading-relaxed">
                     <svg class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-green-500 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
-                    <span>${summary}</span>
+                    <span>${strengths.join('と')}に優れています</span>
                 </li>`;
         } else {
-            strengthsList.innerHTML = '<li class="text-xs text-gray-400 dark:text-gray-500">特に突出した強みはありません</li>';
+            strengthsList.innerHTML = '<li class="text-xs text-gray-400 dark:text-gray-500 font-jp">バランスの取れた評価です</li>';
         }
 
         if (weaknesses.length > 0) {
-            const summary = weaknesses.join('と') + 'に改善の余地があります';
             weaknessesList.innerHTML = `<li class="flex items-start gap-2 text-gray-700 dark:text-gray-300 text-xs leading-relaxed">
                     <svg class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
                     </svg>
-                    <span>${summary}</span>
+                    <span>${weaknesses.join('と')}に改善の余地があります</span>
                 </li>`;
-        } else if (strengths.length === 0) {
-            weaknessesList.innerHTML = '<li class="text-xs text-gray-400 dark:text-gray-500">バランスの取れた評価です</li>';
-            strengthsList.innerHTML = '<li class="text-xs text-gray-400 dark:text-gray-500">バランスの取れた評価です</li>';
         } else {
-            weaknessesList.innerHTML = '<li class="text-xs text-gray-400 dark:text-gray-500">特に注意が必要な点はありません</li>';
+            weaknessesList.innerHTML = '<li class="text-xs text-gray-400 dark:text-gray-500 font-jp">特に注意が必要な点はありません</li>';
         }
     }
 
@@ -676,6 +722,52 @@
         }
     }
 
+    function renderAxisAnalysis(analysisData) {
+        const section = document.getElementById('axis-analysis-section');
+        if (!section) return;
+        if (!analysisData || !analysisData.axes || analysisData.axes.length === 0) {
+            section.classList.add('hidden');
+            return;
+        }
+
+        const container = document.getElementById('axis-analysis-content');
+        container.innerHTML = analysisData.axes.map(ax => {
+            const label = AXIS_LABELS[ax.axis] || ax.axis_name_jp || ax.axis;
+            const gradeInfo = getGrade(ax.score);
+            const strengths = (ax.strengths || []).map(s => {
+                const text = typeof s === 'string' ? s : (s.text || s.description || '');
+                return text ? `<li class="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                    <svg class="w-3 h-3 flex-shrink-0 mt-0.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    <span>${text}</span></li>` : '';
+            }).filter(Boolean).join('');
+            const risks = (ax.risks || []).map(r => {
+                const text = typeof r === 'string' ? r : (r.text || r.description || '');
+                return text ? `<li class="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                    <svg class="w-3 h-3 flex-shrink-0 mt-0.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/></svg>
+                    <span>${text}</span></li>` : '';
+            }).filter(Boolean).join('');
+
+            const hasContent = strengths || risks;
+            if (!hasContent) return '';
+
+            return `<div class="border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="grade-badge grade-${gradeInfo.grade}" style="width:24px;height:24px;font-size:0.7rem;">${gradeInfo.grade}</span>
+                        <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">${label}</span>
+                    </div>
+                    <span class="text-sm font-bold tabular-nums text-gray-700 dark:text-gray-300">${ax.score.toFixed(1)} <span class="text-[10px] font-normal text-gray-400">/ 5.0</span></span>
+                </div>
+                ${strengths ? `<div class="mb-2"><div class="text-[10px] font-semibold text-green-600 dark:text-green-400 uppercase tracking-wider mb-1.5 font-jp">強み</div><ul class="space-y-1.5">${strengths}</ul></div>` : ''}
+                ${risks ? `<div class="${strengths ? 'mt-3 pt-3 border-t border-gray-100 dark:border-aixis-700/50' : ''}"><div class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1.5 font-jp">注意点</div><ul class="space-y-1.5">${risks}</ul></div>` : ''}
+            </div>`;
+        }).filter(Boolean).join('');
+
+        if (container.innerHTML) {
+            section.classList.remove('hidden');
+        }
+    }
+
     // --- Initialize ---
 
     async function init() {
@@ -698,27 +790,30 @@
                 // Scores not available, proceed without
             }
 
-            // Fetch industry/use-case tags and governance (non-blocking)
-            let industries = [], useCaseTags = [], govData = null;
+            // Fetch analysis data and supplementary info (non-blocking)
+            let industries = [], useCaseTags = [], govData = null, analysisData = null;
             try {
-                const [indResp, ucResp, govResp] = await Promise.all([
+                const [indResp, ucResp, govResp, analysisResp] = await Promise.all([
                     fetch('/api/v1/industries/tools/' + tool.id + '/industries'),
                     fetch('/api/v1/industries/tools/' + tool.id + '/use-cases'),
                     fetch('/api/v1/risk-governance/tools/' + tool.id),
+                    fetch('/api/v1/scores/' + encodeURIComponent(slug) + '/analysis'),
                 ]);
                 if (indResp.ok) industries = await indResp.json();
                 if (ucResp.ok) useCaseTags = await ucResp.json();
                 if (govResp.ok) govData = await govResp.json();
+                if (analysisResp.ok) analysisData = await analysisResp.json();
             } catch (e) { /* proceed without */ }
 
             // Render all sections
             renderHero(tool, scores);
             renderScoreDashboard(scores);
-            renderStrengthsWeaknesses(scores);
+            renderStrengthsWeaknesses(scores, analysisData);
             renderToolInfo(tool);
             renderSEOSections(tool);
             renderGovernance(govData);
             renderIndustryUseCaseTags(industries, useCaseTags);
+            renderAxisAnalysis(analysisData);
 
             // Show page
             showMain();

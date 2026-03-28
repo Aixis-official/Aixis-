@@ -1001,7 +1001,7 @@
 <script>
 // ===== Platform Stats =====
 (function() {
-    fetch('/api/v1/stats/')
+    fetch('/api/v1/stats')
         .then(function(resp) {
             if (!resp.ok) throw new Error('Stats API error');
             return resp.json();
@@ -1040,17 +1040,20 @@
         var overallScore = latestScore ? latestScore.overall_score.toFixed(1) : '--';
         var grade = latestScore ? (latestScore.overall_grade || '') : '';
         var gradeBadge = grade
-            ? '<span class="inline-flex items-center justify-center w-8 h-8 rounded text-white text-xs font-bold ' + getGradeBg(grade) + '">' + grade + '</span>'
+            ? '<span class="grade-badge grade-' + grade + '">' + grade + '</span>'
             : '';
         var category = tool.category_name_jp
             ? '<span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-aixis-700 text-gray-500 dark:text-gray-400 font-jp">' + tool.category_name_jp + '</span>'
             : '';
         var displayName = tool.name_jp || tool.name || tool.slug;
+        var logoHtml = tool.logo_url
+            ? '<img src="' + tool.logo_url + '" alt="' + displayName + '" class="w-10 h-10 rounded-lg object-contain bg-white border border-gray-100 dark:border-aixis-600/30 shrink-0" onerror="this.outerHTML=\'<div class=\\\'w-10 h-10 rounded-lg bg-gray-100 dark:bg-aixis-700 flex items-center justify-center text-base font-bold text-aixis-500 dark:text-aixis-200 shrink-0\\\'>' + initial + '</div>\'">'
+            : '<div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-aixis-700 flex items-center justify-center text-base font-bold text-aixis-500 dark:text-aixis-200 shrink-0">' + initial + '</div>';
 
         return '<a href="/tools/' + (tool.slug || '') + '"' +
-            ' class="group block bg-white dark:bg-aixis-800 rounded-sm p-5 shadow-sm dark:shadow-aixis-900/40 border border-gray-100 dark:border-aixis-700 hover:border-gray-300 dark:hover:border-aixis-400/30 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">' +
+            ' class="tool-card group block bg-white dark:bg-aixis-800 rounded-sm p-5 shadow-sm dark:shadow-aixis-900/40 border border-gray-100 dark:border-aixis-700 hover:border-gray-300 dark:hover:border-aixis-400/30 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200" data-grade="' + grade + '">' +
             '<div class="flex items-center gap-3 mb-3">' +
-                '<div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-aixis-700 flex items-center justify-center text-base font-bold text-aixis-500 dark:text-aixis-200 shrink-0">' + initial + '</div>' +
+                logoHtml +
                 '<div class="min-w-0 flex-1">' +
                     '<div class="text-sm font-bold text-gray-900 dark:text-white truncate group-hover:text-aixis-500 transition-colors font-jp">' + displayName + '</div>' +
                     (tool.vendor ? '<div class="text-[11px] text-gray-400 dark:text-gray-500 truncate">' + tool.vendor + '</div>' : '') +
@@ -1058,7 +1061,7 @@
                 gradeBadge +
             '</div>' +
             (category ? '<div class="mb-2.5">' + category + '</div>' : '') +
-            '<div class="pt-2.5 border-t border-gray-100 dark:border-aixis-700/50 flex items-center justify-between">' +
+            '<div class="pt-3 border-t border-gray-100 dark:border-aixis-700/50 flex items-center justify-between">' +
                 '<span class="text-[10px] text-gray-400 dark:text-gray-500 font-jp">総合スコア</span>' +
                 '<span class="text-sm font-bold tabular-nums text-gray-800 dark:text-gray-100">' + overallScore + ' <span class="text-[10px] font-normal text-gray-400">/ 5.0</span></span>' +
             '</div>' +
