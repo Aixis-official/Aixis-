@@ -44,7 +44,7 @@
         </nav>
 
         <!-- 2. Tool Hero Section -->
-        <section id="hero-section" class="relative overflow-hidden rounded-sm mb-8 bg-gradient-to-br from-aixis-600/90 via-aixis-700/90 to-aixis-800/90 dark:from-aixis-800/80 dark:via-aixis-900/90 dark:to-gray-900 shadow-sm">
+        <section id="hero-section" class="relative overflow-hidden rounded-sm mb-6 bg-gradient-to-br from-aixis-600/90 via-aixis-700/90 to-aixis-800/90 dark:from-aixis-800/80 dark:via-aixis-900/90 dark:to-gray-900 shadow-sm">
             <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.04),transparent_60%)]"></div>
             <div class="relative flex flex-col md:flex-row items-center gap-6 p-6 md:p-8">
                 <!-- Left: Tool info -->
@@ -61,10 +61,119 @@
                     <div class="text-white/50 text-xs font-jp mt-0.5">総合スコア</div>
                 </div>
             </div>
+            <!-- Audit date & version badge (inside hero, bottom bar) -->
+            <div id="hero-audit-meta" class="hidden relative border-t border-white/10 px-6 md:px-8 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-white/50 font-jp">
+            </div>
         </section>
 
-        <!-- 3. 5-Axis Score Dashboard -->
-        <section id="score-dashboard" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-8">
+        <!-- 3. Executive Summary (① エグゼクティブサマリー) -->
+        {% if user %}
+        <section id="executive-summary" class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200/60 dark:border-amber-700/30 rounded-sm p-5 mb-6 hidden">
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 mt-0.5">
+                    <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-sm font-bold text-amber-800 dark:text-amber-300 font-jp mb-1.5">エグゼクティブサマリー</h2>
+                    <p id="executive-summary-text" class="text-xs text-amber-900/80 dark:text-amber-200/70 font-jp leading-relaxed"></p>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- 4. Tool Information Table (⑦ 充実版) -->
+        <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-6">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">ツール情報</h2>
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                <div class="flex items-start gap-3">
+                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">ツール名</dt>
+                    <dd id="info-name" class="text-xs font-semibold text-gray-800 dark:text-gray-200 font-jp"></dd>
+                </div>
+                <div class="flex items-start gap-3">
+                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">ベンダー</dt>
+                    <dd id="info-vendor" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                </div>
+                <div class="flex items-start gap-3">
+                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">カテゴリ</dt>
+                    <dd id="info-category" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                </div>
+                <div class="flex items-start gap-3">
+                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">料金モデル</dt>
+                    <dd id="info-pricing" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                </div>
+                <div id="info-price-range-row" class="flex items-start gap-3 hidden">
+                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">価格帯</dt>
+                    <dd id="info-price-range" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                </div>
+                <div id="info-trial-row" class="flex items-start gap-3 hidden">
+                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">無料トライアル</dt>
+                    <dd id="info-trial" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                </div>
+                <div id="info-url-row" class="flex items-start gap-3 hidden">
+                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">公式サイト</dt>
+                    <dd><a id="info-url" href="#" target="_blank" rel="noopener" class="text-xs text-aixis-500 dark:text-aixis-400 hover:underline font-jp truncate block max-w-[200px]"></a></dd>
+                </div>
+                <div id="info-vendor-location-row" class="flex items-start gap-3 hidden">
+                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">本社所在地</dt>
+                    <dd id="info-vendor-location" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                </div>
+            </dl>
+            <!-- Industry Tags -->
+            <div id="info-industries" class="mt-4 pt-3 border-t border-gray-100 dark:border-aixis-600/30 hidden">
+                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">対応業界:</span>
+                <span id="info-industries-tags"></span>
+            </div>
+            <!-- Use Case Tags -->
+            <div id="info-use-cases" class="mt-2.5 hidden">
+                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">ユースケース:</span>
+                <span id="info-use-cases-tags"></span>
+            </div>
+            <div id="info-features" class="mt-4 pt-3 border-t border-gray-100 dark:border-aixis-600/30 hidden">
+                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">機能:</span>
+                <span id="info-features-tags"></span>
+            </div>
+            <div id="info-languages" class="mt-2.5 hidden">
+                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">対応言語:</span>
+                <span id="info-languages-tags"></span>
+            </div>
+        </section>
+
+        <!-- 4b. Prerequisites & Constraints (③ 導入の前提条件・制約) -->
+        {% if user %}
+        <section id="prerequisites-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4 flex items-center gap-2">
+                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+                導入の前提条件・制約
+            </h2>
+            <div id="prerequisites-content" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+        </section>
+        {% endif %}
+
+        <!-- 5. Recommended Use Cases & Industry Fit (② 推奨ユースケース/業種適性) -->
+        {% if user %}
+        <section id="industry-fit-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4 flex items-center gap-2">
+                <svg class="w-4 h-4 text-aixis-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3H21m-3.75 3H21" />
+                </svg>
+                推奨ユースケース・業種適性
+            </h2>
+            <div id="industry-fit-content"></div>
+        </section>
+        {% endif %}
+
+        <!-- 5b. Use Cases Section -->
+        <section id="use-cases-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">ユースケース</h2>
+            <div id="use-cases-content" class="space-y-4"></div>
+        </section>
+
+        <!-- 6. 5-Axis Score Dashboard -->
+        <section id="score-dashboard" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-6">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">5軸詳細スコア</h2>
             <div class="relative">
                 {% if user %}
@@ -128,49 +237,21 @@
             </div>
         </section>
 
-        <!-- 4. (Removed: 強み/改善ポイント/軸別詳細分析 — consolidated into 詳細分析レポート) -->
-
-        <!-- 5. Tool Information Table -->
-        <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-8">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">ツール情報</h2>
-            <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
-                <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp">ツール名</dt>
-                <dd id="info-name" class="text-xs font-semibold text-gray-800 dark:text-gray-200 font-jp"></dd>
-                <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp">ベンダー</dt>
-                <dd id="info-vendor" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
-                <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp">カテゴリ</dt>
-                <dd id="info-category" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
-                <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp">料金モデル</dt>
-                <dd id="info-pricing" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
-            </dl>
-            <!-- Industry Tags -->
-            <div id="info-industries" class="mt-4 pt-3 border-t border-gray-100 dark:border-aixis-600/30 hidden">
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">対応業界:</span>
-                <span id="info-industries-tags"></span>
-            </div>
-            <!-- Use Case Tags -->
-            <div id="info-use-cases" class="mt-2.5 hidden">
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">ユースケース:</span>
-                <span id="info-use-cases-tags"></span>
-            </div>
-            <div id="info-features" class="mt-4 pt-3 border-t border-gray-100 dark:border-aixis-600/30 hidden">
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">機能:</span>
-                <span id="info-features-tags"></span>
-            </div>
-            <div id="info-languages" class="mt-2.5 hidden">
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">対応言語:</span>
-                <span id="info-languages-tags"></span>
-            </div>
+        <!-- 6b. Category Positioning (⑤ 類似ツールとのポジショニング) -->
+        {% if user %}
+        <section id="positioning-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4 flex items-center gap-2">
+                <svg class="w-4 h-4 text-aixis-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+                カテゴリ内ポジショニング
+            </h2>
+            <div id="positioning-content"></div>
         </section>
-
-        <!-- 5b. Use Cases Section -->
-        <section id="use-cases-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-8 hidden">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">ユースケース</h2>
-            <div id="use-cases-content" class="space-y-4"></div>
-        </section>
+        {% endif %}
 
         <!-- 5c. Pros & Cons -->
-        <section id="pros-cons-section" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 hidden">
+        <section id="pros-cons-section" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 hidden">
             <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5">
                 <div class="flex items-center gap-2 mb-3">
                     <div class="w-6 h-6 rounded flex items-center justify-center bg-blue-100 dark:bg-blue-900/30">
@@ -196,14 +277,14 @@
         </section>
 
         <!-- 5d. Pricing Detail -->
-        <section id="pricing-detail-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-8 hidden">
+        <section id="pricing-detail-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-6 hidden">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">料金プラン詳細</h2>
             <div id="pricing-detail-content" class="text-xs text-gray-600 dark:text-gray-300 font-jp leading-relaxed"></div>
             <div id="pricing-tiers-content" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </section>
 
         <!-- 5e. Risk / Governance -->
-        <section id="governance-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-8 hidden">
+        <section id="governance-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-6 hidden">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">リスク・ガバナンス</h2>
             <div class="flex items-center gap-3 mb-4">
                 <div id="gov-risk-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold font-jp"></div>
@@ -222,28 +303,28 @@
         </section>
 
         <!-- 5f. Target Company Profile -->
-        <section id="target-company-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-8 hidden">
+        <section id="target-company-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-6 hidden">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">導入企業像</h2>
             <div id="target-company-content" class="text-xs text-gray-600 dark:text-gray-300 font-jp leading-relaxed"></div>
             <div id="target-company-tags" class="mt-3"></div>
         </section>
 
         <!-- 5g. Risks / Cautions -->
-        <section id="risks-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-8 hidden">
+        <section id="risks-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-lg p-5 mb-6 hidden">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">リスク・注意点</h2>
             <div id="risks-content" class="text-xs text-gray-600 dark:text-gray-300 font-jp leading-relaxed"></div>
         </section>
 
-        <!-- 6. Detailed Analysis Report -->
+        <!-- 7. Detailed Analysis Report (⑧ 展開式に改善) -->
         {% if user %}
-        <section id="analysis-report" class="mb-8">
+        <section id="analysis-report" class="mb-6">
             <div class="section-line"></div>
             <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100 font-jp mb-5">詳細分析レポート</h2>
 
-            <!-- 6a. Per-axis analysis cards with highlights/concerns (populated by JS) -->
+            <!-- 7a. Per-axis analysis cards with collapsible highlights/concerns -->
             <div id="report-axis-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"></div>
 
-            <!-- 6b. Reliability Indicators -->
+            <!-- 7b. Reliability Indicators (⑨ 説明改善) -->
             <div id="reliability-section" class="hidden">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-3 flex items-center gap-2">
                     <svg class="w-4 h-4 text-aixis-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -252,9 +333,16 @@
                     監査信頼度指標
                 </h3>
                 <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5">
-                    <p class="text-[11px] text-gray-400 dark:text-gray-500 font-jp mb-5">BenchRiskフレームワークに基づく4次元の信頼度指標。各指標は0〜100のスケールで算出されます。</p>
+                    <!-- Improved explanation (⑨) -->
+                    <div class="bg-blue-50 dark:bg-blue-900/15 border border-blue-100 dark:border-blue-800/30 rounded-sm p-3.5 mb-5">
+                        <p class="text-[11px] text-blue-800 dark:text-blue-300 font-jp leading-relaxed">
+                            <span class="font-bold">この指標はAixisの評価自体の品質保証です。</span>
+                            ツールのスコア（上記5軸評価）とは異なり、「Aixisの監査プロセスがどれだけ信頼できるか」を4次元で自己評価しています。
+                            BenchRiskフレームワークに基づき、各指標は0〜100のスケールで算出されます。スコアが高いほど、上記の5軸評価の信頼性が高いことを意味します。
+                        </p>
+                    </div>
 
-                    <!-- Reliability heatmap (5 axes × 4 dimensions) -->
+                    <!-- Reliability heatmap (5 axes * 4 dimensions) -->
                     <div id="reliability-heatmap" style="height:280px;" class="mb-5"></div>
 
                     <!-- Legend -->
@@ -277,7 +365,7 @@
         </section>
         {% else %}
         <!-- Not logged in: paywall for analysis report -->
-        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-8" style="min-height:320px;">
+        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:320px;">
             <div class="paywall-blur">
                 <div class="section-line"></div>
                 <h2 class="text-lg font-bold text-gray-900 font-jp mb-4">詳細分析レポート</h2>
@@ -312,19 +400,43 @@
         </section>
         {% endif %}
 
-        <!-- 7. Action Buttons -->
-        <section class="flex flex-wrap gap-2.5 mt-6 mb-10">
+        <!-- 8. CTA Section (⑥ 次のアクション) -->
+        <section class="bg-gradient-to-r from-aixis-50 to-blue-50 dark:from-aixis-900/20 dark:to-blue-900/20 border border-aixis-200/60 dark:border-aixis-700/30 rounded-lg p-6 mb-6">
+            <div class="flex flex-col md:flex-row items-center gap-5">
+                <div class="flex-1">
+                    <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200 font-jp mb-1">次のステップ</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp leading-relaxed">この評価結果に基づいて、次のアクションをお選びください。</p>
+                </div>
+                <div class="flex flex-wrap gap-2.5">
+                    {% if user %}
+                    <a id="compare-link" href="/compare" class="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-lg transition-colors duration-150 font-jp shadow-sm">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                        </svg>
+                        他のツールと比較
+                    </a>
+                    <a href="/contact" class="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-lg hover:bg-gray-50 dark:hover:bg-aixis-700/50 transition-colors duration-150 font-jp shadow-sm">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+                        </svg>
+                        この結果について相談する
+                    </a>
+                    {% else %}
+                    <a href="/login" class="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-lg transition-colors duration-150 font-jp shadow-sm">
+                        無料トライアルで詳細を見る
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Navigation Buttons -->
+        <section class="flex flex-wrap gap-2.5 mt-2 mb-10">
             <a href="/tools" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-lg hover:bg-gray-50 dark:hover:bg-aixis-700/50 transition-colors duration-150 font-jp">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                 </svg>
                 データベースに戻る
-            </a>
-            <a id="compare-link" href="/compare" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-lg transition-colors duration-150 font-jp">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-                </svg>
-                他のツールと比較
             </a>
         </section>
 
@@ -338,6 +450,7 @@
     'use strict';
 
     const slug = '{{ slug }}';
+    const isLoggedIn = {{ 'true' if user else 'false' }};
 
     const AXIS_KEYS = AIXIS.AXIS_KEYS;
     const AXIS_LABELS = AIXIS.AXIS_LABELS;
@@ -370,6 +483,22 @@
         mainEl.classList.remove('hidden');
     }
 
+    function formatDate(isoStr) {
+        if (!isoStr) return null;
+        try {
+            const d = new Date(isoStr);
+            return d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日';
+        } catch(e) { return null; }
+    }
+
+    function formatYearMonth(isoStr) {
+        if (!isoStr) return null;
+        try {
+            const d = new Date(isoStr);
+            return d.getFullYear() + '年' + (d.getMonth()+1) + '月時点';
+        } catch(e) { return null; }
+    }
+
     // --- Render functions ---
 
     function renderHero(tool, scores) {
@@ -389,6 +518,75 @@
         } else {
             gradeArea.innerHTML = '<div class="text-white/50 text-lg font-jp">未評価</div>';
         }
+    }
+
+    // ④ Audit date & version display
+    function renderAuditMeta(analysisData) {
+        const metaEl = document.getElementById('hero-audit-meta');
+        if (!metaEl) return;
+        const meta = analysisData && analysisData.audit_meta;
+        if (!meta) return;
+
+        const items = [];
+        const auditDate = formatYearMonth(meta.completed_at || meta.published_at);
+        if (auditDate) {
+            items.push('<span class="flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>監査実施: ' + auditDate + '</span>');
+        }
+        if (meta.score_version) {
+            items.push('<span class="flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" /></svg>評価バージョン: v' + meta.score_version + '</span>');
+        }
+        if (meta.session_code) {
+            items.push('<span class="flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.864 4.243A7.5 7.5 0 0119.5 10.5c0 2.92-.556 5.709-1.568 8.268M5.742 6.364A7.465 7.465 0 004.5 10.5a48.667 48.667 0 00-1.409 8.38M5.742 6.364l-1.26 1.332" /></svg>セッション: ' + meta.session_code + '</span>');
+        }
+
+        if (items.length > 0) {
+            metaEl.innerHTML = items.join('');
+            metaEl.classList.remove('hidden');
+        }
+    }
+
+    // ① Executive Summary
+    function renderExecutiveSummary(tool, scores, analysisData, govData, industries) {
+        const section = document.getElementById('executive-summary');
+        if (!section || !scores) return;
+
+        const toolName = tool.name_jp || tool.name || slug;
+        const grade = scores.overall_grade || '';
+        const overallScore = scores.overall_score != null ? scores.overall_score.toFixed(1) : '--';
+        const categoryName = tool.category_name_jp || 'AIツール';
+
+        // Build summary from real data
+        let parts = [];
+
+        // What is this tool
+        parts.push(toolName + 'は' + (tool.vendor ? tool.vendor + 'が提供する' : '') + categoryName + 'であり、Aixisの独立監査で総合スコア' + overallScore + '/5.0（' + grade + 'ランク）を取得しています。');
+
+        // Best axis
+        const axisScores = AXIS_KEYS.map(k => ({key: k, label: AXIS_LABELS[k], score: scores[k] || 0}));
+        axisScores.sort((a,b) => b.score - a.score);
+        const bestAxis = axisScores[0];
+        const worstAxis = axisScores[axisScores.length - 1];
+
+        if (bestAxis && worstAxis && bestAxis.key !== worstAxis.key) {
+            parts.push('最大の強みは' + bestAxis.label + '（' + bestAxis.score.toFixed(1) + '）で、' + worstAxis.label + '（' + worstAxis.score.toFixed(1) + '）に改善余地があります。');
+        }
+
+        // Industry fit
+        if (industries && industries.length > 0) {
+            const topIndustries = industries.slice(0, 3).map(m => m.industry ? m.industry.name_jp : '').filter(Boolean);
+            if (topIndustries.length > 0) {
+                parts.push(topIndustries.join('・') + '分野での利用に適しています。');
+            }
+        }
+
+        // Risk level from governance
+        if (govData && govData.risk_level) {
+            const riskLabels = {low:'低リスク', medium:'中リスク', high:'高リスク', critical:'要注意'};
+            parts.push('セキュリティリスクは「' + (riskLabels[govData.risk_level] || govData.risk_level) + '」と評価されています。');
+        }
+
+        document.getElementById('executive-summary-text').textContent = parts.join(' ');
+        section.classList.remove('hidden');
     }
 
     function renderScoreDashboard(scores) {
@@ -453,6 +651,56 @@
 
         el._renderChart = render;
         render();
+    }
+
+    // ⑤ Category Positioning
+    function renderPositioning(positioning, scores) {
+        const section = document.getElementById('positioning-section');
+        if (!section || !positioning) return;
+
+        const catName = positioning.category_name_jp || 'カテゴリ';
+        const total = positioning.total_in_category || 0;
+        const rank = positioning.overall_rank || 0;
+        const axisRanks = positioning.axis_ranks || {};
+
+        if (total <= 1) return; // No point showing positioning for single tool
+
+        section.classList.remove('hidden');
+
+        let html = '';
+
+        // Overall rank highlight
+        html += `<div class="flex items-center gap-3 mb-4 p-3 bg-aixis-50 dark:bg-aixis-900/20 rounded-lg">
+            <div class="text-center">
+                <div class="text-2xl font-black text-aixis-600 dark:text-aixis-400 tabular-nums">${rank}<span class="text-sm font-semibold">位</span></div>
+                <div class="text-[10px] text-gray-500 dark:text-gray-400 font-jp">${catName} ${total}ツール中</div>
+            </div>
+            <div class="h-10 w-px bg-gray-200 dark:bg-aixis-600/30"></div>
+            <div class="flex-1 text-xs text-gray-600 dark:text-gray-300 font-jp leading-relaxed">
+                ${catName}カテゴリに登録されている${total}ツールの中で、総合スコアは<span class="font-bold text-gray-800 dark:text-gray-100">${rank}位</span>にランクインしています。
+            </div>
+        </div>`;
+
+        // Per-axis ranking chips
+        const axisChips = AXIS_KEYS.map(key => {
+            const label = AXIS_LABELS[key];
+            const axRank = axisRanks[key];
+            if (!axRank) return '';
+            const isTop = axRank <= Math.ceil(total * 0.3);
+            const chipClass = isTop
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/30 text-green-700 dark:text-green-300'
+                : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-aixis-600/30 text-gray-600 dark:text-gray-300';
+            return `<div class="flex items-center justify-between px-3 py-2 rounded-lg border ${chipClass}">
+                <span class="text-xs font-jp font-medium">${label}</span>
+                <span class="text-xs font-bold tabular-nums">${axRank}位<span class="font-normal text-gray-400 dark:text-gray-500">/${total}</span></span>
+            </div>`;
+        }).filter(Boolean);
+
+        if (axisChips.length > 0) {
+            html += `<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">${axisChips.join('')}</div>`;
+        }
+
+        document.getElementById('positioning-content').innerHTML = html;
     }
 
     // --- Analysis Report ---
@@ -558,20 +806,53 @@
         const pct = (score / 5 * 100).toFixed(0);
         const hasHighlights = highlights.length > 0;
         const hasConcerns = concerns.length > 0;
+        const cardId = 'axis-card-' + label.replace(/[^a-zA-Z\u3000-\u9FFF]/g, '');
 
-        const highlightsHtml = highlights.map(s =>
+        // ⑧ Collapsible: show first item as summary, rest in expandable
+        const firstHighlight = highlights[0] || '';
+        const restHighlights = highlights.slice(1);
+        const firstConcern = concerns[0] || '';
+        const restConcerns = concerns.slice(1);
+
+        const hasMore = restHighlights.length > 0 || restConcerns.length > 0;
+
+        // Summary line (always visible)
+        const summaryHighlight = firstHighlight
+            ? `<li class="flex items-start gap-1.5 text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
+                <svg class="w-3 h-3 flex-shrink-0 mt-0.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                <span>${firstHighlight}</span>
+            </li>`
+            : '';
+
+        const summaryConcern = firstConcern
+            ? `<li class="flex items-start gap-1.5 text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
+                <svg class="w-3 h-3 flex-shrink-0 mt-0.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/></svg>
+                <span>${firstConcern}</span>
+            </li>`
+            : '';
+
+        // Expanded content
+        const expandedHighlights = restHighlights.map(s =>
             `<li class="flex items-start gap-1.5 text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
                 <svg class="w-3 h-3 flex-shrink-0 mt-0.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
                 <span>${s}</span>
             </li>`
         ).join('');
 
-        const concernsHtml = concerns.map(r =>
+        const expandedConcerns = restConcerns.map(r =>
             `<li class="flex items-start gap-1.5 text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
                 <svg class="w-3 h-3 flex-shrink-0 mt-0.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/></svg>
                 <span>${r}</span>
             </li>`
         ).join('');
+
+        const expandButton = hasMore
+            ? `<button onclick="this.nextElementSibling.classList.toggle('hidden');this.querySelector('span').textContent=this.nextElementSibling.classList.contains('hidden')?'詳細を表示':'閉じる'" class="text-[10px] text-aixis-500 dark:text-aixis-400 hover:text-aixis-600 dark:hover:text-aixis-300 font-jp mt-1 flex items-center gap-0.5 transition-colors">
+                <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                <span>詳細を表示</span>
+            </button>
+            <div class="hidden mt-1 space-y-1">${expandedHighlights}${expandedConcerns}</div>`
+            : '';
 
         return `<div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-4 flex flex-col">
             <div class="flex items-center justify-between mb-2">
@@ -582,9 +863,10 @@
                 <span class="text-sm font-bold tabular-nums text-gray-700 dark:text-gray-300">${score.toFixed(2)}</span>
             </div>
             <div class="score-bar mb-3" style="height:6px;"><div class="score-bar-fill ${scoreLevel(score)}" style="width:${pct}%"></div></div>
-            <div class="flex-1 space-y-2">
-                ${hasHighlights ? `<div class="mb-1"><span class="text-[10px] font-semibold text-green-600 dark:text-green-400 font-jp">強み</span></div><ul class="space-y-1">${highlightsHtml}</ul>` : ''}
-                ${hasConcerns ? `<div class="${hasHighlights ? 'mt-2 pt-2 border-t border-gray-100 dark:border-aixis-700/50' : ''} mb-1"><span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 font-jp">注意点</span></div><ul class="space-y-1">${concernsHtml}</ul>` : ''}
+            <div class="flex-1 space-y-1">
+                ${hasHighlights ? `<div class="mb-1"><span class="text-[10px] font-semibold text-green-600 dark:text-green-400 font-jp">強み</span></div><ul class="space-y-1">${summaryHighlight}</ul>` : ''}
+                ${hasConcerns ? `<div class="${hasHighlights ? 'mt-2 pt-2 border-t border-gray-100 dark:border-aixis-700/50' : ''} mb-1"><span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 font-jp">注意点</span></div><ul class="space-y-1">${summaryConcern}</ul>` : ''}
+                ${expandButton}
             </div>
             <div class="mt-3 pt-2 border-t border-gray-100 dark:border-aixis-700/30">
                 <span class="text-[10px] text-gray-400 dark:text-gray-500 font-jp">${sourceLabel}</span>
@@ -616,13 +898,13 @@
 
         section.classList.remove('hidden');
 
-        // --- Build 5×4 heatmap ---
+        // --- Build 5x4 heatmap ---
         const heatmapEl = document.getElementById('reliability-heatmap');
         if (heatmapEl) {
             const axisLabels = AXIS_KEYS.map(k => AXIS_LABELS[k]);
             const dimLabels = dims.map(d => d.label);
 
-            // Build the matrix: 5 axes × 4 dimensions
+            // Build the matrix: 5 axes x 4 dimensions
             const heatmapZ = [];
             const heatmapText = [];
 
@@ -753,7 +1035,49 @@
         document.getElementById('info-name').textContent = tool.name_jp || tool.name || slug;
         document.getElementById('info-vendor').textContent = tool.vendor || '--';
         document.getElementById('info-category').textContent = tool.category_name_jp || tool.category || '--';
-        document.getElementById('info-pricing').textContent = tool.pricing_model || '--';
+
+        // ⑦ Pricing model with price range
+        const pricingLabels = {free:'無料', freemium:'フリーミアム', paid:'有料', enterprise:'エンタープライズ'};
+        document.getElementById('info-pricing').textContent = pricingLabels[tool.pricing_model] || tool.pricing_model || '--';
+
+        // Price range
+        if (tool.price_min_jpy != null || tool.price_max_jpy != null) {
+            const row = document.getElementById('info-price-range-row');
+            row.classList.remove('hidden');
+            let priceText = '';
+            if (tool.price_min_jpy != null && tool.price_max_jpy != null) {
+                priceText = '¥' + tool.price_min_jpy.toLocaleString() + ' 〜 ¥' + tool.price_max_jpy.toLocaleString() + ' /月';
+            } else if (tool.price_min_jpy != null) {
+                priceText = '¥' + tool.price_min_jpy.toLocaleString() + '〜 /月';
+            } else {
+                priceText = '〜 ¥' + tool.price_max_jpy.toLocaleString() + ' /月';
+            }
+            document.getElementById('info-price-range').textContent = priceText;
+        }
+
+        // Free trial
+        if (tool.free_trial_available != null) {
+            const row = document.getElementById('info-trial-row');
+            row.classList.remove('hidden');
+            let trialText = tool.free_trial_available ? 'あり' : 'なし';
+            if (tool.free_trial_available && tool.free_trial_days) {
+                trialText += '（' + tool.free_trial_days + '日間）';
+            }
+            document.getElementById('info-trial').textContent = trialText;
+        }
+
+        // URL
+        if (tool.url) {
+            const row = document.getElementById('info-url-row');
+            row.classList.remove('hidden');
+            const urlEl = document.getElementById('info-url');
+            urlEl.href = tool.url;
+            try {
+                urlEl.textContent = new URL(tool.url).hostname;
+            } catch(e) {
+                urlEl.textContent = tool.url;
+            }
+        }
 
         // Features
         const features = tool.features || [];
@@ -770,13 +1094,178 @@
         if (languages.length > 0) {
             const container = document.getElementById('info-languages');
             container.classList.remove('hidden');
+            const langLabels = {ja:'日本語',en:'English',zh:'中文',ko:'한국어',fr:'Français',de:'Deutsch',es:'Español',pt:'Português',it:'Italiano',ru:'Русский'};
             document.getElementById('info-languages-tags').innerHTML = languages.map(l =>
-                `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-aixis-700/50 text-gray-500 dark:text-gray-400 mr-1 mb-1">${l}</span>`
+                `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-aixis-700/50 text-gray-500 dark:text-gray-400 mr-1 mb-1">${langLabels[l] || l}</span>`
             ).join('');
         }
 
         // Compare link
-        document.getElementById('compare-link').href = '/compare?tools=' + encodeURIComponent(slug);
+        const compareLink = document.getElementById('compare-link');
+        if (compareLink) {
+            compareLink.href = '/compare?tools=' + encodeURIComponent(slug);
+        }
+    }
+
+    // ③ Prerequisites & Constraints
+    function renderPrerequisites(tool, govData) {
+        const section = document.getElementById('prerequisites-section');
+        if (!section) return;
+
+        const items = [];
+
+        // Data residency
+        if (govData) {
+            if (govData.data_residency_japan != null) {
+                items.push({
+                    icon: govData.data_residency_japan ? 'check' : 'info',
+                    label: 'データ保管場所',
+                    value: govData.data_residency_japan ? '国内（日本）' : '海外',
+                    color: govData.data_residency_japan ? 'green' : 'amber',
+                });
+            }
+            // Certifications
+            const certs = govData.certifications || [];
+            if (certs.length > 0) {
+                items.push({
+                    icon: 'check',
+                    label: 'セキュリティ認証',
+                    value: certs.join('、'),
+                    color: 'green',
+                });
+            }
+            // Data retention policy
+            if (govData.data_retention_policy) {
+                const retentionLabels = {clear:'明確', partial:'一部明記', unclear:'不明確', none:'なし'};
+                items.push({
+                    icon: govData.data_retention_policy === 'clear' ? 'check' : 'info',
+                    label: 'データ保持ポリシー',
+                    value: retentionLabels[govData.data_retention_policy] || govData.data_retention_policy,
+                    color: govData.data_retention_policy === 'clear' ? 'green' : 'amber',
+                });
+            }
+            // Training data opt-out
+            if (govData.training_data_optout != null) {
+                items.push({
+                    icon: govData.training_data_optout ? 'check' : 'info',
+                    label: 'AI学習オプトアウト',
+                    value: govData.training_data_optout ? '可能' : '不可 / 不明',
+                    color: govData.training_data_optout ? 'green' : 'amber',
+                });
+            }
+            // Data deletion
+            if (govData.data_deletion_available != null) {
+                items.push({
+                    icon: govData.data_deletion_available ? 'check' : 'info',
+                    label: 'データ削除依頼',
+                    value: govData.data_deletion_available ? '対応可能' : '不可 / 不明',
+                    color: govData.data_deletion_available ? 'green' : 'amber',
+                });
+            }
+        }
+
+        // Supported languages
+        const langs = tool.supported_languages || [];
+        if (langs.length > 0) {
+            items.push({
+                icon: 'info',
+                label: '対応言語数',
+                value: langs.length + '言語',
+                color: 'blue',
+            });
+        }
+
+        // Pricing model
+        if (tool.pricing_model) {
+            const pricingLabels = {free:'無料', freemium:'フリーミアム（無料枠あり）', paid:'有料（要契約）', enterprise:'エンタープライズ（要問合せ）'};
+            items.push({
+                icon: 'info',
+                label: '契約形態',
+                value: pricingLabels[tool.pricing_model] || tool.pricing_model,
+                color: 'blue',
+            });
+        }
+
+        if (items.length === 0) return;
+
+        section.classList.remove('hidden');
+        const contentEl = document.getElementById('prerequisites-content');
+
+        const iconMap = {
+            check: '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>',
+            info: '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>',
+        };
+        const colorMap = {
+            green: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20',
+            amber: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20',
+            blue: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20',
+        };
+
+        contentEl.innerHTML = items.map(item => `
+            <div class="flex items-start gap-2.5">
+                <div class="flex-shrink-0 w-6 h-6 rounded flex items-center justify-center ${colorMap[item.color] || colorMap.blue}">
+                    ${iconMap[item.icon] || iconMap.info}
+                </div>
+                <div>
+                    <div class="text-[10px] font-medium text-gray-400 dark:text-gray-500 font-jp">${item.label}</div>
+                    <div class="text-xs font-semibold text-gray-700 dark:text-gray-200 font-jp">${item.value}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ② Industry Fit
+    function renderIndustryFit(industries, useCases) {
+        const section = document.getElementById('industry-fit-section');
+        if (!section) return;
+
+        const hasIndustries = industries && industries.length > 0;
+        const hasUseCases = useCases && useCases.length > 0;
+        if (!hasIndustries && !hasUseCases) return;
+
+        section.classList.remove('hidden');
+        let html = '';
+
+        if (hasIndustries) {
+            const fitLabels = {recommended:'推奨', compatible:'対応可', limited:'限定的'};
+            const fitColors = {
+                recommended: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800/30',
+                compatible: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800/30',
+                limited: 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-aixis-600/30',
+            };
+
+            html += '<div class="mb-3"><span class="text-xs font-semibold text-gray-600 dark:text-gray-300 font-jp">業種適性</span></div>';
+            html += '<div class="flex flex-wrap gap-2 mb-4">';
+            industries.forEach(m => {
+                const name = m.industry ? m.industry.name_jp : '';
+                const fit = m.fit_level || 'compatible';
+                const fitLabel = fitLabels[fit] || fit;
+                const fitColor = fitColors[fit] || fitColors.compatible;
+                html += `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[11px] font-medium font-jp ${fitColor}">
+                    ${name}
+                    <span class="text-[9px] opacity-70">${fitLabel}</span>
+                </span>`;
+            });
+            html += '</div>';
+        }
+
+        if (hasUseCases) {
+            const relLabels = {primary:'主要', secondary:'副次'};
+            html += '<div class="mb-3"><span class="text-xs font-semibold text-gray-600 dark:text-gray-300 font-jp">推奨ユースケース</span></div>';
+            html += '<div class="flex flex-wrap gap-2">';
+            useCases.forEach(m => {
+                const name = m.use_case ? m.use_case.name_jp : '';
+                const rel = m.relevance || 'primary';
+                const isPrimary = rel === 'primary';
+                html += `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[11px] font-medium font-jp ${isPrimary ? 'bg-aixis-50 dark:bg-aixis-900/20 text-aixis-600 dark:text-aixis-300 border-aixis-200 dark:border-aixis-700/30' : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-aixis-600/30'}">
+                    ${name}
+                    <span class="text-[9px] opacity-70">${relLabels[rel] || rel}</span>
+                </span>`;
+            });
+            html += '</div>';
+        }
+
+        document.getElementById('industry-fit-content').innerHTML = html;
     }
 
     function renderSEOSections(tool) {
@@ -914,8 +1403,6 @@
         }
     }
 
-    // renderAxisAnalysis removed — consolidated into renderAnalysisReport
-
     // --- Initialize ---
 
     async function init() {
@@ -953,12 +1440,17 @@
                 if (analysisResp.ok) analysisData = await analysisResp.json();
             } catch (e) { /* proceed without */ }
 
-            // Render all sections
+            // Render all sections in new order
             renderHero(tool, scores);
-            renderScoreDashboard(scores);
-            renderAnalysisReport(scores, analysisData);
+            renderAuditMeta(analysisData);
+            renderExecutiveSummary(tool, scores, analysisData, govData, industries);
             renderToolInfo(tool);
+            renderPrerequisites(tool, govData);
+            renderIndustryFit(industries, useCaseTags);
             renderSEOSections(tool);
+            renderScoreDashboard(scores);
+            renderPositioning(analysisData && analysisData.positioning, scores);
+            renderAnalysisReport(scores, analysisData);
             renderGovernance(govData);
             renderIndustryUseCaseTags(industries, useCaseTags);
 
