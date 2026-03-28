@@ -32,20 +32,20 @@ def calculate_reliability(
     Returns dict with keys: consistency, comprehensiveness, correctness,
     intelligibility, overall, details.
     """
-    consistency = _calc_consistency(results)
-    comprehensiveness = _calc_comprehensiveness(results, cases, total_planned, total_executed)
-    correctness = _calc_correctness(axis_scores_data, results)
-    intelligibility = _calc_intelligibility(results, axis_scores_data)
+    consistency = min(100, max(0, _calc_consistency(results)))
+    comprehensiveness = min(100, max(0, _calc_comprehensiveness(results, cases, total_planned, total_executed)))
+    correctness = min(100, max(0, _calc_correctness(axis_scores_data, results)))
+    intelligibility = min(100, max(0, _calc_intelligibility(results, axis_scores_data)))
 
     overall = round(
         (consistency + comprehensiveness + correctness + intelligibility) / 4, 1
     )
 
     return {
-        "consistency": consistency,
-        "comprehensiveness": comprehensiveness,
-        "correctness": correctness,
-        "intelligibility": intelligibility,
+        "consistency": round(consistency, 1),
+        "comprehensiveness": round(comprehensiveness, 1),
+        "correctness": round(correctness, 1),
+        "intelligibility": round(intelligibility, 1),
         "overall": overall,
         "calculated_at": datetime.now(timezone.utc).isoformat(),
         "details": {
@@ -132,46 +132,47 @@ def _consistency_details(results: list) -> dict:
 # ---------------------------------------------------------------------------
 
 def _calc_comprehensiveness(results: list, cases: list, total_planned: int, total_executed: int) -> float:
-    """Score 0-100. Full test plan completion + diverse category coverage.
+    """Score 0-100. Test plan completion + category coverage + depth.
 
-    Conservative scoring approach:
-    - When no explicit test plan was set (inferred from data), completion is
-      capped at 70% because a truly comprehensive audit requires upfront planning.
-    - Category coverage penalizes narrow testing.
-    - Depth requires sufficient tests per category (target: 5+ per category).
+    All sub-scores are capped at 100 before weighting.
     """
-    if total_planned == 0:
+    if total_planned == 0 and not results:
         return 0.0
 
-    # Detect whether the plan was explicitly set vs. derived from results
-    # If planned ≈ executed (within 10%), it's likely auto-derived
-    ratio = total_executed / total_planned if total_planned > 0 else 0
-    is_likely_auto_derived = abs(ratio - 1.0) < 0.15  # within 15%
-
-    if is_likely_auto_derived:
-        # No explicit plan → cap completion at 70%
-        completion = 70.0
+    # --- Completion ratio ---
+    if total_planned > 0:
+        completion = min(100, (total_executed / total_planned) * 100)
+        # Penalize when planned == executed exactly (likely auto-derived, not a real plan)
+        if total_planned == total_executed:
+            completion = min(completion, 75.0)
     else:
-        completion = min(95, (total_executed / total_planned) * 100)
+        completion = 0.0
 
-    # Category coverage: how many distinct categories were tested?
-    planned_cats = set()
-    for c in cases:
-        cat = c.category.value if hasattr(c.category, "value") else str(c.category)
-        planned_cats.add(cat)
-
+    # --- Category coverage ---
+    # Compare executed categories against planned categories.
+    # Always cap at 100 — executing MORE categories than planned is not "better than perfect".
     executed_cats = set()
     for r in results:
         cat = r.category.value if hasattr(r.category, "value") else str(r.category)
         executed_cats.add(cat)
 
-    if planned_cats:
-        cat_coverage = len(executed_cats) / len(planned_cats) * 100
-    else:
-        # No planned categories = less reliable
-        cat_coverage = min(80, len(executed_cats) * 20)  # Up to 80 if 4+ categories
+    planned_cats = set()
+    for c in cases:
+        cat = c.category.value if hasattr(c.category, "value") else str(c.category)
+        planned_cats.add(cat)
 
-    # Minimum tests per category: target is 8+ per category for excellence
+    num_executed_cats = len(executed_cats)
+    num_planned_cats = len(planned_cats)
+
+    if num_planned_cats >= 2:
+        # Meaningful test plan with multiple categories
+        cat_coverage = min(100, num_executed_cats / num_planned_cats * 100)
+    else:
+        # Only 0-1 planned category — use absolute scale instead of ratio
+        # Target: 5+ distinct categories for full score
+        cat_coverage = min(100, num_executed_cats / 5 * 100)
+
+    # --- Depth: tests per category ---
     tests_per_cat = {}
     for r in results:
         cat = r.category.value if hasattr(r.category, "value") else str(r.category)
@@ -180,12 +181,18 @@ def _calc_comprehensiveness(results: list, cases: list, total_planned: int, tota
     if tests_per_cat:
         avg_tests = sum(tests_per_cat.values()) / len(tests_per_cat)
         min_tests = min(tests_per_cat.values())
-        # Penalize if any category has very few tests
-        depth_score = min(100, avg_tests / 8 * 80 + min_tests / 3 * 20)
+        # Target: avg 8+ tests/category, min 3+ tests in weakest category
+        depth_score = min(100, (avg_tests / 8) * 70 + (min(min_tests, 3) / 3) * 30)
     else:
-        depth_score = 0
+        depth_score = 0.0
 
-    return round(completion * 0.5 + cat_coverage * 0.3 + depth_score * 0.2, 1)
+    # Final score: all sub-scores guaranteed 0-100
+    return round(
+        min(100, completion) * 0.5
+        + min(100, cat_coverage) * 0.3
+        + min(100, depth_score) * 0.2,
+        1,
+    )
 
 
 def _comprehensiveness_details(results: list, cases: list, total_planned: int, total_executed: int) -> dict:

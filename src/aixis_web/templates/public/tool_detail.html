@@ -165,17 +165,17 @@
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">5軸詳細スコア</h2>
             <div class="relative">
                 {% if user %}
-                <!-- Logged-in: interactive radar chart (staticPlot + custom hover) -->
+                <!-- Logged-in: radar chart (staticPlot + mousemove hover) -->
                 <div>
-                    <div class="max-w-lg mx-auto relative">
+                    <div class="max-w-lg mx-auto relative" id="radar-wrapper">
                         <div id="radar-chart" class="chart-container" style="min-height:420px;"></div>
-                        <!-- Custom hover tooltip (positioned absolutely over chart) -->
-                        <div id="radar-tooltip" class="hidden absolute z-20 pointer-events-none px-3 py-2 rounded-sm text-xs font-jp shadow-sm border border-gray-200 dark:border-aixis-600/40 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 whitespace-nowrap" style="transform:translate(-50%,-120%);">
+                        <!-- Transparent overlay captures mouse events -->
+                        <div id="radar-overlay" class="absolute inset-0 z-10" style="cursor:crosshair;"></div>
+                        <!-- Tooltip (follows cursor near vertices) -->
+                        <div id="radar-tooltip" class="hidden absolute z-20 pointer-events-none px-3 py-2 rounded-sm text-xs font-jp shadow-sm border border-gray-200 dark:border-aixis-600/40 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 whitespace-nowrap" style="transform:translate(-50%,-130%);">
                             <span id="radar-tooltip-label" class="font-semibold"></span>
                             <span id="radar-tooltip-value" class="ml-1.5 tabular-nums"></span>
                         </div>
-                        <!-- Invisible hover zones over each axis vertex -->
-                        <div id="radar-hover-zones" class="absolute inset-0" style="pointer-events:none;"></div>
                     </div>
                 </div>
                 {% else %}
@@ -533,10 +533,6 @@
 
     function renderRadarChart(scores) {
         const el = document.getElementById('radar-chart');
-        const tooltip = document.getElementById('radar-tooltip');
-        const tooltipLabel = document.getElementById('radar-tooltip-label');
-        const tooltipValue = document.getElementById('radar-tooltip-value');
-        const hoverZones = document.getElementById('radar-hover-zones');
         const values = AXIS_KEYS.map(k => scores[k] || 0);
         const closedValues = [...values, values[0]];
         const closedLabels = [...AXIS_LABELS_ORDERED, AXIS_LABELS_ORDERED[0]];
@@ -571,72 +567,111 @@
                 layout.polar.angularaxis.tickfont = { size: 13, color: dark ? '#cbd5e1' : '#334155' };
             }
 
-            // staticPlot: true — absolutely prevents editing, dragging, all user modification
+            // staticPlot: true — prevents all editing/dragging
             Plotly.newPlot(el, [trace], layout, {
                 responsive: true,
                 displayModeBar: false,
                 staticPlot: true,
             });
 
-            // Build custom hover zones over each axis vertex
-            setupRadarHoverZones(el, values);
+            // Setup mousemove hover after Plotly renders
+            setupRadarMouseHover(el, values);
         };
 
         el._renderChart = render;
         render();
     }
 
-    // Custom hover system: invisible zones over each radar vertex
-    function setupRadarHoverZones(chartEl, values) {
-        const hoverZones = document.getElementById('radar-hover-zones');
+    // Robust mousemove-based hover: detect proximity to SVG marker circles
+    function setupRadarMouseHover(chartEl, values) {
+        const overlay = document.getElementById('radar-overlay');
         const tooltip = document.getElementById('radar-tooltip');
         const tooltipLabel = document.getElementById('radar-tooltip-label');
         const tooltipValue = document.getElementById('radar-tooltip-value');
-        if (!hoverZones || !tooltip) return;
+        if (!overlay || !tooltip) return;
 
-        hoverZones.innerHTML = '';
-        // Container stays pointer-events:none; only individual zones get pointer-events:auto
+        // Find the actual SVG marker positions from Plotly's rendered DOM
+        function getMarkerPositions() {
+            const points = [];
+            // Plotly renders scatterpolar points as <circle> or <path> inside .scatterpolar
+            const wrapper = chartEl.parentElement;
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const circles = chartEl.querySelectorAll('.scatterpolar .point');
 
-        // Calculate polar chart geometry from chart dimensions and Plotly margins
-        const plotW = chartEl.offsetWidth;
-        const plotH = chartEl.offsetHeight;
-        const marginL = 90, marginR = 90, marginT = 50, marginB = 50;
-        const plotAreaW = plotW - marginL - marginR;
-        const plotAreaH = plotH - marginT - marginB;
-        const cx = marginL + plotAreaW / 2;
-        const cy = marginT + plotAreaH / 2;
-        const maxRadius = Math.min(plotAreaW, plotAreaH) / 2 * 0.82;
-
-        // 5 axes starting from top (−90°), clockwise (matches Plotly direction:'clockwise')
-        const numAxes = 5;
-        for (let i = 0; i < numAxes; i++) {
-            const angleDeg = -90 + (360 / numAxes) * i;
-            const angleRad = angleDeg * Math.PI / 180;
-            const r = (values[i] / 5) * maxRadius;
-
-            const px = cx + r * Math.cos(angleRad);
-            const py = cy + r * Math.sin(angleRad);
-
-            const zone = document.createElement('div');
-            zone.className = 'absolute rounded-full';
-            zone.style.cssText = `width:40px;height:40px;left:${px - 20}px;top:${py - 20}px;pointer-events:auto;cursor:pointer;`;
-
-            const axisLabel = AXIS_LABELS_ORDERED[i];
-            const axisValue = values[i].toFixed(1);
-
-            zone.addEventListener('mouseenter', () => {
-                tooltip.classList.remove('hidden');
-                tooltipLabel.textContent = axisLabel;
-                tooltipValue.textContent = axisValue + ' / 5.0';
-                tooltip.style.left = px + 'px';
-                tooltip.style.top = (py - 8) + 'px';
-            });
-            zone.addEventListener('mouseleave', () => {
-                tooltip.classList.add('hidden');
-            });
-
-            hoverZones.appendChild(zone);
+            if (circles.length >= 5) {
+                // Use actual rendered positions from SVG
+                for (let i = 0; i < 5; i++) {
+                    const circle = circles[i];
+                    const rect = circle.getBoundingClientRect();
+                    points.push({
+                        x: rect.left + rect.width / 2 - wrapperRect.left,
+                        y: rect.top + rect.height / 2 - wrapperRect.top,
+                        label: AXIS_LABELS_ORDERED[i],
+                        value: values[i],
+                    });
+                }
+            } else {
+                // Fallback: calculate from chart geometry
+                const plotW = chartEl.offsetWidth;
+                const plotH = chartEl.offsetHeight;
+                const cx = plotW / 2;
+                const cy = plotH / 2;
+                const maxR = Math.min(plotW, plotH) / 2 * 0.62;
+                for (let i = 0; i < 5; i++) {
+                    const angle = (-90 + 72 * i) * Math.PI / 180;
+                    const r = (values[i] / 5) * maxR;
+                    points.push({
+                        x: cx + r * Math.cos(angle),
+                        y: cy + r * Math.sin(angle),
+                        label: AXIS_LABELS_ORDERED[i],
+                        value: values[i],
+                    });
+                }
+            }
+            return points;
         }
+
+        let cachedPositions = null;
+        const HOVER_RADIUS = 30; // px proximity threshold
+
+        // Remove previous listeners by replacing the overlay
+        const newOverlay = overlay.cloneNode(false);
+        overlay.parentNode.replaceChild(newOverlay, overlay);
+
+        newOverlay.addEventListener('mousemove', (e) => {
+            if (!cachedPositions) cachedPositions = getMarkerPositions();
+            const rect = newOverlay.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+
+            // Find closest point within threshold
+            let closest = null;
+            let minDist = Infinity;
+            for (const pt of cachedPositions) {
+                const dist = Math.sqrt((mx - pt.x) ** 2 + (my - pt.y) ** 2);
+                if (dist < minDist && dist < HOVER_RADIUS) {
+                    minDist = dist;
+                    closest = pt;
+                }
+            }
+
+            if (closest) {
+                tooltip.classList.remove('hidden');
+                tooltipLabel.textContent = closest.label;
+                tooltipValue.textContent = closest.value.toFixed(1) + ' / 5.0';
+                tooltip.style.left = closest.x + 'px';
+                tooltip.style.top = closest.y + 'px';
+                newOverlay.style.cursor = 'pointer';
+            } else {
+                tooltip.classList.add('hidden');
+                newOverlay.style.cursor = 'crosshair';
+            }
+        });
+
+        newOverlay.addEventListener('mouseleave', () => {
+            tooltip.classList.add('hidden');
+            cachedPositions = null; // Recalculate on next hover (handles resize)
+        });
     }
 
     // ⑤ Category Positioning
