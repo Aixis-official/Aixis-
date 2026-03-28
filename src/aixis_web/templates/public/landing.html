@@ -614,9 +614,9 @@
     </div>
 
     <div id="featured-tools-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
-            <span class="spinner"></span>
-            <p class="mt-4 text-sm">監査データを読み込み中...</p>
+        <div class="col-span-full py-16">
+            {% set loading_text = "監査データを読み込み中" %}
+            {% include "components/loading_pentagon.html" %}
         </div>
     </div>
 

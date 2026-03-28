@@ -206,8 +206,8 @@
             <div class="relative">
                 {% if user %}
                 <!-- Logged-in: interactive radar chart -->
-                <div>
-                    <div class="max-w-lg mx-auto relative" id="radar-wrapper">
+                <div class="flex justify-center">
+                    <div class="w-full max-w-lg relative" id="radar-wrapper">
                         <style>
                             #radar-chart,
                             #radar-chart *,
@@ -616,7 +616,7 @@
                 hoverinfo: 'text',
                 text: closedLabels.slice(0, 5).map((label, i) =>
                     '<b>' + label + '</b><br>' + values[i].toFixed(1) + ' / 5.0'
-                ).concat(['']), // empty for closing point
+                ).concat(['<b>' + AXIS_LABELS_ORDERED[0] + '</b><br>' + values[0].toFixed(1) + ' / 5.0']), // closing point = same as first
                 hoverlabel: {
                     bgcolor: dark ? '#1e293b' : '#ffffff',
                     bordercolor: dark ? '#475569' : '#e2e8f0',
@@ -656,8 +656,7 @@
             el.on('plotly_click', (evtData) => {
                 if (!evtData || !evtData.points || !evtData.points[0]) return;
                 const pt = evtData.points[0];
-                const idx = pt.pointIndex;
-                if (idx >= 5) return; // skip closing point
+                const idx = pt.pointIndex >= 5 ? 0 : pt.pointIndex; // closing point maps to first axis
 
                 const panel = document.getElementById('radar-detail-panel');
                 const labelEl = document.getElementById('radar-detail-label');
@@ -709,8 +708,8 @@
             // === HOVER: enlarge point on hover ===
             el.on('plotly_hover', (evtData) => {
                 if (!evtData || !evtData.points || !evtData.points[0]) return;
-                const idx = evtData.points[0].pointIndex;
-                if (idx >= 5) return;
+                const rawIdx = evtData.points[0].pointIndex;
+                const idx = rawIdx >= 5 ? 0 : rawIdx;
                 const sizes = closedLabels.map((_, i) => i === idx ? 14 : 10);
                 el._restyleGuard = false;
                 Plotly.restyle(el, { 'marker.size': [sizes] }, [0]);

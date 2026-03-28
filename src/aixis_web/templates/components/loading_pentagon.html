@@ -1,0 +1,35 @@
+{# Pentagon loading animation component
+   Usage: {% include "components/loading_pentagon.html" %}
+   Optional: set loading_text before including to customize the status message
+   Optional: set loading_size = "sm" for smaller variant (48px instead of 80px)
+#}
+{% set _size = loading_size|default("md") %}
+{% set _text = loading_text|default("読み込み中") %}
+<div class="flex flex-col items-center justify-center">
+    <div class="relative" style="width:{{ '48px' if _size == 'sm' else '80px' }};height:{{ '48px' if _size == 'sm' else '80px' }};">
+        <svg viewBox="0 0 100 100" class="w-full h-full">
+            <!-- Outer pentagon (faint) -->
+            <polygon points="50,8 93,35 78,82 22,82 7,35" fill="none"
+                     stroke="currentColor" stroke-width="1" class="text-gray-200 dark:text-gray-700" />
+            <!-- Animated pentagon (draws in) -->
+            <polygon points="50,8 93,35 78,82 22,82 7,35" fill="none"
+                     stroke="currentColor" stroke-width="2" class="text-indigo-500/60 dark:text-indigo-400/60"
+                     stroke-dasharray="280" stroke-dashoffset="280"
+                     stroke-linecap="round" stroke-linejoin="round">
+                <animate attributeName="stroke-dashoffset" values="280;0;280" dur="2.4s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
+            </polygon>
+            <!-- Center dot pulse -->
+            <circle cx="50" cy="50" r="2.5" fill="currentColor" class="text-indigo-400 dark:text-indigo-400">
+                <animate attributeName="r" values="2;4;2" dur="1.6s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.6s" repeatCount="indefinite" />
+            </circle>
+            <!-- 5 vertex dots (appear sequentially) -->
+            <circle cx="50" cy="8" r="2" fill="currentColor" class="text-gray-300 dark:text-gray-600"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="0s" repeatCount="indefinite"/></circle>
+            <circle cx="93" cy="35" r="2" fill="currentColor" class="text-gray-300 dark:text-gray-600"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="0.4s" repeatCount="indefinite"/></circle>
+            <circle cx="78" cy="82" r="2" fill="currentColor" class="text-gray-300 dark:text-gray-600"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="0.8s" repeatCount="indefinite"/></circle>
+            <circle cx="22" cy="82" r="2" fill="currentColor" class="text-gray-300 dark:text-gray-600"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></circle>
+            <circle cx="7" cy="35" r="2" fill="currentColor" class="text-gray-300 dark:text-gray-600"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="1.6s" repeatCount="indefinite"/></circle>
+        </svg>
+    </div>
+    <p class="mt-4 text-xs tracking-wider text-gray-400 dark:text-gray-500 font-sans uppercase">{{ _text }}</p>
+</div>

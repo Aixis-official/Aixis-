@@ -13,12 +13,9 @@
     </nav>
 
     <!-- Loading state -->
-    <div id="loading-state" class="flex flex-col items-center justify-center py-20">
-        <svg class="animate-spin h-8 w-8 text-gray-400 dark:text-gray-500 mb-4" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-        <p class="text-sm text-gray-400 dark:text-gray-500 font-jp">セッション情報を読み込み中...</p>
+    <div id="loading-state" class="py-20">
+        {% set loading_text = "セッション情報を読み込み中" %}
+        {% include "components/loading_pentagon.html" %}
     </div>
 
     <!-- Error state -->
