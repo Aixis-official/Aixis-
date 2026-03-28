@@ -391,30 +391,59 @@ main.main-constrained {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 6px;
     font-weight: 800;
     font-size: 0.85rem;
     color: white;
     line-height: 1;
     flex-shrink: 0;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2);
+    border: 1px solid rgba(0,0,0,0.1);
 }
 
 .grade-badge-lg {
-    width: 60px;
-    height: 60px;
-    font-size: 1.8rem;
+    width: 64px;
+    height: 64px;
+    font-size: 1.9rem;
     border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.25);
+    border: 2px solid rgba(0,0,0,0.08);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.25);
 }
 
-.grade-S { background: var(--grade-s); }
-.grade-A { background: var(--grade-a); }
-.grade-B { background: var(--grade-b); }
-.grade-C { background: var(--grade-c); }
-.grade-D { background: var(--grade-d); }
-.grade-N\/A { background: #a0aec0; }
+.grade-S {
+    background: linear-gradient(135deg, #d4af37 0%, #c5971f 50%, #d4af37 100%);
+    border-color: rgba(180,150,30,0.4);
+    box-shadow: 0 2px 8px rgba(212,175,55,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.grade-A {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 50%, #2f855a 100%);
+    border-color: rgba(56,161,105,0.4);
+    box-shadow: 0 2px 8px rgba(56,161,105,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.grade-B {
+    background: linear-gradient(135deg, #4299e1 0%, #2b6cb0 50%, #2c5282 100%);
+    border-color: rgba(43,108,176,0.4);
+    box-shadow: 0 2px 8px rgba(43,108,176,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.grade-C {
+    background: linear-gradient(135deg, #f6ad55 0%, #ed8936 50%, #dd6b20 100%);
+    border-color: rgba(237,137,54,0.4);
+    box-shadow: 0 2px 8px rgba(237,137,54,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.grade-D {
+    background: linear-gradient(135deg, #fc8181 0%, #e53e3e 50%, #c53030 100%);
+    border-color: rgba(229,62,62,0.4);
+    box-shadow: 0 2px 8px rgba(229,62,62,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.grade-N\/A {
+    background: linear-gradient(135deg, #b0bec5 0%, #90a4ae 50%, #78909c 100%);
+    border-color: rgba(144,164,174,0.4);
+}
 
 /* ==========================================================================
    4f. Score Bars

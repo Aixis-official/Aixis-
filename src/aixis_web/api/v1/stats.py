@@ -35,10 +35,14 @@ async def get_platform_stats(db: Annotated[AsyncSession, Depends(get_db)]):
         )
         audited_tools = tools_with_scores.scalar() or 0
 
-        # Count active categories that have at least one public tool
+        # Count categories that have at least one tool with published scores
         cat_count = await db.execute(
-            select(func.count(func.distinct(Tool.category_id))).where(
-                Tool.is_public.is_(True), Tool.is_active.is_(True)
+            select(func.count(func.distinct(Tool.category_id)))
+            .join(ToolPublishedScore, ToolPublishedScore.tool_id == Tool.id)
+            .where(
+                Tool.is_public.is_(True),
+                Tool.is_active.is_(True),
+                Tool.category_id.isnot(None),
             )
         )
         categories = cat_count.scalar() or 0
@@ -56,7 +60,7 @@ async def get_platform_stats(db: Annotated[AsyncSession, Depends(get_db)]):
             select(func.max(ToolPublishedScore.published_at))
         )
         last_updated_dt = last_score.scalar()
-        last_updated = last_updated_dt.strftime("%Y年%m月%d日") if last_updated_dt else None
+        last_updated = last_updated_dt.strftime("%Y.%m.%d") if last_updated_dt else None
 
         # New this month (distinct tools that got a new published score)
         now = datetime.now(timezone.utc)

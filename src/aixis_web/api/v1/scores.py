@@ -1,4 +1,5 @@
 """Score and ranking endpoints."""
+import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -178,17 +179,23 @@ async def get_tool_analysis(
         strengths = record.strengths or []
         risks = record.risks or []
         if isinstance(strengths, str):
-            import json
             try:
                 strengths = json.loads(strengths)
             except Exception:
                 strengths = []
         if isinstance(risks, str):
-            import json
             try:
                 risks = json.loads(risks)
             except Exception:
                 risks = []
+
+        # Parse details JSON if stored as string
+        details = record.details or {}
+        if isinstance(details, str):
+            try:
+                details = json.loads(details)
+            except Exception:
+                details = {}
 
         axes.append({
             "axis": record.axis,
@@ -198,6 +205,20 @@ async def get_tool_analysis(
             "source": record.source,
             "strengths": strengths if isinstance(strengths, list) else [],
             "risks": risks if isinstance(risks, list) else [],
+            "details": details if isinstance(details, dict) else {},
         })
 
-    return {"tool_id": tool.id, "session_id": session.id, "axes": axes}
+    # Include reliability scores from the audit session
+    reliability = session.reliability_scores or {}
+    if isinstance(reliability, str):
+        try:
+            reliability = json.loads(reliability)
+        except Exception:
+            reliability = {}
+
+    return {
+        "tool_id": tool.id,
+        "session_id": session.id,
+        "axes": axes,
+        "reliability": reliability,
+    }

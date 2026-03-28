@@ -4,7 +4,7 @@
     {
       "name": "aixis",
       "runtimeExecutable": "env",
-      "runtimeArgs": ["PYTHONPATH=src", "DATABASE_URL=sqlite+aiosqlite:////tmp/aixis_preview.db", ".venv/bin/python", "-m", "uvicorn", "aixis_web.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
+      "runtimeArgs": ["PYTHONPATH=src", "DATABASE_URL=sqlite+aiosqlite:////tmp/aixis_preview.db", "SCREENSHOTS_DIR=/tmp/aixis_screenshots", ".venv/bin/python", "-m", "uvicorn", "aixis_web.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
       "port": 8000
     }
   ]

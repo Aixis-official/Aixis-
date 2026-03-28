@@ -16,12 +16,12 @@ window.AIXIS = {
     uniqueness: '革新性'
   },
 
-  // Short labels for compact display
+  // Short labels for compact display (full names for public-facing pages)
   AXIS_SHORT: {
-    practicality: '実務',
-    cost_performance: 'コスパ',
-    localization: '日本語',
-    safety: '安全性',
+    practicality: '実務適性',
+    cost_performance: '費用対効果',
+    localization: '日本語能力',
+    safety: '信頼性・安全性',
     uniqueness: '革新性'
   },
 
