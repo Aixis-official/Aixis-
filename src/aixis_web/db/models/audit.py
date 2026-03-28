@@ -19,7 +19,7 @@ class AuditSession(Base):
     id = Column(String(36), primary_key=True, default=new_uuid)
     session_code = Column(String(50), unique=True, nullable=False)
     tool_id = Column(String(36), ForeignKey("tools.id"), nullable=False)
-    profile_id = Column(String(100), nullable=False)
+    profile_id = Column(String(100), nullable=False, default="")
     status = Column(
         String(20), default="pending"
     )  # pending|running|scoring|waiting_login|aborting|awaiting_manual|completed|failed|cancelled|aborted

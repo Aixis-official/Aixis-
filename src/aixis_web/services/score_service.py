@@ -91,7 +91,7 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
     for axis, mix in AXIS_MIX.items():
         # Manual edits are final — bypass AXIS_MIX blending entirely
         if axis in manual_edit_axes:
-            final[axis] = auto_scores[axis]
+            final[axis] = auto_scores.get(axis, 0.0)
             final[axis] = max(0.0, min(5.0, round(final[axis], 1)))
             continue
 
@@ -113,22 +113,30 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
 
         final[axis] = max(0.0, min(5.0, round(final[axis], 1)))
 
-    # Overall score: equal-weight average of all 5 axes
-    overall = round(sum(final.values()) / len(final), 1) if final else 0.0
+    # Overall score: always average across all 5 axes (even if some are 0)
+    all_axis_count = len(AXIS_MIX)  # Always 5
+    overall = round(sum(final.get(a, 0.0) for a in AXIS_MIX) / all_axis_count, 1)
 
-    # Check completion rate — override grade if insufficient
+    # Check completion rate — apply grade cap if insufficient
     session_obj_q = await db.execute(select(AuditSession).where(AuditSession.id == session_id))
     session_for_completion = session_obj_q.scalar_one_or_none()
     _total_planned = session_for_completion.total_planned if session_for_completion else 0
     _total_executed = session_for_completion.total_executed if session_for_completion else 0
     _completion_rate = _total_executed / _total_planned if _total_planned > 0 else 1.0
 
-    if _completion_rate < 0.3 and _total_planned > 0:
-        # Insufficient completion: override grade to D (lowest valid grade)
-        grade_value = "D"
-    else:
-        grade = OverallGrade.from_score(overall)
-        grade_value = grade.value
+    grade = OverallGrade.from_score(overall)
+    grade_value = grade.value
+
+    if _total_planned > 0 and _completion_rate < 0.5:
+        # Low completion: cap grade based on completion rate
+        # < 30% → cap at C, 30-50% → cap at B (prevents inflated grades from few tests)
+        if _completion_rate < 0.3:
+            max_grade = "C"
+        else:
+            max_grade = "B"
+        grade_order = ["S", "A", "B", "C", "D"]
+        if grade_order.index(grade_value) < grade_order.index(max_grade):
+            grade_value = max_grade
 
     # Determine next version
     existing = await db.execute(

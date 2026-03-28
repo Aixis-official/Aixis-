@@ -203,7 +203,7 @@ const layout = {
     ],
     annotations: [
         { xref: 'paper', yref: 'y', x: 1.01, y: 4.75, text: 'S', showarrow: false, font: { size: 11, color: '#b7791f' }, xanchor: 'left' },
-        { xref: 'paper', yref: 'y', x: 1.01, y: 4.0, text: 'A', showarrow: false, font: { size: 11, color: '#276749' }, xanchor: 'left' },
+        { xref: 'paper', yref: 'y', x: 1.01, y: 3.8, text: 'A', showarrow: false, font: { size: 11, color: '#276749' }, xanchor: 'left' },
         { xref: 'paper', yref: 'y', x: 1.01, y: 3.0, text: 'B', showarrow: false, font: { size: 11, color: '#2b6cb0' }, xanchor: 'left' },
         { xref: 'paper', yref: 'y', x: 1.01, y: 2.0, text: 'C', showarrow: false, font: { size: 11, color: '#c05621' }, xanchor: 'left' },
         { xref: 'paper', yref: 'y', x: 1.01, y: 0.75, text: 'D', showarrow: false, font: { size: 11, color: '#c53030' }, xanchor: 'left' },

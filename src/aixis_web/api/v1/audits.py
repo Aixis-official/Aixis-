@@ -357,7 +357,7 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
                 item["source"] = "hybrid"
 
     # Compute live overall score and grade
-    live_overall = round(sum(live_final_scores.values()) / len(live_final_scores), 1) if live_final_scores else 0.0
+    live_overall = round(sum(live_final_scores.values()) / 5, 1) if live_final_scores else 0.0
     live_grade = OverallGrade.from_score(live_overall).value
 
     # Check for published record (for reference only, not for score values)
@@ -396,8 +396,8 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
         try:
             from ...services.score_service import generate_score_diff
             score_diff = await generate_score_diff(db, session.tool_id, session.id)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to generate score diff for session %s: %s", session.id, e)
 
     return AuditDetailResponse(
         id=session.id,
@@ -713,7 +713,7 @@ async def edit_axis_scores(
             select(AxisScoreRecord).where(AxisScoreRecord.session_id == session_id)
         )
         all_scores = {r.axis: r.score for r in all_scores_result.scalars()}
-        overall = round(sum(all_scores.values()) / len(all_scores), 1) if all_scores else 0.0
+        overall = round(sum(all_scores.values()) / 5, 1) if all_scores else 0.0
         from aixis_agent.core.enums import OverallGrade
         grade = OverallGrade.from_score(overall)
         return {
@@ -861,22 +861,24 @@ async def rescore_audit(
     if session.status == "scoring":
         raise HTTPException(400, "すでにスコアリング中です。完了をお待ちください。")
     if session.status in ("running", "pending"):
-        raise HTTPException(400, "監査がまだ実行中です。完了後に再スコアリングしてください。")
+        raise HTTPException(400, "監査がまだ実行中です。完了後に自動評価やり直しを実行してください。")
 
     tool_id = session.tool_id
 
-    # Only update status here — scores are deleted in background task
-    # right before new scores are written (ON CONFLICT handles upsert).
-    # This prevents data loss if background task fails.
-    await db.execute(text("""
-        UPDATE audit_sessions SET status = 'scoring', error_message = NULL WHERE id = :sid
+    # Atomic status update to prevent race condition (double-click / concurrent requests).
+    # Only transitions if status is NOT already 'scoring', 'running', or 'pending'.
+    result = await db.execute(text("""
+        UPDATE audit_sessions SET status = 'scoring', error_message = NULL
+        WHERE id = :sid AND status NOT IN ('scoring', 'running', 'pending')
     """), {"sid": session_id})
+    if result.rowcount == 0:
+        raise HTTPException(400, "すでにスコアリング中または実行中です。完了をお待ちください。")
     await db.commit()
 
     # Schedule re-scoring via FastAPI BackgroundTasks (reliable execution)
     background_tasks.add_task(_run_rescore_bg, session_id, tool_id)
 
-    return {"status": "scoring", "message": "再スコアリングを開始しました"}
+    return {"status": "scoring", "message": "自動評価やり直しを開始しました"}
 
 
 async def _run_rescore_bg(session_id: str, tool_id: str):
@@ -956,6 +958,24 @@ async def finalize_audit(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"セッションは {session.status} 状態です。完了済みまたは手動評価待ちのセッションのみファイナライズできます。",
         )
+
+    # Idempotency: if already completed with a published score from this session,
+    # return existing score without creating a new version
+    if session.status == "completed":
+        from ..db.models.score import ToolPublishedScore as TPS
+        existing_pub = (await db.execute(
+            select(TPS).where(
+                TPS.tool_id == session.tool_id,
+                TPS.source_session_id == session_id,
+            ).order_by(TPS.version.desc())
+        )).scalar_one_or_none()
+        if existing_pub:
+            return {
+                "message": "監査結果は既に公開済みです",
+                "overall_score": existing_pub.overall_score,
+                "overall_grade": existing_pub.overall_grade,
+                "version": existing_pub.version,
+            }
 
     # Merge auto + manual scores and publish to ToolPublishedScore
     from ...services.score_service import merge_and_publish

@@ -228,7 +228,7 @@ Plotly.newPlot('ranking-chart', [{
     ],
     annotations: [
         { xref: 'x', yref: 'paper', x: 4.75, y: 1.05, text: 'S', showarrow: false, font: { size: 11, color: '#b7791f' } },
-        { xref: 'x', yref: 'paper', x: 4.0, y: 1.05, text: 'A', showarrow: false, font: { size: 11, color: '#276749' } },
+        { xref: 'x', yref: 'paper', x: 3.8, y: 1.05, text: 'A', showarrow: false, font: { size: 11, color: '#276749' } },
         { xref: 'x', yref: 'paper', x: 3.0, y: 1.05, text: 'B', showarrow: false, font: { size: 11, color: '#2b6cb0' } },
         { xref: 'x', yref: 'paper', x: 2.0, y: 1.05, text: 'C', showarrow: false, font: { size: 11, color: '#c05621' } },
         { xref: 'x', yref: 'paper', x: 0.75, y: 1.05, text: 'D', showarrow: false, font: { size: 11, color: '#c53030' } },

@@ -507,7 +507,7 @@
     };
 
     window.rescoreAudit = async function() {
-        if (!confirm('LLMスコアリングを再実行しますか？')) return;
+        if (!confirm('自動評価をやり直しますか？（手動評価データは保持されます）')) return;
 
         try {
             await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/rescore', { method: 'POST' });
@@ -527,7 +527,7 @@
             // Poll for scoring completion
             pollScoringStatus(sessionId);
         } catch (e) {
-            alert('再スコアリングに失敗しました: ' + (e.message || '不明なエラー'));
+            alert('自動評価やり直しに失敗しました: ' + (e.message || '不明なエラー'));
         }
     };
 
@@ -626,10 +626,10 @@
             secondaryBtns.push('<a href="/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded hover:bg-amber-50 dark:hover:bg-amber-900/30 font-jp">手動やり直し</a>');
         }
         if (data.status === 'failed' || data.status === 'aborted') {
-            secondaryBtns.push('<button onclick="rescoreAudit()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded font-jp">再スコアリング</button>');
+            secondaryBtns.push('<button onclick="rescoreAudit()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded font-jp">自動評価やり直し</button>');
         }
         if (data.status === 'awaiting_manual' || data.status === 'completed') {
-            secondaryBtns.push('<button onclick="rescoreAudit()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/30 font-jp">再スコアリング</button>');
+            secondaryBtns.push('<button onclick="rescoreAudit()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/30 font-jp">自動評価やり直し</button>');
         }
 
         // Admin actions (dropdown)
@@ -812,7 +812,7 @@
                 if (!hasValidScores) {
                     var rescoreHtml = '<div class="col-span-5 text-center py-4">' +
                         '<p class="text-amber-500 font-jp mb-3">スコアデータがありません。LLMスコアリングが正常に完了していない可能性があります。</p>' +
-                        '<button onclick="rescoreAudit()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-jp">再スコアリングを実行</button>' +
+                        '<button onclick="rescoreAudit()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-jp">自動評価やり直し</button>' +
                         '</div>';
                     var cardsEl = document.getElementById('axis-cards');
                     if (cardsEl) cardsEl.innerHTML += rescoreHtml;
@@ -1188,7 +1188,7 @@
                 details = details.rule_results;
             }
             if (!details || !Array.isArray(details) || details.length === 0) {
-                return '<div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700/50 text-[10px] text-gray-400 dark:text-gray-500 font-jp italic">詳細スコアは次回の再スコアリングで生成されます</div>';
+                return '<div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700/50 text-[10px] text-gray-400 dark:text-gray-500 font-jp italic">詳細スコアは次回の自動評価やり直しで生成されます</div>';
             }
             var html = '<div class="mt-2 space-y-1.5 border-t border-gray-100 dark:border-gray-700/50 pt-2">';
             details.forEach(function(d) {
