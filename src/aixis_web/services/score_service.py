@@ -45,14 +45,19 @@ async def get_auto_scores(db: AsyncSession, session_id: str) -> tuple[dict[str, 
             continue
 
         # Use the raw auto_score if available in details (stored by LLM scorer),
-        # otherwise use the record score directly
+        # otherwise use the record score directly.
+        # Guard: if details.auto_score is 0 but record.score > 0, prefer record.score
+        # (handles legacy data where error scores corrupted the details JSON).
         auto_score = record.score
         if record.details:
             import json as _json
             try:
                 details = record.details if isinstance(record.details, dict) else _json.loads(record.details)
                 if "auto_score" in details:
-                    auto_score = float(details["auto_score"])
+                    detail_score = float(details["auto_score"])
+                    # Only use details.auto_score if it's non-zero or record.score is also zero
+                    if detail_score > 0 or record.score == 0:
+                        auto_score = detail_score
             except (TypeError, ValueError, _json.JSONDecodeError):
                 pass
         scores[record.axis] = auto_score

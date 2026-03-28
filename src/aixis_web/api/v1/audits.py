@@ -607,10 +607,10 @@ async def edit_axis_scores(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(require_analyst)],
 ):
-    """Directly edit axis scores for a session (admin/temporary feature).
+    """Edit auto (LLM) scores for a session.
 
-    Upserts into axis_scores table. Overall score and grade are auto-calculated
-    from the 5-axis equal-weight average.
+    Updates the AxisScoreRecord auto scores and the details.auto_score field,
+    then triggers merge_and_publish to recompute the final blended scores.
     """
     session = (await db.execute(
         select(AuditSession).where(AuditSession.id == session_id, AuditSession.deleted_at.is_(None))
@@ -626,7 +626,6 @@ async def edit_axis_scores(
             raise HTTPException(400, f"無効な軸: {axis}")
         score = max(0.0, min(5.0, round(score, 1)))
 
-        # Upsert: find existing or create
         existing = (await db.execute(
             select(AxisScoreRecord).where(
                 AxisScoreRecord.session_id == session_id,
@@ -638,7 +637,21 @@ async def edit_axis_scores(
             existing.score = score
             existing.scored_at = datetime.now(timezone.utc)
             existing.scored_by = user.id
-            # Keep existing source/details — only update score
+            # Update auto_score in details JSON so get_auto_scores picks it up
+            details = existing.details
+            if isinstance(details, str):
+                try:
+                    details = _json.loads(details)
+                except Exception:
+                    details = {}
+            if isinstance(details, dict):
+                details["auto_score"] = score
+                existing.details = details
+            elif isinstance(details, list):
+                existing.details = {"rule_results": details, "auto_score": score}
+            # Ensure source is not "error"
+            if existing.source == "error":
+                existing.source = "llm"
         else:
             db.add(AxisScoreRecord(
                 session_id=session_id,
@@ -647,8 +660,8 @@ async def edit_axis_scores(
                 axis_name_jp=AXIS_NAMES_JP[axis],
                 score=score,
                 confidence=0.5,
-                source="manual_edit",
-                details=[],
+                source="llm",
+                details={"auto_score": score},
                 strengths=[],
                 risks=[],
                 scored_by=user.id,
@@ -658,23 +671,39 @@ async def edit_axis_scores(
 
     await db.commit()
 
-    # Calculate overall from all current axis scores
-    all_scores_result = await db.execute(
-        select(AxisScoreRecord).where(AxisScoreRecord.session_id == session_id)
-    )
-    all_scores = {r.axis: r.score for r in all_scores_result.scalars()}
-    overall = round(sum(all_scores.values()) / len(all_scores), 1) if all_scores else 0.0
-
-    from aixis_agent.core.enums import OverallGrade
-    grade = OverallGrade.from_score(overall)
-
-    return {
-        "status": "ok",
-        "updated": updated,
-        "overall_score": overall,
-        "overall_grade": grade.value,
-        "all_scores": all_scores,
-    }
+    # Trigger merge_and_publish to recompute final blended scores
+    from ...services.score_service import merge_and_publish
+    try:
+        published = await merge_and_publish(
+            db=db,
+            session_id=session_id,
+            tool_id=session.tool_id,
+            published_by=user.id,
+        )
+        return {
+            "status": "ok",
+            "updated": updated,
+            "overall_score": published.overall_score,
+            "overall_grade": published.overall_grade,
+            "merged": True,
+        }
+    except Exception as e:
+        logger.warning("Auto-merge after score edit failed for %s: %s", session_id, e)
+        # Fallback: calculate from axis scores directly
+        all_scores_result = await db.execute(
+            select(AxisScoreRecord).where(AxisScoreRecord.session_id == session_id)
+        )
+        all_scores = {r.axis: r.score for r in all_scores_result.scalars()}
+        overall = round(sum(all_scores.values()) / len(all_scores), 1) if all_scores else 0.0
+        from aixis_agent.core.enums import OverallGrade
+        grade = OverallGrade.from_score(overall)
+        return {
+            "status": "ok",
+            "updated": updated,
+            "overall_score": overall,
+            "overall_grade": grade.value,
+            "merged": False,
+        }
 
 
 @router.get("/{session_id}/manual-scores")

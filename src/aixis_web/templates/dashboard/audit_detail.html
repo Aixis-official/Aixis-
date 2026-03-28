@@ -45,7 +45,7 @@
                         <span id="session-dates"></span>
                     </div>
                 </div>
-                <div class="flex items-center gap-3" id="action-buttons"></div>
+                <div class="flex flex-wrap items-center gap-2" id="action-buttons"></div>
             </div>
         </div>
 
@@ -240,21 +240,26 @@
                     </button>
                 </div>
 
-                <!-- Inline score editor (hidden by default) -->
-                <div id="score-editor" class="hidden mb-6 p-4 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-700/50 rounded-lg">
-                    <h3 class="text-sm font-semibold text-indigo-800 dark:text-indigo-300 mb-3 font-jp">軸スコア編集（臨時）</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-3" id="score-editor-inputs"></div>
-                    <div class="flex items-center justify-between mt-3 pt-3 border-t border-indigo-200 dark:border-indigo-700/50">
-                        <div class="text-sm font-jp">
-                            <span class="text-gray-500 dark:text-gray-400">総合スコア: </span>
-                            <span id="editor-overall-score" class="font-bold text-gray-900 dark:text-white tabular-nums">--</span>
-                            <span class="text-gray-400 dark:text-gray-500"> / 5.0</span>
-                            <span class="ml-3 text-gray-500 dark:text-gray-400">グレード: </span>
-                            <span id="editor-overall-grade" class="font-bold tabular-nums">--</span>
+                <!-- Inline auto score editor (hidden by default) -->
+                <div id="score-editor" class="hidden mb-6 p-4 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-700/50 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-300 font-jp">自動スコア編集</h3>
+                            <p class="text-[11px] text-blue-600/70 dark:text-blue-400/70 font-jp mt-0.5">LLM自動評価のスコアを手動で修正します。最終スコアはAXIS_MIX比率で自動算出されます。</p>
                         </div>
                         <div class="flex items-center gap-2">
                             <button onclick="toggleScoreEditor()" class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors font-jp">キャンセル</button>
-                            <button onclick="saveEditedScores()" id="save-scores-btn" class="px-4 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm font-jp">保存</button>
+                            <button onclick="saveEditedScores()" id="save-scores-btn" class="px-4 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm font-jp">保存して再計算</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-3" id="score-editor-inputs"></div>
+                    <div class="flex items-center gap-6 mt-3 pt-3 border-t border-blue-200 dark:border-blue-700/50 text-sm font-jp">
+                        <div>
+                            <span class="text-gray-500 dark:text-gray-400">自動スコア平均: </span>
+                            <span id="editor-overall-score" class="font-bold text-blue-700 dark:text-blue-300 tabular-nums">--</span>
+                        </div>
+                        <div class="text-[11px] text-gray-400 dark:text-gray-500">
+                            保存後、手動スコアと統合して最終スコアが再計算されます
                         </div>
                     </div>
                 </div>
@@ -587,60 +592,75 @@
             '開始: ' + formatDateTime(data.started_at) +
             (data.completed_at ? ' / 完了: ' + formatDateTime(data.completed_at) : '');
 
-        // Action buttons
+        // Action buttons — compact layout
         var actions = document.getElementById('action-buttons');
         var btns = '';
+
+        // Primary action (prominent)
         if (data.status === 'awaiting_manual') {
-            btns += '<a href="/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors font-jp">手動評価を入力</a>';
-        }
-        if (data.status === 'completed') {
-            btns += '<a href="/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors font-jp"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z"/></svg>手動評価をやり直す</a>';
+            btns += '<a href="/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors shadow-sm font-jp">手動評価を入力</a>';
         }
         if (data.status === 'completed' || data.status === 'awaiting_manual') {
-            btns += '<button id="finalize-btn" onclick="finalizeAudit()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm font-jp"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>監査結果を公開</button>';
+            btns += '<button id="finalize-btn" onclick="finalizeAudit()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm font-jp"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>公開</button>';
         }
+
+        // Status indicators
         if (data.status === 'running' || data.status === 'pending') {
-            btns += '<span class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 font-jp"><svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>実行中</span>';
-            btns += '<button onclick="abortAudit()" id="abort-button" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 rounded-lg transition-colors font-jp"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z" /></svg>中止</button>';
+            btns += '<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 font-jp"><svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>実行中</span>';
+            btns += '<button onclick="abortAudit()" id="abort-button" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-900/30 font-jp">中止</button>';
         }
         if (data.status === 'aborting') {
-            btns += '<span class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-500 dark:text-red-400 font-jp"><svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>中止中...</span>';
+            btns += '<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-500 dark:text-red-400 font-jp"><svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>中止中</span>';
         }
         if (data.status === 'waiting_login') {
-            btns += '<span class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 font-jp"><svg class="animate-pulse w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3" /></svg>Chrome拡張で記録中</span>';
-            btns += '<button onclick="abortAudit()" id="abort-button" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors font-jp">中止</button>';
+            btns += '<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 font-jp"><svg class="animate-pulse w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3"/></svg>記録中</span>';
+            btns += '<button onclick="abortAudit()" id="abort-button" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-900/30 font-jp">中止</button>';
         }
         if (data.status === 'scoring') {
-            btns += '<span class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 font-jp"><svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>LLMスコアリング中</span>';
+            btns += '<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple-600 dark:text-purple-400 font-jp"><svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>スコアリング中</span>';
+        }
+
+        // Secondary actions (smaller) — grouped with separator
+        var secondaryBtns = [];
+        if (data.status === 'completed') {
+            secondaryBtns.push('<a href="/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded hover:bg-amber-50 dark:hover:bg-amber-900/30 font-jp">手動やり直し</a>');
         }
         if (data.status === 'failed' || data.status === 'aborted') {
-            btns += '<button onclick="rescoreAudit()" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 rounded-lg transition-colors font-jp"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 19.644l3.181-3.182" /></svg>再スコアリング</button>';
+            secondaryBtns.push('<button onclick="rescoreAudit()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded font-jp">再スコアリング</button>');
         }
         if (data.status === 'awaiting_manual' || data.status === 'completed') {
-            btns += '<button onclick="rescoreAudit()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors font-jp">再スコアリング</button>';
+            secondaryBtns.push('<button onclick="rescoreAudit()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/30 font-jp">再スコアリング</button>');
         }
-        // Status edit button (for non-running sessions)
+
+        // Admin actions (dropdown)
         if (!['running', 'waiting_login', 'scoring'].includes(data.status)) {
-            btns += '<div class="relative" id="status-edit-wrapper">' +
-                '<button onclick="toggleStatusMenu()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors font-jp">' +
-                    '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z"/></svg>' +
-                    'ステータス変更' +
-                '</button>' +
-                '<div id="status-menu" class="hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#1e2235] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">' +
-                    '<div class="py-1">' +
-                        statusMenuItem('completed', '完了', data.status) +
-                        statusMenuItem('awaiting_manual', '手動評価待ち', data.status) +
-                        statusMenuItem('failed', '失敗', data.status) +
-                        statusMenuItem('cancelled', 'キャンセル', data.status) +
-                        statusMenuItem('aborted', '中止済み', data.status) +
+            secondaryBtns.push(
+                '<div class="relative" id="status-edit-wrapper">' +
+                    '<button onclick="toggleStatusMenu()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 font-jp">' +
+                        '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
+                    '</button>' +
+                    '<div id="status-menu" class="hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#1e2235] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">' +
+                        '<div class="py-1">' +
+                            statusMenuItem('completed', '完了', data.status) +
+                            statusMenuItem('awaiting_manual', '手動評価待ち', data.status) +
+                            statusMenuItem('failed', '失敗', data.status) +
+                            statusMenuItem('cancelled', 'キャンセル', data.status) +
+                            statusMenuItem('aborted', '中止済み', data.status) +
+                        '</div>' +
                     '</div>' +
-                '</div>' +
-            '</div>';
-            // Delete button
-            btns += '<button onclick="deleteAuditSession()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-500 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors font-jp">' +
-                '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>' +
-                '削除</button>';
+                '</div>'
+            );
+            secondaryBtns.push(
+                '<button onclick="deleteAuditSession()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-500 dark:text-red-400 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-900/30 font-jp">' +
+                    '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>' +
+                '</button>'
+            );
         }
+
+        if (secondaryBtns.length > 0) {
+            btns += '<span class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5"></span>' + secondaryBtns.join('');
+        }
+
         actions.innerHTML = btns;
 
         // Failed / Aborted section
@@ -938,9 +958,10 @@
     }
 
     function renderScores(scores, publishedOverall, publishedGrade, breakdown, sessionStatus) {
-        // Cache current scores for the editor
+        // Cache current scores and breakdown for the editor
         _currentAxisScores = {};
         scores.forEach(function(s) { _currentAxisScores[s.axis] = s.score; });
+        _currentBreakdown = breakdown || {};
 
         // Show the edit button
         var editBtn = document.getElementById('edit-scores-btn');
@@ -1414,8 +1435,9 @@
         }
     };
 
-    // ===== Inline Score Editor =====
-    var _currentAxisScores = {};  // cached from last render
+    // ===== Inline Auto Score Editor =====
+    var _currentAxisScores = {};  // cached from last render (final scores)
+    var _currentBreakdown = {};   // cached score breakdown
 
     window.toggleScoreEditor = function() {
         var editor = document.getElementById('score-editor');
@@ -1423,19 +1445,23 @@
         editor.classList.toggle('hidden');
 
         if (isHidden) {
-            // Populate inputs with current scores
             var container = document.getElementById('score-editor-inputs');
             var html = '';
             AIXIS.AXIS_KEYS.forEach(function(axis) {
                 var label = AIXIS.AXIS_LABELS[axis];
-                var current = _currentAxisScores[axis] || 0;
+                var mix = AIXIS.AXIS_MIX[axis] || {};
+                // Use auto score from breakdown, not final score
+                var autoScore = (_currentBreakdown[axis] && _currentBreakdown[axis].auto_score != null)
+                    ? _currentBreakdown[axis].auto_score : 0;
                 html += '<div class="flex flex-col gap-1">' +
-                    '<label class="text-xs font-medium text-gray-600 dark:text-gray-400 font-jp">' + label + '</label>' +
+                    '<label class="text-xs font-medium text-gray-600 dark:text-gray-400 font-jp">' + label +
+                        '<span class="text-[9px] text-blue-500 dark:text-blue-400 ml-1">自動' + (mix.auto || '?') + '%</span>' +
+                    '</label>' +
                     '<input type="number" id="score-input-' + axis + '" ' +
-                        'value="' + current.toFixed(1) + '" ' +
+                        'value="' + autoScore.toFixed(1) + '" ' +
                         'min="0" max="5" step="0.1" ' +
                         'oninput="updateEditorOverall()" ' +
-                        'class="w-full px-3 py-2 text-sm font-mono tabular-nums bg-white dark:bg-[#161929] border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-white">' +
+                        'class="w-full px-3 py-2 text-sm font-mono tabular-nums bg-white dark:bg-[#161929] border border-blue-300 dark:border-blue-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white">' +
                 '</div>';
             });
             container.innerHTML = html;
@@ -1456,12 +1482,8 @@
                 }
             }
         });
-        var overall = count > 0 ? total / count : 0;
-        var grade = getGrade(overall);
-        document.getElementById('editor-overall-score').textContent = overall.toFixed(1);
-        var gradeEl = document.getElementById('editor-overall-grade');
-        gradeEl.textContent = grade.grade;
-        gradeEl.style.color = grade.color;
+        var avg = count > 0 ? total / count : 0;
+        document.getElementById('editor-overall-score').textContent = avg.toFixed(1);
     };
 
     window.saveEditedScores = async function() {
@@ -1485,14 +1507,13 @@
                 method: 'PUT',
                 body: JSON.stringify({ scores: scores })
             });
-            // Hide editor and reload
             document.getElementById('score-editor').classList.add('hidden');
             loadAudit();
         } catch (e) {
             alert('スコア保存に失敗しました: ' + (e.message || '不明なエラー'));
         } finally {
             btn.disabled = false;
-            btn.textContent = '保存';
+            btn.textContent = '保存して再計算';
         }
     };
 
