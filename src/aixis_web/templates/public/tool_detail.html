@@ -206,8 +206,8 @@
             <div class="relative">
                 {% if user %}
                 <!-- Logged-in: interactive radar chart -->
-                <div>
-                    <div class="relative" id="radar-wrapper">
+                <div style="display:flex;justify-content:center;">
+                    <div class="relative" id="radar-wrapper" style="width:100%;max-width:560px;">
                         <style>
                             #radar-chart,
                             #radar-chart *,
@@ -258,6 +258,20 @@
                 {% endif %}
             </div>
         </section>
+
+        <!-- 6a. Score History Timeline -->
+        {% if user %}
+        <section id="score-history-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">スコア変遷</h2>
+            <div id="score-history-chart" style="height:300px;"></div>
+            <div id="score-history-empty" class="hidden text-center py-8">
+                <svg class="w-10 h-10 text-gray-200 dark:text-gray-700 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+                <p class="text-xs text-gray-400 dark:text-gray-500 font-jp">監査データが蓄積されると、スコアの推移がここに表示されます。</p>
+            </div>
+        </section>
+        {% endif %}
 
         <!-- 6b. Category Positioning (⑤ 類似ツールとのポジショニング) -->
         {% if user %}
@@ -619,7 +633,7 @@
 
             const layout = getRadarLayout({
                 height: 460,
-                margin: { t: 40, b: 40, l: 40, r: 40 },
+                margin: { t: 50, b: 50, l: 80, r: 80 },
                 showlegend: false,
                 dragmode: false,
             });
@@ -1382,6 +1396,102 @@
         }
     }
 
+    // --- Score History Timeline ---
+    async function renderScoreHistory(toolSlug) {
+        const section = document.getElementById('score-history-section');
+        if (!section) return;
+
+        try {
+            const resp = await fetch('/api/v1/scores/' + encodeURIComponent(toolSlug) + '/history');
+            if (!resp.ok) return;
+            const data = await resp.json();
+
+            const items = data.items || data.history || [];
+            if (items.length < 2) {
+                // Not enough data points for a meaningful chart
+                section.classList.remove('hidden');
+                document.getElementById('score-history-chart').style.display = 'none';
+                document.getElementById('score-history-empty').classList.remove('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+
+            // Group by axis → { axis: [ { date, score } ] }
+            const byAxis = {};
+            items.forEach(item => {
+                const key = item.axis || 'overall';
+                if (!byAxis[key]) byAxis[key] = [];
+                byAxis[key].push({ date: item.recorded_at, score: item.score });
+            });
+
+            // Sort each axis by date
+            Object.values(byAxis).forEach(arr => arr.sort((a, b) => a.date.localeCompare(b.date)));
+
+            const dark = isDarkMode();
+            const axisColors = {
+                overall: dark ? '#a5b4fc' : '#4f46e5',
+                practical_utility: dark ? '#6ee7b7' : '#059669',
+                cost_effectiveness: dark ? '#93c5fd' : '#2563eb',
+                japanese_capability: dark ? '#fcd34d' : '#d97706',
+                reliability_safety: dark ? '#fca5a5' : '#dc2626',
+                innovation: dark ? '#c4b5fd' : '#7c3aed',
+            };
+            const axisNames = {
+                overall: '総合',
+                practical_utility: '実務適性',
+                cost_effectiveness: '費用対効果',
+                japanese_capability: '日本語能力',
+                reliability_safety: '信頼性・安全性',
+                innovation: '革新性',
+            };
+
+            const traces = Object.entries(byAxis).map(([axis, points]) => ({
+                x: points.map(p => p.date),
+                y: points.map(p => p.score),
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: axisNames[axis] || axis,
+                line: { color: axisColors[axis] || '#6b7280', width: 2 },
+                marker: { size: 6 },
+                hovertemplate: '<b>%{fullData.name}</b><br>%{x|%Y/%m/%d}<br>%{y:.1f}<extra></extra>',
+            }));
+
+            const layout = getPlotlyLayout({
+                height: 300,
+                margin: { t: 20, b: 40, l: 40, r: 20 },
+                showlegend: true,
+                legend: {
+                    orientation: 'h',
+                    yanchor: 'bottom', y: 1.02, xanchor: 'center', x: 0.5,
+                    font: { size: 10, color: dark ? '#94a3b8' : '#64748b' },
+                    bgcolor: 'rgba(0,0,0,0)',
+                },
+                xaxis: {
+                    type: 'date',
+                    gridcolor: dark ? '#1e293b' : '#f1f5f9',
+                    tickfont: { size: 10, color: dark ? '#64748b' : '#94a3b8' },
+                    linecolor: dark ? '#334155' : '#e2e8f0',
+                },
+                yaxis: {
+                    range: [0, 5.2],
+                    dtick: 1,
+                    gridcolor: dark ? '#1e293b' : '#f1f5f9',
+                    tickfont: { size: 10, color: dark ? '#64748b' : '#94a3b8' },
+                    linecolor: dark ? '#334155' : '#e2e8f0',
+                },
+            });
+
+            const el = document.getElementById('score-history-chart');
+            Plotly.newPlot(el, traces, layout, {
+                responsive: true,
+                displayModeBar: false,
+            });
+        } catch (e) {
+            // Silently fail — history is supplementary
+        }
+    }
+
     // --- Initialize ---
 
     async function init() {
@@ -1432,6 +1542,9 @@
             renderAnalysisReport(scores, analysisData);
             renderGovernance(govData);
             renderIndustryUseCaseTags(industries, useCaseTags);
+
+            // Fetch and render score history (non-blocking)
+            renderScoreHistory(slug);
 
             // Show page
             showMain();
