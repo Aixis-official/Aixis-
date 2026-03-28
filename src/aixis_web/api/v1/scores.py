@@ -212,10 +212,11 @@ async def get_tool_analysis(
             "details": details if isinstance(details, dict) else {},
         })
 
-    # Always calculate reliability from actual audit data (not cached)
+    # Always calculate reliability from actual audit data
     reliability = {}
     try:
         from ...services.reliability_service import calculate_reliability
+        from sqlalchemy import text as sa_text
 
         results_q = await db.execute(
             select(DBTestResult).where(DBTestResult.session_id == session.id)
@@ -228,7 +229,6 @@ async def get_tool_analysis(
         cases_rows = cases_q.scalars().all()
 
         # Use explicit session values if set; otherwise derive from data
-        # Apply penalty flag when using fallback values (metadata was not explicitly set)
         has_explicit_plan = bool(session.total_planned and session.total_planned > 0)
         total_planned = session.total_planned if has_explicit_plan else len(cases_rows)
         total_executed = session.total_executed if (session.total_executed and session.total_executed > 0) else len(results_rows)
@@ -240,22 +240,32 @@ async def get_tool_analysis(
             "risks": a.get("risks"),
         } for a in axes]
 
+        logger.info(
+            "Reliability calc inputs: session=%s, results=%d, cases=%d, planned=%d, executed=%d, axes=%d",
+            session.id, len(results_rows), len(cases_rows), total_planned, total_executed, len(axis_scores_data),
+        )
+
         reliability = calculate_reliability(
             results_rows, cases_rows, axis_scores_data,
             total_planned, total_executed,
         )
-        # Persist for future requests
-        session.reliability_scores = reliability
-        await db.commit()
+
+        logger.info("Reliability calculated: %s", {k: v for k, v in reliability.items() if k != "details"})
+
+        # Persist via raw SQL to avoid ORM session conflicts
+        try:
+            await db.execute(
+                sa_text("UPDATE audit_sessions SET reliability_scores = :rel WHERE id = :sid"),
+                {"rel": json.dumps(reliability, ensure_ascii=False), "sid": session.id},
+            )
+            await db.commit()
+        except Exception as persist_err:
+            logger.warning("Failed to persist reliability scores: %s", persist_err)
+            # Calculation succeeded even if persistence failed — use the computed values
+
     except Exception as e:
-        logger.warning("Reliability calculation failed: %s", e)
-        # Fall back to stored data if calculation fails
-        reliability = session.reliability_scores or {}
-        if isinstance(reliability, str):
-            try:
-                reliability = json.loads(reliability)
-            except Exception:
-                reliability = {}
+        logger.error("Reliability calculation failed for session %s: %s", session.id, e, exc_info=True)
+        reliability = {}  # Return empty, never stale data
 
     # --- Audit metadata (date, version) ---
     audit_meta = {

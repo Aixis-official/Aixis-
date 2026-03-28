@@ -542,14 +542,17 @@
                 theta: closedLabels,
                 fill: 'toself',
                 fillcolor: fillColor,
+                name: '',
+                showlegend: false,
                 line: { color: lineColor, width: 2.5 },
                 marker: { size: 9, color: markerColor, symbol: 'circle',
                           line: { color: dark ? '#1e1b4b' : '#ffffff', width: 2 } },
-                hovertemplate: '<b>%{theta}</b><br>スコア: %{r:.1f} / 5.0<extra></extra>',
+                hoverinfo: 'text',
+                text: AXIS_LABELS_ORDERED.map((label, i) => label + ': ' + values[i].toFixed(1) + ' / 5.0'),
                 hoverlabel: {
                     bgcolor: dark ? '#1e293b' : '#ffffff',
                     bordercolor: dark ? '#475569' : '#e2e8f0',
-                    font: { color: dark ? '#e2e8f0' : '#1e293b', size: 13 },
+                    font: { color: dark ? '#e2e8f0' : '#1e293b', size: 13, family: 'Noto Sans JP, sans-serif' },
                 },
             };
 
@@ -566,7 +569,9 @@
             Plotly.newPlot(el, [trace], layout, {
                 responsive: true,
                 displayModeBar: false,
-                staticPlot: false,
+                scrollZoom: false,
+                editable: false,
+                edits: { shapePosition: false, axisTitleText: false, titleText: false },
             });
         };
 
