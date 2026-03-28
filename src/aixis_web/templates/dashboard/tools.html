@@ -170,14 +170,20 @@
                             </div>
                         </details>
 
-                        <div class="pt-3 border-t border-gray-100 dark:border-gray-700/50 flex gap-2">
-                            <button type="submit" id="form-submit-btn"
-                                    class="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-lg transition-colors duration-200 shadow-sm font-jp">
-                                登録
-                            </button>
-                            <button type="button" onclick="resetForm()"
-                                    class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200 font-jp">
-                                リセット
+                        <div class="pt-3 border-t border-gray-100 dark:border-gray-700/50 flex flex-col gap-2">
+                            <div class="flex gap-2">
+                                <button type="submit" id="form-submit-btn"
+                                        class="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-lg transition-colors duration-200 shadow-sm font-jp">
+                                    登録
+                                </button>
+                                <button type="button" onclick="resetForm()"
+                                        class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200 font-jp">
+                                    リセット
+                                </button>
+                            </div>
+                            <button type="button" id="auto-research-btn" onclick="autoResearchTool()"
+                                    class="hidden w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-600/50 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors duration-200 font-jp">
+                                🔍 LLMで公式情報を自動リサーチ
                             </button>
                         </div>
                     </form>
@@ -422,6 +428,7 @@
         document.getElementById('f-seo-keywords').value = (tool.seo_keywords_jp || []).join(',');
         document.getElementById('form-title').textContent = 'ツール編集: ' + (tool.name_jp || tool.name);
         document.getElementById('form-submit-btn').textContent = '更新';
+        document.getElementById('auto-research-btn').classList.remove('hidden');
 
         // Show config editor
         var configPanel = document.getElementById('config-editor-panel');
@@ -472,8 +479,33 @@
         document.getElementById('f-seo-keywords').value = '';
         document.getElementById('form-title').textContent = 'ツール新規登録';
         document.getElementById('form-submit-btn').textContent = '登録';
+        document.getElementById('auto-research-btn').classList.add('hidden');
         document.getElementById('config-editor-panel').classList.add('hidden');
         hideMessages();
+    };
+
+    window.autoResearchTool = async function() {
+        if (!editingSlug) return;
+        var btn = document.getElementById('auto-research-btn');
+        var origText = btn.textContent;
+        btn.textContent = 'リサーチ中...';
+        btn.disabled = true;
+        try {
+            var result = await aixisAPI('/tools/' + encodeURIComponent(editingSlug) + '/auto-research', { method: 'POST' });
+            if (result.status === 'success') {
+                showMessage('success', 'ツール情報を自動更新しました: ' + (result.updated_fields || []).join(', '));
+                // Reload tools and re-edit
+                await loadTools();
+                window.editTool(editingSlug);
+            } else {
+                showMessage('error', 'リサーチに失敗しました: ' + (result.message || '不明なエラー'));
+            }
+        } catch (e) {
+            showMessage('error', 'リサーチに失敗しました: ' + e.message);
+        } finally {
+            btn.textContent = origText;
+            btn.disabled = false;
+        }
     };
 
     window.showAddForm = function() {

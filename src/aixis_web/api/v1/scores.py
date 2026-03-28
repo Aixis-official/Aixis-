@@ -1,13 +1,16 @@
 """Score and ranking endpoints."""
 import json
+import logging
 from typing import Annotated
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...db.base import get_db
-from ...db.models.audit import AuditSession
+from ...db.models.audit import AuditSession, DBTestCase, DBTestResult
 from ...db.models.score import AxisScoreRecord, ScoreHistory, ToolPublishedScore
 from ...db.models.tool import Tool, ToolCategory
 from ...db.models.risk_governance import ToolRiskGovernance
@@ -215,6 +218,42 @@ async def get_tool_analysis(
         try:
             reliability = json.loads(reliability)
         except Exception:
+            reliability = {}
+
+    # If no reliability data exists, calculate it on-the-fly from audit data
+    if not reliability:
+        try:
+            from ...services.reliability_service import calculate_reliability
+
+            results_q = await db.execute(
+                select(DBTestResult).where(DBTestResult.session_id == session.id)
+            )
+            results_rows = results_q.scalars().all()
+
+            cases_q = await db.execute(
+                select(DBTestCase).where(DBTestCase.session_id == session.id)
+            )
+            cases_rows = cases_q.scalars().all()
+
+            total_planned = session.total_planned or len(cases_rows)
+            total_executed = session.total_executed or len(results_rows)
+
+            axis_scores_data = [{
+                "axis": a["axis"], "score": a["score"],
+                "confidence": a["confidence"],
+                "details": a.get("details"), "strengths": a.get("strengths"),
+                "risks": a.get("risks"),
+            } for a in axes]
+
+            reliability = calculate_reliability(
+                results_rows, cases_rows, axis_scores_data,
+                total_planned, total_executed,
+            )
+            # Persist for future requests
+            session.reliability_scores = reliability
+            await db.commit()
+        except Exception as e:
+            logger.warning("On-the-fly reliability calculation failed: %s", e)
             reliability = {}
 
     # --- Audit metadata (date, version) ---

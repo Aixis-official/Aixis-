@@ -735,10 +735,56 @@ async def _run_llm_scoring_background(session_id: str, tool_id: str) -> None:
 
     try:
         from ...services.llm_scorer import LLMScorer
+        from ...services.reliability_service import calculate_reliability
 
         async with async_session() as db:
             scorer = LLMScorer()
-            await scorer.score_session(session_id, tool_id, db)
+            all_scores = await scorer.score_session(session_id, tool_id, db)
+
+            # Calculate reliability scores from actual audit data
+            try:
+                # Fetch test results and cases for reliability calculation
+                results_q = await db.execute(text(
+                    "SELECT * FROM db_test_results WHERE session_id = :sid"
+                ), {"sid": session_id})
+                results_rows = results_q.fetchall()
+
+                cases_q = await db.execute(text(
+                    "SELECT * FROM db_test_cases WHERE session_id = :sid"
+                ), {"sid": session_id})
+                cases_rows = cases_q.fetchall()
+
+                session_q = await db.execute(text(
+                    "SELECT total_planned, total_executed FROM audit_sessions WHERE id = :sid"
+                ), {"sid": session_id})
+                session_row = session_q.fetchone()
+                total_planned = session_row[0] if session_row and session_row[0] else len(cases_rows)
+                total_executed = session_row[1] if session_row and session_row[1] else len(results_rows)
+
+                # Build axis_scores_data from the LLM scoring results
+                axis_scores_data = []
+                for s in all_scores:
+                    axis_scores_data.append({
+                        "axis": s.get("axis", ""),
+                        "score": s.get("score", 0),
+                        "confidence": s.get("confidence", 0),
+                        "details": s.get("details"),
+                        "strengths": s.get("strengths"),
+                        "risks": s.get("risks"),
+                    })
+
+                reliability = calculate_reliability(
+                    results_rows, cases_rows, axis_scores_data,
+                    total_planned, total_executed,
+                )
+
+                import json
+                await db.execute(text(
+                    "UPDATE audit_sessions SET reliability_scores = :rel WHERE id = :sid"
+                ), {"rel": json.dumps(reliability, ensure_ascii=False), "sid": session_id})
+                logger.info("Reliability scores calculated for session %s: overall=%s", session_id, reliability.get("overall"))
+            except Exception as rel_err:
+                logger.warning("Reliability calculation failed for session %s: %s", session_id, rel_err)
 
             # Set to awaiting_manual for human checklist evaluation
             await db.execute(

@@ -240,6 +240,121 @@ async def auto_set_favicons(
     return {"updated": updated, "total": len(tools)}
 
 
+@router.post("/{slug}/auto-research", status_code=status.HTTP_200_OK)
+async def auto_research_tool_info(
+    slug: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _admin: Annotated[User, Depends(require_admin)],
+):
+    """Use LLM to research and auto-populate tool info from official sources.
+
+    Updates: supported_languages, features, pricing info, vendor, description
+    based on Claude's knowledge of the tool's official site/documentation.
+    """
+    result = await db.execute(select(Tool).where(Tool.slug == slug))
+    tool = result.scalar_one_or_none()
+    if not tool:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="ツールが見つかりません"
+        )
+
+    import anthropic
+    import json
+
+    client = anthropic.Anthropic()
+    tool_name = tool.name_jp or tool.name or slug
+    tool_url = tool.url or ""
+    tool_vendor = tool.vendor or ""
+
+    research_prompt = f"""以下のAIツールについて、公式サイト・公式ドキュメントから確認できる情報のみを使用して、JSONフォーマットで回答してください。
+
+重要なルール:
+- 公式情報（公式サイト、公式ドキュメント、公式ブログ）のみを使用すること
+- 確認できない情報はnullとすること
+- 推測や憶測は一切含めないこと
+
+ツール名: {tool_name}
+公式URL: {tool_url}
+ベンダー: {tool_vendor}
+
+以下のJSON形式で回答してください（説明文不要、JSONのみ）:
+{{
+  "name": "英語正式名称（公式サイトの表記通り）",
+  "name_jp": "日本語名称（公式に日本語名がある場合。ない場合は英語名そのまま）",
+  "vendor": "ベンダー/開発元の正式名称",
+  "description_jp": "ツールの概要説明（2-3文、公式情報に基づく）",
+  "supported_languages": ["ja", "en", "zh", "ko", "fr", "de", "es", "pt", "it", "ru"],
+  "features": ["主要機能1", "主要機能2", "主要機能3"],
+  "pricing_model": "free|freemium|paid|enterprise のいずれか",
+  "free_trial_available": true/false,
+  "free_trial_days": 日数またはnull
+}}
+
+supported_languagesは実際にUI/インターフェースが対応している言語のISO 639-1コードのリストを返してください。
+featuresは主要な機能を最大5つまで、簡潔な日本語で。"""
+
+    try:
+        import asyncio
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(None, lambda: client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1000,
+            messages=[{"role": "user", "content": research_prompt}],
+        ))
+        content = response.content[0].text if response.content else ""
+
+        # Extract JSON from response
+        import re
+        json_match = re.search(r'\{[\s\S]*\}', content)
+        if not json_match:
+            return {"status": "error", "message": "LLMからJSON応答を取得できませんでした", "raw": content}
+
+        data = json.loads(json_match.group())
+        updated_fields = []
+
+        # Update fields only if LLM provides non-null values
+        if data.get("name"):
+            tool.name = data["name"]
+            updated_fields.append("name")
+        if data.get("name_jp"):
+            tool.name_jp = data["name_jp"]
+            updated_fields.append("name_jp")
+        if data.get("vendor"):
+            tool.vendor = data["vendor"]
+            updated_fields.append("vendor")
+        if data.get("description_jp"):
+            tool.description_jp = data["description_jp"]
+            updated_fields.append("description_jp")
+        if data.get("supported_languages") and isinstance(data["supported_languages"], list):
+            tool.supported_languages = data["supported_languages"]
+            updated_fields.append("supported_languages")
+        if data.get("features") and isinstance(data["features"], list):
+            tool.features = data["features"]
+            updated_fields.append("features")
+        if data.get("pricing_model"):
+            tool.pricing_model = data["pricing_model"]
+            updated_fields.append("pricing_model")
+        if data.get("free_trial_available") is not None:
+            tool.free_trial_available = data["free_trial_available"]
+            updated_fields.append("free_trial_available")
+        if data.get("free_trial_days") is not None:
+            tool.free_trial_days = data["free_trial_days"]
+            updated_fields.append("free_trial_days")
+
+        tool.updated_at = datetime.now(timezone.utc)
+        await db.commit()
+
+        return {
+            "status": "success",
+            "updated_fields": updated_fields,
+            "research_data": data,
+        }
+
+    except Exception as e:
+        logger.exception("Auto-research failed for %s: %s", slug, e)
+        return {"status": "error", "message": str(e)}
+
+
 @router.delete("/{slug}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tool(
     slug: str,
