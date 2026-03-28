@@ -1,4 +1,6 @@
 """Score merging service - combines automated and manual scores."""
+import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from sqlalchemy import select
@@ -10,6 +12,8 @@ from ..db.models.audit import AuditSession
 from ..db.models.tool import Tool
 from ..config import settings
 from aixis_agent.core.enums import OverallGrade, ScoreAxis
+
+logger = logging.getLogger(__name__)
 
 # Auto/manual mix ratios per axis
 AXIS_MIX = {
@@ -189,6 +193,12 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
     await db.commit()
     await db.refresh(published)
 
+    # Generate public-facing analysis summaries using LLM (best-effort)
+    try:
+        await generate_public_summaries(db, session_id)
+    except Exception:
+        logger.warning("Failed to generate public summaries for session %s", session_id)
+
     # Emit score.published webhook event (best-effort)
     try:
         from .webhook_service import emit_event
@@ -302,6 +312,110 @@ async def generate_score_diff(db: AsyncSession, tool_id: str, current_session_id
         "reliability_current": curr_reliability,
         "reliability_previous": prev_reliability,
     }
+
+
+async def generate_public_summaries(db: AsyncSession, session_id: str) -> None:
+    """Generate public-facing analysis summaries using LLM.
+
+    Takes raw audit strengths/risks (which may contain meta observations)
+    and rewrites them as objective, user-facing insights. Stores results
+    back in AxisScoreRecord.details['public_highlights'] and ['public_concerns'].
+    """
+    try:
+        import anthropic
+    except ImportError:
+        logger.warning("anthropic package not available, skipping public summary generation")
+        return
+
+    api_key = settings.anthropic_api_key
+    if not api_key:
+        logger.warning("ANTHROPIC_API_KEY not set, skipping public summary generation")
+        return
+
+    result = await db.execute(
+        select(AxisScoreRecord).where(AxisScoreRecord.session_id == session_id)
+    )
+    records = list(result.scalars())
+    if not records:
+        return
+
+    client = anthropic.Anthropic(api_key=api_key)
+    model = settings.ai_scoring_model or "claude-haiku-4-5-20251001"
+
+    for record in records:
+        axis_name = AXIS_NAMES_JP.get(record.axis, record.axis)
+        strengths = record.strengths or []
+        risks = record.risks or []
+        if isinstance(strengths, str):
+            try:
+                strengths = json.loads(strengths)
+            except Exception:
+                strengths = []
+        if isinstance(risks, str):
+            try:
+                risks = json.loads(risks)
+            except Exception:
+                risks = []
+
+        if not strengths and not risks:
+            continue
+
+        raw_strengths = "\n".join(f"- {s}" if isinstance(s, str) else f"- {s.get('text', str(s))}" for s in strengths)
+        raw_risks = "\n".join(f"- {r}" if isinstance(r, str) else f"- {r.get('text', str(r))}" for r in risks)
+
+        prompt = f"""あなたはAIツール評価レポートのライターです。以下は「{axis_name}」軸の監査で得られた生の分析データです。
+
+## 強み（生データ）
+{raw_strengths or "（なし）"}
+
+## リスク・懸念（生データ）
+{raw_risks or "（なし）"}
+
+## 指示
+上記の生データを、企業の意思決定者向けの客観的な洞察に書き換えてください。
+
+**厳守ルール:**
+- 「観察N」「スクリーンショット」「テスト」「計測データ」などの監査プロセスに言及しない
+- 「不十分」「不正確」「未計測」など評価の限界に言及しない
+- 具体的な数値（応答時間など）は使ってよいが、観察番号は使わない
+- 一般的な製品の特徴として記述する（「このツールは〜」ではなく「〜の能力がある」など）
+- 1項目1行、簡潔に（30文字以内を目安）
+
+JSONで回答:
+{{"highlights": ["強み1", "強み2", ...], "concerns": ["懸念1", ...]}}
+各3項目以内。データがない場合は空配列。"""
+
+        try:
+            response = client.messages.create(
+                model=model,
+                max_tokens=500,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = response.content[0].text.strip()
+            # Extract JSON from response
+            if "```" in text:
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+                text = text.strip()
+            parsed = json.loads(text)
+
+            # Store in details
+            details = record.details or {}
+            if isinstance(details, str):
+                try:
+                    details = json.loads(details)
+                except Exception:
+                    details = {}
+            details["public_highlights"] = parsed.get("highlights", [])
+            details["public_concerns"] = parsed.get("concerns", [])
+            record.details = details
+
+        except Exception as e:
+            logger.warning("Failed to generate public summary for axis %s: %s", record.axis, e)
+            continue
+
+    await db.commit()
 
 
 def load_checklist_template(axis: str, checklists_dir: Path | None = None) -> list[dict]:
