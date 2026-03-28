@@ -99,6 +99,7 @@ class AuditDetailResponse(AuditResponse):
     score_diff: dict[str, Any] | None = None
     published_overall_score: float | None = None
     published_overall_grade: str | None = None
+    score_breakdown: dict[str, Any] | None = None  # per-axis auto/manual/final breakdown
 
 
 class AuditListResponse(BaseModel):
