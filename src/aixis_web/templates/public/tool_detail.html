@@ -723,6 +723,25 @@
                 setTimeout(() => { el._restyleGuard = true; }, 50);
                 el.style.cursor = 'default';
             });
+
+            // === MUTATION OBSERVER: force cursor override on all Plotly elements ===
+            // Plotly sets inline cursor styles dynamically; CSS alone can't reliably win.
+            function enforceCursors() {
+                el.querySelectorAll('.nsewdrag, .drag, .draglayer, .draglayer rect, .hoverlayer, .main-svg').forEach(node => {
+                    if (node.style.cursor && node.style.cursor !== 'default') {
+                        node.style.setProperty('cursor', 'default', 'important');
+                    }
+                });
+                // Ensure data points keep pointer cursor
+                el.querySelectorAll('.scatterpolar .point').forEach(node => {
+                    node.style.setProperty('cursor', 'pointer', 'important');
+                });
+            }
+            enforceCursors();
+            if (!el._cursorObserver) {
+                el._cursorObserver = new MutationObserver(enforceCursors);
+                el._cursorObserver.observe(el, { attributes: true, attributeFilter: ['style'], subtree: true, childList: true });
+            }
         };
 
         el._renderChart = render;
