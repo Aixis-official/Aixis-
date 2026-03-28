@@ -212,49 +212,47 @@ async def get_tool_analysis(
             "details": details if isinstance(details, dict) else {},
         })
 
-    # Include reliability scores from the audit session
-    reliability = session.reliability_scores or {}
-    if isinstance(reliability, str):
-        try:
-            reliability = json.loads(reliability)
-        except Exception:
-            reliability = {}
+    # Always calculate reliability from actual audit data (not cached)
+    reliability = {}
+    try:
+        from ...services.reliability_service import calculate_reliability
 
-    # If no reliability data exists, calculate it on-the-fly from audit data
-    if not reliability:
-        try:
-            from ...services.reliability_service import calculate_reliability
+        results_q = await db.execute(
+            select(DBTestResult).where(DBTestResult.session_id == session.id)
+        )
+        results_rows = results_q.scalars().all()
 
-            results_q = await db.execute(
-                select(DBTestResult).where(DBTestResult.session_id == session.id)
-            )
-            results_rows = results_q.scalars().all()
+        cases_q = await db.execute(
+            select(DBTestCase).where(DBTestCase.session_id == session.id)
+        )
+        cases_rows = cases_q.scalars().all()
 
-            cases_q = await db.execute(
-                select(DBTestCase).where(DBTestCase.session_id == session.id)
-            )
-            cases_rows = cases_q.scalars().all()
+        total_planned = session.total_planned or len(cases_rows)
+        total_executed = session.total_executed or len(results_rows)
 
-            total_planned = session.total_planned or len(cases_rows)
-            total_executed = session.total_executed or len(results_rows)
+        axis_scores_data = [{
+            "axis": a["axis"], "score": a["score"],
+            "confidence": a["confidence"],
+            "details": a.get("details"), "strengths": a.get("strengths"),
+            "risks": a.get("risks"),
+        } for a in axes]
 
-            axis_scores_data = [{
-                "axis": a["axis"], "score": a["score"],
-                "confidence": a["confidence"],
-                "details": a.get("details"), "strengths": a.get("strengths"),
-                "risks": a.get("risks"),
-            } for a in axes]
-
-            reliability = calculate_reliability(
-                results_rows, cases_rows, axis_scores_data,
-                total_planned, total_executed,
-            )
-            # Persist for future requests
-            session.reliability_scores = reliability
-            await db.commit()
-        except Exception as e:
-            logger.warning("On-the-fly reliability calculation failed: %s", e)
-            reliability = {}
+        reliability = calculate_reliability(
+            results_rows, cases_rows, axis_scores_data,
+            total_planned, total_executed,
+        )
+        # Persist for future requests
+        session.reliability_scores = reliability
+        await db.commit()
+    except Exception as e:
+        logger.warning("Reliability calculation failed: %s", e)
+        # Fall back to stored data if calculation fails
+        reliability = session.reliability_scores or {}
+        if isinstance(reliability, str):
+            try:
+                reliability = json.loads(reliability)
+            except Exception:
+                reliability = {}
 
     # --- Audit metadata (date, version) ---
     audit_meta = {

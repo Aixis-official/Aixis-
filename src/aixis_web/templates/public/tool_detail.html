@@ -44,31 +44,32 @@
         </nav>
 
         <!-- 2. Tool Hero Section -->
-        <section id="hero-section" class="relative overflow-hidden rounded-sm mb-6 bg-gradient-to-br from-aixis-600/90 via-aixis-700/90 to-aixis-800/90 dark:from-aixis-800/80 dark:via-aixis-900/90 dark:to-gray-900 shadow-sm">
+        <section id="hero-section" class="relative overflow-hidden rounded-sm mb-6 bg-gradient-to-br from-aixis-600/90 via-aixis-700/90 to-aixis-800/90 dark:from-aixis-800/80 dark:via-aixis-900/90 dark:to-gray-900">
             <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.04),transparent_60%)]"></div>
-            <div class="relative flex flex-col md:flex-row items-center gap-6 p-6 md:p-8">
-                <!-- Left: Tool info -->
-                <div class="flex-1 text-white flex items-start gap-4">
-                    <!-- Tool icon -->
+            <div class="relative flex flex-col md:flex-row items-start md:items-center gap-5 px-7 py-7 md:px-10 md:py-9">
+                <!-- Left: Icon + Tool info -->
+                <div class="flex-1 text-white flex items-start gap-5">
                     <div id="hero-icon-wrapper" class="flex-shrink-0 hidden">
-                        <img id="hero-icon" class="w-12 h-12 rounded-sm bg-white/10 border border-white/15 object-contain" alt="" />
+                        <img id="hero-icon" class="w-14 h-14 rounded bg-white/10 p-1.5 object-contain" alt="" />
                     </div>
-                    <div class="flex-1">
-                        <span id="hero-category" class="inline-block px-2.5 py-0.5 rounded text-[10px] font-medium bg-white/10 border border-white/15 mb-2.5 font-jp"></span>
-                        <h1 id="hero-name" class="text-xl md:text-2xl font-bold mb-1 font-jp"></h1>
-                        <p id="hero-vendor" class="text-white/60 text-xs mb-2 font-jp"></p>
-                        <p id="hero-description" class="text-white/75 text-sm leading-relaxed font-jp"></p>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2.5 mb-3">
+                            <span id="hero-category" class="inline-block px-2.5 py-0.5 rounded text-[10px] font-medium bg-white/10 border border-white/15 font-jp"></span>
+                        </div>
+                        <h1 id="hero-name" class="text-2xl md:text-3xl font-bold mb-1.5 font-jp tracking-tight"></h1>
+                        <p id="hero-vendor" class="text-white/55 text-sm mb-2.5 font-jp"></p>
+                        <p id="hero-description" class="text-white/70 text-sm leading-relaxed font-jp max-w-2xl"></p>
                     </div>
                 </div>
                 <!-- Right: Grade + Score -->
-                <div id="hero-grade-area" class="flex-shrink-0 text-center">
-                    <div id="hero-grade-badge" class="grade-badge grade-badge-lg mx-auto"></div>
+                <div id="hero-grade-area" class="flex-shrink-0 text-center md:text-right md:pl-8">
+                    <div id="hero-grade-badge" class="grade-badge grade-badge-lg mx-auto md:ml-auto md:mr-0"></div>
                     <div id="hero-score-value" class="text-3xl font-bold text-white mt-3 tabular-nums"></div>
-                    <div class="text-white/50 text-xs font-jp mt-0.5">総合スコア</div>
+                    <div class="text-white/45 text-xs font-jp mt-0.5">総合スコア</div>
                 </div>
             </div>
-            <!-- Audit date & version badge (inside hero, bottom bar) -->
-            <div id="hero-audit-meta" class="hidden relative border-t border-white/10 px-6 md:px-8 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-white/50 font-jp">
+            <!-- Audit metadata bar -->
+            <div id="hero-audit-meta" class="hidden relative border-t border-white/10 px-7 md:px-10 py-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-white/50 font-jp">
             </div>
         </section>
 
@@ -324,17 +325,7 @@
                         </p>
                     </div>
 
-                    <!-- Reliability heatmap (5 axes * 4 dimensions) -->
-                    <div id="reliability-heatmap" style="height:280px;" class="mb-5"></div>
-
-                    <!-- Legend -->
-                    <div class="mb-4 flex items-center gap-4 text-[10px] text-gray-400 dark:text-gray-500 font-jp">
-                        <span class="flex items-center gap-1"><span class="w-3 h-2 rounded-sm" style="background:rgba(29,78,216,0.95)"></span>高信頼 (≥80)</span>
-                        <span class="flex items-center gap-1"><span class="w-3 h-2 rounded-sm" style="background:rgba(59,130,246,0.55)"></span>標準 (50-79)</span>
-                        <span class="flex items-center gap-1"><span class="w-3 h-2 rounded-sm" style="background:rgba(99,102,241,0.25)"></span>改善余地 (&lt;50)</span>
-                    </div>
-
-                    <!-- Gauge cards -->
+                    <!-- 4-dimension gauge cards -->
                     <div id="reliability-gauges" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"></div>
 
                     <!-- Overall score -->
@@ -527,13 +518,13 @@
         const items = [];
         const auditDate = formatYearMonth(meta.completed_at || meta.published_at);
         if (auditDate) {
-            items.push('<span class="flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>監査実施: ' + auditDate + '</span>');
+            items.push('<span class="flex items-center gap-1.5">監査実施: ' + auditDate + '</span>');
         }
         if (meta.score_version) {
-            items.push('<span class="flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" /></svg>評価バージョン: v' + meta.score_version + '</span>');
+            items.push('<span class="flex items-center gap-1.5">評価バージョン: v' + meta.score_version + '</span>');
         }
         if (meta.session_code) {
-            items.push('<span class="flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.864 4.243A7.5 7.5 0 0119.5 10.5c0 2.92-.556 5.709-1.568 8.268M5.742 6.364A7.465 7.465 0 004.5 10.5a48.667 48.667 0 00-1.409 8.38M5.742 6.364l-1.26 1.332" /></svg>セッション: ' + meta.session_code + '</span>');
+            items.push('<span class="flex items-center gap-1.5">セッション: ' + meta.session_code + '</span>');
         }
 
         if (items.length > 0) {
@@ -542,48 +533,68 @@
         }
     }
 
-    // ① Executive Summary
+    // ① Executive Summary — qualitative, no numbers
     function renderExecutiveSummary(tool, scores, analysisData, govData, industries) {
         const section = document.getElementById('executive-summary');
         if (!section || !scores) return;
 
-        const toolName = tool.name_jp || tool.name || slug;
-        const grade = scores.overall_grade || '';
-        const overallScore = scores.overall_score != null ? scores.overall_score.toFixed(1) : '--';
+        const toolName = tool.name || tool.name_jp || slug;
         const categoryName = tool.category_name_jp || 'AIツール';
+        const axes = analysisData && analysisData.axes ? analysisData.axes : [];
 
-        // Build summary from real data
+        // Collect real strengths & risks text from analysis
+        const allStrengths = [];
+        const allRisks = [];
+        axes.forEach(a => {
+            (a.strengths || []).forEach(s => {
+                const txt = typeof s === 'string' ? s : (s.text || s.description || '');
+                if (txt) allStrengths.push(txt);
+            });
+            (a.risks || []).forEach(r => {
+                const txt = typeof r === 'string' ? r : (r.text || r.description || '');
+                if (txt) allRisks.push(txt);
+            });
+        });
+
         let parts = [];
 
-        // What is this tool
-        parts.push(toolName + 'は' + (tool.vendor ? tool.vendor + 'が提供する' : '') + categoryName + 'であり、Aixisの独立監査で総合スコア' + overallScore + '/5.0（' + grade + 'ランク）を取得しています。');
-
-        // Best axis
-        const axisScores = AXIS_KEYS.map(k => ({key: k, label: AXIS_LABELS[k], score: scores[k] || 0}));
-        axisScores.sort((a,b) => b.score - a.score);
-        const bestAxis = axisScores[0];
-        const worstAxis = axisScores[axisScores.length - 1];
-
-        if (bestAxis && worstAxis && bestAxis.key !== worstAxis.key) {
-            parts.push('最大の強みは' + bestAxis.label + '（' + bestAxis.score.toFixed(1) + '）で、' + worstAxis.label + '（' + worstAxis.score.toFixed(1) + '）に改善余地があります。');
+        // Line 1: What is this tool (qualitative description, no scores)
+        const desc = tool.description_jp || tool.description || '';
+        if (desc && desc.length > 10) {
+            // Use the tool's own description as the opening
+            parts.push(desc.length > 120 ? desc.substring(0, 120).replace(/[。、]$/, '') + '。' : desc);
+        } else {
+            parts.push((tool.vendor ? tool.vendor + 'が提供する' : '') + categoryName + '。');
         }
 
-        // Industry fit
+        // Line 2: Key strength — from actual analysis data
+        if (allStrengths.length > 0) {
+            const topStrength = allStrengths[0].length > 80
+                ? allStrengths[0].substring(0, 80).replace(/[。、]$/, '')
+                : allStrengths[0].replace(/。$/, '');
+            parts.push('特に' + topStrength + 'が評価されている。');
+        }
+
+        // Line 3: Key concern — from actual analysis data
+        if (allRisks.length > 0) {
+            const topRisk = allRisks[0].length > 80
+                ? allRisks[0].substring(0, 80).replace(/[。、]$/, '')
+                : allRisks[0].replace(/。$/, '');
+            parts.push('一方、' + topRisk + 'には留意が必要。');
+        }
+
+        // Line 4: Industry fit (if available)
         if (industries && industries.length > 0) {
             const topIndustries = industries.slice(0, 3).map(m => m.industry ? m.industry.name_jp : '').filter(Boolean);
             if (topIndustries.length > 0) {
-                parts.push(topIndustries.join('・') + '分野での利用に適しています。');
+                parts.push(topIndustries.join('・') + '分野での活用に向く。');
             }
         }
 
-        // Risk level from governance
-        if (govData && govData.risk_level) {
-            const riskLabels = {low:'低リスク', medium:'中リスク', high:'高リスク', critical:'要注意'};
-            parts.push('セキュリティリスクは「' + (riskLabels[govData.risk_level] || govData.risk_level) + '」と評価されています。');
+        if (parts.length > 0) {
+            document.getElementById('executive-summary-text').textContent = parts.join(' ');
+            section.classList.remove('hidden');
         }
-
-        document.getElementById('executive-summary-text').textContent = parts.join(' ');
-        section.classList.remove('hidden');
     }
 
     function renderScoreDashboard(scores) {
@@ -873,7 +884,6 @@
         if (!analysisData) return;
 
         const reliability = analysisData.reliability || {};
-        const axes = analysisData.axes || [];
 
         const dims = [
             { key: 'consistency', label: '再現性', labelEn: 'CONSISTENCY', desc: '同条件での結果の安定性' },
@@ -882,118 +892,22 @@
             { key: 'intelligibility', label: '解釈性', labelEn: 'INTELLIGIBILITY', desc: '結果の解釈しやすさ' },
         ];
 
-        // Check if we have global reliability data
         const hasGlobalReliability = dims.some(d => reliability[d.key] != null);
-        // Check if we have per-axis confidence data
-        const hasAxisConfidence = axes.some(a => a.confidence != null && a.confidence > 0);
-
-        if (!hasGlobalReliability && !hasAxisConfidence) return;
+        if (!hasGlobalReliability) return;
 
         section.classList.remove('hidden');
 
-        // --- Build 5x4 heatmap ---
-        const heatmapEl = document.getElementById('reliability-heatmap');
-        if (heatmapEl) {
-            const axisLabels = AXIS_KEYS.map(k => AXIS_LABELS[k]);
-            const dimLabels = dims.map(d => d.label);
-
-            // Build the matrix: 5 axes x 4 dimensions
-            const heatmapZ = [];
-            const heatmapText = [];
-
-            // Weights to distribute per-axis confidence across 4 dimensions
-            const dimWeights = [0.95, 1.0, 0.90, 0.85];
-
-            AXIS_KEYS.forEach(key => {
-                const ax = axes.find(a => a.axis === key);
-                const axisConf = ax && ax.confidence != null ? ax.confidence : 0.7;
-                const confBase = axisConf <= 1.0 ? axisConf * 100 : axisConf;
-
-                const row = [];
-                const textRow = [];
-                dims.forEach((d, di) => {
-                    let val;
-                    if (reliability[d.key] != null) {
-                        // Modulate global reliability by per-axis confidence
-                        val = reliability[d.key] * (confBase / 100) * dimWeights[di];
-                        val = Math.min(100, Math.max(0, Math.round(val)));
-                    } else {
-                        // No global data: estimate from per-axis confidence
-                        val = Math.round(confBase * dimWeights[di]);
-                    }
-                    row.push(val);
-                    textRow.push(val.toString());
-                });
-                heatmapZ.push(row);
-                heatmapText.push(textRow);
-            });
-
-            const render = () => {
-                const dark = isDarkMode();
-                const trace = {
-                    type: 'heatmap',
-                    z: heatmapZ,
-                    x: dimLabels,
-                    y: axisLabels,
-                    text: heatmapText,
-                    texttemplate: '%{text}',
-                    textfont: { size: 13, color: 'white' },
-                    colorscale: [
-                        [0, 'rgba(156,163,175,0.30)'],
-                        [0.3, 'rgba(107,114,128,0.45)'],
-                        [0.5, 'rgba(75,85,99,0.55)'],
-                        [0.7, 'rgba(55,65,81,0.70)'],
-                        [0.85, 'rgba(55,65,81,0.85)'],
-                        [1.0, 'rgba(31,41,55,0.95)'],
-                    ],
-                    zmin: 0,
-                    zmax: 100,
-                    showscale: false,
-                    hovertemplate: '%{y} × %{x}: %{z}/100<extra></extra>',
-                    xgap: 3,
-                    ygap: 3,
-                };
-
-                const layout = getPlotlyLayout({
-                    height: 280,
-                    margin: { t: 30, b: 40, l: 110, r: 20 },
-                    xaxis: {
-                        side: 'top',
-                        tickfont: { size: 11, color: dark ? '#a0aec0' : '#64748b' },
-                    },
-                    yaxis: {
-                        autorange: 'reversed',
-                        tickfont: { size: 12, color: dark ? '#e2e8f0' : '#1e293b' },
-                    },
-                });
-
-                Plotly.newPlot(heatmapEl, [trace], layout, { responsive: true, displayModeBar: false, staticPlot: true });
-            };
-            heatmapEl._renderChart = render;
-            render();
-        }
-
-        // --- Render reliability gauge cards ---
+        // --- Render 4 gauge cards (global reliability, not per-axis) ---
         const gaugesEl = document.getElementById('reliability-gauges');
         if (gaugesEl) {
-            // If no global reliability, compute average per-axis confidence
-            const avgConf = axes.length > 0
-                ? axes.reduce((s, a) => s + (a.confidence || 0), 0) / axes.length
-                : 0.7;
+            const dimValues = dims.map(d => Math.min(100, Math.max(0, Math.round(reliability[d.key] || 0))));
 
             gaugesEl.innerHTML = dims.map((d, di) => {
-                let val = reliability[d.key];
-                if (val == null) {
-                    // Estimate from average confidence
-                    const base = avgConf <= 1.0 ? avgConf * 100 : avgConf;
-                    val = base * [0.95, 1.0, 0.90, 0.85][di];
-                }
-                const pct = Math.min(100, Math.max(0, Math.round(val)));
+                const pct = dimValues[di];
                 const color = pct >= 80 ? '#374151' : pct >= 50 ? '#6b7280' : '#9ca3af';
-                const bgColor = 'bg-gray-50 dark:bg-gray-800/50';
                 const levelLabel = pct >= 80 ? '高信頼' : pct >= 50 ? '標準' : '要改善';
                 const arcLen = pct / 100 * 40 * Math.PI;
-                return `<div class="text-center ${bgColor} rounded-sm p-3">
+                return `<div class="text-center bg-gray-50 dark:bg-gray-800/50 rounded-sm p-3">
                     <div class="relative mx-auto" style="width:90px;height:55px;">
                         <svg viewBox="0 0 100 55" class="w-full">
                             <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="${isDarkMode() ? '#2d3748' : '#e2e8f0'}" stroke-width="8" stroke-linecap="round"/>
@@ -1008,19 +922,12 @@
                     <div class="text-[10px] font-semibold mt-1" style="color:${color}">${levelLabel}</div>
                 </div>`;
             }).join('');
-        }
 
-        // Overall reliability
-        const overallEl = document.getElementById('reliability-overall-value');
-        if (reliability.overall != null) {
-            const overall = Math.round(reliability.overall);
-            overallEl.textContent = overall + ' / 100';
-            overallEl.style.color = overall >= 80 ? '#374151' : overall >= 50 ? '#6b7280' : '#9ca3af';
-        } else if (hasAxisConfidence) {
-            const avgConf = axes.reduce((s, a) => s + (a.confidence || 0), 0) / axes.length;
-            const estimated = Math.round((avgConf <= 1.0 ? avgConf * 100 : avgConf));
-            overallEl.textContent = estimated + ' / 100';
-            overallEl.style.color = estimated >= 80 ? '#374151' : estimated >= 50 ? '#6b7280' : '#9ca3af';
+            // Overall: compute as average of the 4 dimensions (not from stored overall which may be stale)
+            const overallEl = document.getElementById('reliability-overall-value');
+            const computedOverall = Math.round(dimValues.reduce((a, b) => a + b, 0) / dimValues.length);
+            overallEl.textContent = computedOverall + ' / 100';
+            overallEl.style.color = computedOverall >= 80 ? '#374151' : computedOverall >= 50 ? '#6b7280' : '#9ca3af';
         }
     }
 
