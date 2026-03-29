@@ -214,13 +214,15 @@ function getCSRFToken() {
 }
 
 // Configure htmx to send CSRF token on every non-GET request
-document.addEventListener('DOMContentLoaded', function() {
-  document.body.addEventListener('htmx:configRequest', function(evt) {
-    if (evt.detail.verb !== 'get') {
-      evt.detail.headers['X-CSRF-Token'] = getCSRFToken();
-    }
+if (typeof htmx !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.addEventListener('htmx:configRequest', function(evt) {
+      if (evt.detail.verb !== 'get') {
+        evt.detail.headers['X-CSRF-Token'] = getCSRFToken();
+      }
+    });
   });
-});
+}
 
 
 // ===== API HELPER =====

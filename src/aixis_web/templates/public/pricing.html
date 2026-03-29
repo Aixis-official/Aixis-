@@ -19,6 +19,8 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://platform.aixis.jp/pricing">
 <meta property="og:description" content="AIツール監査レポートへのアクセスプランをご用意。お問い合わせから無料トライアル開始。">
+<meta property="og:image" content="https://platform.aixis.jp/static/img/Aixis-logo-final.png">
+<meta name="twitter:card" content="summary">
 {% endblock %}
 
 {% block structured_data %}
@@ -334,13 +336,13 @@ function setPricingTab(tab) {
     var period = document.getElementById('price-standard-period');
 
     if (tab === 'yearly') {
-        monthly.className = 'px-5 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-gray-500 dark:text-gray-400';
-        yearly.className = 'px-5 py-2 text-sm font-semibold rounded-md transition-all duration-200 bg-white dark:bg-aixis-600 text-gray-900 dark:text-white shadow-sm';
+        monthly.className = 'px-4 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 text-gray-500 dark:text-gray-400';
+        yearly.className = 'px-4 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 bg-white dark:bg-aixis-600 text-gray-900 dark:text-white shadow-sm';
         price.innerHTML = '&yen;24,800';
         period.textContent = '/月（税別・年払い）';
     } else {
-        yearly.className = 'px-5 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-gray-500 dark:text-gray-400';
-        monthly.className = 'px-5 py-2 text-sm font-semibold rounded-md transition-all duration-200 bg-white dark:bg-aixis-600 text-gray-900 dark:text-white shadow-sm';
+        yearly.className = 'px-4 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 text-gray-500 dark:text-gray-400';
+        monthly.className = 'px-4 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 bg-white dark:bg-aixis-600 text-gray-900 dark:text-white shadow-sm';
         price.innerHTML = '&yen;29,800';
         period.textContent = '/月（税別）';
     }

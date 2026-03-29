@@ -1,4 +1,5 @@
 """SSR page routes using Jinja2 templates."""
+import time
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -13,6 +14,11 @@ from .api.deps import get_current_user
 from .db.base import get_db
 from .db.models.user import User
 from .i18n import get_translator, detect_language
+
+try:
+    from .services.subscription_service import get_subscription_info
+except ImportError:
+    get_subscription_info = None
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -53,9 +59,8 @@ def _get_template_context(request: Request, user=None, **extra) -> dict:
         **extra,
     }
     # Attach subscription info when user is authenticated
-    if user:
+    if user and get_subscription_info is not None:
         try:
-            from .services.subscription_service import get_subscription_info
             ctx["subscription"] = get_subscription_info(user)
         except Exception:
             pass
@@ -175,7 +180,7 @@ async def terms_page(request: Request, user: _OptionalUser = None):
 @page_router.get("/tokushoho")
 async def tokushoho_page(request: Request, user: _OptionalUser = None):
     """特定商取引法に基づく表記 page."""
-    ctx = _get_template_context(request, user=user, title="特定商取引法に基づく表記")
+    ctx = _get_template_context(request, user=user, title="特定商取引法に基づく表記", active_page="tokushoho")
     return _render("public/tokushoho.html", ctx)
 
 
@@ -189,7 +194,7 @@ async def pricing_page(request: Request, user: _OptionalUser = None):
 @page_router.get("/audit-process")
 async def audit_process_page(request: Request, user: _OptionalUser = None):
     """Audit process explanation page."""
-    ctx = _get_template_context(request, user=user, title="AI監査プロセス | 評価方法の詳細", active_page="services")
+    ctx = _get_template_context(request, user=user, title="AI監査プロセス | 評価方法の詳細", active_page="audit-process")
     return _render("public/audit_process.html", ctx)
 
 
@@ -617,9 +622,17 @@ _STATIC_PAGES = [
 ]
 
 
+_sitemap_cache: dict = {"xml": None, "ts": 0}
+_SITEMAP_TTL = 3600  # 1 hour
+
+
 @page_router.get("/sitemap.xml")
 async def sitemap_xml(db: AsyncSession = Depends(get_db)):
     """Dynamic sitemap.xml for search engine crawlers."""
+    now = time.time()
+    if _sitemap_cache["xml"] and (now - _sitemap_cache["ts"]) < _SITEMAP_TTL:
+        return Response(content=_sitemap_cache["xml"], media_type="application/xml")
+
     from .db.models.tool import Tool, ToolCategory
 
     lines = [
@@ -670,6 +683,8 @@ async def sitemap_xml(db: AsyncSession = Depends(get_db)):
 
     lines.append("</urlset>")
     xml = "\n".join(lines)
+    _sitemap_cache["xml"] = xml
+    _sitemap_cache["ts"] = now
     return Response(content=xml, media_type="application/xml")
 
 

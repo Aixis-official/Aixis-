@@ -62,6 +62,10 @@
 </script>
 {% endblock %}
 
+{% block head %}
+<script defer src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+{% endblock %}
+
 {% block content %}
 <div id="tool-detail" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">
     <!-- Loading state: animated 5-axis pentagon with status text -->
@@ -1100,11 +1104,6 @@
         const section = document.getElementById('reliability-section');
         if (!section) return;
         if (!analysisData) return;
-
-        // Debug: log API version and reliability debug info to console
-        const _debug = analysisData._debug || {};
-        console.log('[Aixis] Analysis API debug:', JSON.stringify(_debug));
-        console.log('[Aixis] Reliability raw:', JSON.stringify(analysisData.reliability));
 
         const reliability = analysisData.reliability || {};
 

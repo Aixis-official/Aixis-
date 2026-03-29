@@ -17,6 +17,21 @@
 <meta property="og:title" content="お問い合わせ - Aixis">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://platform.aixis.jp/contact">
+<meta property="og:image" content="https://platform.aixis.jp/static/img/Aixis-logo-final.png">
+<meta name="twitter:card" content="summary">
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "ホーム", "item": "https://platform.aixis.jp/"},
+    {"@type": "ListItem", "position": 2, "name": "お問い合わせ", "item": "https://platform.aixis.jp/contact"}
+  ]
+}
+</script>
 {% endblock %}
 
 {% block head %}
