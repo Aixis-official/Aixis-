@@ -116,7 +116,7 @@
     </div>
 
     <!-- Main Content (hidden until loaded) -->
-    <div id="main-content" class="hidden space-y-8">
+    <div id="category-main-content" class="hidden space-y-8">
 
         <!-- Horizontal Bar Chart -->
         <div class="bg-white dark:bg-aixis-800 rounded-sm shadow-sm border border-gray-200/60 dark:border-aixis-700/60 p-6">
@@ -191,7 +191,7 @@
 
     function showError(msg) {
         document.getElementById('loading-state').classList.add('hidden');
-        document.getElementById('main-content').classList.add('hidden');
+        document.getElementById('category-main-content').classList.add('hidden');
         const errorEl = document.getElementById('error-state');
         errorEl.classList.remove('hidden');
         if (msg) document.getElementById('error-message').textContent = msg;
@@ -200,7 +200,7 @@
     function showContent() {
         document.getElementById('loading-state').classList.add('hidden');
         document.getElementById('error-state').classList.add('hidden');
-        document.getElementById('main-content').classList.remove('hidden');
+        document.getElementById('category-main-content').classList.remove('hidden');
     }
 
     let _sortedTools = [];

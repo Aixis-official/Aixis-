@@ -276,7 +276,9 @@
     }
     .stat-particles {
         position: relative;
-        overflow: hidden;
+        overflow: clip;
+        overflow-clip-margin: content-box;
+        padding-bottom: 4px;
     }
     .stat-particles::before,
     .stat-particles::after {
