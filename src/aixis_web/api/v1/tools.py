@@ -245,7 +245,11 @@ async def create_tool(
     except Exception:
         logger.warning("Failed to emit tool.created webhook for %s", tool.slug, exc_info=True)
 
-    return tool
+    # Re-fetch with scores eagerly loaded for proper serialization
+    refreshed = await db.execute(
+        select(Tool).where(Tool.id == tool.id).options(selectinload(Tool.scores))
+    )
+    return refreshed.scalar_one()
 
 
 @router.put("/{slug}", response_model=ToolResponse)
@@ -292,7 +296,12 @@ async def update_tool(
         tool.logo_url = _auto_favicon_url(tool.url)
 
     await db.commit()
-    await db.refresh(tool)
+
+    # Re-fetch with scores eagerly loaded (same pattern as GET endpoint)
+    refreshed = await db.execute(
+        select(Tool).where(Tool.id == tool.id).options(selectinload(Tool.scores))
+    )
+    tool = refreshed.scalar_one()
 
     # Resolve category name (same as GET endpoint)
     resp = ToolResponse.model_validate(tool)
