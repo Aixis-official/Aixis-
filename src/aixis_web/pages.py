@@ -696,6 +696,7 @@ async def robots_txt():
         "Allow: /\n"
         "Disallow: /dashboard/\n"
         "Disallow: /api/\n"
+        "Disallow: /api/v1/debug/\n"
         "Disallow: /login\n"
         "Disallow: /forgot-password\n"
         "Disallow: /reset-password\n"

@@ -35,9 +35,8 @@ async def _seed_admin_user(db: AsyncSession) -> None:
     )
     existing = result.scalar_one_or_none()
     if existing:
-        existing.hashed_password = hash_password(settings.admin_password)
         existing.is_active = True
-        logger.info("Admin user password synced: %s", settings.admin_email)
+        logger.info("Admin user already exists, skipping password overwrite: %s", settings.admin_email)
         return
 
     # Ensure organization exists

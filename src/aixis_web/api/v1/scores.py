@@ -387,5 +387,4 @@ async def get_tool_analysis(
         "reliability": reliability,
         "audit_meta": audit_meta,
         "positioning": positioning,
-        "_debug": _reliability_debug,
     }

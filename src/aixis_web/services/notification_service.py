@@ -5,6 +5,7 @@ and posting to Slack/Discord webhooks based on user preferences.
 """
 
 import asyncio
+import html as html_mod
 import json
 import logging
 import smtplib
@@ -20,6 +21,13 @@ from ..config import settings
 from ..db.models.notification import Notification, NotificationPreference
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_create_task(coro):
+    """Create an asyncio task with automatic exception logging."""
+    task = asyncio.create_task(coro)
+    task.add_done_callback(lambda t: t.exception() if not t.cancelled() else None)
+    return task
 
 
 async def create_notification(
@@ -108,7 +116,7 @@ async def dispatch_notification(
     if pref.email_enabled and user_email and settings.smtp_host:
         subject = f"[Aixis] {title_jp}"
         body_html = _build_email_html(title_jp, body_jp, link)
-        asyncio.create_task(
+        _safe_create_task(
             asyncio.to_thread(
                 send_email_notification, user_email, subject, body_html
             )
@@ -119,23 +127,26 @@ async def dispatch_notification(
         message = f"*{title_jp}*\n{body_jp}"
         if link:
             message += f"\n<{link}|詳細を見る>"
-        asyncio.create_task(send_slack_notification(pref.slack_webhook_url, message))
+        _safe_create_task(send_slack_notification(pref.slack_webhook_url, message))
 
     # Discord notification
     if pref.discord_webhook_url:
         message = f"**{title_jp}**\n{body_jp}"
         if link:
             message += f"\n[詳細を見る]({link})"
-        asyncio.create_task(send_discord_notification(pref.discord_webhook_url, message))
+        _safe_create_task(send_discord_notification(pref.discord_webhook_url, message))
 
     await db.commit()
 
 
 def _build_email_html(title: str, body: str, link: str | None = None) -> str:
     """Build a simple HTML email body."""
+    safe_title = html_mod.escape(title)
+    safe_body = html_mod.escape(body)
     link_html = ""
     if link:
-        link_html = f'<p><a href="{link}" style="color:#2563eb;">詳細を確認する</a></p>'
+        safe_link = html_mod.escape(link, quote=True)
+        link_html = f'<p><a href="{safe_link}" style="color:#2563eb;">詳細を確認する</a></p>'
 
     return f"""
     <div style="font-family:'Noto Sans JP',sans-serif;max-width:600px;margin:0 auto;padding:20px;">
@@ -143,8 +154,8 @@ def _build_email_html(title: str, body: str, link: str | None = None) -> str:
             <h1 style="margin:0;font-size:18px;">Aixis</h1>
         </div>
         <div style="background:white;padding:24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
-            <h2 style="margin:0 0 12px;font-size:16px;color:#111827;">{title}</h2>
-            <p style="margin:0 0 16px;color:#4b5563;font-size:14px;line-height:1.6;">{body}</p>
+            <h2 style="margin:0 0 12px;font-size:16px;color:#111827;">{safe_title}</h2>
+            <p style="margin:0 0 16px;color:#4b5563;font-size:14px;line-height:1.6;">{safe_body}</p>
             {link_html}
         </div>
         <p style="margin-top:16px;font-size:12px;color:#9ca3af;text-align:center;">
@@ -210,6 +221,10 @@ async def send_discord_notification(webhook_url: str, message: str) -> None:
 
 def _post_webhook(url: str, payload_bytes: bytes) -> None:
     """Synchronous webhook POST (runs in thread)."""
+    from .webhook_service import validate_webhook_url
+
+    validate_webhook_url(url)
+
     req = urllib.request.Request(
         url,
         data=payload_bytes,

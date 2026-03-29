@@ -83,6 +83,7 @@
             </button>
             <span class="text-xs text-gray-400 dark:text-gray-500 font-jp">最大6ツールまで選択可能</span>
         </div>
+        <p id="compare-error" class="hidden mt-2 text-sm text-red-500 dark:text-red-400"></p>
     </div>
 
     <!-- Comparison Results (hidden until executed) -->
@@ -215,10 +216,16 @@
     }
 
     // ---- Compare execution ----
+    const errorEl = document.getElementById('compare-error');
+
     compareBtn.addEventListener('click', async function() {
         compareBtn.disabled = true;
-        compareBtn.textContent = '読み込み中...';
+        errorEl.classList.add('hidden');
+        errorEl.textContent = '';
         toolScores = {};
+
+        var total = selectedTools.length;
+        compareBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>読み込み中... (0/' + total + ')';
 
         for (var i = 0; i < selectedTools.length; i++) {
             var t = selectedTools[i];
@@ -226,13 +233,15 @@
                 var resp = await fetch('/api/v1/scores/' + encodeURIComponent(t.slug));
                 if (resp.ok) toolScores[t.slug] = await resp.json();
             } catch (e) { /* skip */ }
+            compareBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>読み込み中... (' + (i + 1) + '/' + total + ')';
         }
 
         compareBtn.textContent = '比較を実行';
         compareBtn.disabled = selectedTools.length < 2;
 
         if (Object.keys(toolScores).length < 2) {
-            alert('スコアデータが2ツール以上必要です。');
+            errorEl.textContent = 'スコアデータが2ツール以上必要です。';
+            errorEl.classList.remove('hidden');
             return;
         }
 
