@@ -708,6 +708,7 @@
 
     function renderScoreDashboard(scores) {
         const section = document.getElementById('score-dashboard');
+        if (!section) return;
         if (!scores) {
             section.classList.add('hidden');
             return;
@@ -1395,23 +1396,27 @@
             ).join('');
         }
 
-        // Pros & Cons
-        const pros = tool.pros_jp || [];
-        const cons = tool.cons_jp || [];
-        if (pros.length > 0 || cons.length > 0) {
-            document.getElementById('pros-cons-section').classList.remove('hidden');
-            const makeListItem = (text, color) =>
-                `<li class="flex items-start gap-2 text-gray-700 dark:text-gray-300 text-xs leading-relaxed">
-                    <span class="w-1.5 h-1.5 rounded-full bg-${color}-400 dark:bg-${color}-500 flex-shrink-0 mt-1.5"></span>
-                    <span>${text}</span>
-                </li>`;
-            document.getElementById('pros-list').innerHTML = pros.map(p => makeListItem(p, 'blue')).join('') || '<li class="text-xs text-gray-400">--</li>';
-            document.getElementById('cons-list').innerHTML = cons.map(c => makeListItem(c, 'orange')).join('') || '<li class="text-xs text-gray-400">--</li>';
+        // Pros & Cons (behind paywall for non-logged-in users)
+        const prosSection = document.getElementById('pros-cons-section');
+        if (prosSection) {
+            const pros = tool.pros_jp || [];
+            const cons = tool.cons_jp || [];
+            if (pros.length > 0 || cons.length > 0) {
+                prosSection.classList.remove('hidden');
+                const makeListItem = (text, color) =>
+                    `<li class="flex items-start gap-2 text-gray-700 dark:text-gray-300 text-xs leading-relaxed">
+                        <span class="w-1.5 h-1.5 rounded-full bg-${color}-400 dark:bg-${color}-500 flex-shrink-0 mt-1.5"></span>
+                        <span>${text}</span>
+                    </li>`;
+                document.getElementById('pros-list').innerHTML = pros.map(p => makeListItem(p, 'blue')).join('') || '<li class="text-xs text-gray-400">--</li>';
+                document.getElementById('cons-list').innerHTML = cons.map(c => makeListItem(c, 'orange')).join('') || '<li class="text-xs text-gray-400">--</li>';
+            }
         }
 
-        // Pricing Detail
-        if (tool.pricing_detail_jp || (tool.pricing_tiers && tool.pricing_tiers.length)) {
-            document.getElementById('pricing-detail-section').classList.remove('hidden');
+        // Pricing Detail (behind paywall for non-logged-in users)
+        const pricingSection = document.getElementById('pricing-detail-section');
+        if (pricingSection && (tool.pricing_detail_jp || (tool.pricing_tiers && tool.pricing_tiers.length))) {
+            pricingSection.classList.remove('hidden');
             if (tool.pricing_detail_jp) {
                 document.getElementById('pricing-detail-content').textContent = tool.pricing_detail_jp;
             }
@@ -1448,6 +1453,7 @@
     function renderGovernance(govData) {
         if (!govData) return;
         const section = document.getElementById('governance-section');
+        if (!section) return;
         section.classList.remove('hidden');
 
         // Risk level badge
