@@ -240,3 +240,28 @@ async def get_api_key_user(
     # Store scopes on request state for downstream scope checks
     request.state.api_key_scopes = api_key.scopes or []
     return user
+
+
+async def require_agent_or_analyst(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    jwt_user: Annotated[User | None, Depends(get_current_user)] = None,
+) -> User:
+    """Authenticate via API key (Chrome extension) OR JWT (dashboard).
+
+    Allows both API-key-based and session-based authentication for
+    endpoints used by both the Chrome extension and the dashboard UI.
+    """
+    # 1. Try API key first
+    api_key_raw = request.headers.get("X-API-Key")
+    if api_key_raw:
+        return await get_api_key_user(request, db)
+
+    # 2. Fall back to JWT (dashboard)
+    if jwt_user and jwt_user.role in ("admin", "analyst", "auditor"):
+        return jwt_user
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="認証が必要です（APIキーまたはダッシュボードログイン）",
+    )

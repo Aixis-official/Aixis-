@@ -20,7 +20,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Up
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..deps import get_db
+from ..deps import get_db, require_agent_or_analyst
 from .agent import require_agent_key
 from ...db.models.user import User
 from ...schemas.extension import (
@@ -59,7 +59,7 @@ _SCREENSHOTS_DIR = Path(_ext_settings.screenshots_dir)
 async def create_extension_session(
     body: ExtensionSessionCreate,
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(require_agent_key),
+    user: User = Depends(require_agent_or_analyst),
 ):
     """Create a new audit session for the Chrome extension."""
     try:
