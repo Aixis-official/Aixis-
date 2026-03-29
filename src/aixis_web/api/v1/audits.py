@@ -130,6 +130,18 @@ async def list_audits(
             for t in tools_result.scalars().all():
                 tool_names[t.id] = t.name_jp or t.name
 
+        # Check which sessions have published scores
+        from ...db.models.score import ToolPublishedScore
+        session_ids = [item.id for item in items]
+        published_session_ids = set()
+        if session_ids:
+            pub_result = await db.execute(
+                select(ToolPublishedScore.source_session_id).where(
+                    ToolPublishedScore.source_session_id.in_(session_ids)
+                )
+            )
+            published_session_ids = {r[0] for r in pub_result.all() if r[0]}
+
         response_items = []
         for item in items:
             try:
@@ -147,6 +159,7 @@ async def list_audits(
                     "started_at": item.started_at.isoformat() if item.started_at else None,
                     "completed_at": item.completed_at.isoformat() if item.completed_at else None,
                     "created_at": item.created_at.isoformat() if item.created_at else None,
+                    "is_published": item.id in published_session_ids,
                 })
             except Exception as e:
                 logger.warning("Skipping audit row %s: %s", getattr(item, 'id', '?'), e)

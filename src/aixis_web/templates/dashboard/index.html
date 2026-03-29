@@ -155,12 +155,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     let audits = [];
     let _dashboardPollInterval = null;
 
+    // Preserve checkbox state across re-renders
+    function getCheckedIds() {
+        var cbs = document.querySelectorAll('.audit-select-cb:checked');
+        return new Set(Array.from(cbs).map(function(cb) { return cb.value; }));
+    }
+
+    function restoreCheckedIds(ids) {
+        if (!ids || ids.size === 0) return;
+        var cbs = document.querySelectorAll('.audit-select-cb');
+        cbs.forEach(function(cb) { if (ids.has(cb.value)) cb.checked = true; });
+        updateBulkDeleteBtn();
+    }
+
     async function loadDashboard() {
+        // Save checkbox state before re-render
+        var checkedIds = getCheckedIds();
+
         try {
             const data = await aixisAPI('/audits');
             audits = data.items || data || [];
             renderAudits(audits);
             updateStats(audits);
+
+            // Restore checkbox state after re-render
+            restoreCheckedIds(checkedIds);
 
             // Auto-refresh if any audits are running/waiting
             const hasActive = audits.some(a => ['running', 'waiting_login', 'scoring', 'aborting', 'pending'].includes(a.status));
@@ -250,13 +269,24 @@ function updateStats(audits) {
 
     const pendingCount = audits.filter(a => a.status === 'awaiting_manual').length;
     document.getElementById('stat-pending').textContent = pendingCount;
-    document.getElementById('stat-completed').textContent = audits.filter(a => a.status === 'completed').length;
+    // Count published sessions separately
+    const publishedCount = audits.filter(a => a.is_published).length;
+    const completedNotPublished = audits.filter(a => a.status === 'completed' && !a.is_published).length;
+    document.getElementById('stat-completed').textContent = publishedCount + completedNotPublished;
 
     // Highlight pending card if items exist
     if (pendingCount > 0) {
         const card = document.getElementById('stat-pending-card');
         card.classList.add('ring-2', 'ring-amber-400');
     }
+}
+
+// Override status badge for published sessions
+function auditStatusBadge(audit) {
+    if (audit.is_published) {
+        return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700/50"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>公開済み</span>';
+    }
+    return createStatusBadge(audit.status);
 }
 
 function renderAudits(audits) {
@@ -295,16 +325,20 @@ function renderAudits(audits) {
         if (a.status === 'scoring') {
             actions += `<a href="/dashboard/audits/${encodeURIComponent(a.id)}" class="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-purple-600 dark:text-purple-400 font-jp"><svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>採点中</a> `;
         }
-        // Delete button for all sessions (running ones will be auto-aborted)
-        actions += `<button onclick="deleteAudit('${escapeJsString(a.id)}', this)" class="inline-flex items-center px-1.5 py-1 text-[11px] text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="削除"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg></button>`;
+        // Delete: published sessions need double-confirm, others just normal confirm
+        if (a.is_published) {
+            actions += `<button onclick="deletePublishedAudit('${escapeJsString(a.id)}', '${escapeJsString(a.tool_name || '')}', this)" class="inline-flex items-center px-1.5 py-1 text-[11px] text-gray-300 dark:text-gray-600 hover:text-red-400 dark:hover:text-red-500 transition-colors" title="公開済みセッション（保護）"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg></button>`;
+        } else {
+            actions += `<button onclick="deleteAudit('${escapeJsString(a.id)}', this)" class="inline-flex items-center px-1.5 py-1 text-[11px] text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="削除"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg></button>`;
+        }
         return `
-        <tr class="border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors duration-150">
-            <td class="px-2 py-3"><input type="checkbox" class="audit-select-cb rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer" value="${escapeHtml(a.id)}" onchange="updateBulkDeleteBtn()"></td>
+        <tr class="border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors duration-150${a.is_published ? ' bg-indigo-50/30 dark:bg-indigo-900/10' : ''}">
+            <td class="px-2 py-3"><input type="checkbox" class="audit-select-cb rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer" value="${escapeHtml(a.id)}" data-published="${a.is_published ? '1' : '0'}" onchange="updateBulkDeleteBtn()"></td>
             <td class="px-3 py-3 font-mono text-xs whitespace-nowrap"><a href="/dashboard/audits/${encodeURIComponent(a.id)}" class="text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml(a.session_code || a.id).substring(0, 16)}</a></td>
             <td class="px-3 py-3 font-semibold text-gray-900 dark:text-white text-xs max-w-[120px] truncate">${escapeHtml(a.tool_name || a.tool_id || '--')}</td>
             <td class="px-3 py-3 text-gray-600 dark:text-gray-400 text-xs whitespace-nowrap">${formatDateTime(a.started_at)}</td>
             <td class="px-3 py-3 text-gray-600 dark:text-gray-400 tabular-nums text-xs">${a.total_executed || 0}/${a.total_planned || 0}</td>
-            <td class="px-3 py-3">${createStatusBadge(a.status)}</td>
+            <td class="px-3 py-3">${auditStatusBadge(a)}</td>
             <td class="px-2 py-3">
                 <div class="flex items-center gap-1 flex-nowrap">${actions}</div>
             </td>
@@ -369,7 +403,26 @@ async function deleteAudit(sessionId, btn) {
 
     try {
         await aixisAPI('/audits/' + encodeURIComponent(sessionId), { method: 'DELETE' });
-        // Reload page
+        window.location.reload();
+    } catch (e) {
+        alert('削除に失敗しました: ' + (e.message || '不明なエラー'));
+        btn.disabled = false;
+    }
+}
+
+async function deletePublishedAudit(sessionId, toolName, btn) {
+    var msg = '⚠️ このセッションは公開済みです。\n\n';
+    msg += 'ツール: ' + (toolName || '不明') + '\n';
+    msg += 'スコアデータが公開中のため、削除すると影響が出る可能性があります。\n\n';
+    msg += '本当に削除しますか？';
+    if (!confirm(msg)) return;
+    // Second confirm for published sessions
+    if (!confirm('最終確認：公開済みセッションを削除します。よろしいですか？')) return;
+    if (btn.disabled) return;
+    btn.disabled = true;
+
+    try {
+        await aixisAPI('/audits/' + encodeURIComponent(sessionId), { method: 'DELETE' });
         window.location.reload();
     } catch (e) {
         alert('削除に失敗しました: ' + (e.message || '不明なエラー'));
@@ -426,7 +479,16 @@ async function bulkDeleteSelected() {
     var checked = document.querySelectorAll('.audit-select-cb:checked');
     if (checked.length === 0) return;
     var ids = Array.from(checked).map(function(cb) { return cb.value; });
-    if (!confirm(ids.length + '件のセッションを削除しますか？（実行中のセッションは自動的に中止されます）')) return;
+    var publishedCount = Array.from(checked).filter(function(cb) { return cb.dataset.published === '1'; }).length;
+
+    var msg = ids.length + '件のセッションを削除しますか？';
+    if (publishedCount > 0) {
+        msg = '⚠️ 選択された' + ids.length + '件のうち、' + publishedCount + '件は公開済みです。\n公開済みセッションを削除するとスコアデータに影響が出る可能性があります。\n\n本当に削除しますか？';
+    }
+    if (!confirm(msg)) return;
+    if (publishedCount > 0) {
+        if (!confirm('最終確認：公開済みセッションを含む' + ids.length + '件を削除します。よろしいですか？')) return;
+    }
 
     try {
         await aixisAPI('/audits/bulk-delete', {

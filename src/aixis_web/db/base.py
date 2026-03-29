@@ -94,6 +94,70 @@ async def init_db():
         # Auto-migrate: add missing columns for existing tables
         await conn.run_sync(_auto_migrate_columns)
 
+    # Auto-seed default categories
+    await _seed_default_categories()
+
+
+async def _seed_default_categories():
+    """Ensure default tool categories exist. Idempotent — skips if already present."""
+    from .models.tool import ToolCategory, Tool
+    from sqlalchemy import select
+
+    DEFAULT_CATEGORIES = [
+        {
+            "slug": "slide-creation-ai",
+            "name_jp": "資料作成AI",
+            "name_en": "Slide Creation AI",
+            "description_jp": "プレゼンテーション資料やスライドを自動生成するAIツール。テキスト入力からビジュアルなスライドを作成し、レイアウトやデザインを自動調整する。",
+            "sort_order": 10,
+            "audit_method_notes": "## 監査方法: Chrome拡張機能による自動監査\n\n"
+                "プロファイル: `slide_creation`\n\n"
+                "### 評価軸\n"
+                "- **実用性**: ビジネス文書からのスライド生成品質\n"
+                "- **コストパフォーマンス**: 料金プランと生成品質のバランス\n"
+                "- **ローカライゼーション**: 日本語レイアウト・敬語対応\n"
+                "- **安全性**: データ取扱い・プライバシーポリシー\n"
+                "- **独自性**: 他ツールとの差別化機能\n\n"
+                "### テストカテゴリ\n"
+                "- business_jp（ビジネス日本語）\n"
+                "- long_input（長文入力）\n"
+                "- keigo_mixing（敬語混在）\n",
+        },
+    ]
+
+    async with async_session() as session:
+        for cat_data in DEFAULT_CATEGORIES:
+            result = await session.execute(
+                select(ToolCategory).where(ToolCategory.slug == cat_data["slug"])
+            )
+            existing = result.scalar_one_or_none()
+            if existing:
+                # Update audit_method_notes if it was empty
+                if not existing.audit_method_notes and cat_data.get("audit_method_notes"):
+                    existing.audit_method_notes = cat_data["audit_method_notes"]
+                continue
+
+            cat = ToolCategory(**cat_data)
+            session.add(cat)
+            await session.flush()
+
+            # Auto-link tools that match this category's profile
+            if cat_data["slug"] == "slide-creation-ai":
+                # Find tools with profile_id="slide_creation" or tools named Gamma/Tome/etc.
+                tools_result = await session.execute(
+                    select(Tool).where(
+                        (Tool.profile_id == "slide_creation") | (Tool.category_id.is_(None))
+                    )
+                )
+                for tool in tools_result.scalars().all():
+                    # Link tools with matching profile or known slide creation tools
+                    if tool.profile_id == "slide_creation" or (
+                        tool.name and tool.name.lower() in ("gamma", "tome", "beautiful.ai", "canva", "イルシル")
+                    ):
+                        tool.category_id = cat.id
+
+        await session.commit()
+
 
 def _auto_migrate_columns(conn):
     """Add any missing columns from SQLAlchemy models to existing DB tables.

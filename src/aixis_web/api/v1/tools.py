@@ -346,13 +346,13 @@ async def auto_research_tool_info(
 
     import anthropic
     import json
-    import os
+    from ...config import settings as app_settings
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = app_settings.anthropic_api_key
     if not api_key:
         return {
             "status": "error",
-            "message": "ANTHROPIC_API_KEY が設定されていません。環境変数を確認してください。",
+            "message": "Anthropic APIキーが設定されていません。設定画面からAPIキーを登録してください。",
         }
 
     try:
@@ -402,11 +402,21 @@ executive_summary_jpは企業の意思決定者向けに、このツールの本
     try:
         import asyncio
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(None, lambda: client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=2000,
-            messages=[{"role": "user", "content": research_prompt}],
-        ))
+        try:
+            response = await loop.run_in_executor(None, lambda: client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=2000,
+                messages=[{"role": "user", "content": research_prompt}],
+            ))
+        except anthropic.AuthenticationError as e:
+            return {"status": "error", "message": f"APIキー認証エラー: {e}。ANTHROPIC_API_KEYの値を確認してください。"}
+        except anthropic.RateLimitError as e:
+            return {"status": "error", "message": f"APIレート制限に達しました。しばらく待ってから再試行してください: {e}"}
+        except anthropic.APIConnectionError as e:
+            return {"status": "error", "message": f"Anthropic APIへの接続に失敗しました: {e}"}
+        except anthropic.BadRequestError as e:
+            return {"status": "error", "message": f"APIリクエストエラー: {e}"}
+
         content = response.content[0].text if response.content else ""
 
         # Extract JSON from response
