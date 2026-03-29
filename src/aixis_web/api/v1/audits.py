@@ -501,11 +501,9 @@ async def delete_audit(
             detail="監査セッションが見つかりません",
         )
 
-    if session.status in ("running", "waiting_login"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="実行中のセッションは削除できません。先に中止してください。",
-        )
+    # For running/waiting sessions, auto-abort before soft-deleting
+    if session.status in ("running", "waiting_login", "scoring", "aborting"):
+        session.status = "aborted"
 
     # Soft-delete: mark as deleted instead of destroying data
     session.deleted_at = datetime.now(timezone.utc)
@@ -525,6 +523,43 @@ async def delete_audit(
         await db.commit()
     except Exception:
         pass
+
+
+class _BulkDeleteBody(BaseModel):
+    session_ids: list[str]
+
+
+@router.post("/bulk-delete")
+async def bulk_delete_audits(
+    body: _BulkDeleteBody,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[User, Depends(require_analyst)],
+):
+    """Bulk soft-delete multiple audit sessions."""
+    if not body.session_ids:
+        return {"deleted": 0}
+
+    now = datetime.now(timezone.utc)
+    deleted_count = 0
+    for sid in body.session_ids:
+        result = await db.execute(
+            select(AuditSession).where(
+                AuditSession.id == sid,
+                AuditSession.deleted_at.is_(None),
+            )
+        )
+        session = result.scalar_one_or_none()
+        if not session:
+            continue
+        # Auto-abort running sessions
+        if session.status in ("running", "waiting_login", "scoring", "aborting"):
+            session.status = "aborted"
+        session.deleted_at = now
+        session.deleted_by = _user.id
+        deleted_count += 1
+
+    await db.commit()
+    return {"deleted": deleted_count}
 
 
 @router.post("/{session_id}/restore")
@@ -783,44 +818,52 @@ async def submit_manual_scores(
             detail=f"セッションは「{session.status}」状態です。自動評価完了後に手動評価を送信してください。",
         )
 
-    for item in body.items:
-        # Upsert: update existing entry or create new one
-        existing = await db.execute(
-            select(ManualChecklistRecord).where(
-                ManualChecklistRecord.session_id == session_id,
-                ManualChecklistRecord.checklist_item_id == item.checklist_item_id,
+    try:
+        for item in body.items:
+            # Upsert: update existing entry or create new one
+            existing = await db.execute(
+                select(ManualChecklistRecord).where(
+                    ManualChecklistRecord.session_id == session_id,
+                    ManualChecklistRecord.checklist_item_id == item.checklist_item_id,
+                )
             )
+            existing_record = existing.scalar_one_or_none()
+
+            if existing_record:
+                existing_record.axis = item.axis
+                existing_record.item_name_jp = item.item_name_jp
+                existing_record.passed = item.passed
+                existing_record.score = item.score
+                existing_record.weight = item.weight
+                existing_record.evidence = item.evidence
+                existing_record.evidence_url = item.evidence_url
+                existing_record.evaluated_by = user.id
+                existing_record.evaluated_at = datetime.now(timezone.utc)
+            else:
+                record = ManualChecklistRecord(
+                    session_id=session_id,
+                    tool_id=session.tool_id,
+                    axis=item.axis,
+                    checklist_item_id=item.checklist_item_id,
+                    item_name_jp=item.item_name_jp,
+                    passed=item.passed,
+                    score=item.score,
+                    weight=item.weight,
+                    evidence=item.evidence,
+                    evidence_url=item.evidence_url,
+                    evaluated_by=user.id,
+                    evaluated_at=datetime.now(timezone.utc),
+                )
+                db.add(record)
+
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        logger.error("Failed to save manual scores for session %s: %s", session_id, e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"手動評価の保存に失敗しました: {e}",
         )
-        existing_record = existing.scalar_one_or_none()
-
-        if existing_record:
-            existing_record.axis = item.axis
-            existing_record.item_name_jp = item.item_name_jp
-            existing_record.passed = item.passed
-            existing_record.score = item.score
-            existing_record.weight = item.weight
-            existing_record.evidence = item.evidence
-            existing_record.evidence_url = item.evidence_url
-            existing_record.evaluated_by = user.id
-            existing_record.evaluated_at = datetime.now(timezone.utc)
-        else:
-            record = ManualChecklistRecord(
-                session_id=session_id,
-                tool_id=session.tool_id,
-                axis=item.axis,
-                checklist_item_id=item.checklist_item_id,
-                item_name_jp=item.item_name_jp,
-                passed=item.passed,
-                score=item.score,
-                weight=item.weight,
-                evidence=item.evidence,
-                evidence_url=item.evidence_url,
-                evaluated_by=user.id,
-                evaluated_at=datetime.now(timezone.utc),
-            )
-            db.add(record)
-
-    await db.commit()
 
     # Auto-merge: combine auto + manual scores and publish
     from ...services.score_service import merge_and_publish
@@ -840,8 +883,13 @@ async def submit_manual_scores(
             "overall_grade": published.overall_grade,
         }
     except Exception as e:
-        logger.warning("Auto-merge after manual scores failed for %s: %s", session_id, e)
-        return {"status": "ok", "count": len(body.items), "merged": False}
+        logger.warning("Auto-merge after manual scores failed for %s: %s", session_id, e, exc_info=True)
+        return {
+            "status": "partial",
+            "count": len(body.items),
+            "merged": False,
+            "message": f"手動評価は保存されましたが、スコア公開に失敗しました: {e}。ファイナライズ画面から再度お試しください。",
+        }
 
 
 @router.post("/{session_id}/rescore")
@@ -960,8 +1008,8 @@ async def finalize_audit(
             detail=f"セッションは {session.status} 状態です。完了済みまたは手動評価待ちのセッションのみファイナライズできます。",
         )
 
-    # Always re-merge from current auto + manual data to ensure the latest scores
-    # are published. merge_and_publish handles versioning internally.
+    # Re-merge from current auto + manual data to publish the latest scores.
+    # merge_and_publish handles versioning internally.
     from ...services.score_service import merge_and_publish
 
     try:

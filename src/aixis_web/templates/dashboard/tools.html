@@ -72,15 +72,10 @@
                             <p class="text-[10px] text-gray-400 mt-0.5">英小文字・数字・ハイフンのみ</p>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">英語名 <span class="text-red-500">*</span></label>
-                                <input type="text" id="f-name" required class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors" placeholder="My AI Tool">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">日本語名 <span class="text-red-500">*</span></label>
-                                <input type="text" id="f-name-jp" required class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors" placeholder="マイAIツール">
-                            </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">名前 <span class="text-red-500">*</span></label>
+                            <input type="text" id="f-name-jp" required class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors" placeholder="ChatGPT / マイAIツール">
+                            <input type="hidden" id="f-name" value="">
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
@@ -392,7 +387,9 @@
         var slug = document.getElementById('f-slug').value.trim();
         var name = document.getElementById('f-name').value.trim();
         var nameJp = document.getElementById('f-name-jp').value.trim();
-        if (!slug || !name || !nameJp) { errEl.textContent = 'スラッグ、英語名、日本語名は必須です。'; errEl.classList.remove('hidden'); return; }
+        // Sync name from name_jp if empty
+        if (!name) name = nameJp;
+        if (!slug || !nameJp) { errEl.textContent = 'スラッグと名前は必須です。'; errEl.classList.remove('hidden'); return; }
 
         var body = { slug: slug, name: name, name_jp: nameJp, is_public: document.getElementById('f-public').checked };
         var vendor = document.getElementById('f-vendor').value.trim();
@@ -471,8 +468,8 @@
     function renderResearchPreview(data) {
         document.getElementById('research-loading').classList.add('hidden');
         var fields = [
-            { key: 'name', label: '英語名' },
-            { key: 'name_jp', label: '日本語名' },
+            { key: 'name', label: '名前（英語）' },
+            { key: 'name_jp', label: '名前' },
             { key: 'vendor', label: 'ベンダー' },
             { key: 'description_jp', label: '説明' },
             { key: 'executive_summary_jp', label: 'エグゼクティブサマリー' },

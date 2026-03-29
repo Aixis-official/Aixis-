@@ -53,6 +53,83 @@ async def list_categories(db: Annotated[AsyncSession, Depends(get_db)]):
     return result.scalars().all()
 
 
+class _CategoryCreate(BaseModel):
+    slug: str
+    name_jp: str
+    name_en: str | None = None
+    description_jp: str | None = None
+    sort_order: int = 0
+    audit_method_notes: str | None = None
+
+
+class _CategoryUpdate(BaseModel):
+    name_jp: str | None = None
+    name_en: str | None = None
+    description_jp: str | None = None
+    sort_order: int | None = None
+    audit_method_notes: str | None = None
+
+
+@router.post("/categories", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
+async def create_category(
+    body: _CategoryCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _admin: Annotated[User, Depends(require_admin)],
+):
+    """Create a new tool category (admin only)."""
+    existing = await db.execute(select(ToolCategory).where(ToolCategory.slug == body.slug))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="このスラッグは既に使用されています")
+    cat = ToolCategory(slug=body.slug, name_jp=body.name_jp, name_en=body.name_en,
+                       description_jp=body.description_jp, sort_order=body.sort_order,
+                       audit_method_notes=body.audit_method_notes)
+    db.add(cat)
+    await db.commit()
+    await db.refresh(cat)
+    return cat
+
+
+@router.put("/categories/{category_id}", response_model=CategoryResponse)
+async def update_category(
+    category_id: str,
+    body: _CategoryUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _admin: Annotated[User, Depends(require_admin)],
+):
+    """Update a tool category (admin only)."""
+    result = await db.execute(select(ToolCategory).where(ToolCategory.id == category_id))
+    cat = result.scalar_one_or_none()
+    if not cat:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="カテゴリが見つかりません")
+    for key, value in body.model_dump(exclude_unset=True).items():
+        setattr(cat, key, value)
+    await db.commit()
+    await db.refresh(cat)
+    return cat
+
+
+@router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_category(
+    category_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _admin: Annotated[User, Depends(require_admin)],
+):
+    """Delete a tool category (admin only). Fails if tools are assigned."""
+    result = await db.execute(select(ToolCategory).where(ToolCategory.id == category_id))
+    cat = result.scalar_one_or_none()
+    if not cat:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="カテゴリが見つかりません")
+    # Check for assigned tools
+    tool_count = await db.execute(
+        select(func.count()).select_from(Tool).where(Tool.category_id == category_id)
+    )
+    if (tool_count.scalar() or 0) > 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="ツールが割り当てられているカテゴリは削除できません")
+    await db.delete(cat)
+    await db.commit()
+
+
 @router.get("", response_model=ToolListResponse)
 async def list_tools(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -216,7 +293,15 @@ async def update_tool(
 
     await db.commit()
     await db.refresh(tool)
-    return tool
+
+    # Resolve category name (same as GET endpoint)
+    resp = ToolResponse.model_validate(tool)
+    if tool.category_id:
+        cat_result = await db.execute(
+            select(ToolCategory.name_jp).where(ToolCategory.id == tool.category_id)
+        )
+        resp.category_name_jp = cat_result.scalar_one_or_none()
+    return resp
 
 
 @router.post("/auto-favicon", status_code=status.HTTP_200_OK)
@@ -261,8 +346,22 @@ async def auto_research_tool_info(
 
     import anthropic
     import json
+    import os
 
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {
+            "status": "error",
+            "message": "ANTHROPIC_API_KEY が設定されていません。環境変数を確認してください。",
+        }
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Anthropic クライアントの初期化に失敗しました: {e}",
+        }
     tool_name = tool.name_jp or tool.name or slug
     tool_url = tool.url or ""
     tool_vendor = tool.vendor or ""

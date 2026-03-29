@@ -285,6 +285,18 @@ async def tools_management_page(
     return _render("dashboard/tools.html", ctx)
 
 
+@page_router.get("/dashboard/categories")
+async def categories_management_page(
+    request: Request,
+    user: Annotated[User | None, Depends(get_current_user)] = None,
+):
+    """Category management page."""
+    if redirect := _check_dashboard_access(user):
+        return redirect
+    ctx = _get_template_context(request, user=user, title="カテゴリ管理", active_page="categories-admin")
+    return _render("dashboard/categories.html", ctx)
+
+
 @page_router.get("/dashboard/manual")
 async def manual_list_page(
     request: Request,

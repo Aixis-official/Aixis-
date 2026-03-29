@@ -101,6 +101,7 @@ class CategoryResponse(BaseModel):
     parent_id: str | None = None
     sort_order: int
     description_jp: str | None = None
+    audit_method_notes: str | None = None
 
     model_config = {"from_attributes": True}
 

@@ -23,6 +23,8 @@ class ToolCategory(Base):
     parent_id = Column(String(36), ForeignKey("tool_categories.id"))
     sort_order = Column(Integer, default=0)
     description_jp = Column(Text)
+    # Audit method notes: how this category is audited (markdown)
+    audit_method_notes = Column(Text)
 
     # relationships
     tools = relationship("Tool", back_populates="category")
