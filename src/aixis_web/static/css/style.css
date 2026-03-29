@@ -445,6 +445,40 @@ main.main-constrained {
     border-color: rgba(144,164,174,0.4);
 }
 
+/* Grade Badge "Stamp" hover effect */
+.grade-badge-stamp {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                text-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    cursor: default;
+}
+.grade-badge-stamp:hover {
+    transform: scale(1.15);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        inset 0 -1px 0 rgba(0,0,0,0.2),
+        0 0 12px rgba(0,0,0,0.15),
+        0 4px 8px rgba(0,0,0,0.1);
+    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+}
+/* S grade gold shimmer on hover */
+.grade-badge-stamp.grade-S:hover {
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.5),
+        inset 0 -1px 0 rgba(0,0,0,0.2),
+        0 0 20px rgba(234, 179, 8, 0.3),
+        0 4px 12px rgba(234, 179, 8, 0.2);
+}
+/* A grade green glow */
+.grade-badge-stamp.grade-A:hover {
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        inset 0 -1px 0 rgba(0,0,0,0.2),
+        0 0 16px rgba(56, 161, 105, 0.25),
+        0 4px 10px rgba(56, 161, 105, 0.15);
+}
+
 /* ==========================================================================
    4f. Score Bars
    ========================================================================== */

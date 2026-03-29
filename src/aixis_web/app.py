@@ -301,6 +301,98 @@ body{{font-family:Inter,'Noto Sans JP',sans-serif;display:flex;flex-direction:co
 </div>
 </body></html>"""
 
+    _404_audit_html = """<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>監査失敗 - 404 | Aixis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        @keyframes stamp-appear {
+            0% { transform: scale(2) rotate(-15deg); opacity: 0; }
+            60% { transform: scale(0.95) rotate(3deg); opacity: 0.9; }
+            100% { transform: scale(1) rotate(-3deg); opacity: 1; }
+        }
+        @keyframes scan-line {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        .stamp-animation {
+            animation: stamp-appear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            animation-delay: 0.3s;
+            opacity: 0;
+        }
+        .scan-effect::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(59,130,246,0.3), transparent);
+            animation: scan-line 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4" style="font-family: 'Noto Sans JP', 'Inter', sans-serif;">
+    <div class="max-w-lg w-full">
+        <div class="bg-white border border-gray-200 shadow-sm relative scan-effect overflow-hidden">
+            <div class="border-b border-gray-200 px-8 py-5 flex items-center justify-between">
+                <div>
+                    <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest font-sans">Aixis Audit Report</div>
+                    <div class="text-xs text-gray-400 mt-0.5">Report ID: 404-NOT-FOUND</div>
+                </div>
+                <a href="/" class="text-sm font-bold text-gray-800 hover:text-blue-600 transition-colors" style="font-family: 'Inter', sans-serif;">Aixis</a>
+            </div>
+            <div class="px-8 py-10 text-center relative">
+                <div class="text-[120px] font-black text-gray-100 leading-none select-none" style="font-family: 'Inter', sans-serif;">404</div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="stamp-animation border-4 border-red-400 rounded-sm px-6 py-3 transform -rotate-3">
+                        <div class="text-red-400 font-black text-2xl tracking-wider" style="font-family: 'Inter', sans-serif;">NOT FOUND</div>
+                    </div>
+                </div>
+                <h1 class="mt-6 text-lg font-bold text-gray-900">ページの監査に失敗しました</h1>
+                <p class="mt-2 text-sm text-gray-500 leading-relaxed">
+                    リクエストされたURLの監査を試みましたが、<br>該当するデータが見つかりませんでした。
+                </p>
+            </div>
+            <div class="border-t border-gray-100 px-8 py-4">
+                <table class="w-full text-xs">
+                    <tr>
+                        <td class="py-1.5 text-gray-400 w-1/3">ステータス</td>
+                        <td class="py-1.5 text-red-500 font-semibold">404 — 未検出</td>
+                    </tr>
+                    <tr>
+                        <td class="py-1.5 text-gray-400">監査対象</td>
+                        <td class="py-1.5 text-gray-600 font-mono text-[11px]" id="requested-url"></td>
+                    </tr>
+                    <tr>
+                        <td class="py-1.5 text-gray-400">監査日時</td>
+                        <td class="py-1.5 text-gray-600" id="audit-datetime"></td>
+                    </tr>
+                    <tr>
+                        <td class="py-1.5 text-gray-400">判定</td>
+                        <td class="py-1.5"><span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[10px] font-black" style="background: #ef4444;">D</span> <span class="text-gray-500 ml-1">要注意</span></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="border-t border-gray-200 px-8 py-5 flex flex-wrap gap-3 justify-center">
+                <a href="/" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold bg-gray-900 text-white hover:bg-gray-800 rounded-md transition-colors">ホームに戻る</a>
+                <a href="/tools" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md transition-colors">監査データベース</a>
+                <a href="/contact" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md transition-colors">お問い合わせ</a>
+            </div>
+        </div>
+        <p class="text-center text-xs text-gray-400 mt-4">&copy; Aixis. Independent AI Audit Platform.</p>
+    </div>
+    <script>
+        document.getElementById('requested-url').textContent = window.location.pathname;
+        document.getElementById('audit-datetime').textContent = new Date().toLocaleString('ja-JP');
+    </script>
+</body>
+</html>"""
+
     @app.exception_handler(404)
     async def not_found_handler(request: Request, exc: HTTPException):
         if request.url.path.startswith("/api/"):
@@ -310,11 +402,7 @@ body{{font-family:Inter,'Noto Sans JP',sans-serif;display:flex;flex-direction:co
                 content={"detail": getattr(exc, "detail", "Not found")},
             )
         return HTMLResponse(
-            content=_error_html(
-                404,
-                "ページが見つかりません",
-                "お探しのページは移動または削除された可能性があります。URLをご確認のうえ、もう一度お試しください。",
-            ),
+            content=_404_audit_html,
             status_code=404,
         )
 

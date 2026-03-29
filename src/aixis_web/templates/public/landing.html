@@ -267,6 +267,51 @@
     .axis-overlay.is-visible .axis-overlay-content {
         transform: translateY(0) scale(1);
     }
+    /* ===== Stats Particle Effect ===== */
+    @keyframes float-particle {
+        0% { transform: translateY(0) scale(1); opacity: 0; }
+        10% { opacity: 0.6; }
+        90% { opacity: 0.6; }
+        100% { transform: translateY(-60px) scale(0.5); opacity: 0; }
+    }
+    .stat-particles {
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-particles::before,
+    .stat-particles::after {
+        content: '';
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: rgba(99, 102, 241, 0.4);
+        animation: float-particle 3s ease-in-out infinite;
+    }
+    .stat-particles::before {
+        left: 20%;
+        bottom: 10%;
+        animation-delay: 0s;
+    }
+    .stat-particles::after {
+        left: 70%;
+        bottom: 15%;
+        animation-delay: 1.5s;
+    }
+    .stat-particles-extra {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        border-radius: 50%;
+        bottom: 0;
+        left: 50%;
+        background: rgba(59, 130, 246, 0.3);
+        box-shadow:
+            -20px 0 rgba(59, 130, 246, 0.2),
+            30px -5px rgba(99, 102, 241, 0.25),
+            -10px 10px rgba(139, 92, 246, 0.2);
+        animation: float-particle 4s ease-in-out infinite 0.8s;
+    }
 </style>
 {% endblock %}
 
@@ -394,19 +439,23 @@
     <div class="hidden lg:block mx-auto" style="max-width: 600px; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06) 30%, rgba(255,255,255,0.06) 70%, transparent);"></div>
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-12 text-center">
-            <div>
+            <div class="stat-particles">
+                <span class="stat-particles-extra"></span>
                 <div id="stat-audited" class="text-4xl sm:text-5xl font-light text-white tracking-tight font-serif" data-countup="0" data-countup-type="int">--</div>
                 <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">監査済みツール</div>
             </div>
-            <div>
+            <div class="stat-particles">
+                <span class="stat-particles-extra"></span>
                 <div id="stat-categories" class="text-4xl sm:text-5xl font-light text-white tracking-tight font-serif" data-countup="0" data-countup-type="int">--</div>
                 <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">対応カテゴリ</div>
             </div>
-            <div>
+            <div class="stat-particles">
+                <span class="stat-particles-extra"></span>
                 <div id="stat-updated" class="text-4xl sm:text-5xl font-light text-white tracking-tight font-serif" data-countup-type="date">--</div>
                 <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">最終更新</div>
             </div>
-            <div>
+            <div class="stat-particles">
+                <span class="stat-particles-extra"></span>
                 <div id="stat-new" class="text-4xl sm:text-5xl font-light text-white tracking-tight font-serif" data-countup="0" data-countup-type="int">--</div>
                 <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">今月の新規追加</div>
             </div>
@@ -1006,7 +1055,7 @@ function animateCountUp(elId, target, opts) {
         var overallScore = latestScore ? latestScore.overall_score.toFixed(1) : '--';
         var grade = latestScore ? (latestScore.overall_grade || '') : '';
         var gradeBadge = grade
-            ? '<span class="grade-badge grade-' + grade + '">' + grade + '</span>'
+            ? '<span class="grade-badge grade-badge-stamp grade-' + grade + '">' + grade + '</span>'
             : '';
         var category = tool.category_name_jp
             ? '<span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-aixis-700 text-gray-500 dark:text-gray-400 font-jp">' + tool.category_name_jp + '</span>'

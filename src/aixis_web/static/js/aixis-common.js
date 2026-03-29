@@ -263,7 +263,7 @@ async function aixisAPI(path, options = {}) {
 
 function createGradeBadge(grade, size = '') {
   const sizeClass = size === 'lg' ? 'grade-badge-lg' : '';
-  return `<span class="grade-badge ${sizeClass} grade-${grade}">${grade}</span>`;
+  return `<span class="grade-badge grade-badge-stamp ${sizeClass} grade-${grade}">${grade}</span>`;
 }
 
 function createScoreBar(score, maxScore = 5.0) {

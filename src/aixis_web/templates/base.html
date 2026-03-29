@@ -164,6 +164,8 @@
 </head>
 <body class="min-h-screen flex flex-col bg-gray-50 text-gray-900 font-mixed leading-[1.85] transition-colors duration-300 text-base {{ page_bg | default('') }}">
 
+    <div id="page-progress" class="fixed top-0 left-0 h-0.5 z-[9999] pointer-events-none" style="width: 0%; background: linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6); transition: width 0.3s ease;"></div>
+
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-white focus:text-gray-900 focus:rounded-md focus:shadow-lg focus:text-sm focus:font-bold">
         コンテンツにスキップ
     </a>
@@ -556,6 +558,46 @@
                     }
                 });
             }
+        })();
+    </script>
+
+    <!-- Page transition progress bar -->
+    <script>
+        (function() {
+            var bar = document.getElementById('page-progress');
+            if (!bar) return;
+
+            // Start progress on link click
+            document.addEventListener('click', function(e) {
+                var link = e.target.closest('a[href]');
+                if (!link) return;
+                var href = link.getAttribute('href');
+                // Only for internal navigation (not # anchors, not new tabs, not javascript:)
+                if (!href || href.startsWith('#') || href.startsWith('javascript:') ||
+                    link.target === '_blank' || e.ctrlKey || e.metaKey) return;
+                if (href.startsWith('http') && !href.startsWith(window.location.origin)) return;
+
+                bar.style.transition = 'width 0.3s ease';
+                bar.style.width = '30%';
+                setTimeout(function() {
+                    bar.style.transition = 'width 8s cubic-bezier(0.1, 0.5, 0.1, 1)';
+                    bar.style.width = '80%';
+                }, 100);
+            });
+
+            // Complete on page load
+            window.addEventListener('load', function() {
+                bar.style.transition = 'width 0.2s ease';
+                bar.style.width = '100%';
+                setTimeout(function() {
+                    bar.style.transition = 'opacity 0.3s ease';
+                    bar.style.opacity = '0';
+                    setTimeout(function() {
+                        bar.style.width = '0%';
+                        bar.style.opacity = '1';
+                    }, 300);
+                }, 200);
+            });
         })();
     </script>
 
