@@ -19,6 +19,15 @@
 <meta property="og:url" content="https://platform.aixis.jp/categories/{{ slug }}">
 {% endblock %}
 
+{% block structured_data %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"CollectionPage","name":"{{ title }}","url":"https://platform.aixis.jp/categories/{{ slug }}","publisher":{"@type":"Organization","name":"Aixis","url":"https://platform.aixis.jp"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"ホーム","item":"https://platform.aixis.jp/"},{"@type":"ListItem","position":2,"name":"カテゴリ一覧","item":"https://platform.aixis.jp/categories"},{"@type":"ListItem","position":3,"name":"{{ title }}","item":"https://platform.aixis.jp/categories/{{ slug }}"}]}
+</script>
+{% endblock %}
+
 {% block head %}
 <style>
     .rank-1 { background: rgba(26, 54, 93, 0.04); }

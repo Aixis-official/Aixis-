@@ -8,8 +8,26 @@
 <meta name="keywords" content="AIツール ベンチマーク,AI リーダーボード,AIツール パフォーマンス,AIランキング リアルタイム">
 {% endblock %}
 
+{% block canonical %}
+<link rel="canonical" href="https://platform.aixis.jp/benchmarks/{{ slug }}/leaderboard">
+{% endblock %}
+
+{% block ogp %}
+<meta property="og:title" content="{{ title }} - Aixis AI監査プラットフォーム">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://platform.aixis.jp/benchmarks/{{ slug }}/leaderboard">
+{% endblock %}
+
 {% block content %}
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+    <nav class="mb-5" aria-label="パンくずリスト">
+        <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
+            <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
+            <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
+            <li class="text-gray-600 dark:text-gray-300 font-medium">リーダーボード</li>
+        </ol>
+    </nav>
 
     <!-- Header -->
     <div class="text-center mb-10">

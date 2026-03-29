@@ -14,6 +14,12 @@
 <link rel="canonical" href="https://platform.aixis.jp/independence">
 {% endblock %}
 
+{% block ogp %}
+<meta property="og:title" content="独立性宣言 - Aixis">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://platform.aixis.jp/independence">
+{% endblock %}
+
 {% block head %}
 <style>
     @keyframes countLine {
@@ -58,6 +64,13 @@
 <section class="relative overflow-hidden bg-gradient-to-br from-[#0f172a] to-[#1e3a5f]">
     <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
     <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+        <nav class="mb-5" aria-label="パンくずリスト">
+            <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
+                <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
+                <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
+                <li class="text-gray-600 dark:text-gray-300 font-medium">独立性宣言</li>
+            </ol>
+        </nav>
         <div class="flex flex-col lg:flex-row items-center gap-12">
             <div class="flex-1">
                 <span class="report-label font-sans" style="color: #64748b; text-transform: none;">Aixis Independence Declaration</span>

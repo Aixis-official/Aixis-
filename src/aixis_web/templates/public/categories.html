@@ -13,6 +13,21 @@
 <link rel="canonical" href="https://platform.aixis.jp/categories">
 {% endblock %}
 
+{% block ogp %}
+<meta property="og:title" content="AIツール カテゴリ別比較 - Aixis">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://platform.aixis.jp/categories">
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"CollectionPage","name":"AIツール カテゴリ別比較・ランキング","description":"AIツールをカテゴリ別に比較・ランキング。用途別に最適なツールが見つかります。","url":"https://platform.aixis.jp/categories","publisher":{"@type":"Organization","name":"Aixis","url":"https://platform.aixis.jp"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"ホーム","item":"https://platform.aixis.jp/"},{"@type":"ListItem","position":2,"name":"カテゴリ一覧","item":"https://platform.aixis.jp/categories"}]}
+</script>
+{% endblock %}
+
 {% block head %}
 <style>
     .category-card {

@@ -650,6 +650,16 @@ async def sitemap_xml(db: AsyncSession = Depends(get_db)):
             f"<priority>0.6</priority></url>"
         )
 
+    # Benchmark leaderboard pages
+    from .db.models.benchmark import BenchmarkSuite
+    bench_result = await db.execute(select(BenchmarkSuite.slug))
+    for (bench_slug,) in bench_result.all():
+        lines.append(
+            f"  <url><loc>{SITE_ORIGIN}/benchmarks/{bench_slug}/leaderboard</loc>"
+            f"<changefreq>weekly</changefreq>"
+            f"<priority>0.5</priority></url>"
+        )
+
     lines.append("</urlset>")
     xml = "\n".join(lines)
     return Response(content=xml, media_type="application/xml")

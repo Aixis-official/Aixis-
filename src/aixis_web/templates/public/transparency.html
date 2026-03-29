@@ -13,11 +13,24 @@
 <link rel="canonical" href="https://platform.aixis.jp/transparency">
 {% endblock %}
 
+{% block ogp %}
+<meta property="og:title" content="透明性ポリシー - Aixis">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://platform.aixis.jp/transparency">
+{% endblock %}
+
 {% block content %}
 
 <!-- Page Header -->
 <section class="bg-white border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-left">
+        <nav class="mb-5" aria-label="パンくずリスト">
+            <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
+                <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
+                <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
+                <li class="text-gray-600 dark:text-gray-300 font-medium">透明性ポリシー</li>
+            </ol>
+        </nav>
         <div class="section-line"></div>
         <span class="report-label font-sans text-gray-400">Transparency Policy</span>
         <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 tracking-tight mt-2">

@@ -335,6 +335,7 @@
         {% endif %}
 
         <!-- 5c. Pros & Cons -->
+        {% if user %}
         <section id="pros-cons-section" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 hidden">
             <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5">
                 <div class="flex items-center gap-2 mb-3">
@@ -359,13 +360,67 @@
                 <ul id="cons-list" class="space-y-2 font-jp"></ul>
             </div>
         </section>
+        {% else %}
+        <!-- Not logged in: paywall for pros/cons + pricing -->
+        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:200px;">
+            <div class="paywall-blur">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="w-5 h-5 rounded-sm bg-gray-100 dark:bg-gray-800"></div>
+                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">メリット</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-4/5"></div>
+                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/5"></div>
+                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-4/6"></div>
+                        </div>
+                    </div>
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="w-5 h-5 rounded-sm bg-gray-100 dark:bg-gray-800"></div>
+                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">デメリット</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/5"></div>
+                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-2/5"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-4">
+                    <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">料金プラン詳細</span>
+                    <div class="mt-3 space-y-2">
+                        <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-full"></div>
+                        <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/4"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="paywall-overlay">
+                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-8 max-w-md w-full mx-4 text-center">
+                    <svg class="w-6 h-6 text-gray-400 dark:text-gray-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                    <div class="text-base font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">詳細情報</div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-5 leading-relaxed">メリット・デメリット・料金プラン詳細を含む完全なレポートにアクセスできます。</p>
+                    <a href="/login" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-3">
+                        無料トライアルで詳細を見る
+                    </a>
+                    <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">
+                        ログインはこちら
+                    </a>
+                </div>
+            </div>
+        </section>
+        {% endif %}
 
         <!-- 5d. Pricing Detail -->
+        {% if user %}
         <section id="pricing-detail-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">料金プラン詳細</h2>
             <div id="pricing-detail-content" class="text-xs text-gray-600 dark:text-gray-300 font-jp leading-relaxed"></div>
             <div id="pricing-tiers-content" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </section>
+        {% endif %}
 
         <!-- 5e. Risk / Governance -->
         <section id="governance-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
