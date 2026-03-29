@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% set active_page = 'tokushoho' %}
+
+{% block meta_description %}
+<meta name="description" content="Aixis（アイシス）の特定商取引法に基づく表記。サービス提供者情報、料金、支払方法等を記載しています。">
+{% endblock %}
+
+{% block meta_keywords %}
+<meta name="keywords" content="Aixis 特定商取引法,特商法表記,Aixis 運営者情報">
+{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="https://platform.aixis.jp/tokushoho">
+{% endblock %}
+
+{% block ogp %}
+<meta property="og:title" content="特定商取引法に基づく表記 - Aixis">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://platform.aixis.jp/tokushoho">
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<section class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-left">
+        <nav class="mb-5" aria-label="パンくずリスト">
+            <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
+                <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
+                <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
+                <li class="text-gray-600 dark:text-gray-300 font-medium">特定商取引法に基づく表記</li>
+            </ol>
+        </nav>
+        <div class="section-line"></div>
+        <span class="report-label font-sans text-gray-400">Act on Specified Commercial Transactions</span>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 tracking-tight mt-2">
+            特定商取引法に基づく表記
+        </h1>
+        <p class="mt-4 text-sm text-gray-500">
+            最終更新日: 2026年3月29日
+        </p>
+        <hr class="divider-thin">
+    </div>
+</section>
+
+<!-- Content -->
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-gray-200">
+            <tbody>
+                <tr class="border-b border-gray-200 bg-gray-50">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">販売事業者名</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed">[事業者名を記入]</td>
+                </tr>
+                <tr class="border-b border-gray-200">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">運営統括責任者</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed">[責任者名を記入]</td>
+                </tr>
+                <tr class="border-b border-gray-200 bg-gray-50">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">所在地</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed">[住所を記入]</td>
+                </tr>
+                <tr class="border-b border-gray-200">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">電話番号</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed">お問い合わせフォームよりご連絡ください</td>
+                </tr>
+                <tr class="border-b border-gray-200 bg-gray-50">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">メールアドレス</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed">お問い合わせフォームよりご連絡ください</td>
+                </tr>
+                <tr class="border-b border-gray-200">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">URL</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed"><a href="https://platform.aixis.jp" class="underline hover:text-gray-900 transition-colors">https://platform.aixis.jp</a></td>
+                </tr>
+                <tr class="border-b border-gray-200 bg-gray-50">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">販売価格</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed">各サービスページに記載の価格に準じます</td>
+                </tr>
+                <tr class="border-b border-gray-200">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">追加手数料</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed">なし（税込価格表示）</td>
+                </tr>
+                <tr class="border-b border-gray-200 bg-gray-50">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">支払方法</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed">請求書払い</td>
+                </tr>
+                <tr class="border-b border-gray-200">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">支払時期</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed">サービス利用開始時</td>
+                </tr>
+                <tr class="border-b border-gray-200 bg-gray-50">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">サービス提供時期</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed">お申し込み確認後、速やかにアカウントを発行いたします</td>
+                </tr>
+                <tr class="border-b border-gray-200">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">返品・キャンセル</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed">デジタルサービスの性質上、サービス提供開始後の返品・返金はお受けできません。ただし、サービスに重大な瑕疵がある場合は個別にご相談ください。</td>
+                </tr>
+                <tr class="bg-gray-50">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 whitespace-nowrap w-1/4 align-top">動作環境</th>
+                    <td class="py-4 px-5 text-gray-700 leading-relaxed">Google Chrome 最新版を推奨。インターネット接続環境が必要です。</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{% endblock %}

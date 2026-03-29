@@ -312,8 +312,8 @@
                     {% else %}
                     <a href="/contact"
                        class="w-full sm:w-auto inline-flex flex-col items-center justify-center px-6 sm:px-8 py-3.5 rounded-none text-sm sm:text-base font-bold text-white border-2 border-white/30 hover:border-white/60 hover:bg-white/5 transition-all duration-200 text-center leading-snug">
-                        14日間の無料トライアルを申請する
-                        <span class="block text-[10px] sm:text-[11px] font-normal text-slate-300/80 mt-1 font-serif tracking-wide">1営業日以内にアカウントを発行します</span>
+                        無料トライアルを申請する
+                        <span class="block text-[10px] sm:text-[11px] font-normal text-slate-300/80 mt-1 font-serif tracking-wide">お問い合わせ後、1営業日以内にアカウントを発行します</span>
                     </a>
                     {% endif %}
                 </div>
@@ -427,7 +427,7 @@
         </h2>
         <p class="about-text mt-10 text-[15px] sm:text-[16px] lg:text-[18px] text-slate-300/80 max-w-2xl leading-[2.0] lg:leading-[2.2] font-serif tracking-[0.02em]" style="font-weight: 400;">
             AIツール市場には、ベンダーの利益に左右される評価が溢れています。<br class="hidden lg:inline"><br class="hidden lg:inline">
-            Aixisはこの構造的問題に対し、ベンダーから一切の報酬を受け取らない完全独立の立場で、5軸定量監査を実施。自動テストと専門家評価を組み合わせたハイブリッド方式により、再現性と客観性を担保した監査データを提供します。
+            Aixisはこの構造的問題に対し、ベンダーから一切の報酬を受け取らない完全独立の立場で、5軸定量監査を実施。Chrome拡張によるブラウザ自動化とLLM解析により、定量的で再現性のある監査データを提供します。
         </p>
         <div class="mt-14">
             <a href="/independence" class="about-link inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors duration-200">
@@ -677,7 +677,7 @@
                     <span class="text-3xl font-bold text-gray-900 dark:text-white">&yen;29,800</span>
                     <span class="text-sm text-gray-500 dark:text-gray-400">/月（税別）</span>
                 </div>
-                <p class="mt-1 text-xs text-blue-500 dark:text-blue-400 font-bold">14日間無料トライアル</p>
+                <p class="mt-1 text-xs text-blue-500 dark:text-blue-400 font-bold">お問い合わせ後、無料トライアル開始</p>
 
                 <ul class="mt-6 space-y-3 flex-1">
                     <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
@@ -926,7 +926,7 @@
                 {% else %}
                 <a href="/contact"
                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3.5 rounded-none text-sm sm:text-base font-bold text-white border-2 border-white/30 hover:border-white/60 hover:bg-white/5 transition-all duration-200 text-center leading-snug">
-                    14日間の無料トライアルを申請する
+                    無料トライアルを申請する
                 </a>
                 {% endif %}
             </div>
@@ -1097,7 +1097,7 @@ function animateCountUp(elId, target, opts) {
             subtitle: 'Practicality',
             color: '#3b82f6',
             icon: 'P',
-            ratio: '自動テスト 40% / 専門家評価 60%',
+            ratio: '自動テスト 40% / AI定性評価 60%',
             ratioWidth: '40%',
             description: '業務での即戦力度合いを、タスク完遂率・操作性・ワークフロー統合性から監査します。',
             purpose: '導入後の業務効率化・ROI向上の判断材料として活用できます。',
@@ -1109,7 +1109,7 @@ function animateCountUp(elId, target, opts) {
             subtitle: 'Cost Performance',
             color: '#10b981',
             icon: 'C',
-            ratio: '自動テスト 30% / 専門家評価 70%',
+            ratio: '自動テスト 30% / AI定性評価 70%',
             ratioWidth: '30%',
             description: '価格に見合う価値を、応答速度・成功率・API効率・出力品質から自動分析し、料金体系・ROIは手動で補完します。',
             purpose: '投資対効果の客観的な判断材料として活用できます。',
@@ -1121,7 +1121,7 @@ function animateCountUp(elId, target, opts) {
             subtitle: 'Japanese Readiness',
             color: '#f59e0b',
             icon: 'L',
-            ratio: '自動テスト 70% / 専門家評価 30%',
+            ratio: '自動テスト 70% / AI定性評価 30%',
             ratioWidth: '70%',
             description: '日本語UI・ドキュメント・サポート品質を体系的に監査します。',
             purpose: '日本市場での即時展開可能性の指標として活用できます。',
@@ -1133,7 +1133,7 @@ function animateCountUp(elId, target, opts) {
             subtitle: 'Safety',
             color: '#ef4444',
             icon: 'S',
-            ratio: '自動テスト 35% / 専門家評価 65%',
+            ratio: '自動テスト 35% / AI定性評価 65%',
             ratioWidth: '35%',
             description: 'セキュリティ対策・稼働安定性・データ保護体制を監査します。',
             purpose: '組織のコンプライアンス要件への適合度を確認できます。',
@@ -1145,7 +1145,7 @@ function animateCountUp(elId, target, opts) {
             subtitle: 'Uniqueness',
             color: '#8b5cf6',
             icon: 'U',
-            ratio: '自動テスト 50% / 専門家評価 50%',
+            ratio: '自動テスト 50% / AI定性評価 50%',
             ratioWidth: '50%',
             description: '出力多様性・創造的対応力・出力リッチさ・エラー時の柔軟性を自動分析し、独自技術・差別化は手動で補完します。',
             purpose: '競合優位性と将来性の定量評価として活用できます。',

@@ -172,10 +172,17 @@ async def terms_page(request: Request, user: _OptionalUser = None):
     return _render("public/terms.html", ctx)
 
 
+@page_router.get("/tokushoho")
+async def tokushoho_page(request: Request, user: _OptionalUser = None):
+    """特定商取引法に基づく表記 page."""
+    ctx = _get_template_context(request, user=user, title="特定商取引法に基づく表記")
+    return _render("public/tokushoho.html", ctx)
+
+
 @page_router.get("/pricing")
 async def pricing_page(request: Request, user: _OptionalUser = None):
     """Pricing plans page."""
-    ctx = _get_template_context(request, user=user, title="料金プラン | 14日間無料トライアル", active_page="pricing")
+    ctx = _get_template_context(request, user=user, title="料金プラン | AI監査プラットフォーム", active_page="pricing")
     return _render("public/pricing.html", ctx)
 
 
@@ -210,7 +217,7 @@ async def audit_protocol_page(request: Request, user: _OptionalUser = None):
 @page_router.get("/contact")
 async def contact_page(request: Request, user: _OptionalUser = None):
     """Contact form page."""
-    ctx = _get_template_context(request, user=user, title="お問い合わせ | 14日間の無料トライアル申請", active_page="contact")
+    ctx = _get_template_context(request, user=user, title="お問い合わせ | AI監査のご相談・トライアル申請", active_page="contact")
     return _render("public/contact.html", ctx)
 
 
@@ -606,6 +613,7 @@ _STATIC_PAGES = [
     ("/audit-protocol", "monthly", "0.4"),
     ("/contact", "monthly", "0.3"),
     ("/terms", "yearly", "0.2"),
+    ("/tokushoho", "yearly", "0.2"),
 ]
 
 

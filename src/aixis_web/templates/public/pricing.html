@@ -3,11 +3,11 @@
 {% set page_bg = 'page-bg-pure-white' %}
 
 {% block meta_description %}
-<meta name="description" content="Aixis AI監査プラットフォームの料金プラン。14日間無料トライアルで全機能をお試し。月額¥29,800から全監査データベースにアクセス。個別監査レポートも対応。">
+<meta name="description" content="Aixis AI監査プラットフォームの料金プラン。お問い合わせ後、無料トライアルからスタート。全監査データベースへのアクセスプランをご用意。個別監査レポートも対応。">
 {% endblock %}
 
 {% block meta_keywords %}
-<meta name="keywords" content="AIツール 監査 料金,AI評価 価格,AIツール比較 費用,Aixis 料金プラン,AI監査 無料トライアル">
+<meta name="keywords" content="AIツール 監査 料金,AI評価 価格,AIツール比較 費用,Aixis 料金プラン,AI監査 問い合わせ">
 {% endblock %}
 
 {% block canonical %}
@@ -18,50 +18,10 @@
 <meta property="og:title" content="料金プラン - Aixis AI監査プラットフォーム">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://platform.aixis.jp/pricing">
-<meta property="og:description" content="14日間無料トライアル。AIツール監査レポートへのアクセスプランをご用意。">
+<meta property="og:description" content="AIツール監査レポートへのアクセスプランをご用意。お問い合わせから無料トライアル開始。">
 {% endblock %}
 
 {% block structured_data %}
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "無料トライアル中に費用は発生しますか？",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "14日間は完全無料でご利用いただけます。トライアル期間中にご解約いただければ費用は一切発生しません。トライアル終了後は、ご登録いただいたお支払い方法に基づき自動的に有料プランへ移行します。"
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "年額プランへの切替はいつでもできますか？",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "はい。マイページからいつでも切替可能です。差額は日割りで調整されます。"
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "解約はいつでもできますか？",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "はい。契約期間の縛りはありません。月額プランはいつでも解約でき、当月末までご利用いただけます。"
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "請求書払いは可能ですか？",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "はい。年額プランおよび個別監査レポートは請求書払いに対応しています。お問い合わせフォームよりご連絡ください。"
-      }
-    }
-  ]
-}
-</script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -91,7 +51,7 @@
             料金プラン
         </h1>
         <p class="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            14日間の無料トライアルですべての機能をお試しいただけます
+            お問い合わせいただいた後、無料トライアルからスタートいただけます
         </p>
         <hr class="divider-thin">
     </div>
@@ -151,7 +111,7 @@
                 <span id="price-standard" class="text-4xl font-bold text-gray-900 dark:text-white shrink-0">&yen;29,800</span>
                 <span id="price-standard-period" class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">/月（税別）</span>
             </div>
-            <p class="mt-2 text-xs text-blue-600 dark:text-blue-400 font-medium">14日間無料トライアル</p>
+            <p class="mt-2 text-xs text-blue-600 dark:text-blue-400 font-medium">お問い合わせ後、無料トライアル開始</p>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">同等の調査をコンサルに依頼すると月数十万〜。常時アクセス可能。</p>
             <ul class="mt-8 space-y-3.5 flex-1">
                 <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
@@ -183,7 +143,7 @@
             {% else %}
             <a href="/contact?type=database"
                class="mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-md text-sm font-bold bg-blue-500 dark:bg-blue-400 text-white dark:text-aixis-900 hover:bg-blue-600 dark:hover:bg-blue-300 transition-all duration-200 shadow-sm btn-blue-hover">
-                無料トライアルを始める
+                お問い合わせ
             </a>
             {% endif %}
         </div>
@@ -363,108 +323,10 @@
     </div>
 </section>
 
-<!-- FAQ -->
-<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-8 text-left">よくある質問</h2>
-    <div class="space-y-3" id="faq-accordion">
-        <div class="faq-item bg-white dark:bg-aixis-800 rounded-sm border border-gray-200 dark:border-aixis-700 overflow-hidden transition-all duration-300 hover:border-gray-300 dark:hover:border-aixis-600">
-            <button type="button" class="faq-trigger w-full flex items-center justify-between px-6 py-5 cursor-pointer text-left text-sm font-semibold text-gray-900 dark:text-white select-none group">
-                <span class="flex items-center gap-3">
-                    <span class="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-xs font-bold text-blue-600 dark:text-blue-400 transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50">Q</span>
-                    無料トライアル中に費用は発生しますか？
-                </span>
-                <svg class="faq-icon w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-            </button>
-            <div class="faq-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;">
-                <div class="px-6 pb-5 pl-[3.75rem] text-sm text-gray-600 dark:text-gray-400 leading-relaxed">14日間は完全無料でご利用いただけます。トライアル期間中にご解約いただければ費用は一切発生しません。トライアル終了後は、ご登録いただいたお支払い方法に基づき自動的に有料プランへ移行します。</div>
-            </div>
-        </div>
-        <div class="faq-item bg-white dark:bg-aixis-800 rounded-sm border border-gray-200 dark:border-aixis-700 overflow-hidden transition-all duration-300 hover:border-gray-300 dark:hover:border-aixis-600">
-            <button type="button" class="faq-trigger w-full flex items-center justify-between px-6 py-5 cursor-pointer text-left text-sm font-semibold text-gray-900 dark:text-white select-none group">
-                <span class="flex items-center gap-3">
-                    <span class="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-xs font-bold text-blue-600 dark:text-blue-400 transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50">Q</span>
-                    年額プランへの切替はいつでもできますか？
-                </span>
-                <svg class="faq-icon w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-            </button>
-            <div class="faq-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;">
-                <div class="px-6 pb-5 pl-[3.75rem] text-sm text-gray-600 dark:text-gray-400 leading-relaxed">はい。マイページからいつでも切替可能です。差額は日割りで調整されます。</div>
-            </div>
-        </div>
-        <div class="faq-item bg-white dark:bg-aixis-800 rounded-sm border border-gray-200 dark:border-aixis-700 overflow-hidden transition-all duration-300 hover:border-gray-300 dark:hover:border-aixis-600">
-            <button type="button" class="faq-trigger w-full flex items-center justify-between px-6 py-5 cursor-pointer text-left text-sm font-semibold text-gray-900 dark:text-white select-none group">
-                <span class="flex items-center gap-3">
-                    <span class="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-xs font-bold text-blue-600 dark:text-blue-400 transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50">Q</span>
-                    解約はいつでもできますか？
-                </span>
-                <svg class="faq-icon w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-            </button>
-            <div class="faq-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;">
-                <div class="px-6 pb-5 pl-[3.75rem] text-sm text-gray-600 dark:text-gray-400 leading-relaxed">はい。契約期間の縛りはありません。月額プランはいつでも解約でき、当月末までご利用いただけます。</div>
-            </div>
-        </div>
-        <div class="faq-item bg-white dark:bg-aixis-800 rounded-sm border border-gray-200 dark:border-aixis-700 overflow-hidden transition-all duration-300 hover:border-gray-300 dark:hover:border-aixis-600">
-            <button type="button" class="faq-trigger w-full flex items-center justify-between px-6 py-5 cursor-pointer text-left text-sm font-semibold text-gray-900 dark:text-white select-none group">
-                <span class="flex items-center gap-3">
-                    <span class="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-xs font-bold text-blue-600 dark:text-blue-400 transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50">Q</span>
-                    請求書払いは可能ですか？
-                </span>
-                <svg class="faq-icon w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-            </button>
-            <div class="faq-content" style="max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;">
-                <div class="px-6 pb-5 pl-[3.75rem] text-sm text-gray-600 dark:text-gray-400 leading-relaxed">はい。年額プランおよび個別監査レポートは請求書払いに対応しています。お問い合わせフォームよりご連絡ください。</div>
-            </div>
-        </div>
-    </div>
-</section>
-
 {% endblock %}
 
 {% block scripts %}
 <script>
-// FAQ Accordion
-(function() {
-    var accordion = document.getElementById('faq-accordion');
-    if (!accordion) return;
-
-    accordion.addEventListener('click', function(e) {
-        var trigger = e.target.closest('.faq-trigger');
-        if (!trigger) return;
-
-        var item = trigger.closest('.faq-item');
-        var content = item.querySelector('.faq-content');
-        var icon = item.querySelector('.faq-icon');
-        var isOpen = item.classList.contains('is-open');
-
-        // Close all other items (accordion behavior)
-        accordion.querySelectorAll('.faq-item.is-open').forEach(function(openItem) {
-            if (openItem !== item) {
-                var oc = openItem.querySelector('.faq-content');
-                var oi = openItem.querySelector('.faq-icon');
-                openItem.classList.remove('is-open');
-                oc.style.maxHeight = '0';
-                oc.style.opacity = '0';
-                oi.style.transform = 'rotate(0deg)';
-                openItem.style.borderColor = '';
-            }
-        });
-
-        if (isOpen) {
-            item.classList.remove('is-open');
-            content.style.maxHeight = '0';
-            content.style.opacity = '0';
-            icon.style.transform = 'rotate(0deg)';
-            item.style.borderColor = '';
-        } else {
-            item.classList.add('is-open');
-            content.style.maxHeight = content.scrollHeight + 'px';
-            content.style.opacity = '1';
-            icon.style.transform = 'rotate(45deg)';
-            item.style.borderColor = '#3b82f6';
-        }
-    });
-})();
-
 function setPricingTab(tab) {
     var monthly = document.getElementById('tab-monthly');
     var yearly = document.getElementById('tab-yearly');
