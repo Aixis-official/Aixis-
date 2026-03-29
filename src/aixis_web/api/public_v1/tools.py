@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from ...db.base import get_db
 from ...db.models.api_key import ApiKey
+from ...db.models.audit import AuditSession
 from ...db.models.score import ScoreHistory, ToolPublishedScore
 from ...db.models.tool import Tool, ToolCategory
 from ...middleware.rate_limit import require_scope
@@ -242,18 +243,28 @@ async def get_score_history(
             status_code=status.HTTP_404_NOT_FOUND, detail="Tool not found"
         )
 
-    # Count total entries
+    # Count total entries (only from published/completed sessions)
     total_result = await db.execute(
         select(func.count())
         .select_from(ScoreHistory)
-        .where(ScoreHistory.tool_id == tool.id)
+        .join(AuditSession, ScoreHistory.source_session_id == AuditSession.id)
+        .where(
+            ScoreHistory.tool_id == tool.id,
+            AuditSession.status == "completed",
+            AuditSession.deleted_at.is_(None),
+        )
     )
     total = total_result.scalar() or 0
 
     offset = (page - 1) * page_size
     history_result = await db.execute(
         select(ScoreHistory)
-        .where(ScoreHistory.tool_id == tool.id)
+        .join(AuditSession, ScoreHistory.source_session_id == AuditSession.id)
+        .where(
+            ScoreHistory.tool_id == tool.id,
+            AuditSession.status == "completed",
+            AuditSession.deleted_at.is_(None),
+        )
         .order_by(ScoreHistory.recorded_at.desc())
         .offset(offset)
         .limit(page_size)

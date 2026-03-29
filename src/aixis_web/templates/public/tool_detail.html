@@ -1407,8 +1407,12 @@
             const data = await resp.json();
 
             const items = data.items || data.history || [];
-            if (items.length < 2) {
-                // Not enough data points for a meaningful chart
+            if (items.length === 0) return;
+
+            // Check unique publish dates (each publish creates 5 entries at the same time)
+            const uniqueDates = new Set(items.map(i => (i.recorded_at || '').substring(0, 10)));
+            if (uniqueDates.size < 2) {
+                // Only 1 publish event — show "needs more data" message
                 section.classList.remove('hidden');
                 document.getElementById('score-history-chart').style.display = 'none';
                 document.getElementById('score-history-empty').classList.remove('hidden');
@@ -1418,32 +1422,36 @@
             section.classList.remove('hidden');
 
             // Group by axis → { axis: [ { date, score } ] }
+            // DB axis names: practicality, cost_performance, localization, safety, uniqueness
             const byAxis = {};
             items.forEach(item => {
                 const key = item.axis || 'overall';
                 if (!byAxis[key]) byAxis[key] = [];
-                byAxis[key].push({ date: item.recorded_at, score: item.score });
+                // Normalize date to YYYY-MM-DD for proper day-level display
+                const dateStr = (item.recorded_at || '').substring(0, 10);
+                byAxis[key].push({ date: dateStr, score: item.score });
             });
 
             // Sort each axis by date
             Object.values(byAxis).forEach(arr => arr.sort((a, b) => a.date.localeCompare(b.date)));
 
             const dark = isDarkMode();
+            // Match DB axis names (practicality, cost_performance, localization, safety, uniqueness)
             const axisColors = {
                 overall: dark ? '#a5b4fc' : '#4f46e5',
-                practical_utility: dark ? '#6ee7b7' : '#059669',
-                cost_effectiveness: dark ? '#93c5fd' : '#2563eb',
-                japanese_capability: dark ? '#fcd34d' : '#d97706',
-                reliability_safety: dark ? '#fca5a5' : '#dc2626',
-                innovation: dark ? '#c4b5fd' : '#7c3aed',
+                practicality: dark ? '#6ee7b7' : '#059669',
+                cost_performance: dark ? '#93c5fd' : '#2563eb',
+                localization: dark ? '#fcd34d' : '#d97706',
+                safety: dark ? '#fca5a5' : '#dc2626',
+                uniqueness: dark ? '#c4b5fd' : '#7c3aed',
             };
             const axisNames = {
                 overall: '総合',
-                practical_utility: '実務適性',
-                cost_effectiveness: '費用対効果',
-                japanese_capability: '日本語能力',
-                reliability_safety: '信頼性・安全性',
-                innovation: '革新性',
+                practicality: '実務適性',
+                cost_performance: '費用対効果',
+                localization: '日本語能力',
+                safety: '信頼性・安全性',
+                uniqueness: '革新性',
             };
 
             const traces = Object.entries(byAxis).map(([axis, points]) => ({
@@ -1469,6 +1477,8 @@
                 },
                 xaxis: {
                     type: 'date',
+                    tickformat: '%Y/%m/%d',
+                    dtick: 86400000,  // 1 day in milliseconds
                     gridcolor: dark ? '#1e293b' : '#f1f5f9',
                     tickfont: { size: 10, color: dark ? '#64748b' : '#94a3b8' },
                     linecolor: dark ? '#334155' : '#e2e8f0',

@@ -131,9 +131,15 @@ async def get_score_history(
             status_code=status.HTTP_404_NOT_FOUND, detail="ツールが見つかりません"
         )
 
+    # Only include entries from published (completed) audit sessions
     history_result = await db.execute(
         select(ScoreHistory)
-        .where(ScoreHistory.tool_id == tool.id)
+        .join(AuditSession, ScoreHistory.source_session_id == AuditSession.id)
+        .where(
+            ScoreHistory.tool_id == tool.id,
+            AuditSession.status == "completed",
+            AuditSession.deleted_at.is_(None),
+        )
         .order_by(ScoreHistory.recorded_at.desc())
     )
     items = history_result.scalars().all()

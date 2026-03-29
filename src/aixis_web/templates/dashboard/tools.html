@@ -5,135 +5,113 @@
 {% block content %}
 <div class="max-w-6xl mx-auto">
 
-    <!-- Breadcrumb -->
-    <nav class="mb-6 text-sm text-gray-500 dark:text-gray-400 font-jp">
-        <a href="/dashboard" class="hover:text-gray-700 dark:hover:text-gray-200 transition-colors">ダッシュボード</a>
-        <span class="mx-2">/</span>
-        <span class="text-gray-900 dark:text-white">ツール管理</span>
-    </nav>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <!-- Left 2/3: Tool List -->
-        <div class="lg:col-span-2">
-            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 transition-colors duration-200">
-                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">登録ツール一覧</h2>
-                    <div class="flex items-center gap-3">
-                        <div class="relative">
-                            <input type="text" id="tool-search" placeholder="検索..."
-                                   class="w-48 pl-8 pr-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 font-jp">
-                            <svg class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-                        </div>
-                        <button type="button" onclick="showAddForm()"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-lg transition-colors duration-200 shadow-sm">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                            新規登録
-                        </button>
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="border-b border-gray-100 dark:border-gray-700/50">
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ツール名</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">スラッグ</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ベンダー</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ターゲット設定</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">状態</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tools-body">
-                            <tr>
-                                <td colspan="6" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
-                                    <div class="flex flex-col items-center gap-2">
-                                        <svg class="animate-spin h-6 w-6 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                                        </svg>
-                                        <span class="font-jp">読み込み中...</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white font-jp">ツール管理</h1>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-jp">登録ツールの管理・情報編集・LLMリサーチ</p>
         </div>
+        <button type="button" onclick="openNewToolModal()"
+                class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-lg transition-colors shadow-sm font-jp">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            新規登録
+        </button>
+    </div>
 
-        <!-- Right 1/3: Add/Edit Form -->
-        <div class="lg:col-span-1">
-            <div class="lg:sticky lg:top-20">
-                <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6 transition-colors duration-200">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4 font-jp" id="form-title">ツール新規登録</h3>
+    <!-- Search + Filters -->
+    <div class="flex items-center gap-3 mb-5">
+        <div class="relative flex-1 max-w-sm">
+            <input type="text" id="tool-search" placeholder="ツール名・ベンダーで検索..."
+                   class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-[#161929] text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors font-jp">
+            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+        </div>
+        <select id="status-filter" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-[#161929] text-gray-700 dark:text-gray-300 font-jp">
+            <option value="">すべて</option>
+            <option value="published">公開済み</option>
+            <option value="draft">非公開</option>
+        </select>
+    </div>
 
+    <!-- Tool Cards Grid -->
+    <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+        <!-- Loading -->
+        <div class="col-span-full flex flex-col items-center justify-center py-16">
+            {% set loading_text = "ツールを読み込み中" %}
+            {% include "components/loading_pentagon.html" %}
+        </div>
+    </div>
+
+    <!-- Tool Edit Modal (overlay) -->
+    <div id="tool-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="min-h-screen flex items-start justify-center px-4 pt-20 pb-10">
+            <div class="fixed inset-0 bg-black/40 backdrop-blur-sm" onclick="closeToolModal()"></div>
+            <div class="relative bg-white dark:bg-[#1e2235] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700/50 w-full max-w-2xl">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700/50">
+                    <h2 id="modal-title" class="text-base font-semibold text-gray-900 dark:text-white font-jp">ツール編集</h2>
+                    <button onclick="closeToolModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="px-6 py-5 max-h-[calc(100vh-12rem)] overflow-y-auto">
                     <!-- Messages -->
-                    <div id="form-error" class="hidden mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-jp"></div>
-                    <div id="form-success" class="hidden mb-4 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-jp"></div>
+                    <div id="modal-error" class="hidden mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-jp"></div>
+                    <div id="modal-success" class="hidden mb-4 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-jp"></div>
 
                     <form id="tool-form" class="space-y-4">
                         <input type="hidden" id="edit-slug" value="">
 
+                        <!-- Basic Info -->
                         <div>
                             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">スラッグ <span class="text-red-500">*</span></label>
                             <input type="text" id="f-slug" required pattern="[a-z0-9\-]+"
-                                   class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
+                                   class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors"
                                    placeholder="my-ai-tool">
-                            <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">英小文字・数字・ハイフンのみ</p>
+                            <p class="text-[10px] text-gray-400 mt-0.5">英小文字・数字・ハイフンのみ</p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">英語名 <span class="text-red-500">*</span></label>
-                                <input type="text" id="f-name" required
-                                       class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
-                                       placeholder="My AI Tool">
+                                <input type="text" id="f-name" required class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors" placeholder="My AI Tool">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">日本語名 <span class="text-red-500">*</span></label>
-                                <input type="text" id="f-name-jp" required
-                                       class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
-                                       placeholder="マイAIツール">
+                                <input type="text" id="f-name-jp" required class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors" placeholder="マイAIツール">
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">ベンダー</label>
-                            <input type="text" id="f-vendor"
-                                   class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
-                                   placeholder="株式会社サンプル">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">ベンダー</label>
+                                <input type="text" id="f-vendor" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors" placeholder="株式会社サンプル">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">カテゴリ</label>
+                                <select id="f-category" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors font-jp">
+                                    <option value="">未分類</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div>
                             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">URL</label>
-                            <input type="url" id="f-url"
-                                   class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
-                                   placeholder="https://example.com">
+                            <input type="url" id="f-url" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors" placeholder="https://example.com">
                         </div>
 
                         <div>
                             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">説明（日本語）</label>
-                            <textarea id="f-desc-jp" rows="2"
-                                      class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-y transition-colors duration-200 font-jp"
-                                      placeholder="ツールの概要..."></textarea>
+                            <textarea id="f-desc-jp" rows="2" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y transition-colors font-jp" placeholder="ツールの概要..."></textarea>
                         </div>
 
-                        <div class="flex items-center gap-3">
-                            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 font-jp cursor-pointer">
-                                <input type="checkbox" id="f-public"
-                                       class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
-                                公開する
-                            </label>
-                        </div>
-
-                        <!-- Executive Summary -->
                         <div>
-                            <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">エグゼクティブサマリー</label>
-                            <textarea id="f-executive-summary" rows="3" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="企業担当者向けの概要。数値を使わず、ツールの本質・強み・注意点を3-4行で。"></textarea>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">エグゼクティブサマリー</label>
+                            <textarea id="f-executive-summary" rows="3" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y transition-colors font-jp" placeholder="企業担当者向けの概要。数値を使わず、ツールの本質・強み・注意点を3-4行で。"></textarea>
                         </div>
 
-                        <!-- SEO Content Fields (collapsible) -->
+                        <!-- SEO Content (collapsible) -->
                         <details class="border border-gray-100 dark:border-gray-700/50 rounded-lg">
                             <summary class="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 font-jp cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg">SEO・記事コンテンツ項目</summary>
                             <div class="p-3 space-y-3">
@@ -148,14 +126,6 @@
                                 <div>
                                     <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">リスク・注意点</label>
                                     <textarea id="f-risks-jp" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="データの第三者提供リスク..."></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">導入企業像</label>
-                                    <textarea id="f-target-company-jp" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="従業員100名以上の法務部門を持つ企業..."></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">企業規模（カンマ区切り）</label>
-                                    <input type="text" id="f-target-sizes" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 font-jp" placeholder="startup,smb,mid,enterprise">
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">料金詳細</label>
@@ -176,82 +146,55 @@
                             </div>
                         </details>
 
-                        <div class="pt-3 border-t border-gray-100 dark:border-gray-700/50 flex flex-col gap-2">
-                            <div class="flex gap-2">
-                                <button type="submit" id="form-submit-btn"
-                                        class="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-lg transition-colors duration-200 shadow-sm font-jp">
-                                    登録
-                                </button>
-                                <button type="button" onclick="resetForm()"
-                                        class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200 font-jp">
-                                    リセット
-                                </button>
-                            </div>
-                            <button type="button" id="auto-research-btn" onclick="autoResearchTool()"
-                                    class="hidden w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-600/50 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors duration-200 font-jp">
-                                🔍 LLMで公式情報を自動リサーチ
-                            </button>
+                        <div class="flex items-center gap-3">
+                            <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 font-jp cursor-pointer">
+                                <input type="checkbox" id="f-public" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                                公開する
+                            </label>
                         </div>
                     </form>
                 </div>
 
-                <!-- Target Config Editor (shown when editing) -->
-                <div id="config-editor-panel" class="hidden mt-4 bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6 transition-colors duration-200">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-2 font-jp">ターゲット設定 (YAML)</h3>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mb-3 font-jp">ツールのURL・監査設定をYAML形式で定義します。</p>
-
-                    <div id="config-msg" class="hidden mb-3 px-3 py-2 rounded-lg text-xs font-jp"></div>
-
-                    <textarea id="config-yaml" rows="14"
-                              class="w-full px-3 py-2 text-xs font-mono rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-y transition-colors duration-200"
-                              placeholder="name: My Tool Target&#10;url: https://example.com&#10;executor_type: extension&#10;steps:&#10;  - action: navigate&#10;    url: https://example.com&#10;  - action: fill&#10;    selector: '#input'&#10;    value: '{{prompt}}'&#10;  - action: click&#10;    selector: '#submit'&#10;  - action: wait_for&#10;    selector: '.response'&#10;    extract: text"></textarea>
-
-                    <div class="flex gap-2 mt-3">
-                        <button type="button" onclick="saveTargetConfig()"
-                                class="flex-1 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 rounded-lg transition-colors duration-200 shadow-sm font-jp">
-                            設定を保存
-                        </button>
+                <!-- Modal Footer -->
+                <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between gap-3">
+                    <button type="button" id="llm-research-btn" onclick="startLLMResearch()" class="hidden inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700/50 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors font-jp">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>
+                        LLMリサーチ
+                    </button>
+                    <div class="flex gap-2 ml-auto">
+                        <button type="button" onclick="closeToolModal()" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors font-jp">キャンセル</button>
+                        <button type="button" id="form-submit-btn" onclick="submitToolForm()" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-lg transition-colors shadow-sm font-jp">登録</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                    <!-- Auth Cookie Setup -->
-                    <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
-                        <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-2 font-jp">認証設定</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 font-jp">ログインが必要なツールの場合、以下の手順で認証データを設定してください。</p>
-
-                        <!-- Step-by-step instructions -->
-                        <div class="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                            <p class="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-2 font-jp">認証データの取得手順（推奨: ワンクリック）</p>
-                            <ol class="text-xs text-amber-700 dark:text-amber-400 space-y-1.5 font-jp list-decimal list-inside">
-                                <li>対象ツールのサイトにアクセスし、<strong>ログイン</strong>する</li>
-                                <li><strong>F12キー</strong>（Mac: Cmd+Option+I）でDevToolsを開く → <strong>Console</strong> タブ</li>
-                                <li>初回は <code class="bg-gray-200 dark:bg-gray-700 px-1 rounded text-[10px]">allow pasting</code> と入力してEnter</li>
-                                <li>下のコマンドを<strong>コピーして貼り付け → Enter</strong></li>
-                                <li>Enter後<strong>3秒以内にページ側をクリック</strong>（フォーカス移動）</li>
-                                <li>「コピー完了」アラート → 下の入力欄に <strong>Ctrl+V / Cmd+V</strong></li>
-                            </ol>
-                            <div class="relative mt-2">
-                                <pre id="cookie-cmd" class="text-[10px] bg-gray-900 text-green-400 p-2 rounded font-mono overflow-x-auto select-all cursor-pointer" onclick="copyCookieCmd()" title="クリックでコピー">setTimeout(()=>{const ls=Object.entries(localStorage).map(([k,v])=>({name:k,value:v}));cookieStore.getAll().then(c=>{const cookies=c.map(x=>({name:x.name,value:x.value,domain:x.domain||location.hostname,path:x.path||'/'}));const state={cookies:cookies,origins:[{origin:location.origin,localStorage:ls}]};navigator.clipboard.writeText(JSON.stringify(state)).then(()=>alert('Cookie '+cookies.length+'件 + localStorage '+ls.length+'件コピー完了！'))})},3000)</pre>
-                                <button type="button" onclick="copyCookieCmd()" class="absolute top-1 right-1 px-1.5 py-0.5 text-[10px] bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors font-jp">コピー</button>
-                            </div>
-                            <p class="text-[10px] text-amber-600 dark:text-amber-500 mt-2 font-jp">
-                                ※ Cookie + localStorage を同時取得します。HttpOnly Cookieは含まれませんが、多くのSPAツールはlocalStorageで認証するため問題ありません。
-                            </p>
-                        </div>
-
-                        <div id="auth-cookie-status" class="hidden mb-3 px-3 py-2 rounded-lg text-xs font-jp"></div>
-                        <textarea id="auth-cookies-json" rows="4"
-                                  class="w-full px-3 py-2 text-xs font-mono rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent resize-y transition-colors duration-200"
-                                  placeholder="ここにCookieを貼り付け（上の手順でコピーしたものをそのまま Ctrl+V / Cmd+V）"></textarea>
-                        <div class="flex gap-2 mt-3">
-                            <button type="button" onclick="saveAuthCookies()"
-                                    class="flex-1 px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-400 rounded-lg transition-colors duration-200 shadow-sm font-jp">
-                                認証Cookieを保存
-                            </button>
-                            <button type="button" onclick="clearAuthCookies()"
-                                    class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors duration-200 font-jp">
-                                クリア
-                            </button>
-                        </div>
+    <!-- LLM Research Preview Modal -->
+    <div id="research-modal" class="hidden fixed inset-0 z-[60] overflow-y-auto">
+        <div class="min-h-screen flex items-start justify-center px-4 pt-16 pb-10">
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closeResearchModal()"></div>
+            <div class="relative bg-white dark:bg-[#1e2235] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700/50 w-full max-w-2xl">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700/50">
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-white font-jp">LLMリサーチ結果プレビュー</h2>
+                    <button onclick="closeResearchModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div id="research-loading" class="flex flex-col items-center justify-center py-12">
+                    {% set loading_text = "LLMリサーチ中" %}
+                    {% set loading_size = "sm" %}
+                    {% include "components/loading_pentagon.html" %}
+                    <p class="text-xs text-gray-400 mt-2 font-jp">公式情報を取得しています...</p>
+                </div>
+                <div id="research-result" class="hidden px-6 py-5 max-h-[calc(100vh-14rem)] overflow-y-auto space-y-3">
+                    <!-- Dynamically populated -->
+                </div>
+                <div id="research-footer" class="hidden px-6 py-4 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+                    <p class="text-[10px] text-gray-400 font-jp">内容を確認してから「適用」を押してください</p>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeResearchModal()" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors font-jp">キャンセル</button>
+                        <button type="button" onclick="applyResearchData()" class="px-5 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 rounded-lg transition-colors shadow-sm font-jp">適用して保存</button>
                     </div>
                 </div>
             </div>
@@ -264,154 +207,131 @@
 <script>
 (function() {
     var allTools = [];
+    var allCategories = [];
     var editingSlug = '';
+    var researchData = null;
 
-    // ===== Load Tools =====
+    // ===== Load Data =====
     async function loadTools() {
         try {
             var data = await aixisAPI('/tools?page_size=100&all=true');
             allTools = data.items || [];
-            renderTools(allTools);
+            renderToolsGrid(filterTools());
         } catch (e) {
-            document.getElementById('tools-body').innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-red-400 dark:text-red-500 text-sm font-jp">読み込みに失敗しました</td></tr>';
+            document.getElementById('tools-grid').innerHTML = '<div class="col-span-full text-center py-12 text-red-400 text-sm font-jp">ツールの読み込みに失敗しました</div>';
         }
     }
 
-    function renderTools(tools) {
-        var body = document.getElementById('tools-body');
-        if (!tools || tools.length === 0) {
-            body.innerHTML = '<tr><td colspan="6" class="px-4 py-12 text-center"><div class="flex flex-col items-center gap-2 text-gray-400 dark:text-gray-500"><svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg><span class="text-sm font-jp">ツールが登録されていません。右のフォームから登録してください。</span></div></td></tr>';
-            return;
-        }
-        body.innerHTML = tools.map(function(t) {
-            var statusBadge = t.is_active
-                ? (t.is_public
-                    ? '<span class="inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">公開</span>'
-                    : '<span class="inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">非公開</span>')
-                : '<span class="inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">無効</span>';
-
-            var iconHtml = t.logo_url
-                ? '<img src="' + escapeHtml(t.logo_url) + '" class="w-5 h-5 rounded shrink-0" alt="" onerror="this.style.display=\'none\'">'
-                : '<div class="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[10px] text-gray-400 shrink-0">' + escapeHtml((t.name || '?')[0].toUpperCase()) + '</div>';
-
-            return '<tr class="border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors duration-150">' +
-                '<td class="px-4 py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap"><div class="flex items-center gap-2">' + iconHtml + '<span>' + escapeHtml(t.name_jp || t.name) + '</span></div></td>' +
-                '<td class="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">' + escapeHtml(t.slug) + '</td>' +
-                '<td class="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">' + escapeHtml(t.vendor || '--') + '</td>' +
-                '<td class="px-4 py-3 text-center"><span class="config-status" data-slug="' + escapeHtml(t.slug) + '">--</span></td>' +
-                '<td class="px-4 py-3">' + statusBadge + '</td>' +
-                '<td class="px-4 py-3"><button onclick="editTool(\'' + escapeHtml(t.slug) + '\')" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline font-jp">編集</button></td>' +
-                '</tr>';
-        }).join('');
-
-        // Check config status for each tool
-        tools.forEach(function(t) { checkConfigStatus(t.slug); });
-    }
-
-    async function checkConfigStatus(slug) {
-        var el = document.querySelector('.config-status[data-slug="' + slug + '"]');
-        if (!el) return;
+    async function loadCategories() {
         try {
-            var cfg = await aixisAPI('/tools/' + encodeURIComponent(slug) + '/target-config');
-            if (cfg && cfg.config_yaml) {
-                el.innerHTML = '<span class="inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">v' + cfg.version + '</span>';
-            } else {
-                el.innerHTML = '<span class="text-[10px] text-gray-400 dark:text-gray-500">未設定</span>';
-            }
-        } catch (e) {
-            el.innerHTML = '<span class="text-[10px] text-gray-400 dark:text-gray-500">未設定</span>';
-        }
+            var data = await aixisAPI('/tools/categories');
+            allCategories = data || [];
+            var select = document.getElementById('f-category');
+            select.innerHTML = '<option value="">未分類</option>';
+            allCategories.forEach(function(c) {
+                var opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name_jp;
+                select.appendChild(opt);
+            });
+        } catch (e) { /* ignore */ }
     }
 
-    // ===== Search =====
-    document.getElementById('tool-search').addEventListener('input', function() {
-        var q = this.value.toLowerCase();
-        if (!q) { renderTools(allTools); return; }
-        var filtered = allTools.filter(function(t) {
-            return (t.name || '').toLowerCase().includes(q)
+    // ===== Filter =====
+    function filterTools() {
+        var q = (document.getElementById('tool-search').value || '').toLowerCase();
+        var statusFilter = document.getElementById('status-filter').value;
+        return allTools.filter(function(t) {
+            var matchesQuery = !q || (t.name || '').toLowerCase().includes(q)
                 || (t.name_jp || '').toLowerCase().includes(q)
                 || (t.slug || '').toLowerCase().includes(q)
                 || (t.vendor || '').toLowerCase().includes(q);
+            var matchesStatus = !statusFilter
+                || (statusFilter === 'published' && t.is_public)
+                || (statusFilter === 'draft' && !t.is_public);
+            return matchesQuery && matchesStatus;
         });
-        renderTools(filtered);
-    });
+    }
 
-    // ===== Form Submit =====
-    document.getElementById('tool-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        hideMessages();
+    document.getElementById('tool-search').addEventListener('input', function() { renderToolsGrid(filterTools()); });
+    document.getElementById('status-filter').addEventListener('change', function() { renderToolsGrid(filterTools()); });
 
-        var slug = document.getElementById('f-slug').value.trim();
-        var name = document.getElementById('f-name').value.trim();
-        var nameJp = document.getElementById('f-name-jp').value.trim();
-        var vendor = document.getElementById('f-vendor').value.trim();
-        var url = document.getElementById('f-url').value.trim();
-        var descJp = document.getElementById('f-desc-jp').value.trim();
-        var isPublic = document.getElementById('f-public').checked;
-
-        if (!slug || !name || !nameJp) {
-            showFormError('スラッグ、英語名、日本語名は必須です。');
+    // ===== Render Cards =====
+    function renderToolsGrid(tools) {
+        var grid = document.getElementById('tools-grid');
+        if (!tools || tools.length === 0) {
+            grid.innerHTML = '<div class="col-span-full flex flex-col items-center py-16 text-gray-400 dark:text-gray-500"><svg class="w-12 h-12 mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg><p class="text-sm font-jp">ツールが見つかりません</p></div>';
             return;
         }
 
-        // Parse SEO fields
-        var prosText = document.getElementById('f-pros-jp').value.trim();
-        var consText = document.getElementById('f-cons-jp').value.trim();
-        var risksJp = document.getElementById('f-risks-jp').value.trim();
-        var targetCompanyJp = document.getElementById('f-target-company-jp').value.trim();
-        var targetSizes = document.getElementById('f-target-sizes').value.trim();
-        var pricingDetailJp = document.getElementById('f-pricing-detail-jp').value.trim();
-        var executiveSummary = document.getElementById('f-executive-summary').value.trim();
-        var seoTitle = document.getElementById('f-seo-title').value.trim();
-        var seoDesc = document.getElementById('f-seo-desc').value.trim();
-        var seoKw = document.getElementById('f-seo-keywords').value.trim();
+        grid.innerHTML = tools.map(function(t) {
+            var iconHtml = t.logo_url
+                ? '<img src="' + esc(t.logo_url) + '" class="w-9 h-9 rounded-lg shrink-0 object-cover" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
+                  '<div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-100 to-indigo-50 dark:from-indigo-900/50 dark:to-indigo-800/30 items-center justify-center text-sm font-bold text-indigo-400 shrink-0 hidden">' + esc((t.name || '?')[0].toUpperCase()) + '</div>'
+                : '<div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-100 to-indigo-50 dark:from-indigo-900/50 dark:to-indigo-800/30 flex items-center justify-center text-sm font-bold text-indigo-400 shrink-0">' + esc((t.name || '?')[0].toUpperCase()) + '</div>';
 
-        var body = {
-            slug: slug, name: name, name_jp: nameJp,
-            is_public: isPublic
-        };
-        if (vendor) body.vendor = vendor;
-        if (url) body.url = url;
-        if (descJp) body.description_jp = descJp;
-        if (executiveSummary) body.executive_summary_jp = executiveSummary;
-        // SEO fields
-        if (prosText) body.pros_jp = prosText.split('\n').map(function(s){return s.trim();}).filter(Boolean);
-        if (consText) body.cons_jp = consText.split('\n').map(function(s){return s.trim();}).filter(Boolean);
-        if (risksJp) body.risks_jp = risksJp;
-        if (targetCompanyJp) body.target_company_profile_jp = targetCompanyJp;
-        if (targetSizes) body.target_company_sizes = targetSizes.split(',').map(function(s){return s.trim();}).filter(Boolean);
-        if (pricingDetailJp) body.pricing_detail_jp = pricingDetailJp;
-        if (seoTitle) body.seo_title_jp = seoTitle;
-        if (seoDesc) body.seo_description_jp = seoDesc;
-        if (seoKw) body.seo_keywords_jp = seoKw.split(',').map(function(s){return s.trim();}).filter(Boolean);
+            var statusBadge = t.is_public
+                ? '<span class="inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">公開中</span>'
+                : '<span class="inline-flex px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">非公開</span>';
 
-        try {
-            var existingSlug = document.getElementById('edit-slug').value;
-            if (existingSlug) {
-                // Update
-                await aixisAPI('/tools/' + encodeURIComponent(existingSlug), {
-                    method: 'PUT',
-                    body: JSON.stringify(body)
-                });
-                showFormSuccess('ツールを更新しました。');
-            } else {
-                // Create
-                await aixisAPI('/tools', {
-                    method: 'POST',
-                    body: JSON.stringify(body)
-                });
-                showFormSuccess('ツールを登録しました。');
+            var categoryName = '';
+            if (t.category_id && allCategories.length) {
+                var cat = allCategories.find(function(c) { return c.id === t.category_id; });
+                if (cat) categoryName = cat.name_jp;
             }
-            await loadTools();
-        } catch (err) {
-            showFormError(err.message || '保存に失敗しました。');
-        }
-    });
+            var categoryBadge = categoryName
+                ? '<span class="inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50">' + esc(categoryName) + '</span>'
+                : '';
 
-    // ===== Edit Tool =====
+            // Score info
+            var scoreHtml = '';
+            if (t.scores && t.scores.length > 0) {
+                var latest = t.scores[0];
+                var gradeClass = { S: 'text-yellow-600', A: 'text-emerald-600', B: 'text-blue-600', C: 'text-orange-500', D: 'text-red-500' };
+                scoreHtml = '<div class="flex items-center gap-2 mt-2">' +
+                    '<span class="text-lg font-bold ' + (gradeClass[latest.overall_grade] || 'text-gray-400') + '">' + esc(latest.overall_grade || '--') + '</span>' +
+                    '<span class="text-xs text-gray-500">' + (latest.overall_score ? latest.overall_score.toFixed(1) : '--') + ' / 5.0</span>' +
+                    '<span class="text-[10px] text-gray-400 ml-auto">v' + (latest.version || 1) + '</span>' +
+                '</div>';
+            }
+
+            return '<div class="bg-white dark:bg-[#1e2235] rounded-xl border border-gray-100 dark:border-gray-700/50 p-4 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600/50 transition-all duration-200 cursor-pointer group" onclick="window.editTool(\'' + esc(t.slug) + '\')">' +
+                '<div class="flex items-start gap-3">' +
+                    iconHtml +
+                    '<div class="flex-1 min-w-0">' +
+                        '<div class="flex items-center gap-2 mb-0.5">' +
+                            '<h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate font-jp">' + esc(t.name_jp || t.name) + '</h3>' +
+                            statusBadge +
+                        '</div>' +
+                        '<p class="text-xs text-gray-500 dark:text-gray-400 truncate">' + esc(t.vendor || '') + (t.url ? ' &middot; ' + esc((() => { try { return new URL(t.url).hostname; } catch(e) { return t.url; } })()) : '') + '</p>' +
+                        '<div class="flex items-center gap-1.5 mt-1.5">' + categoryBadge + '</div>' +
+                    '</div>' +
+                '</div>' +
+                scoreHtml +
+                '<div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50 dark:border-gray-700/30">' +
+                    '<button onclick="event.stopPropagation(); window.editTool(\'' + esc(t.slug) + '\')" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline font-jp">編集</button>' +
+                    (t.is_public ? '<a href="/db/' + esc(t.slug) + '" target="_blank" onclick="event.stopPropagation()" class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-jp">DB表示</a>' : '') +
+                    (t.is_public ? '<button onclick="event.stopPropagation(); startReAudit(\'' + esc(t.id) + '\', \'' + esc(t.name_jp || t.name) + '\')" class="ml-auto text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline font-jp">再監査</button>' : '') +
+                '</div>' +
+            '</div>';
+        }).join('');
+    }
+
+    // ===== Modal =====
+    window.openNewToolModal = function() {
+        resetForm();
+        document.getElementById('modal-title').textContent = 'ツール新規登録';
+        document.getElementById('form-submit-btn').textContent = '登録';
+        document.getElementById('llm-research-btn').classList.add('hidden');
+        document.getElementById('tool-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('f-slug').focus();
+    };
+
     window.editTool = function(slug) {
         var tool = allTools.find(function(t) { return t.slug === slug; });
         if (!tool) return;
+        resetForm();
 
         editingSlug = slug;
         document.getElementById('edit-slug').value = slug;
@@ -424,299 +344,227 @@
         document.getElementById('f-url').value = tool.url || '';
         document.getElementById('f-desc-jp').value = tool.description_jp || '';
         document.getElementById('f-public').checked = tool.is_public;
-        // SEO fields
+        document.getElementById('f-category').value = tool.category_id || '';
+        document.getElementById('f-executive-summary').value = tool.executive_summary_jp || '';
         document.getElementById('f-pros-jp').value = (tool.pros_jp || []).join('\n');
         document.getElementById('f-cons-jp').value = (tool.cons_jp || []).join('\n');
-        document.getElementById('f-executive-summary').value = tool.executive_summary_jp || '';
         document.getElementById('f-risks-jp').value = tool.risks_jp || '';
-        document.getElementById('f-target-company-jp').value = tool.target_company_profile_jp || '';
-        document.getElementById('f-target-sizes').value = (tool.target_company_sizes || []).join(',');
         document.getElementById('f-pricing-detail-jp').value = tool.pricing_detail_jp || '';
         document.getElementById('f-seo-title').value = tool.seo_title_jp || '';
         document.getElementById('f-seo-desc').value = tool.seo_description_jp || '';
         document.getElementById('f-seo-keywords').value = (tool.seo_keywords_jp || []).join(',');
-        document.getElementById('form-title').textContent = 'ツール編集: ' + (tool.name_jp || tool.name);
+
+        document.getElementById('modal-title').textContent = 'ツール編集: ' + (tool.name_jp || tool.name);
         document.getElementById('form-submit-btn').textContent = '更新';
-        document.getElementById('auto-research-btn').classList.remove('hidden');
-
-        // Show config editor
-        var configPanel = document.getElementById('config-editor-panel');
-        configPanel.classList.remove('hidden');
-        loadTargetConfig(slug);
-
-        // Load existing auth cookies
-        var cookieTextarea = document.getElementById('auth-cookies-json');
-        var cookieStatus = document.getElementById('auth-cookie-status');
-        cookieStatus.classList.add('hidden');
-        if (tool.auth_storage_state && tool.auth_storage_state.cookies && tool.auth_storage_state.cookies.length > 0) {
-            cookieTextarea.value = JSON.stringify(tool.auth_storage_state.cookies, null, 2);
-            cookieStatus.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300';
-            cookieStatus.textContent = tool.auth_storage_state.cookies.length + '件のCookieが設定済みです。';
-            cookieStatus.classList.remove('hidden');
-        } else {
-            cookieTextarea.value = '';
-        }
-
-        hideMessages();
-
-        // Scroll to form on mobile
-        document.getElementById('form-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('llm-research-btn').classList.remove('hidden');
+        document.getElementById('tool-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
     };
 
-    // ===== Reset Form =====
-    window.resetForm = function() {
+    window.closeToolModal = function() {
+        document.getElementById('tool-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+    };
+
+    function resetForm() {
         editingSlug = '';
         document.getElementById('edit-slug').value = '';
         document.getElementById('f-slug').value = '';
         document.getElementById('f-slug').readOnly = false;
         document.getElementById('f-slug').classList.remove('bg-gray-100', 'dark:bg-gray-800', 'cursor-not-allowed');
-        document.getElementById('f-name').value = '';
-        document.getElementById('f-name-jp').value = '';
-        document.getElementById('f-vendor').value = '';
-        document.getElementById('f-url').value = '';
-        document.getElementById('f-desc-jp').value = '';
+        ['f-name','f-name-jp','f-vendor','f-url','f-desc-jp','f-executive-summary','f-pros-jp','f-cons-jp','f-risks-jp','f-pricing-detail-jp','f-seo-title','f-seo-desc','f-seo-keywords'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.value = '';
+        });
         document.getElementById('f-public').checked = false;
-        // Clear SEO fields
-        document.getElementById('f-pros-jp').value = '';
-        document.getElementById('f-cons-jp').value = '';
-        document.getElementById('f-executive-summary').value = '';
-        document.getElementById('f-risks-jp').value = '';
-        document.getElementById('f-target-company-jp').value = '';
-        document.getElementById('f-target-sizes').value = '';
-        document.getElementById('f-pricing-detail-jp').value = '';
-        document.getElementById('f-seo-title').value = '';
-        document.getElementById('f-seo-desc').value = '';
-        document.getElementById('f-seo-keywords').value = '';
-        document.getElementById('form-title').textContent = 'ツール新規登録';
-        document.getElementById('form-submit-btn').textContent = '登録';
-        document.getElementById('auto-research-btn').classList.add('hidden');
-        document.getElementById('config-editor-panel').classList.add('hidden');
-        hideMessages();
+        document.getElementById('f-category').value = '';
+        document.getElementById('modal-error').classList.add('hidden');
+        document.getElementById('modal-success').classList.add('hidden');
+    }
+
+    // ===== Submit =====
+    window.submitToolForm = async function() {
+        var errEl = document.getElementById('modal-error');
+        var succEl = document.getElementById('modal-success');
+        errEl.classList.add('hidden');
+        succEl.classList.add('hidden');
+
+        var slug = document.getElementById('f-slug').value.trim();
+        var name = document.getElementById('f-name').value.trim();
+        var nameJp = document.getElementById('f-name-jp').value.trim();
+        if (!slug || !name || !nameJp) { errEl.textContent = 'スラッグ、英語名、日本語名は必須です。'; errEl.classList.remove('hidden'); return; }
+
+        var body = { slug: slug, name: name, name_jp: nameJp, is_public: document.getElementById('f-public').checked };
+        var vendor = document.getElementById('f-vendor').value.trim();
+        var url = document.getElementById('f-url').value.trim();
+        var descJp = document.getElementById('f-desc-jp').value.trim();
+        var catId = document.getElementById('f-category').value;
+        var execSum = document.getElementById('f-executive-summary').value.trim();
+        if (vendor) body.vendor = vendor;
+        if (url) body.url = url;
+        if (descJp) body.description_jp = descJp;
+        if (catId) body.category_id = catId;
+        if (execSum) body.executive_summary_jp = execSum;
+
+        // SEO fields
+        var prosText = document.getElementById('f-pros-jp').value.trim();
+        var consText = document.getElementById('f-cons-jp').value.trim();
+        if (prosText) body.pros_jp = prosText.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+        if (consText) body.cons_jp = consText.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+        var risksJp = document.getElementById('f-risks-jp').value.trim();
+        var pricingJp = document.getElementById('f-pricing-detail-jp').value.trim();
+        var seoTitle = document.getElementById('f-seo-title').value.trim();
+        var seoDesc = document.getElementById('f-seo-desc').value.trim();
+        var seoKw = document.getElementById('f-seo-keywords').value.trim();
+        if (risksJp) body.risks_jp = risksJp;
+        if (pricingJp) body.pricing_detail_jp = pricingJp;
+        if (seoTitle) body.seo_title_jp = seoTitle;
+        if (seoDesc) body.seo_description_jp = seoDesc;
+        if (seoKw) body.seo_keywords_jp = seoKw.split(',').map(function(s){return s.trim();}).filter(Boolean);
+
+        try {
+            var existing = document.getElementById('edit-slug').value;
+            if (existing) {
+                await aixisAPI('/tools/' + encodeURIComponent(existing), { method: 'PUT', body: JSON.stringify(body) });
+                succEl.textContent = 'ツールを更新しました。';
+            } else {
+                await aixisAPI('/tools', { method: 'POST', body: JSON.stringify(body) });
+                succEl.textContent = 'ツールを登録しました。';
+            }
+            succEl.classList.remove('hidden');
+            await loadTools();
+            setTimeout(closeToolModal, 800);
+        } catch (err) {
+            errEl.textContent = err.message || '保存に失敗しました。';
+            errEl.classList.remove('hidden');
+        }
     };
 
-    window.autoResearchTool = async function() {
+    // ===== LLM Research =====
+    window.startLLMResearch = async function() {
         if (!editingSlug) return;
-        var btn = document.getElementById('auto-research-btn');
-        var origText = btn.textContent;
-        btn.textContent = 'リサーチ中...';
-        btn.disabled = true;
+        researchData = null;
+        document.getElementById('research-modal').classList.remove('hidden');
+        document.getElementById('research-loading').classList.remove('hidden');
+        document.getElementById('research-result').classList.add('hidden');
+        document.getElementById('research-footer').classList.add('hidden');
+
+        try {
+            var result = await aixisAPI('/tools/' + encodeURIComponent(editingSlug) + '/auto-research?preview=true', { method: 'POST' });
+            if (result.status === 'error') {
+                showResearchError(result.message || 'リサーチに失敗しました');
+                return;
+            }
+            researchData = result.research_data;
+            renderResearchPreview(researchData);
+        } catch (e) {
+            showResearchError(e.message || 'リサーチに失敗しました');
+        }
+    };
+
+    function showResearchError(msg) {
+        document.getElementById('research-loading').classList.add('hidden');
+        document.getElementById('research-result').innerHTML = '<div class="text-center py-8"><p class="text-sm text-red-500 font-jp">' + esc(msg) + '</p></div>';
+        document.getElementById('research-result').classList.remove('hidden');
+    }
+
+    function renderResearchPreview(data) {
+        document.getElementById('research-loading').classList.add('hidden');
+        var fields = [
+            { key: 'name', label: '英語名' },
+            { key: 'name_jp', label: '日本語名' },
+            { key: 'vendor', label: 'ベンダー' },
+            { key: 'description_jp', label: '説明' },
+            { key: 'executive_summary_jp', label: 'エグゼクティブサマリー' },
+            { key: 'features', label: '主要機能', type: 'list' },
+            { key: 'supported_languages', label: '対応言語', type: 'list' },
+            { key: 'pricing_model', label: '料金モデル' },
+            { key: 'free_trial_available', label: '無料トライアル', type: 'bool' },
+            { key: 'free_trial_days', label: 'トライアル日数' },
+            { key: 'pros_jp', label: 'メリット', type: 'list' },
+            { key: 'cons_jp', label: 'デメリット', type: 'list' },
+            { key: 'risks_jp', label: 'リスク' },
+            { key: 'pricing_detail_jp', label: '料金詳細' },
+        ];
+
+        var html = fields.map(function(f) {
+            var val = data[f.key];
+            if (val === null || val === undefined) return '';
+            var display = '';
+            if (f.type === 'list' && Array.isArray(val)) {
+                display = val.map(function(v) { return '<span class="inline-block px-2 py-0.5 mr-1 mb-1 text-xs bg-gray-100 dark:bg-gray-700 rounded">' + esc(String(v)) + '</span>'; }).join('');
+            } else if (f.type === 'bool') {
+                display = '<span class="text-xs">' + (val ? 'あり' : 'なし') + '</span>';
+            } else {
+                display = '<span class="text-xs text-gray-700 dark:text-gray-300">' + esc(String(val)) + '</span>';
+            }
+            return '<div class="flex items-start gap-3 py-2 border-b border-gray-50 dark:border-gray-700/30">' +
+                '<span class="text-[10px] font-medium text-gray-500 dark:text-gray-400 min-w-[6rem] shrink-0 pt-0.5 font-jp">' + f.label + '</span>' +
+                '<div class="flex-1">' + display + '</div>' +
+            '</div>';
+        }).filter(Boolean).join('');
+
+        document.getElementById('research-result').innerHTML = html || '<p class="text-sm text-gray-400 py-4 text-center font-jp">データがありません</p>';
+        document.getElementById('research-result').classList.remove('hidden');
+        document.getElementById('research-footer').classList.remove('hidden');
+    }
+
+    window.applyResearchData = async function() {
+        if (!editingSlug || !researchData) return;
         try {
             var result = await aixisAPI('/tools/' + encodeURIComponent(editingSlug) + '/auto-research', { method: 'POST' });
             if (result.status === 'success') {
-                showMessage('success', 'ツール情報を自動更新しました: ' + (result.updated_fields || []).join(', '));
-                // Reload tools and re-edit
+                closeResearchModal();
                 await loadTools();
                 window.editTool(editingSlug);
+                var succEl = document.getElementById('modal-success');
+                succEl.textContent = 'LLMリサーチデータを適用しました: ' + (result.updated_fields || []).join(', ');
+                succEl.classList.remove('hidden');
             } else {
-                showMessage('error', 'リサーチに失敗しました: ' + (result.message || '不明なエラー'));
+                alert('適用に失敗しました: ' + (result.message || '不明なエラー'));
             }
         } catch (e) {
-            showMessage('error', 'リサーチに失敗しました: ' + e.message);
-        } finally {
-            btn.textContent = origText;
-            btn.disabled = false;
+            alert('適用に失敗しました: ' + e.message);
         }
     };
 
-    window.showAddForm = function() {
-        window.resetForm();
-        document.getElementById('f-slug').focus();
+    window.closeResearchModal = function() {
+        document.getElementById('research-modal').classList.add('hidden');
     };
 
-    // ===== Target Config =====
-    async function loadTargetConfig(slug) {
-        var textarea = document.getElementById('config-yaml');
-        textarea.value = '';
+    // ===== Re-Audit =====
+    window.startReAudit = async function(toolId, toolName) {
+        if (!confirm(esc(toolName) + ' の再監査セッションを作成しますか？')) return;
         try {
-            var cfg = await aixisAPI('/tools/' + encodeURIComponent(slug) + '/target-config');
-            if (cfg && cfg.config_yaml) {
-                textarea.value = cfg.config_yaml;
-            }
+            var result = await aixisAPI('/extension/sessions', {
+                method: 'POST',
+                body: JSON.stringify({ tool_id: toolId, recording_mode: 'protocol' })
+            });
+            alert('再監査セッション ' + result.session_code + ' を作成しました。Chrome拡張で記録を開始してください。');
+            window.location.href = '/dashboard/audits/' + encodeURIComponent(result.session_id);
         } catch (e) {
-            // No config yet, that's fine
+            alert('セッション作成に失敗しました: ' + e.message);
         }
-    }
-
-    window.saveTargetConfig = async function() {
-        if (!editingSlug) return;
-        var yaml = document.getElementById('config-yaml').value.trim();
-        var msgEl = document.getElementById('config-msg');
-
-        if (!yaml) {
-            msgEl.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300';
-            msgEl.textContent = 'YAML設定を入力してください。';
-            msgEl.classList.remove('hidden');
-            return;
-        }
-
-        try {
-            await aixisAPI('/tools/' + encodeURIComponent(editingSlug) + '/target-config', {
-                method: 'PUT',
-                body: JSON.stringify({ config_yaml: yaml })
-            });
-            msgEl.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300';
-            msgEl.textContent = 'ターゲット設定を保存しました。';
-            msgEl.classList.remove('hidden');
-            checkConfigStatus(editingSlug);
-        } catch (err) {
-            msgEl.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300';
-            msgEl.textContent = err.message || '保存に失敗しました。';
-            msgEl.classList.remove('hidden');
-        }
-    };
-
-    // ===== Auth Cookie Management =====
-    window.copyCookieCmd = function() {
-        var cmd = document.getElementById('cookie-cmd').textContent;
-        navigator.clipboard.writeText(cmd).then(function() {
-            var btn = document.querySelector('#cookie-cmd + button');
-            if (btn) { btn.textContent = 'コピー済み'; setTimeout(function() { btn.textContent = 'コピー'; }, 2000); }
-        }).catch(function() {
-            var range = document.createRange();
-            range.selectNodeContents(document.getElementById('cookie-cmd'));
-            var sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-        });
-    };
-
-    window.saveAuthCookies = async function() {
-        if (!editingSlug) return;
-        var statusEl = document.getElementById('auth-cookie-status');
-        var raw = document.getElementById('auth-cookies-json').value.trim();
-        if (!raw) {
-            statusEl.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300';
-            statusEl.textContent = 'Cookieデータを入力してください。';
-            statusEl.classList.remove('hidden');
-            return;
-        }
-        try {
-            var storageState = null;
-            // Try JSON first
-            try {
-                var parsed = JSON.parse(raw);
-                if (Array.isArray(parsed)) {
-                    // Array of cookies: [{name, value, ...}, ...]
-                    storageState = { cookies: parsed, origins: [] };
-                } else if (parsed && typeof parsed === 'object') {
-                    if (parsed.cookies || parsed.origins) {
-                        // Full storage state format: {cookies: [...], origins: [...]}
-                        // Merge with existing cookies from DB if new data only has origins
-                        var existingState = null;
-                        try {
-                            var toolData = await aixisAPI('/tools/' + encodeURIComponent(editingSlug) + '?detail=true');
-                            existingState = toolData.auth_storage_state;
-                        } catch(_){}
-                        var newCookies = parsed.cookies || [];
-                        var newOrigins = parsed.origins || [];
-                        var existCookies = (existingState && existingState.cookies) ? existingState.cookies : [];
-                        var existOrigins = (existingState && existingState.origins) ? existingState.origins : [];
-                        // Merge: use new cookies if provided, otherwise keep existing
-                        storageState = {
-                            cookies: newCookies.length > 0 ? newCookies : existCookies,
-                            origins: newOrigins.length > 0 ? newOrigins : existOrigins
-                        };
-                        // If both have origins, merge by origin URL
-                        if (newOrigins.length > 0 && existOrigins.length > 0) {
-                            var originMap = {};
-                            existOrigins.forEach(function(o) { originMap[o.origin] = o; });
-                            newOrigins.forEach(function(o) { originMap[o.origin] = o; });
-                            storageState.origins = Object.values(originMap);
-                        }
-                    } else {
-                        throw new Error('not recognized');
-                    }
-                } else {
-                    throw new Error('not recognized');
-                }
-            } catch (jsonErr) {
-                if (storageState) throw jsonErr; // re-throw if partial parse
-                // Parse tab-separated format from Chrome Application > Cookies
-                var lines = raw.split('\n').filter(function(l) { return l.trim(); });
-                var cookies = [];
-                for (var i = 0; i < lines.length; i++) {
-                    var cols = lines[i].split('\t');
-                    if (cols.length >= 2) {
-                        var c = { name: cols[0].trim(), value: cols[1].trim() };
-                        if (cols.length >= 3 && cols[2].trim()) c.domain = cols[2].trim();
-                        if (cols.length >= 4 && cols[3].trim()) c.path = cols[3].trim();
-                        if (cols.length >= 7) {
-                            var httpOnly = cols[6].trim().toLowerCase();
-                            if (httpOnly === '✓' || httpOnly === 'true' || httpOnly === '1') c.httpOnly = true;
-                        }
-                        if (cols.length >= 8) {
-                            var secure = cols[7].trim().toLowerCase();
-                            if (secure === '✓' || secure === 'true' || secure === '1') c.secure = true;
-                        }
-                        if (cols.length >= 9 && cols[8].trim()) c.sameSite = cols[8].trim();
-                        cookies.push(c);
-                    }
-                }
-                if (cookies.length === 0) throw new Error('データを認識できませんでした。JSON、Chrome DevToolsコピー、またはlocalStorage形式で入力してください。');
-                storageState = { cookies: cookies, origins: [] };
-            }
-            var cookieCount = storageState.cookies ? storageState.cookies.length : 0;
-            var lsCount = 0;
-            (storageState.origins || []).forEach(function(o) { lsCount += (o.localStorage || []).length; });
-            await aixisAPI('/tools/' + encodeURIComponent(editingSlug), {
-                method: 'PUT',
-                body: JSON.stringify({ auth_storage_state: storageState })
-            });
-            statusEl.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300';
-            var msg = '';
-            if (cookieCount > 0 && lsCount > 0) msg = 'Cookie ' + cookieCount + '件 + localStorage ' + lsCount + '件を保存しました。';
-            else if (cookieCount > 0) msg = cookieCount + '件のCookieを保存しました。';
-            else if (lsCount > 0) msg = 'localStorage ' + lsCount + '件を保存しました（既存Cookieとマージ済み）。';
-            msg += ' 次回の監査から自動的にログイン状態でテストされます。';
-            statusEl.textContent = msg;
-            statusEl.classList.remove('hidden');
-        } catch (err) {
-            statusEl.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300';
-            statusEl.textContent = 'エラー: ' + (err.message || '保存に失敗しました');
-            statusEl.classList.remove('hidden');
-        }
-    };
-
-    window.clearAuthCookies = async function() {
-        if (!editingSlug) return;
-        if (!confirm('認証Cookieをクリアしますか？')) return;
-        try {
-            await aixisAPI('/tools/' + encodeURIComponent(editingSlug), {
-                method: 'PUT',
-                body: JSON.stringify({ auth_storage_state: null })
-            });
-            document.getElementById('auth-cookies-json').value = '';
-            var statusEl = document.getElementById('auth-cookie-status');
-            statusEl.className = 'mb-3 px-3 py-2 rounded-lg text-xs font-jp bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400';
-            statusEl.textContent = '認証Cookieをクリアしました。';
-            statusEl.classList.remove('hidden');
-        } catch (err) { alert(err.message); }
     };
 
     // ===== Helpers =====
-    function showFormError(msg) {
-        var el = document.getElementById('form-error');
-        el.textContent = msg; el.classList.remove('hidden');
-    }
-    function showFormSuccess(msg) {
-        var el = document.getElementById('form-success');
-        el.textContent = msg; el.classList.remove('hidden');
-    }
-    function hideMessages() {
-        document.getElementById('form-error').classList.add('hidden');
-        document.getElementById('form-success').classList.add('hidden');
-        document.getElementById('config-msg').classList.add('hidden');
-    }
-
-    function escapeHtml(str) {
+    function esc(str) {
         if (!str) return '';
         var div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
     }
 
+    // ESC key to close modals
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (!document.getElementById('research-modal').classList.contains('hidden')) closeResearchModal();
+            else if (!document.getElementById('tool-modal').classList.contains('hidden')) closeToolModal();
+        }
+    });
+
     // Init
-    loadTools();
+    loadCategories().then(loadTools);
 })();
 </script>
 {% endblock %}

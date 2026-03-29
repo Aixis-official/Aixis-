@@ -245,11 +245,12 @@ async def auto_research_tool_info(
     slug: str,
     db: Annotated[AsyncSession, Depends(get_db)],
     _admin: Annotated[User, Depends(require_admin)],
+    preview: bool = Query(False, description="Preview only — do not save to DB"),
 ):
     """Use LLM to research and auto-populate tool info from official sources.
 
-    Updates: supported_languages, features, pricing info, vendor, description
-    based on Claude's knowledge of the tool's official site/documentation.
+    When preview=true, returns research data without saving (for human review).
+    When preview=false (default), also includes SEO/article fields.
     """
     result = await db.execute(select(Tool).where(Tool.slug == slug))
     tool = result.scalar_one_or_none()
@@ -283,22 +284,28 @@ async def auto_research_tool_info(
   "name_jp": "日本語名称（公式に日本語名がある場合。ない場合は英語名そのまま）",
   "vendor": "ベンダー/開発元の正式名称",
   "description_jp": "ツールの概要説明（2-3文、公式情報に基づく）",
-  "supported_languages": ["ja", "en", "zh", "ko", "fr", "de", "es", "pt", "it", "ru"],
+  "supported_languages": ["ja", "en"],
   "features": ["主要機能1", "主要機能2", "主要機能3"],
   "pricing_model": "free|freemium|paid|enterprise のいずれか",
-  "free_trial_available": true/false,
-  "free_trial_days": 日数またはnull
+  "free_trial_available": true,
+  "free_trial_days": null,
+  "executive_summary_jp": "企業担当者向けの概要。ツールの本質・強み・注意点を3-4行で。数値は使わず本質を伝える。",
+  "pros_jp": ["メリット1", "メリット2", "メリット3"],
+  "cons_jp": ["デメリット1", "デメリット2"],
+  "risks_jp": "データの第三者提供リスクなど、公式情報から確認できるリスク・注意点",
+  "pricing_detail_jp": "料金プランの詳細。無料/有料プランの内容と価格。"
 }}
 
 supported_languagesは実際にUI/インターフェースが対応している言語のISO 639-1コードのリストを返してください。
-featuresは主要な機能を最大5つまで、簡潔な日本語で。"""
+featuresは主要な機能を最大5つまで、簡潔な日本語で。
+executive_summary_jpは企業の意思決定者向けに、このツールの本質を伝える概要。"""
 
     try:
         import asyncio
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(None, lambda: client.messages.create(
             model="claude-sonnet-4-20250514",
-            max_tokens=1000,
+            max_tokens=2000,
             messages=[{"role": "user", "content": research_prompt}],
         ))
         content = response.content[0].text if response.content else ""
@@ -310,6 +317,15 @@ featuresは主要な機能を最大5つまで、簡潔な日本語で。"""
             return {"status": "error", "message": "LLMからJSON応答を取得できませんでした", "raw": content}
 
         data = json.loads(json_match.group())
+
+        # Preview mode: return research data without saving
+        if preview:
+            return {
+                "status": "preview",
+                "research_data": data,
+                "message": "プレビューモードです。内容を確認・編集してから保存してください。",
+            }
+
         updated_fields = []
 
         # Update fields only if LLM provides non-null values
@@ -340,6 +356,21 @@ featuresは主要な機能を最大5つまで、簡潔な日本語で。"""
         if data.get("free_trial_days") is not None:
             tool.free_trial_days = data["free_trial_days"]
             updated_fields.append("free_trial_days")
+        if data.get("executive_summary_jp"):
+            tool.executive_summary_jp = data["executive_summary_jp"]
+            updated_fields.append("executive_summary_jp")
+        if data.get("pros_jp") and isinstance(data["pros_jp"], list):
+            tool.pros_jp = data["pros_jp"]
+            updated_fields.append("pros_jp")
+        if data.get("cons_jp") and isinstance(data["cons_jp"], list):
+            tool.cons_jp = data["cons_jp"]
+            updated_fields.append("cons_jp")
+        if data.get("risks_jp"):
+            tool.risks_jp = data["risks_jp"]
+            updated_fields.append("risks_jp")
+        if data.get("pricing_detail_jp"):
+            tool.pricing_detail_jp = data["pricing_detail_jp"]
+            updated_fields.append("pricing_detail_jp")
 
         tool.updated_at = datetime.now(timezone.utc)
         await db.commit()
