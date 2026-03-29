@@ -185,6 +185,11 @@
     var allTools = [];
     var currentSelectedId = '';
 
+    // Guard against missing config-db-status element
+    if (!configDbStatus) {
+        configDbStatus = document.createElement('span');
+    }
+
     // ===== Tool List (inline, searchable) =====
     async function loadTools() {
         try {

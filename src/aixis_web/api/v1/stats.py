@@ -1,5 +1,6 @@
 """Public platform statistics endpoint."""
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
@@ -16,6 +17,9 @@ from ...db.models.score import ToolPublishedScore
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+_stats_cache: dict = {"data": None, "ts": 0}
+_STATS_TTL = 300  # 5 minutes
+
 
 class PlatformStats(BaseModel):
     audited_tools: int = 0
@@ -28,6 +32,10 @@ class PlatformStats(BaseModel):
 @router.get("", response_model=PlatformStats)
 async def get_platform_stats(db: Annotated[AsyncSession, Depends(get_db)]):
     """Get public platform statistics. No auth required."""
+    now_ts = time.time()
+    if _stats_cache["data"] is not None and (now_ts - _stats_cache["ts"]) < _STATS_TTL:
+        return _stats_cache["data"]
+
     try:
         # Count public, active tools that have published scores
         tools_with_scores = await db.execute(
@@ -72,13 +80,16 @@ async def get_platform_stats(db: Annotated[AsyncSession, Depends(get_db)]):
         )
         new_this_month = new_month.scalar() or 0
 
-        return PlatformStats(
+        result = PlatformStats(
             audited_tools=audited_tools,
             categories=categories,
             total_audits=total_audits,
             last_updated=last_updated,
             new_this_month=new_this_month,
         )
+        _stats_cache["data"] = result
+        _stats_cache["ts"] = time.time()
+        return result
     except Exception:
         logger.exception("Failed to compute platform stats")
         return PlatformStats()

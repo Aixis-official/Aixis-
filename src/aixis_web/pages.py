@@ -1,6 +1,7 @@
 """SSR page routes using Jinja2 templates."""
 import time
 from datetime import datetime, timezone
+from html import escape as html_escape
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
@@ -721,8 +722,8 @@ async def og_image(slug: str, db: AsyncSession = Depends(get_db)):
     if not tool:
         return Response(status_code=404)
 
-    tool_name = tool.name_jp or tool.name
-    vendor = tool.vendor or ""
+    tool_name = html_escape(tool.name_jp or tool.name)
+    vendor = html_escape(tool.vendor or "")
 
     # Get overall score if available
     score_result = await db.execute(
