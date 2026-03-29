@@ -10,11 +10,75 @@
 <meta name="keywords" content="AIツール 監査 料金,AI評価 価格,AIツール比較 費用,Aixis 料金プラン,AI監査 無料トライアル">
 {% endblock %}
 
+{% block canonical %}
+<link rel="canonical" href="https://platform.aixis.jp/pricing">
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "無料トライアル中に費用は発生しますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "14日間は完全無料でご利用いただけます。トライアル期間中にご解約いただければ費用は一切発生しません。トライアル終了後は、ご登録いただいたお支払い方法に基づき自動的に有料プランへ移行します。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "年額プランへの切替はいつでもできますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "はい。マイページからいつでも切替可能です。差額は日割りで調整されます。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "解約はいつでもできますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "はい。契約期間の縛りはありません。月額プランはいつでも解約でき、当月末までご利用いただけます。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "請求書払いは可能ですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "はい。年額プランおよび個別監査レポートは請求書払いに対応しています。お問い合わせフォームよりご連絡ください。"
+      }
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "ホーム", "item": "https://platform.aixis.jp/"},
+    {"@type": "ListItem", "position": 2, "name": "料金プラン", "item": "https://platform.aixis.jp/pricing"}
+  ]
+}
+</script>
+{% endblock %}
+
 {% block content %}
 
 <!-- Page Header -->
 <section class="bg-white dark:bg-aixis-800 border-b border-gray-200 dark:border-aixis-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-left">
+        <nav class="mb-5" aria-label="パンくずリスト">
+            <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
+                <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
+                <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
+                <li class="text-gray-600 dark:text-gray-300 font-medium">料金プラン</li>
+            </ol>
+        </nav>
         <span class="report-label font-sans" style="text-transform: none;">Aixis Pricing Structure</span>
         <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
             料金プラン

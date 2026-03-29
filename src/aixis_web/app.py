@@ -254,23 +254,30 @@ def create_app() -> FastAPI:
     def _error_html(code: int, title: str, message: str) -> str:
         return f"""<!DOCTYPE html>
 <html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{code} - Aixis</title>
+<title>{title} - Aixis AI監査プラットフォーム</title>
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://platform.aixis.jp/">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
 body{{font-family:Inter,'Noto Sans JP',sans-serif;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;background:#fafafa;color:#111827}}
-.error-container{{text-align:center;max-width:480px;padding:2rem}}
+.error-container{{text-align:center;max-width:520px;padding:2rem}}
 .error-code{{font-size:6rem;font-weight:800;color:#e2e8f0;line-height:1;letter-spacing:-0.04em}}
 .error-title{{font-size:1.125rem;font-weight:700;color:#1e293b;margin-top:1rem}}
 .error-message{{font-size:0.875rem;color:#64748b;margin-top:0.75rem;line-height:1.6}}
 .error-actions{{margin-top:2rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}}
-.error-actions a{{display:inline-flex;align-items:center;gap:0.5rem;padding:0.625rem 1.5rem;font-size:0.875rem;font-weight:600;text-decoration:none;transition:all 0.2s}}
+.error-actions a{{display:inline-flex;align-items:center;gap:0.5rem;padding:0.625rem 1.5rem;font-size:0.875rem;font-weight:600;text-decoration:none;border-radius:4px;transition:all 0.2s}}
 .btn-primary{{background:#0f172a;color:#fff}}
 .btn-primary:hover{{background:#1e293b}}
 .btn-secondary{{border:1px solid #d1d5db;color:#374151}}
 .btn-secondary:hover{{background:#f9fafb}}
 .section-line{{width:24px;height:2px;background:#cbd5e1;margin:0 auto 1rem}}
+.nav-links{{margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid #e5e7eb}}
+.nav-links p{{font-size:0.75rem;color:#9ca3af;margin-bottom:0.75rem}}
+.nav-links ul{{list-style:none;display:flex;gap:1.25rem;justify-content:center;flex-wrap:wrap}}
+.nav-links a{{font-size:0.8125rem;color:#6366f1;text-decoration:none;transition:color 0.2s}}
+.nav-links a:hover{{color:#4338ca;text-decoration:underline}}
 </style></head>
 <body>
 <div class="error-container">
@@ -282,6 +289,15 @@ body{{font-family:Inter,'Noto Sans JP',sans-serif;display:flex;flex-direction:co
 <a href="/" class="btn-primary">ホームに戻る</a>
 <a href="/contact" class="btn-secondary">お問い合わせ</a>
 </div>
+<nav class="nav-links">
+<p>お探しのページが見つからない場合</p>
+<ul>
+<li><a href="/tools">AIツール一覧</a></li>
+<li><a href="/categories">カテゴリ</a></li>
+<li><a href="/compare">ツール比較</a></li>
+<li><a href="/pricing">料金プラン</a></li>
+</ul>
+</nav>
 </div>
 </body></html>"""
 

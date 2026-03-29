@@ -9,6 +9,10 @@
 <meta name="keywords" content="AIツール カテゴリ,AIツール ランキング,チャットボット 比較,画像生成AI 比較,文書作成AI 比較,コード生成AI 比較,AI カテゴリ別">
 {% endblock %}
 
+{% block canonical %}
+<link rel="canonical" href="https://platform.aixis.jp/categories">
+{% endblock %}
+
 {% block head %}
 <style>
     .category-card {
@@ -24,6 +28,13 @@
 <!-- Page Header -->
 <section class="bg-white dark:bg-aixis-800 border-b border-gray-200 dark:border-aixis-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-center">
+        <nav class="mb-5" aria-label="パンくずリスト">
+            <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
+                <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
+                <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
+                <li class="text-gray-600 dark:text-gray-300 font-medium">カテゴリ一覧</li>
+            </ol>
+        </nav>
         <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif tracking-tight text-gray-900 dark:text-white">
             カテゴリ別比較・ランキング
         </h1>

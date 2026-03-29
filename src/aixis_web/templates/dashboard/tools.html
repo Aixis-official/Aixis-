@@ -107,9 +107,11 @@
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">対応言語（カンマ区切り）</label>
-                                <input type="text" id="f-languages" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors" placeholder="ja,en">
+                            <div class="flex items-center gap-3 pt-5">
+                                <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 font-jp cursor-pointer">
+                                    <input type="checkbox" id="f-japanese-supported" class="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                                    日本語対応
+                                </label>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">料金モデル</label>
@@ -361,7 +363,7 @@
         document.getElementById('f-url').value = tool.url || '';
         document.getElementById('f-desc-jp').value = tool.description_jp || '';
         document.getElementById('f-features').value = (tool.features || []).join('\n');
-        document.getElementById('f-languages').value = (tool.supported_languages || []).join(',');
+        document.getElementById('f-japanese-supported').checked = (tool.supported_languages || []).includes('ja');
         document.getElementById('f-pricing-model').value = tool.pricing_model || '';
         document.getElementById('f-public').checked = tool.is_public;
         document.getElementById('f-category').value = tool.category_id || '';
@@ -392,11 +394,12 @@
         document.getElementById('f-slug').value = '';
         document.getElementById('f-slug').readOnly = false;
         document.getElementById('f-slug').classList.remove('bg-gray-100', 'dark:bg-gray-800', 'cursor-not-allowed');
-        ['f-name','f-name-jp','f-vendor','f-url','f-desc-jp','f-features','f-languages','f-executive-summary','f-pros-jp','f-cons-jp','f-risks-jp','f-pricing-detail-jp','f-seo-title','f-seo-desc','f-seo-keywords'].forEach(function(id) {
+        ['f-name','f-name-jp','f-vendor','f-url','f-desc-jp','f-features','f-executive-summary','f-pros-jp','f-cons-jp','f-risks-jp','f-pricing-detail-jp','f-seo-title','f-seo-desc','f-seo-keywords'].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) el.value = '';
         });
         document.getElementById('f-public').checked = false;
+        document.getElementById('f-japanese-supported').checked = false;
         document.getElementById('f-category').value = '';
         document.getElementById('f-pricing-model').value = '';
         document.getElementById('modal-error').classList.add('hidden');
@@ -432,7 +435,7 @@
         if (catId) body.category_id = catId;
         if (execSum) body.executive_summary_jp = execSum;
         if (featuresText) body.features = featuresText.split('\n').map(function(s){return s.trim();}).filter(Boolean);
-        if (langsText) body.supported_languages = langsText.split(',').map(function(s){return s.trim();}).filter(Boolean);
+        body.supported_languages = document.getElementById('f-japanese-supported').checked ? ['ja'] : [];
         if (pricingModel) body.pricing_model = pricingModel;
 
         // SEO fields

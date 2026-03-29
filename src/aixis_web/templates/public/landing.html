@@ -9,11 +9,19 @@
 <meta name="keywords" content="AIツール 比較,AIツール 一覧,AIツール 評価,AI監査,AIツール ランキング,AIツール おすすめ,企業向けAI,AI導入 比較,AIツール レビュー">
 {% endblock %}
 
+{% block canonical %}
+<link rel="canonical" href="https://platform.aixis.jp/">
+{% endblock %}
+
 {% block ogp %}
 <meta property="og:title" content="AIツール比較・一覧 | Aixis 独立系AI監査プラットフォーム">
 <meta property="og:description" content="AIツールを独立した5軸監査で徹底比較。感覚ではなくデータでAIツール選定を支援。">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://aixis.jp/">
+<meta property="og:url" content="https://platform.aixis.jp/">
+<meta property="og:image" content="https://platform.aixis.jp/static/img/Aixis-logo-final.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="AIツール比較・一覧 | Aixis 独立系AI監査プラットフォーム">
+<meta name="twitter:description" content="AIツールを独立した5軸監査で徹底比較。感覚ではなくデータでAIツール選定を支援。">
 {% endblock %}
 
 {% block structured_data %}
@@ -22,15 +30,28 @@
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "Aixis",
-  "url": "https://aixis.jp",
-  "logo": "https://aixis.jp/static/img/Aixis-logo-final.png",
+  "url": "https://platform.aixis.jp",
+  "logo": "https://platform.aixis.jp/static/img/Aixis-logo-final.png",
   "description": "独立系AI調査・監査機関。AIツールを5軸評価フレームワークで定量的に監査・比較。",
   "sameAs": [],
   "contactPoint": {
     "@type": "ContactPoint",
     "contactType": "customer service",
-    "url": "https://aixis.jp/contact",
+    "url": "https://platform.aixis.jp/contact",
     "availableLanguage": "Japanese"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Aixis AI監査プラットフォーム",
+  "url": "https://platform.aixis.jp",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://platform.aixis.jp/tools?q={search_term_string}",
+    "query-input": "required name=search_term_string"
   }
 }
 </script>

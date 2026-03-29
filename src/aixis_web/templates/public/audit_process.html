@@ -9,6 +9,10 @@
 <meta name="keywords" content="AI監査 プロセス,AIツール 評価方法,AI評価 基準,5軸評価,AIツール 監査方法,AI品質評価">
 {% endblock %}
 
+{% block canonical %}
+<link rel="canonical" href="https://platform.aixis.jp/audit-process">
+{% endblock %}
+
 {% block head %}
 <style>
     .process-step {
@@ -34,6 +38,13 @@
 <!-- Page Header -->
 <section class="bg-white dark:bg-aixis-800 border-b border-gray-200 dark:border-aixis-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-left">
+        <nav class="mb-5" aria-label="パンくずリスト">
+            <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
+                <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
+                <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
+                <li class="text-gray-600 dark:text-gray-300 font-medium">監査プロセス</li>
+            </ol>
+        </nav>
         <div class="section-line"></div>
         <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
             監査プロセス

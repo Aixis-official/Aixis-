@@ -3,11 +3,14 @@ from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .api.deps import get_current_user
+from .db.base import get_db
 from .db.models.user import User
 from .i18n import get_translator, detect_language
 
@@ -114,9 +117,37 @@ async def categories_index(request: Request, user: _OptionalUser = None):
 
 
 @page_router.get("/tools/{slug}")
-async def tool_detail_page(request: Request, slug: str, user: _OptionalUser = None):
-    """Tool detail page."""
-    ctx = _get_template_context(request, user=user, title="ツール詳細レビュー・評価", slug=slug, active_page="tools")
+async def tool_detail_page(request: Request, slug: str, user: _OptionalUser = None, db: AsyncSession = Depends(get_db)):
+    """Tool detail page with dynamic SEO meta tags."""
+    from .db.models.tool import Tool
+    result = await db.execute(select(Tool).where(Tool.slug == slug))
+    tool = result.scalar_one_or_none()
+
+    if tool:
+        seo_title = tool.seo_title_jp or f"{tool.name_jp or tool.name} レビュー・評価"
+        seo_desc = tool.seo_description_jp or tool.description_jp or f"{tool.name_jp or tool.name}の実務適性・費用対効果・日本語能力・安全性・革新性を独立監査で5軸評価。"
+        seo_keywords = tool.seo_keywords_jp or []
+        tool_data = {
+            "name": tool.name,
+            "name_jp": tool.name_jp,
+            "vendor": tool.vendor,
+            "description_jp": tool.description_jp,
+            "logo_url": tool.logo_url,
+            "url": tool.url,
+            "category_id": tool.category_id,
+        }
+    else:
+        seo_title = "ツール詳細レビュー・評価"
+        seo_desc = "AIツールの詳細レビュー・5軸評価スコア。"
+        seo_keywords = []
+        tool_data = None
+
+    ctx = _get_template_context(
+        request, user=user, title=seo_title, slug=slug, active_page="tools",
+        seo_description=seo_desc,
+        seo_keywords=seo_keywords,
+        tool_data=tool_data,
+    )
     return _render("public/tool_detail.html", ctx)
 
 
@@ -554,3 +585,144 @@ async def benchmark_manage_page(
         return redirect
     ctx = _get_template_context(request, user=user, title="ベンチマーク管理", active_page="benchmarks")
     return _render("dashboard/benchmark_manage.html", ctx)
+
+
+# ---------------------------------------------------------------------------
+# SEO: sitemap.xml & robots.txt
+# ---------------------------------------------------------------------------
+
+SITE_ORIGIN = "https://platform.aixis.jp"
+
+# Public static pages to include in sitemap (path, changefreq, priority)
+_STATIC_PAGES = [
+    ("/", "weekly", "1.0"),
+    ("/tools", "daily", "0.9"),
+    ("/categories", "weekly", "0.8"),
+    ("/compare", "weekly", "0.7"),
+    ("/pricing", "monthly", "0.5"),
+    ("/audit-process", "monthly", "0.5"),
+    ("/independence", "monthly", "0.4"),
+    ("/transparency", "monthly", "0.4"),
+    ("/audit-protocol", "monthly", "0.4"),
+    ("/contact", "monthly", "0.3"),
+    ("/terms", "yearly", "0.2"),
+]
+
+
+@page_router.get("/sitemap.xml")
+async def sitemap_xml(db: AsyncSession = Depends(get_db)):
+    """Dynamic sitemap.xml for search engine crawlers."""
+    from .db.models.tool import Tool, ToolCategory
+
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+
+    # Static pages
+    for path, freq, prio in _STATIC_PAGES:
+        lines.append(
+            f"  <url><loc>{SITE_ORIGIN}{path}</loc>"
+            f"<changefreq>{freq}</changefreq>"
+            f"<priority>{prio}</priority></url>"
+        )
+
+    # Tool detail pages
+    result = await db.execute(
+        select(Tool.slug, Tool.updated_at).where(Tool.is_active == True)  # noqa: E712
+    )
+    for slug, updated_at in result.all():
+        lastmod = ""
+        if updated_at:
+            lastmod = f"<lastmod>{updated_at.strftime('%Y-%m-%d')}</lastmod>"
+        lines.append(
+            f"  <url><loc>{SITE_ORIGIN}/tools/{slug}</loc>"
+            f"{lastmod}<changefreq>weekly</changefreq>"
+            f"<priority>0.8</priority></url>"
+        )
+
+    # Category pages
+    cat_result = await db.execute(select(ToolCategory.slug))
+    for (cat_slug,) in cat_result.all():
+        lines.append(
+            f"  <url><loc>{SITE_ORIGIN}/categories/{cat_slug}</loc>"
+            f"<changefreq>weekly</changefreq>"
+            f"<priority>0.6</priority></url>"
+        )
+
+    lines.append("</urlset>")
+    xml = "\n".join(lines)
+    return Response(content=xml, media_type="application/xml")
+
+
+@page_router.get("/robots.txt")
+async def robots_txt():
+    """robots.txt for search engine crawlers."""
+    content = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /dashboard/\n"
+        "Disallow: /api/\n"
+        "Disallow: /login\n"
+        "Disallow: /forgot-password\n"
+        "Disallow: /reset-password\n"
+        "Disallow: /invite/\n"
+        "Disallow: /portal\n"
+        "Disallow: /mypage\n"
+        "Disallow: /platform/\n"
+        "\n"
+        f"Sitemap: {SITE_ORIGIN}/sitemap.xml\n"
+    )
+    return PlainTextResponse(content=content)
+
+
+@page_router.get("/og/{slug}.svg")
+async def og_image(slug: str, db: AsyncSession = Depends(get_db)):
+    """Dynamic OGP image (SVG) for each tool — used in og:image meta tags."""
+    from .db.models.tool import Tool
+    from .db.models.score import ToolPublishedScore
+
+    result = await db.execute(select(Tool).where(Tool.slug == slug))
+    tool = result.scalar_one_or_none()
+    if not tool:
+        return Response(status_code=404)
+
+    tool_name = tool.name_jp or tool.name
+    vendor = tool.vendor or ""
+
+    # Get overall score if available
+    score_result = await db.execute(
+        select(ToolPublishedScore.score).where(
+            ToolPublishedScore.tool_id == tool.id,
+            ToolPublishedScore.axis_key == "overall",
+        )
+    )
+    score_row = score_result.first()
+    overall_score = f"{score_row[0]:.1f}" if score_row else "—"
+
+    # Truncate long names
+    if len(tool_name) > 20:
+        tool_name = tool_name[:19] + "…"
+
+    svg = f"""<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="40" y="40" width="1120" height="550" rx="16" fill="none" stroke="#334155" stroke-width="1"/>
+  <text x="100" y="120" font-family="sans-serif" font-size="22" fill="#94a3b8" font-weight="600">Aixis AI Audit Platform</text>
+  <text x="100" y="280" font-family="sans-serif" font-size="72" fill="#f8fafc" font-weight="800">{tool_name}</text>
+  <text x="100" y="340" font-family="sans-serif" font-size="28" fill="#94a3b8">{vendor}</text>
+  <text x="100" y="520" font-family="sans-serif" font-size="20" fill="#64748b">独立監査スコア（5軸評価）</text>
+  <circle cx="1000" cy="300" r="100" fill="none" stroke="#6366f1" stroke-width="6"/>
+  <text x="1000" y="290" font-family="sans-serif" font-size="64" fill="#f8fafc" font-weight="800" text-anchor="middle">{overall_score}</text>
+  <text x="1000" y="330" font-family="sans-serif" font-size="18" fill="#94a3b8" text-anchor="middle">/ 5.0</text>
+  <text x="1000" y="520" font-family="sans-serif" font-size="18" fill="#475569" text-anchor="middle">platform.aixis.jp</text>
+</svg>"""
+    return Response(content=svg, media_type="image/svg+xml", headers={
+        "Cache-Control": "public, max-age=86400",
+    })

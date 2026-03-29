@@ -9,8 +9,54 @@
 <meta name="keywords" content="AIツール データベース,AIツール 一覧,AIツール スコア,AI比較 データベース,ChatGPT 比較,Claude 比較,AIツール 評価一覧">
 {% endblock %}
 
+{% block canonical %}
+<link rel="canonical" href="https://platform.aixis.jp/tools">
+{% endblock %}
+
+{% block ogp %}
+<meta property="og:title" content="AIツール一覧 - Aixis AI監査プラットフォーム">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://platform.aixis.jp/tools">
+<meta property="og:description" content="AIツールの独立監査レポート一覧。実務適性を5軸で評価。">
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "AIツール監査データベース",
+  "description": "主要AIツールを5軸スコアで独立評価。カテゴリ別比較・ランキングも掲載。",
+  "url": "https://platform.aixis.jp/tools",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Aixis",
+    "url": "https://platform.aixis.jp"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "ホーム", "item": "https://platform.aixis.jp/"},
+    {"@type": "ListItem", "position": 2, "name": "AIツール一覧", "item": "https://platform.aixis.jp/tools"}
+  ]
+}
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <nav class="mb-5" aria-label="パンくずリスト">
+        <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
+            <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
+            <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
+            <li class="text-gray-600 dark:text-gray-300 font-medium">監査データベース</li>
+        </ol>
+    </nav>
 
     <!-- ================================================================
          1. Page Header (compact)
