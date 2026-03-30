@@ -878,7 +878,7 @@
     function renderReliability(rel) {
         if (!rel || typeof rel.overall === 'undefined') return;
         document.getElementById('reliability-section').classList.remove('hidden');
-        document.getElementById('reliability-overall').textContent = rel.overall;
+        document.getElementById('reliability-overall').textContent = (typeof rel.overall === 'number' && isFinite(rel.overall)) ? rel.overall.toFixed(1) : '--';
 
         var DIMENSIONS = [
             { key: 'consistency',       label: '再現性',   labelEn: 'Consistency',       color: '#3b82f6', icon: '🔄' },
@@ -889,7 +889,7 @@
 
         var container = document.getElementById('reliability-gauges');
         container.innerHTML = DIMENSIONS.map(function(dim) {
-            var val = rel[dim.key] || 0;
+            var val = (typeof rel[dim.key] === 'number' && isFinite(rel[dim.key])) ? rel[dim.key] : 0;
             var rating = val >= 80 ? '高信頼' : val >= 50 ? '標準' : '要改善';
             var ratingColor = val >= 80 ? 'text-emerald-600 dark:text-emerald-400' : val >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400';
             return '<div class="p-4 rounded-lg border border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-[#161929]">' +
@@ -1026,14 +1026,14 @@
             bannerEl.innerHTML = bannerHtml;
         }
 
-        document.getElementById('overall-score').textContent = overall.toFixed(1);
+        document.getElementById('overall-score').textContent = (isFinite(overall) ? overall.toFixed(1) : '0.0');
         var gradeEl = document.getElementById('overall-grade');
         gradeEl.textContent = grade.grade;
         gradeEl.style.color = grade.color;
 
         // Radar chart
         var labels = scores.map(function(s) { return s.axis_name_jp; });
-        var values = scores.map(function(s) { return s.score; });
+        var values = scores.map(function(s) { return isFinite(s.score) ? s.score : 0; });
         values.push(values[0]);
         labels.push(labels[0]);
 
@@ -1099,9 +1099,9 @@
             AXIS_ORDER.forEach(function(axis) {
                 var b = breakdown[axis];
                 if (!b) return;
-                var autoVal = b.auto_score;
-                var manualVal = b.manual_score;
-                var finalVal = b.final_score;
+                var autoVal = (typeof b.auto_score === 'number' && isFinite(b.auto_score)) ? b.auto_score : null;
+                var manualVal = (typeof b.manual_score === 'number' && isFinite(b.manual_score)) ? b.manual_score : null;
+                var finalVal = (typeof b.final_score === 'number' && isFinite(b.final_score)) ? b.final_score : null;
 
                 tHtml += '<tr class="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/30">' +
                     '<td class="py-3 px-2"><span class="text-xs font-medium text-gray-700 dark:text-gray-300 font-jp">' + AXIS_NAMES[axis] + '</span></td>' +
@@ -1112,7 +1112,7 @@
                     '</td>' +
                     // Manual score
                     '<td class="py-3 px-2 text-center">' +
-                        (b.has_manual
+                        (b.has_manual && manualVal != null
                             ? '<div class="' + scoreColor(manualVal) + ' font-bold tabular-nums text-sm">' + manualVal.toFixed(1) + '</div>' +
                               '<div class="mt-1 px-2">' + miniBar(manualVal, 5, '#f59e0b') + '</div>'
                             : '<div class="text-gray-300 dark:text-gray-600 text-sm font-jp">未入力</div>'
@@ -1166,8 +1166,8 @@
             var html = '<div class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">';
             CONFIDENCE_DIMS.forEach(function(dim) {
                 var val = dims ? dims[dim.key] : null;
-                var hasVal = val !== null && val !== undefined;
-                var pct = hasVal ? Math.round(val * 100) : 0;
+                var hasVal = val !== null && val !== undefined && isFinite(val);
+                var pct = hasVal ? Math.min(100, Math.max(0, Math.round(val * 100))) : 0;
                 var displayVal = hasVal ? pct + '%' : '---';
                 html += '<div class="flex items-center gap-1">' +
                     '<span class="text-[9px] text-gray-400 dark:text-gray-500 font-jp w-8 shrink-0">' + dim.label + '</span>' +
@@ -1194,7 +1194,7 @@
             }
             var html = '<div class="mt-2 space-y-1.5 border-t border-gray-100 dark:border-gray-700/50 pt-2">';
             details.forEach(function(d) {
-                var dScore = typeof d.score === 'number' ? d.score : 0;
+                var dScore = (typeof d.score === 'number' && isFinite(d.score)) ? d.score : 0;
                 var dDisplay = dScore.toFixed(1);
                 var dColor = dScore >= 3.5 ? 'text-emerald-600 dark:text-emerald-400' : (dScore >= 2.0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-red-500 dark:text-red-400');
                 html += '<div class="text-[10px]">' +
@@ -1212,9 +1212,10 @@
         // === Axis detail cards (strengths, risks, rule results) ===
         var cards = document.getElementById('axis-cards');
         cards.innerHTML = scores.map(function(s) {
-            var sc = s.score.toFixed(1);
-            var barPct = (s.score / 5.0 * 100).toFixed(1);
-            var level = scoreLevel(s.score);
+            var safeScore = isFinite(s.score) ? s.score : 0;
+            var sc = safeScore.toFixed(1);
+            var barPct = (safeScore / 5.0 * 100).toFixed(1);
+            var level = scoreLevel(safeScore);
             var needsManual = s.confidence === 0 && s.score === 0 && s.source === 'error';
             return '<div class="p-4 rounded-lg border border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-[#161929]">' +
                 '<div class="flex items-center justify-between mb-2">' +

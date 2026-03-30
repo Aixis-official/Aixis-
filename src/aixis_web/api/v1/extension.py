@@ -686,7 +686,7 @@ async def complete_session(
     tool_id = session_row[1]
     total_planned = session_row[3] or 0
     total_executed = session_row[4] or 0
-    completeness = int(total_executed / total_planned * 100) if total_planned > 0 else 0
+    completeness = min(100, int(total_executed / total_planned * 100)) if total_planned > 0 else 0
 
     # Update session to "scoring" status
     await db.execute(text("""

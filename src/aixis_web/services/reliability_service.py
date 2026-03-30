@@ -142,9 +142,6 @@ def _calc_comprehensiveness(results: list, cases: list, total_planned: int, tota
     # --- Completion ratio ---
     if total_planned > 0:
         completion = min(100, (total_executed / total_planned) * 100)
-        # Penalize when planned == executed exactly (likely auto-derived, not a real plan)
-        if total_planned == total_executed:
-            completion = min(completion, 75.0)
     else:
         completion = 0.0
 
@@ -244,8 +241,8 @@ def _calc_correctness(axis_scores_data: list[dict], results: list) -> float:
     else:
         dist_score = 50
 
-    # Evidence backing: % of results with non-error responses
-    valid_results = sum(1 for r in results if not getattr(r, "error", None) and getattr(r, "response_raw", None))
+    # Evidence backing: % of results with non-error responses (text or screenshot)
+    valid_results = sum(1 for r in results if not getattr(r, "error", None) and (getattr(r, "response_raw", None) or getattr(r, "screenshot_path", None)))
     evidence_ratio = valid_results / len(results) if results else 0
     evidence_score = evidence_ratio * 100
 
@@ -255,7 +252,7 @@ def _calc_correctness(axis_scores_data: list[dict], results: list) -> float:
 def _correctness_details(axis_scores_data: list[dict], results: list) -> dict:
     confidences = {s.get("axis", "?"): s.get("confidence", 0) for s in axis_scores_data}
     scores = {s.get("axis", "?"): s.get("score", 0) for s in axis_scores_data}
-    valid = sum(1 for r in results if not getattr(r, "error", None) and getattr(r, "response_raw", None))
+    valid = sum(1 for r in results if not getattr(r, "error", None) and (getattr(r, "response_raw", None) or getattr(r, "screenshot_path", None)))
     return {
         "axis_confidences": confidences,
         "axis_scores": scores,
@@ -274,8 +271,8 @@ def _calc_intelligibility(results: list, axis_scores_data: list[dict]) -> float:
     if not results:
         return 0.0
 
-    # Non-empty response ratio
-    has_response = sum(1 for r in results if getattr(r, "response_raw", None) and len(str(r.response_raw).strip()) > 10)
+    # Non-empty response ratio (text or screenshot evidence)
+    has_response = sum(1 for r in results if (getattr(r, "response_raw", None) and len(str(r.response_raw).strip()) > 10) or getattr(r, "screenshot_path", None))
     response_ratio = has_response / len(results) if results else 0
 
     # Axis score detail coverage: % of axes that have details/strengths/risks
@@ -299,6 +296,8 @@ def _calc_intelligibility(results: list, axis_scores_data: list[dict]) -> float:
         raw = getattr(r, "response_raw", None)
         if raw:
             response_lengths.append(len(str(raw)))
+        elif getattr(r, "screenshot_path", None):
+            response_lengths.append(200)  # screenshots count as moderate evidence
     avg_length = statistics.mean(response_lengths) if response_lengths else 0
 
     # Length score: 100+ chars = good, 500+ = excellent
@@ -308,10 +307,18 @@ def _calc_intelligibility(results: list, axis_scores_data: list[dict]) -> float:
 
 
 def _intelligibility_details(results: list, axis_scores_data: list[dict]) -> dict:
-    has_response = sum(1 for r in results if getattr(r, "response_raw", None) and len(str(r.response_raw).strip()) > 10)
-    response_lengths = [len(str(r.response_raw)) for r in results if getattr(r, "response_raw", None)]
+    has_response = sum(1 for r in results if (getattr(r, "response_raw", None) and len(str(r.response_raw).strip()) > 10) or getattr(r, "screenshot_path", None))
+    has_screenshot = sum(1 for r in results if getattr(r, "screenshot_path", None))
+    response_lengths = []
+    for r in results:
+        raw = getattr(r, "response_raw", None)
+        if raw:
+            response_lengths.append(len(str(raw)))
+        elif getattr(r, "screenshot_path", None):
+            response_lengths.append(200)
     return {
         "responses_with_content": has_response,
+        "responses_with_screenshot": has_screenshot,
         "total_results": len(results),
         "avg_response_length": round(statistics.mean(response_lengths)) if response_lengths else 0,
         "axes_with_details": sum(1 for s in axis_scores_data if s.get("details")),

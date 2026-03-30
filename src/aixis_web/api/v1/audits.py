@@ -3,6 +3,7 @@ import csv
 import io
 import json as _json
 import logging
+import math
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated
@@ -304,11 +305,13 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
             except (ValueError, TypeError):
                 _risks = []
 
+        _score = s.score if isinstance(s.score, (int, float)) and math.isfinite(s.score) else 0.0
+        _conf = s.confidence if isinstance(s.confidence, (int, float)) and math.isfinite(s.confidence) else 0.0
         axis_scores.append({
             "axis": s.axis,
             "axis_name_jp": s.axis_name_jp,
-            "score": s.score,
-            "confidence": s.confidence,
+            "score": _score,
+            "confidence": _conf,
             "source": s.source,
             "strengths": _strengths if isinstance(_strengths, list) else [],
             "risks": _risks if isinstance(_risks, list) else [],
@@ -348,12 +351,16 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
         else:
             final_val = 0.0
 
+        if not math.isfinite(final_val):
+            final_val = 0.0
         final_val = max(0.0, min(5.0, round(final_val, 1)))
         live_final_scores[axis] = final_val
 
+        _safe_auto = round(auto_val, 2) if auto_val is not None and math.isfinite(auto_val) else None
+        _safe_manual = round(manual_val, 2) if manual_val is not None and math.isfinite(manual_val) else None
         score_breakdown[axis] = {
-            "auto_score": round(auto_val, 2) if auto_val is not None else None,
-            "manual_score": round(manual_val, 2) if manual_val is not None else None,
+            "auto_score": _safe_auto,
+            "manual_score": _safe_manual,
             "final_score": final_val,
             "auto_ratio": int(mix["auto"] * 100),
             "manual_ratio": int(mix["manual"] * 100),
@@ -370,7 +377,8 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
                 item["source"] = "hybrid"
 
     # Compute live overall score and grade
-    live_overall = round(sum(live_final_scores.values()) / 5, 1) if live_final_scores else 0.0
+    _raw_overall = sum(live_final_scores.values()) / 5 if live_final_scores else 0.0
+    live_overall = round(_raw_overall, 1) if math.isfinite(_raw_overall) else 0.0
     live_grade = OverallGrade.from_score(live_overall).value
 
     # Check for published record (for reference only, not for score values)
