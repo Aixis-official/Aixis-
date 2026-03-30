@@ -1035,7 +1035,7 @@ function animateCountUp(elId, target, opts) {
 
 // ===== Platform Stats =====
 (function() {
-    fetch('/api/v1/stats')
+    fetch('/api/v1/stats?_t=' + Date.now(), { cache: 'no-store' })
         .then(function(resp) {
             if (!resp.ok) throw new Error('Stats API error');
             return resp.json();

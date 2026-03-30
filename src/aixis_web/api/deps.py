@@ -69,14 +69,31 @@ async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User | None:
-    # Try Bearer header first, then fall back to cookie
-    token = None
-    if credentials:
-        token = credentials.credentials
-    else:
-        token = request.cookies.get(COOKIE_NAME)
-    if not token:
+    # Collect candidate tokens: Bearer header first, then cookie fallback
+    tokens_to_try: list[str] = []
+    if credentials and credentials.credentials:
+        tokens_to_try.append(credentials.credentials)
+    cookie_token = request.cookies.get(COOKIE_NAME)
+    if cookie_token and cookie_token not in tokens_to_try:
+        tokens_to_try.append(cookie_token)
+
+    if not tokens_to_try:
         return None
+
+    for token in tokens_to_try:
+        user = await _validate_token(token, request, db)
+        if user is not None:
+            return user
+
+    return None
+
+
+async def _validate_token(
+    token: str,
+    request: Request,
+    db: AsyncSession,
+) -> User | None:
+    """Validate a single JWT token and return the associated user, or None."""
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
@@ -117,6 +134,7 @@ async def get_current_user(
 
     except JWTError:
         return None
+
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user and not user.is_active:

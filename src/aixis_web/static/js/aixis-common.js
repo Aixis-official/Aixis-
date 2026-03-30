@@ -237,7 +237,17 @@ async function aixisAPI(path, options = {}) {
     headers['X-CSRF-Token'] = getCSRFToken();
   }
 
-  const response = await fetch(`/api/v1${path}`, { ...options, headers });
+  let response = await fetch(`/api/v1${path}`, { ...options, headers, credentials: 'same-origin' });
+
+  // If Bearer token failed but we have a cookie session, retry without Bearer
+  if (response.status === 401 && token) {
+    localStorage.removeItem('aixis_token');
+    const retryHeaders = { 'Content-Type': 'application/json', ...options.headers };
+    if (method !== 'GET' && method !== 'HEAD') {
+      retryHeaders['X-CSRF-Token'] = getCSRFToken();
+    }
+    response = await fetch(`/api/v1${path}`, { ...options, headers: retryHeaders, credentials: 'same-origin' });
+  }
 
   if (response.status === 401) {
     localStorage.removeItem('aixis_token');

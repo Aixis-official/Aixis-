@@ -3,7 +3,7 @@ import logging
 import time
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,8 +30,15 @@ class PlatformStats(BaseModel):
 
 
 @router.get("", response_model=PlatformStats)
-async def get_platform_stats(db: Annotated[AsyncSession, Depends(get_db)]):
+async def get_platform_stats(
+    response: Response,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     """Get public platform statistics. No auth required."""
+    # Prevent browser HTTP caching (especially aggressive mobile caching)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+
     now_ts = time.time()
     if _stats_cache["data"] is not None and (now_ts - _stats_cache["ts"]) < _STATS_TTL:
         return _stats_cache["data"]
