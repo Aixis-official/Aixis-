@@ -814,7 +814,10 @@
                         '<button onclick="rescoreAudit()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-jp">自動評価やり直し</button>' +
                         '</div>';
                     var cardsEl = document.getElementById('axis-cards');
-                    if (cardsEl) cardsEl.innerHTML += rescoreHtml;
+                    if (cardsEl && !cardsEl.dataset.rescoreShown) {
+                        cardsEl.innerHTML += rescoreHtml;
+                        cardsEl.dataset.rescoreShown = 'true';
+                    }
                 }
             }
         }

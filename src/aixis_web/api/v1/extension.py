@@ -389,7 +389,7 @@ async def upload_observation(
         (session_id, test_case_id, category, prompt_sent, response_raw,
          response_time_ms, error, screenshot_path, page_url, executed_at, metadata_json)
         VALUES (:session_id, :test_case_id, :category, :prompt, :response,
-                :time_ms, :error, :screenshot, :page_url, NOW(), :metadata)
+                :time_ms, :error, :screenshot, :page_url, CURRENT_TIMESTAMP, :metadata)
     """), {
         "session_id": session_id,
         "test_case_id": test_case_id,
@@ -429,14 +429,14 @@ async def upload_observation(
         await db.execute(text("""
             UPDATE audit_sessions
             SET total_executed = COALESCE(total_executed, 0) + 1,
-                started_at = COALESCE(started_at, NOW())
+                started_at = COALESCE(started_at, CURRENT_TIMESTAMP)
             WHERE id = :sid
         """), {"sid": session_id})
     else:
         # Still update started_at if needed
         await db.execute(text("""
             UPDATE audit_sessions
-            SET started_at = COALESCE(started_at, NOW())
+            SET started_at = COALESCE(started_at, CURRENT_TIMESTAMP)
             WHERE id = :sid
         """), {"sid": session_id})
 
@@ -566,7 +566,7 @@ async def upload_file(
         (session_id, test_case_id, category, prompt_sent, response_raw,
          response_time_ms, error, screenshot_path, page_url, executed_at, metadata_json)
         VALUES (:session_id, :test_case_id, :category, :prompt, :response,
-                0, NULL, NULL, NULL, NOW(), :metadata)
+                0, NULL, NULL, NULL, CURRENT_TIMESTAMP, :metadata)
     """), {
         "session_id": session_id,
         "test_case_id": file_case_id,
@@ -644,7 +644,7 @@ async def advance_test_progress(
     await db.execute(text("""
         UPDATE audit_sessions
         SET total_executed = COALESCE(total_executed, 0) + 1,
-            started_at = COALESCE(started_at, NOW())
+            started_at = COALESCE(started_at, CURRENT_TIMESTAMP)
         WHERE id = :sid
     """), {"sid": session_id})
     await db.commit()
@@ -692,7 +692,7 @@ async def complete_session(
     await db.execute(text("""
         UPDATE audit_sessions
         SET status = 'scoring',
-            completed_at = NOW(),
+            completed_at = CURRENT_TIMESTAMP,
             completeness_ratio = :completeness
         WHERE id = :sid
     """), {

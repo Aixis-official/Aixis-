@@ -399,12 +399,12 @@ class LLMScorer:
                     (id, session_id, tool_id, axis, axis_name_jp, score, confidence,
                      source, details, strengths, risks, scored_at, scored_by)
                     VALUES (:id, :session_id, :tool_id, :axis, :axis_name_jp, :score,
-                            :confidence, :source, :details, :strengths, :risks, NOW(),
+                            :confidence, :source, :details, :strengths, :risks, CURRENT_TIMESTAMP,
                             :scored_by)
                     ON CONFLICT (session_id, axis) DO UPDATE SET
                         score = EXCLUDED.score, confidence = EXCLUDED.confidence,
                         details = EXCLUDED.details, strengths = EXCLUDED.strengths,
-                        risks = EXCLUDED.risks, scored_at = NOW()
+                        risks = EXCLUDED.risks, scored_at = CURRENT_TIMESTAMP
                 """), {
                     "id": score_id,
                     "session_id": session_id,
@@ -440,7 +440,7 @@ class LLMScorer:
                         (id, session_id, tool_id, axis, axis_name_jp, score, confidence,
                          source, details, strengths, risks, scored_at, scored_by)
                         VALUES (:id, :sid, :tid, :axis, :name, :score, :conf,
-                                :source, :details, :strengths, :risks, NOW(), NULL)
+                                :source, :details, :strengths, :risks, CURRENT_TIMESTAMP, NULL)
                         ON CONFLICT (session_id, axis) DO NOTHING
                     """), {
                         "id": err_id, "sid": session_id, "tid": tool_id,
@@ -472,8 +472,8 @@ class LLMScorer:
             penalty_factor = completion_rate / 0.3  # 0.0 to 1.0
             await db.execute(text("""
                 UPDATE axis_scores
-                SET score = LEAST(score * :factor, 2.0),
-                    confidence = LEAST(confidence * :factor, 0.30)
+                SET score = MIN(score * :factor, 2.0),
+                    confidence = MIN(confidence * :factor, 0.30)
                 WHERE session_id = :sid
             """), {
                 "factor": penalty_factor,
@@ -494,7 +494,7 @@ class LLMScorer:
             confidence_factor = 0.5 + (completion_rate - 0.3) / 0.6
             await db.execute(text("""
                 UPDATE axis_scores
-                SET confidence = LEAST(confidence * :factor, 0.60)
+                SET confidence = MIN(confidence * :factor, 0.60)
                 WHERE session_id = :sid
             """), {
                 "factor": confidence_factor,
