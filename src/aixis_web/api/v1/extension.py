@@ -392,7 +392,7 @@ async def upload_observation(
         (session_id, test_case_id, category, prompt_sent, response_raw,
          response_time_ms, error, screenshot_path, page_url, executed_at, metadata_json)
         VALUES (:session_id, :test_case_id, :category, :prompt, :response,
-                :time_ms, :error, :screenshot, :page_url, :executed_at, :metadata)
+                :time_ms, :error, :screenshot, :page_url, NOW(), :metadata)
     """), {
         "session_id": session_id,
         "test_case_id": test_case_id,
@@ -403,7 +403,6 @@ async def upload_observation(
         "error": None,
         "screenshot": screenshot_path,
         "page_url": body.page_url,
-        "executed_at": now,
         "metadata": json.dumps(body.metadata, ensure_ascii=False) if body.metadata else "{}",
     })
 
@@ -433,22 +432,16 @@ async def upload_observation(
         await db.execute(text("""
             UPDATE audit_sessions
             SET total_executed = COALESCE(total_executed, 0) + 1,
-                started_at = COALESCE(started_at, :now)
+                started_at = COALESCE(started_at, NOW())
             WHERE id = :sid
-        """), {
-            "now": now,
-            "sid": session_id,
-        })
+        """), {"sid": session_id})
     else:
         # Still update started_at if needed
         await db.execute(text("""
             UPDATE audit_sessions
-            SET started_at = COALESCE(started_at, :now)
+            SET started_at = COALESCE(started_at, NOW())
             WHERE id = :sid
-        """), {
-            "now": now,
-            "sid": session_id,
-        })
+        """), {"sid": session_id})
 
     await db.commit()
 
@@ -570,14 +563,13 @@ async def upload_file(
         (session_id, test_case_id, category, prompt_sent, response_raw,
          response_time_ms, error, screenshot_path, page_url, executed_at, metadata_json)
         VALUES (:session_id, :test_case_id, :category, :prompt, :response,
-                0, NULL, NULL, NULL, :now, :metadata)
+                0, NULL, NULL, NULL, NOW(), :metadata)
     """), {
         "session_id": session_id,
         "test_case_id": file_case_id,
         "category": "artifact_upload",
         "prompt": f"成果物ファイル: {safe_name}",
         "response": extracted_text[:50000],  # Limit to 50K chars
-        "now": now,
         "metadata": json.dumps({"file_path": str(file_path), "file_size": len(content)}, ensure_ascii=False),
     })
 
@@ -651,9 +643,9 @@ async def advance_test_progress(
     await db.execute(text("""
         UPDATE audit_sessions
         SET total_executed = COALESCE(total_executed, 0) + 1,
-            started_at = COALESCE(started_at, :now)
+            started_at = COALESCE(started_at, NOW())
         WHERE id = :sid
-    """), {"now": now, "sid": session_id})
+    """), {"sid": session_id})
     await db.commit()
     return {"ok": True}
 
@@ -701,11 +693,10 @@ async def complete_session(
     await db.execute(text("""
         UPDATE audit_sessions
         SET status = 'scoring',
-            completed_at = :now,
+            completed_at = NOW(),
             completeness_ratio = :completeness
         WHERE id = :sid
     """), {
-        "now": now,
         "completeness": completeness,
         "sid": session_id,
     })
