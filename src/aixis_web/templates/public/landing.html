@@ -995,19 +995,42 @@ function animateCountUp(elId, target, opts) {
     opts = opts || {};
     var duration = opts.duration || 1200;
     var decimals = opts.decimals || 0;
-    var start = 0;
-    var startTime = null;
 
-    function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; } // easeInOutQuad
+    // Set final value immediately as fallback (ensures correct value even if rAF doesn't fire)
+    var finalText = decimals > 0 ? target.toFixed(decimals) : String(target);
 
-    function step(ts) {
-        if (!startTime) startTime = ts;
-        var progress = Math.min((ts - startTime) / duration, 1);
-        var val = start + (target - start) * ease(progress);
-        el.textContent = decimals > 0 ? val.toFixed(decimals) : Math.round(val);
-        if (progress < 1) requestAnimationFrame(step);
+    function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+    function runAnimation() {
+        var start = 0;
+        var startTime = null;
+        function step(ts) {
+            if (!startTime) startTime = ts;
+            var progress = Math.min((ts - startTime) / duration, 1);
+            var val = start + (target - start) * ease(progress);
+            el.textContent = decimals > 0 ? val.toFixed(decimals) : Math.round(val);
+            if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
     }
-    requestAnimationFrame(step);
+
+    // Use IntersectionObserver to start animation when element is visible
+    if ('IntersectionObserver' in window) {
+        var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    observer.disconnect();
+                    runAnimation();
+                }
+            });
+        }, { threshold: 0.1 });
+        observer.observe(el);
+        // Safety: ensure value is set after a timeout even if observer never fires
+        setTimeout(function() { if (el.textContent === '--' || el.textContent === '0') { el.textContent = finalText; } }, 3000);
+    } else {
+        // Fallback: just set the value
+        el.textContent = finalText;
+    }
 }
 
 // ===== Platform Stats =====
