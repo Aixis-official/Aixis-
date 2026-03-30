@@ -163,11 +163,14 @@ async def _create_session_impl(body, db, user):
     await db.flush()  # Ensure session exists before inserting test cases
 
     # 2. Insert test cases AFTER session exists
+    # Use session-scoped IDs to avoid PK conflicts across sessions
+    short_sid = session_id[:8]
     for case in cases:
         cat_val = case.category.value if hasattr(case.category, "value") else str(case.category)
+        scoped_id = f"{case.id}:{short_sid}"
         try:
             tc = DBTestCase(
-                id=case.id,
+                id=scoped_id,
                 session_id=session_id,
                 category=cat_val,
                 prompt=case.prompt,
@@ -178,11 +181,11 @@ async def _create_session_impl(body, db, user):
             )
             db.add(tc)
         except Exception as e:
-            logger.warning("Failed to insert test case %s: %s", case.id, e)
+            logger.warning("Failed to insert test case %s: %s", scoped_id, e)
             continue
 
         test_cases_out.append(TestCaseOut(
-            id=case.id,
+            id=scoped_id,
             category=cat_val,
             prompt=case.prompt,
             expected_behaviors=case.expected_behaviors,
@@ -190,8 +193,6 @@ async def _create_session_impl(body, db, user):
             tags=case.tags,
             metadata=case.metadata,
         ))
-
-    await db.commit()
 
     await db.commit()
 
