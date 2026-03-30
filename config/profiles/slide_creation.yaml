@@ -23,15 +23,14 @@ traits:
   - "business_presentation"
 
 primary_categories:
-  - business_jp
-  - long_input
-  - keigo_mixing
+  - slide_basic
+  - slide_structure
+  - slide_japanese
+  - slide_accuracy
 secondary_categories:
-  - ambiguous
-  - multi_step
-excluded_categories:
-  - dialect
-  - broken_grammar
+  - slide_advanced
+  - ui_evaluation
+excluded_categories: []
 
 scoring_weights:
   japanese_ability: 1.5

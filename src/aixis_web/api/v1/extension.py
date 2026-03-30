@@ -119,6 +119,14 @@ async def _create_session_impl(body, db, user):
 
             cases = generate_all(patterns_dir, categories)
 
+            # Fallback: if profile categories didn't match any patterns, try without filter
+            if not cases and categories:
+                logger.warning(
+                    "No test cases matched categories %s, falling back to all patterns",
+                    categories,
+                )
+                cases = generate_all(patterns_dir, categories=None)
+
             # Sort by priority for optimal coverage
             from aixis_agent.orchestrator.pipeline import sort_by_priority
             cases = sort_by_priority(cases)
