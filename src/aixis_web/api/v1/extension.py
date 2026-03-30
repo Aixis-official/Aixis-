@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..deps import get_db, require_agent_or_analyst
 from .agent import require_agent_key
 from ...db.models.user import User
+from ...db.models.audit import AuditSession as AuditSessionModel, DBTestCase
 from ...schemas.extension import (
     ExtensionSessionCreate,
     ExtensionSessionResponse,
@@ -146,45 +147,36 @@ async def _create_session_impl(body, db, user):
         raise HTTPException(500, "テストケースが0件です。パターンファイルの設定を確認してください。")
 
     # 1. Create session FIRST (test cases have FK to audit_sessions)
-    await db.execute(text("""
-        INSERT INTO audit_sessions
-        (id, session_code, tool_id, profile_id, status, initiated_by,
-         created_at, executor_type, total_planned, total_executed)
-        VALUES (:id, :code, :tool_id, :profile_id, :status, :initiated_by,
-                :now, :executor_type, :total_planned, 0)
-    """), {
-        "id": session_id,
-        "code": session_code,
-        "tool_id": body.tool_id,
-        "profile_id": body.profile_id or "",
-        "status": "running",
-        "initiated_by": user.id,
-        "now": now,
-        "executor_type": "extension",
-        "total_planned": total_planned,
-    })
+    session_obj = AuditSessionModel(
+        id=session_id,
+        session_code=session_code,
+        tool_id=body.tool_id,
+        profile_id=body.profile_id or "",
+        status="running",
+        initiated_by=user.id,
+        created_at=now,
+        executor_type="extension",
+        total_planned=total_planned,
+        total_executed=0,
+    )
+    db.add(session_obj)
+    await db.flush()  # Ensure session exists before inserting test cases
 
     # 2. Insert test cases AFTER session exists
     for case in cases:
         cat_val = case.category.value if hasattr(case.category, "value") else str(case.category)
         try:
-            await db.execute(text("""
-                INSERT INTO db_test_cases
-                (id, session_id, category, prompt, metadata_json,
-                 expected_behaviors, failure_indicators, tags)
-                VALUES (:id, :session_id, :category, :prompt, :metadata,
-                        :expected, :failures, :tags)
-                ON CONFLICT (id) DO NOTHING
-            """), {
-                "id": case.id,
-                "session_id": session_id,
-                "category": cat_val,
-                "prompt": case.prompt,
-                "metadata": json.dumps(case.metadata, ensure_ascii=False),
-                "expected": json.dumps(case.expected_behaviors, ensure_ascii=False),
-                "failures": json.dumps(case.failure_indicators, ensure_ascii=False),
-                "tags": json.dumps(case.tags, ensure_ascii=False),
-            })
+            tc = DBTestCase(
+                id=case.id,
+                session_id=session_id,
+                category=cat_val,
+                prompt=case.prompt,
+                metadata_json=case.metadata,
+                expected_behaviors=case.expected_behaviors,
+                failure_indicators=case.failure_indicators,
+                tags=case.tags,
+            )
+            db.add(tc)
         except Exception as e:
             logger.warning("Failed to insert test case %s: %s", case.id, e)
             continue
@@ -198,6 +190,8 @@ async def _create_session_impl(body, db, user):
             tags=case.tags,
             metadata=case.metadata,
         ))
+
+    await db.commit()
 
     await db.commit()
 
