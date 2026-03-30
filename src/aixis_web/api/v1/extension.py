@@ -265,8 +265,7 @@ async def upload_observation(
     _validate_session_id(session_id)
 
     # Limit payload size
-    import sys
-    body_size = sys.getsizeof(body.model_dump_json())
+    body_size = len(body.model_dump_json())
     if body_size > 10 * 1024 * 1024:  # 10MB limit
         raise HTTPException(400, "ペイロードが大きすぎます（最大10MB）")
 
@@ -288,8 +287,6 @@ async def upload_observation(
 
     if session_row[2] not in ("running", "pending"):
         raise HTTPException(400, f"セッションは現在 {session_row[2]} 状態です。観察データを追加できません。")
-
-    now = datetime.now(timezone.utc)
 
     # Get actual observation count (including manual screenshots) for sequence numbering
     count_result = await db.execute(
@@ -464,12 +461,19 @@ async def upload_file(
 ):
     """Upload a PPTX or PDF file and extract text content for LLM scoring."""
     _validate_session_id(session_id)
-    # Verify session exists
+    # Verify session exists and belongs to user
     result = await db.execute(
-        text("SELECT id, status FROM audit_sessions WHERE id = :sid"),
-        {"sid": session_id},
+        text("SELECT id, status FROM audit_sessions WHERE id = :sid AND initiated_by = :uid"),
+        {"sid": session_id, "uid": user.id},
     )
     session_row = result.fetchone()
+    # Admin/analyst fallback — can access any session
+    if not session_row and user.role in ('admin', 'analyst'):
+        result = await db.execute(
+            text("SELECT id, status FROM audit_sessions WHERE id = :sid"),
+            {"sid": session_id},
+        )
+        session_row = result.fetchone()
     if not session_row:
         raise HTTPException(404, f"セッションが見つかりません: {session_id}")
 
@@ -538,7 +542,6 @@ async def upload_file(
         extracted_text = f"(テキスト抽出に失敗しました: {e})"
 
     # Store extracted text as a special observation
-    now = datetime.now(timezone.utc)
     file_case_id = f"file-{session_id[:8]}-{safe_filename}"
     await db.execute(text("""
         INSERT INTO db_test_cases
@@ -624,8 +627,6 @@ async def advance_test_progress(
     test_case_id = body.get("test_case_id")
     test_index = body.get("test_index")
 
-    now = datetime.now(timezone.utc)
-
     # Backfill response_time_ms onto db_test_results for this test_case_id
     if response_time_ms and response_time_ms > 0 and test_case_id:
         await db.execute(text("""
@@ -686,8 +687,6 @@ async def complete_session(
     total_planned = session_row[3] or 0
     total_executed = session_row[4] or 0
     completeness = int(total_executed / total_planned * 100) if total_planned > 0 else 0
-
-    now = datetime.now(timezone.utc)
 
     # Update session to "scoring" status
     await db.execute(text("""

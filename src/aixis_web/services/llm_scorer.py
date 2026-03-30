@@ -21,7 +21,6 @@ import logging
 import statistics
 import uuid
 from collections import defaultdict
-from datetime import datetime, timezone
 
 import anthropic
 from sqlalchemy import text
@@ -292,6 +291,13 @@ class LLMScorer:
         # 1b. Research tool's official information for scoring context
         tool_info = await self._research_tool_info(tool_id, db)
 
+        # 1c. Fetch total_planned from session for confidence/prompt calculations
+        tp_result = await db.execute(text(
+            "SELECT total_planned FROM audit_sessions WHERE id = :sid"
+        ), {"sid": session_id})
+        tp_row = tp_result.fetchone()
+        session_total_planned = tp_row[0] if tp_row and tp_row[0] else len(observations)
+
         # 2. Fetch any existing manual checklist scores for 60/40 blending
         try:
             manual_result = await db.execute(text("""
@@ -323,7 +329,7 @@ class LLMScorer:
                 # Always call LLM scoring — never skip based on auto_ratio
                 logger.info("Scoring axis %s (auto_ratio=%.0f%%) — LLM analysis always performed",
                             axis, AXIS_MIX.get(axis, {}).get("auto", 0.6) * 100)
-                score_data = await self._score_axis(axis, rubric, observations, tool_info=tool_info)
+                score_data = await self._score_axis(axis, rubric, observations, tool_info=tool_info, total_planned=session_total_planned)
 
                 # Retry once if LLM returned no details (likely truncation)
                 expected_count = len(rubric.get("criteria", []))
@@ -333,7 +339,7 @@ class LLMScorer:
                         "Axis %s: 0/%d details returned, retrying with higher token budget",
                         axis, expected_count,
                     )
-                    score_data = await self._score_axis(axis, rubric, observations, tool_info=tool_info)
+                    score_data = await self._score_axis(axis, rubric, observations, tool_info=tool_info, total_planned=session_total_planned)
                     retry_count = len(score_data.get("details", []))
                     logger.info("Axis %s retry: %d/%d details returned", axis, retry_count, expected_count)
 
@@ -353,7 +359,7 @@ class LLMScorer:
                 # Fall back to all observations if filtering yields nothing
                 if not axis_observations:
                     axis_observations = observations
-                confidence_dimensions = self._calculate_confidence_dimensions(axis_observations)
+                confidence_dimensions = self._calculate_confidence_dimensions(axis_observations, session_total_planned)
 
                 # Store the raw LLM auto score — AXIS_MIX blending is done
                 # exclusively in merge_and_publish() to avoid double-blending.
@@ -393,12 +399,12 @@ class LLMScorer:
                     (id, session_id, tool_id, axis, axis_name_jp, score, confidence,
                      source, details, strengths, risks, scored_at, scored_by)
                     VALUES (:id, :session_id, :tool_id, :axis, :axis_name_jp, :score,
-                            :confidence, :source, :details, :strengths, :risks, :scored_at,
+                            :confidence, :source, :details, :strengths, :risks, NOW(),
                             :scored_by)
                     ON CONFLICT (session_id, axis) DO UPDATE SET
                         score = EXCLUDED.score, confidence = EXCLUDED.confidence,
                         details = EXCLUDED.details, strengths = EXCLUDED.strengths,
-                        risks = EXCLUDED.risks, scored_at = EXCLUDED.scored_at
+                        risks = EXCLUDED.risks, scored_at = NOW()
                 """), {
                     "id": score_id,
                     "session_id": session_id,
@@ -411,7 +417,6 @@ class LLMScorer:
                     "details": json.dumps(details_with_meta, ensure_ascii=False),
                     "strengths": json.dumps(score_data["strengths"], ensure_ascii=False),
                     "risks": json.dumps(score_data["risks"], ensure_ascii=False),
-                    "scored_at": datetime.now(timezone.utc),
                     "scored_by": None,  # NULL = automated LLM scoring
                 })
 
@@ -435,7 +440,7 @@ class LLMScorer:
                         (id, session_id, tool_id, axis, axis_name_jp, score, confidence,
                          source, details, strengths, risks, scored_at, scored_by)
                         VALUES (:id, :sid, :tid, :axis, :name, :score, :conf,
-                                :source, :details, :strengths, :risks, :scored_at, NULL)
+                                :source, :details, :strengths, :risks, NOW(), NULL)
                         ON CONFLICT (session_id, axis) DO NOTHING
                     """), {
                         "id": err_id, "sid": session_id, "tid": tool_id,
@@ -444,7 +449,6 @@ class LLMScorer:
                         "details": json.dumps({"error": str(e)[:500]}, ensure_ascii=False),
                         "strengths": "[]",
                         "risks": json.dumps([f"スコアリングエラー: {str(e)[:200]}"], ensure_ascii=False),
-                        "scored_at": datetime.now(timezone.utc),
                     })
                 except Exception:
                     logger.warning("Failed to write error score for %s/%s", session_id, axis)
@@ -518,6 +522,7 @@ class LLMScorer:
     def _calculate_confidence_dimensions(
         self,
         observations: list[dict],
+        total_planned: int | None = None,
     ) -> dict:
         """Calculate 4-dimension confidence metrics from observations.
 
@@ -568,8 +573,8 @@ class LLMScorer:
         correctness = tests_with_screenshots / len(observations) if observations else 0.0
 
         # --- 網羅性 (comprehensiveness): completion rate ---
-        total_planned = max(len(observations), 17)  # approximate; actual value from DB used for penalties
-        comprehensiveness = min(1.0, len(observations) / max(total_planned, 1))
+        effective_planned = total_planned if total_planned else len(observations)
+        comprehensiveness = min(1.0, len(observations) / max(effective_planned, 1))
 
         # --- 解釈性 (intelligibility): average screenshots per test (more = more evidence) ---
         screenshot_counts = []
@@ -694,6 +699,7 @@ class LLMScorer:
         rubric: dict,
         observations: list[dict],
         tool_info: str = "",
+        total_planned: int | None = None,
     ) -> dict:
         """Score a single axis using Claude with multimodal (text + screenshots).
 
@@ -701,7 +707,7 @@ class LLMScorer:
         category) and resized to reduce API token cost. The cap of 15 stays
         within Claude API's 20-image-per-message limit.
         """
-        prompt_text = self._build_rubric_prompt(axis, rubric, observations)
+        prompt_text = self._build_rubric_prompt(axis, rubric, observations, total_planned=total_planned)
 
         # Prepend tool's official info as BACKGROUND CONTEXT ONLY
         # Evaluation criteria are IDENTICAL for all tools — tool info is for reference
@@ -881,6 +887,7 @@ class LLMScorer:
         axis: str,
         rubric: dict,
         observations: list[dict],
+        total_planned: int | None = None,
     ) -> str:
         """Build the scoring prompt for a specific axis."""
         criteria_text = "\n".join(
@@ -912,8 +919,8 @@ class LLMScorer:
 
         observations_text = "\n".join(obs_entries)
 
-        total_planned = max(len(observations), 17)  # approximate
-        completion_rate = len(observations) / max(total_planned, 1) * 100
+        effective_planned = total_planned if total_planned else len(observations)
+        completion_rate = len(observations) / max(effective_planned, 1) * 100
 
         return f"""あなたはスライド作成・資料作成AIツール（Gamma等）の専門的な品質評価者です。
 

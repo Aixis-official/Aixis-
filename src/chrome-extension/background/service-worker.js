@@ -304,6 +304,43 @@ async function completeSession() {
     return { error: "アクティブなセッションがありません" };
   }
 
+  // Upload the current test's observation before completing (same logic as advanceTest)
+  if (state.testCases.length > 0 && state.currentTestIndex < state.testCases.length) {
+    if (!state.submittedTests) state.submittedTests = {};
+    const testKey = String(state.currentTestIndex);
+
+    if (!state.submittedTests[testKey]) {
+      let elapsed = state.timerElapsedMs;
+      if (state.timerRunning && state.timerStartedAt) {
+        elapsed += Date.now() - state.timerStartedAt;
+      }
+
+      const currentTest = state.testCases[state.currentTestIndex];
+      const obsData = {
+        test_case_id: currentTest?.id || null,
+        prompt_text: currentTest?.prompt || "",
+        response_text: null,
+        response_time_ms: elapsed,
+        page_url: null,
+        screenshot_base64: null,
+        metadata: {
+          type: "test_completion",
+          category: currentTest?.category || "protocol",
+          test_index: state.currentTestIndex,
+          expected_behaviors: currentTest?.expected_behaviors || [],
+        },
+      };
+
+      try {
+        await AixisAPI.uploadObservation(state.currentSession.id, obsData);
+        state.submittedTests[testKey] = true;
+        state.observationCount++;
+      } catch (err) {
+        console.error("Final test completion upload failed:", err);
+      }
+    }
+  }
+
   // Save the current test's timer value before stopping
   if (state.timerRunning && state.timerStartedAt) {
     const key = _ssKey();
