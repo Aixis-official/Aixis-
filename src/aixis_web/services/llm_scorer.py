@@ -403,7 +403,8 @@ class LLMScorer:
                             :scored_by)
                     ON CONFLICT (session_id, axis) DO UPDATE SET
                         score = EXCLUDED.score, confidence = EXCLUDED.confidence,
-                        details = EXCLUDED.details, strengths = EXCLUDED.strengths,
+                        source = EXCLUDED.source, details = EXCLUDED.details,
+                        strengths = EXCLUDED.strengths,
                         risks = EXCLUDED.risks, scored_at = CURRENT_TIMESTAMP
                 """), {
                     "id": score_id,
@@ -1053,8 +1054,8 @@ class LLMScorer:
                         if depth == 0:
                             try:
                                 candidate = json.loads(text[start:i+1])
-                                # Validate it looks like a score response (has score key)
-                                if isinstance(candidate, dict) and "score" in candidate:
+                                # Validate it looks like a score response (has score or details key)
+                                if isinstance(candidate, dict) and ("score" in candidate or "details" in candidate):
                                     data = candidate
                             except json.JSONDecodeError:
                                 pass
@@ -1091,6 +1092,22 @@ class LLMScorer:
                 "evidence": d.get("evidence", ""),
                 "severity": d.get("severity", "medium"),
             })
+
+        # CRITICAL FALLBACK: If the top-level score is 0 (or near-zero) but
+        # detail scores exist with non-zero values, compute the axis score as
+        # a weighted average of detail scores. This handles cases where the LLM
+        # omits or zeroes the top-level "score" key but provides valid per-rule scores.
+        if score < 0.01 and details:
+            weighted_sum = sum(d["score"] * d["weight"] for d in details)
+            total_weight = sum(d["weight"] for d in details)
+            if total_weight > 0:
+                fallback_score = weighted_sum / total_weight
+                if fallback_score > 0.01:
+                    logger.warning(
+                        "Axis %s: top-level score=%.2f but detail weighted avg=%.2f — using detail average as axis score",
+                        axis, score, fallback_score,
+                    )
+                    score = max(0.0, min(5.0, round(fallback_score, 2)))
 
         # Fallback: if LLM returned no details (or fewer than expected),
         # generate entries from the rubric criteria so the UI always has data.

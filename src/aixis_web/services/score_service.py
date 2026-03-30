@@ -37,7 +37,7 @@ async def get_auto_scores(db: AsyncSession, session_id: str) -> tuple[dict[str, 
     result = await db.execute(
         select(AxisScoreRecord).where(
             AxisScoreRecord.session_id == session_id,
-            AxisScoreRecord.source.in_(["auto", "llm", "hybrid", "manual_edit"]),
+            AxisScoreRecord.source.in_(["auto", "llm", "hybrid", "manual_edit", "manual"]),
         )
     )
     scores = {}
@@ -54,6 +54,7 @@ async def get_auto_scores(db: AsyncSession, session_id: str) -> tuple[dict[str, 
         # Guard: if details.auto_score is 0 but record.score > 0, prefer record.score
         # (handles legacy data where error scores corrupted the details JSON).
         auto_score = record.score
+        details = None
         if record.details:
             import json as _json
             try:
@@ -65,6 +66,27 @@ async def get_auto_scores(db: AsyncSession, session_id: str) -> tuple[dict[str, 
                         auto_score = detail_score
             except (TypeError, ValueError, _json.JSONDecodeError):
                 pass
+
+        # CRITICAL FALLBACK: If score is still 0 but rule_results have non-zero
+        # scores, compute weighted average from detail rules. This recovers scores
+        # where the LLM omitted the top-level "score" but provided valid rule scores.
+        if auto_score < 0.01 and details and "rule_results" in details:
+            try:
+                rule_results = details["rule_results"]
+                if isinstance(rule_results, list) and rule_results:
+                    weighted_sum = sum(float(r.get("score", 0)) * float(r.get("weight", 1)) for r in rule_results)
+                    total_weight = sum(float(r.get("weight", 1)) for r in rule_results)
+                    if total_weight > 0:
+                        computed = weighted_sum / total_weight
+                        if computed > 0.01:
+                            auto_score = max(0.0, min(5.0, round(computed, 2)))
+                            logger.info(
+                                "Axis %s: recovered score %.2f from rule_results (record.score was %.2f)",
+                                record.axis, auto_score, record.score,
+                            )
+            except (TypeError, ValueError):
+                pass
+
         scores[record.axis] = auto_score
     return scores, manual_edit_axes
 

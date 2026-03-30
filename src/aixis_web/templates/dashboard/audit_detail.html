@@ -335,7 +335,9 @@
     var pollingInterval = null;
     var auditStartedAt = null;
     var elapsedTimer = null;
-    var scoringStartTime = null;
+    // Persist scoring start time across page reloads via sessionStorage
+    var _storedScoringStart = sessionStorage.getItem('scoring_start_' + sessionId);
+    var scoringStartTime = _storedScoringStart ? parseInt(_storedScoringStart, 10) : null;
     var scoringElapsedTimer = null;
     var scoringPollCount = 0;
 
@@ -690,9 +692,38 @@
             document.getElementById('scoring-section').classList.remove('hidden');
             document.getElementById('progress-section').classList.add('hidden');
 
-            // Start scoring-specific elapsed timer
+            // Hide stale sections during scoring to avoid confusion
+            document.getElementById('reliability-section').classList.add('hidden');
+            document.getElementById('score-diff-section').classList.add('hidden');
+            // Hide scores section or show a scoring placeholder
+            var scoresSection = document.getElementById('scores-section');
+            scoresSection.classList.remove('hidden');
+            var axisCards = document.getElementById('axis-cards');
+            var scoredAxes = (data.axis_scores || []).filter(function(s) {
+                return s.source !== 'error' && s.score > 0;
+            }).length;
+            if (scoredAxes === 0) {
+                // No scores yet — show placeholder instead of error
+                axisCards.innerHTML = '<div class="col-span-5 text-center py-8">' +
+                    '<svg class="animate-spin h-8 w-8 text-purple-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24">' +
+                        '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>' +
+                        '<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>' +
+                    '</svg>' +
+                    '<p class="text-sm text-gray-500 dark:text-gray-400 font-jp">LLMが各軸を評価中です...</p>' +
+                '</div>';
+            } else {
+                // Some axes scored — render partial results
+                try {
+                    renderScores(data.axis_scores, null, null, data.score_breakdown, data.status);
+                } catch (e) {
+                    // Ignore render errors during scoring
+                }
+            }
+
+            // Start scoring-specific elapsed timer (persisted in sessionStorage)
             if (!scoringStartTime) {
                 scoringStartTime = Date.now();
+                sessionStorage.setItem('scoring_start_' + sessionId, String(scoringStartTime));
             }
             if (!scoringElapsedTimer) {
                 scoringElapsedTimer = setInterval(function() {
@@ -712,9 +743,6 @@
 
             // Update progress with scored axis count
             scoringPollCount++;
-            var scoredAxes = (data.axis_scores || []).filter(function(s) {
-                return s.source !== 'error' && s.score > 0;
-            }).length;
             if (scoredAxes > 0) {
                 var detail = document.getElementById('scoring-status-detail');
                 if (detail) detail.textContent = 'スコアリング中... (' + scoredAxes + '/5 軸完了)';
@@ -738,6 +766,7 @@
                 scoringElapsedTimer = null;
                 scoringStartTime = null;
                 scoringPollCount = 0;
+                sessionStorage.removeItem('scoring_start_' + sessionId);
             }
         }
 
@@ -782,41 +811,45 @@
             renderVolumeMetrics(data.volume_metrics, data.total_planned, data.total_executed);
         }
 
-        // Reliability meta-scores (BenchRisk)
-        if (data.reliability_scores) {
+        // Reliability meta-scores (BenchRisk) — hide during scoring to avoid stale data
+        if (data.reliability_scores && data.status !== 'scoring') {
             renderReliability(data.reliability_scores);
+        } else if (data.status === 'scoring') {
+            document.getElementById('reliability-section').classList.add('hidden');
         }
 
-        // Score diff (re-audit comparison)
-        if (data.score_diff && data.score_diff.has_previous) {
+        // Score diff (re-audit comparison) — hide during scoring
+        if (data.score_diff && data.score_diff.has_previous && data.status !== 'scoring') {
             renderScoreDiff(data.score_diff);
         }
 
-        // Scores section
-        if (data.axis_scores && data.axis_scores.length > 0) {
-            document.getElementById('scores-section').classList.remove('hidden');
-            try {
-                renderScores(data.axis_scores, data.published_overall_score, data.published_overall_grade, data.score_breakdown, data.status);
-            } catch (scoreErr) {
-                console.error('Score rendering error:', scoreErr);
-                document.getElementById('axis-cards').innerHTML =
-                    '<div class="col-span-5 text-center text-red-500 py-4">スコア表示エラー: ' + scoreErr.message + '</div>';
-            }
-        } else {
-            // Show section with "scoring pending" message if session is in scoring/awaiting_manual
-            if (['scoring', 'awaiting_manual', 'completed'].includes(data.status)) {
+        // Scores section — handled inside the scoring block when status=scoring
+        if (data.status !== 'scoring') {
+            if (data.axis_scores && data.axis_scores.length > 0) {
                 document.getElementById('scores-section').classList.remove('hidden');
-                var hasValidScores = data.axis_scores && data.axis_scores.length > 0 &&
-                    data.axis_scores.some(function(s) { return s.score > 0 || (s.source && s.source !== 'error'); });
-                if (!hasValidScores) {
-                    var rescoreHtml = '<div class="col-span-5 text-center py-4">' +
-                        '<p class="text-amber-500 font-jp mb-3">スコアデータがありません。LLMスコアリングが正常に完了していない可能性があります。</p>' +
-                        '<button onclick="rescoreAudit()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-jp">自動評価やり直し</button>' +
-                        '</div>';
-                    var cardsEl = document.getElementById('axis-cards');
-                    if (cardsEl && !cardsEl.dataset.rescoreShown) {
-                        cardsEl.innerHTML += rescoreHtml;
-                        cardsEl.dataset.rescoreShown = 'true';
+                try {
+                    renderScores(data.axis_scores, data.published_overall_score, data.published_overall_grade, data.score_breakdown, data.status);
+                } catch (scoreErr) {
+                    console.error('Score rendering error:', scoreErr);
+                    document.getElementById('axis-cards').innerHTML =
+                        '<div class="col-span-5 text-center text-red-500 py-4">スコア表示エラー: ' + scoreErr.message + '</div>';
+                }
+            } else {
+                // Show section with "scoring pending" message if session is in awaiting_manual/completed
+                if (['awaiting_manual', 'completed'].includes(data.status)) {
+                    document.getElementById('scores-section').classList.remove('hidden');
+                    var hasValidScores = data.axis_scores && data.axis_scores.length > 0 &&
+                        data.axis_scores.some(function(s) { return s.score > 0 || (s.source && s.source !== 'error'); });
+                    if (!hasValidScores) {
+                        var rescoreHtml = '<div class="col-span-5 text-center py-4">' +
+                            '<p class="text-amber-500 font-jp mb-3">スコアデータがありません。LLMスコアリングが正常に完了していない可能性があります。</p>' +
+                            '<button onclick="rescoreAudit()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-jp">自動評価やり直し</button>' +
+                            '</div>';
+                        var cardsEl = document.getElementById('axis-cards');
+                        if (cardsEl && !cardsEl.dataset.rescoreShown) {
+                            cardsEl.innerHTML += rescoreHtml;
+                            cardsEl.dataset.rescoreShown = 'true';
+                        }
                     }
                 }
             }
