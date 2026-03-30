@@ -1156,9 +1156,12 @@
     }
   }
 
+  let panelExplicitlyShown = false;
+
   function showPanel() {
     if (panelHost) {
       panelHost.style.display = "";
+      panelExplicitlyShown = true;
       // Clear closed state
       chrome.storage.local.set({ panelClosed: false });
     }
@@ -2055,10 +2058,13 @@
     createPanel();
 
     // Check if panel was explicitly closed by user — keep it hidden
+    // But skip if showPanel() was already called (race condition with popup SHOW_PANEL)
     try {
-      const stored = await chrome.storage.local.get("panelClosed");
-      if (stored.panelClosed === true) {
-        panelHost.style.display = "none";
+      if (!panelExplicitlyShown) {
+        const stored = await chrome.storage.local.get("panelClosed");
+        if (stored.panelClosed === true) {
+          panelHost.style.display = "none";
+        }
       }
     } catch {}
 
