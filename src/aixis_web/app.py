@@ -250,7 +250,12 @@ def create_app() -> FastAPI:
     screenshots_dir.mkdir(parents=True, exist_ok=True)
     app.mount("/screenshots", StaticFiles(directory=str(screenshots_dir)), name="screenshots")
 
-    # Mount static files
+    # Mount uploaded files from persistent volume (before /static)
+    uploads_dir = Path("/data/uploads")
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+
+    # Mount static files (app assets — bundled in container image, OK to be ephemeral)
     static_dir = BASE_DIR / "static"
     static_dir.mkdir(exist_ok=True)
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")

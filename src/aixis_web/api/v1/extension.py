@@ -501,7 +501,7 @@ async def upload_file(
         safe_filename = f"upload_{uuid.uuid4().hex[:8]}.{ext}"
 
     # Save file
-    upload_dir = Path(__file__).resolve().parents[2] / "static" / "uploads" / "extension" / session_id
+    upload_dir = Path("/data/uploads/extension") / session_id
     upload_dir.mkdir(parents=True, exist_ok=True)
     file_path = upload_dir / safe_filename
     file_path.write_bytes(content)

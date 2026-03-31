@@ -4,16 +4,15 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Copy pg_dump (v18) + required libs from official PostgreSQL image
+# Copy pg_dump / pg_restore v18 binaries from official PostgreSQL image
 COPY --from=pgclient /usr/lib/postgresql/18/bin/pg_dump /usr/local/bin/pg_dump
 COPY --from=pgclient /usr/lib/postgresql/18/bin/pg_restore /usr/local/bin/pg_restore
-COPY --from=pgclient /usr/lib/*/libpq.so* /usr/lib/
-RUN ldconfig
 
-# System deps for WeasyPrint
-RUN apt-get update && apt-get install -y \
+# System deps: WeasyPrint + pg_dump runtime libraries (libpq, Kerberos, LDAP, SASL)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-xlib-2.0-0 \
     libffi-dev shared-mime-info \
+    libpq5 libkrb5-3 libgssapi-krb5-2 libldap-2.5-0 libsasl2-2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy all source first (needed for hatch build)
@@ -27,7 +26,7 @@ RUN pip install --no-cache-dir --force-reinstall "jinja2>=3.1,<3.2" && pip insta
 
 # NOTE: Use PostgreSQL in production (Railway addon).
 # SQLite data is LOST on every deploy because containers are ephemeral.
-RUN mkdir -p /data /app/backups
+RUN mkdir -p /data/backups /data/output /data/screenshots /data/uploads
 
 ENV PYTHONPATH=/app/src
 

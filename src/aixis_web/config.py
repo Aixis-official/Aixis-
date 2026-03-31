@@ -60,7 +60,7 @@ class Settings(BaseSettings):
 
     # Paths
     config_dir: str = "config"
-    output_dir: str = "output"
+    output_dir: str = "/data/output"
     screenshots_dir: str = "/data/screenshots"
 
     # Admin seed

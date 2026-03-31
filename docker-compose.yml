@@ -15,7 +15,7 @@ services:
       - redis
     volumes:
       - ./config:/app/config
-      - ./output:/app/output
+      - ./data:/data
     command: uvicorn aixis_web.app:app --host 0.0.0.0 --port 8000 --reload
 
   worker:
@@ -28,7 +28,7 @@ services:
       - redis
     volumes:
       - ./config:/app/config
-      - ./output:/app/output
+      - ./data:/data
     command: arq aixis_web.tasks.worker.WorkerSettings
 
   postgres:

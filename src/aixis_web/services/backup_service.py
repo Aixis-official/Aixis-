@@ -25,7 +25,7 @@ from ..config import settings
 
 logger = logging.getLogger(__name__)
 
-BACKUP_DIR = Path("backups")
+BACKUP_DIR = Path("/data/backups")
 METADATA_FILE = BACKUP_DIR / "backup_manifest.json"
 
 # Tiered retention limits
