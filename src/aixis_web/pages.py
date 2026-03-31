@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .api.deps import get_current_user
 from .db.base import get_db
 from .db.models.user import User
+from .config import settings
 from .i18n import get_translator, detect_language
 
 _page_logger = logging.getLogger(__name__)
@@ -739,7 +740,7 @@ async def benchmark_manage_page(
 # SEO: sitemap.xml & robots.txt
 # ---------------------------------------------------------------------------
 
-SITE_ORIGIN = "https://platform.aixis.jp"
+SITE_ORIGIN = settings.site_origin
 
 # Public static pages to include in sitemap (path, changefreq, priority)
 _STATIC_PAGES = [

@@ -29,16 +29,9 @@ _log = _logging.getLogger(__name__)
 
 _db_url = _ensure_async_url(settings.database_url)
 
-# Log the resolved URL (mask password for safety)
-_safe_url = _db_url
-if "@" in _safe_url:
-    # mask password: scheme://user:****@host/db
-    _pre_at = _safe_url.split("@")[0]
-    _post_at = _safe_url.split("@", 1)[1]
-    if ":" in _pre_at.split("//", 1)[-1]:
-        _scheme_user = _pre_at.rsplit(":", 1)[0]
-        _safe_url = f"{_scheme_user}:****@{_post_at}"
-_log.critical("DATABASE URL resolved to: %s", _safe_url)
+# Log only the database engine type (never log connection strings, even masked)
+_db_engine_type = "postgresql" if "postgresql" in _db_url else "sqlite" if "sqlite" in _db_url else "other"
+_log.info("Database engine: %s", _db_engine_type)
 
 # Configure connection pool — SQLite uses NullPool by default,
 # PostgreSQL/MySQL benefit from explicit pool limits.

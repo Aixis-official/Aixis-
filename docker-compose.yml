@@ -6,10 +6,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - AIXIS_DATABASE_URL=postgresql+asyncpg://aixis:aixis@postgres:5432/aixis
-      - AIXIS_REDIS_URL=redis://redis:6379
+      - AIXIS_DATABASE_URL=postgresql+asyncpg://aixis:${POSTGRES_PASSWORD:-aixis_dev_only}@postgres:5432/aixis
+      - AIXIS_REDIS_URL=redis://:${REDIS_PASSWORD:-}@redis:6379
       - AIXIS_DEBUG=true
-      - AIXIS_SECRET_KEY=change-this-in-production
+      - AIXIS_SECRET_KEY=${SECRET_KEY:-}
     depends_on:
       - postgres
       - redis
@@ -21,8 +21,8 @@ services:
   worker:
     build: .
     environment:
-      - AIXIS_DATABASE_URL=postgresql+asyncpg://aixis:aixis@postgres:5432/aixis
-      - AIXIS_REDIS_URL=redis://redis:6379
+      - AIXIS_DATABASE_URL=postgresql+asyncpg://aixis:${POSTGRES_PASSWORD:-aixis_dev_only}@postgres:5432/aixis
+      - AIXIS_REDIS_URL=redis://:${REDIS_PASSWORD:-}@redis:6379
     depends_on:
       - postgres
       - redis
@@ -35,17 +35,25 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: aixis
-      POSTGRES_PASSWORD: aixis
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aixis_dev_only}
       POSTGRES_DB: aixis
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
+    command: >
+      sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then
+        redis-server --requirepass "$$REDIS_PASSWORD";
+      else
+        redis-server;
+      fi'
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
 
 volumes:
   postgres_data:

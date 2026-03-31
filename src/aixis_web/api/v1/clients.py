@@ -30,9 +30,9 @@ router = APIRouter()
 
 
 def _build_invite_url(request: Request, raw_token: str) -> str:
-    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
-    host = request.headers.get("x-forwarded-host", request.url.netloc)
-    return f"{scheme}://{host}/invite/{raw_token}"
+    # Use canonical site_origin — never trust Host/X-Forwarded-* headers for email links
+    from ...config import settings
+    return f"{settings.site_origin}/invite/{raw_token}"
 
 
 async def _client_to_response(db: AsyncSession, user: User) -> ClientResponse:

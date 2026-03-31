@@ -122,6 +122,10 @@ class Settings(BaseSettings):
     contact_rate_limit_per_ip: int = 5  # max submissions per IP per hour
     contact_rate_limit_window_seconds: int = 3600
 
+    # Canonical site origin — used for email links, OGP, sitemaps.
+    # Prevents Host header injection attacks.
+    site_origin: str = "https://platform.aixis.jp"
+
     # Admin IPs that bypass login rate limiting (comma-separated)
     admin_ips: str = ""
 
@@ -167,13 +171,13 @@ def validate_settings():
 
     if "sqlite" in settings.database_url and not settings.debug:
         logger.critical(
-            "DATABASE: SQLite is being used in production! "
-            "Data WILL BE LOST on container restart/redeploy. "
-            "Add a PostgreSQL addon in Railway and set DATABASE_URL. "
-            "Current DATABASE_URL: %s",
-            settings.database_url,
+            "DATABASE: SQLite is not supported in production. "
+            "Add a PostgreSQL addon and set DATABASE_URL."
         )
-        warnings.append("SQLite in production — data loss risk")
+        raise SystemExit(
+            "FATAL: SQLite is not supported in production. "
+            "Set DATABASE_URL to a PostgreSQL connection string."
+        )
 
     return warnings
 

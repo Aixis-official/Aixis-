@@ -435,11 +435,12 @@ class GDriveTokenRequest(BaseModel):
 
 
 def _gdrive_callback_uri(request: Request) -> str:
-    """Build the OAuth2 callback URI from the current request."""
-    # Use X-Forwarded-Proto / X-Forwarded-Host if behind a reverse proxy
-    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
-    host = request.headers.get("x-forwarded-host", request.url.netloc)
-    return f"{scheme}://{host}/api/v1/settings/gdrive/callback"
+    """Build the OAuth2 callback URI using canonical site origin.
+
+    Never trusts Host/X-Forwarded-* headers to prevent token redirection attacks.
+    """
+    from ...config import settings
+    return f"{settings.site_origin}/api/v1/settings/gdrive/callback"
 
 
 @router.post("/gdrive/auth-url")

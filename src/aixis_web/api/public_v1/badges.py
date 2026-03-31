@@ -219,7 +219,8 @@ async def evaluated_badge_snippet(
             detail="No published scores found",
         )
 
-    base = str(request.base_url).rstrip("/")
+    from ...config import settings
+    base = settings.site_origin
     badge_url = f"{base}/api/public/v1/evaluated/{tool_slug}.svg"
     tool_url = f"{base}/tools/{tool_slug}"
 

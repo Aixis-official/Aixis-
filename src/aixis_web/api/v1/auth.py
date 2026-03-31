@@ -338,11 +338,8 @@ async def forgot_password(
         # Send email with raw token
         try:
             from ...services.email_service import send_email, _wrap_html
-            reset_url = f"https://platform.aixis.jp/reset-password?token={raw_token}"
-            # Also support non-production domains
-            host = request.headers.get("host", "platform.aixis.jp")
-            scheme = "https" if not settings.debug else "http"
-            reset_url = f"{scheme}://{host}/reset-password?token={raw_token}"
+            # Use canonical site_origin — never trust Host header for email links
+            reset_url = f"{settings.site_origin}/reset-password?token={raw_token}"
 
             subject = "[Aixis] パスワード再設定のご案内"
             text = f"""{user.name} 様

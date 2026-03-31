@@ -124,7 +124,11 @@ async def emit_event(
         try:
             plain_secret = decrypt_value(sub.secret)
         except Exception:
-            plain_secret = sub.secret  # Fallback for pre-encryption secrets
+            logger.warning(
+                "Webhook secret decryption failed for subscription %s — "
+                "re-encrypt secrets via admin panel", sub.id,
+            )
+            plain_secret = sub.secret  # Legacy pre-encryption secret (log warning)
 
         # Fire background delivery (non-blocking, with error logging)
         task = asyncio.create_task(
@@ -205,6 +209,19 @@ async def deliver_webhook(
             logger.exception("Failed to update delivery record after error")
 
 
+_MAX_WEBHOOK_RESPONSE_BYTES = 10 * 1024  # 10 KB — prevent DoS from large responses
+
+
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Block automatic redirect following to prevent SSRF bypass via redirect."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise urllib.error.HTTPError(
+            newurl, code, f"Redirect blocked (SSRF protection): {code} → {newurl}",
+            headers, fp,
+        )
+
+
 def _do_post(
     url: str,
     payload_bytes: bytes,
@@ -226,12 +243,14 @@ def _do_post(
         },
         method="POST",
     )
+    # Use opener that blocks redirects (prevents SSRF via redirect to internal IPs)
+    opener = urllib.request.build_opener(_NoRedirectHandler)
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            body = resp.read().decode("utf-8", errors="replace")
+        with opener.open(req, timeout=30) as resp:
+            body = resp.read(_MAX_WEBHOOK_RESPONSE_BYTES).decode("utf-8", errors="replace")
             return resp.status, body
     except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="replace") if e.fp else ""
+        body = e.read(_MAX_WEBHOOK_RESPONSE_BYTES).decode("utf-8", errors="replace") if e.fp else ""
         return e.code, body
     except urllib.error.URLError as e:
         raise ConnectionError(f"URL error: {e.reason}") from e
