@@ -30,80 +30,173 @@ from ..config import settings
 
 logger = logging.getLogger(__name__)
 
-# Axis definitions with Japanese names and evaluation criteria
-# Mapped to the canonical 5 axes used across the platform
-AXIS_RUBRICS = {
+# ---------------------------------------------------------------------------
+# Category-specific rubric definitions
+# ---------------------------------------------------------------------------
+# Each tool category has its own rubric tailored to its domain.
+# The scorer resolves which rubric to use via tool.profile_id or category slug.
+# If no matching rubric exists, falls back to the default (slide_creation).
+#
+# To add a new category:
+#   1. Define AXIS_RUBRICS_<CATEGORY> dict below
+#   2. Add mapping in CATEGORY_RUBRIC_MAP
+# ---------------------------------------------------------------------------
+
+# Default rubric set (slide creation AI)
+AXIS_RUBRICS_SLIDE_CREATION = {
     "practicality": {
         "name_jp": "実務適性",
-        "description": "スライド作成タスクの完了度、指示への忠実性、実務での活用しやすさ",
+        "description": "日本のビジネス現場でそのまま使えるスライドを生成できるか。日本語で指示して日本語のスライドが出てこなければ、実務適性は著しく低い。",
         "criteria": [
+            {"rule_id": "jp_instruction_compliance", "name_jp": "日本語指示への応答", "weight": 4.0,
+             "guide": "日本語でプロンプトを入力した際に、日本語のスライドが生成されるか。"
+                      "【スコア基準】5.0=日本語指示に対し完全に日本語でスライド生成 / "
+                      "3.0=日本語指示に対し一部日本語・一部英語で生成 / "
+                      "1.0=日本語で指示したのに英語のみのスライドが生成される / "
+                      "0.0=日本語指示を理解できずエラーまたは無関係な出力"},
             {"rule_id": "topic_coverage", "name_jp": "テーマ網羅性", "weight": 3.0,
-             "guide": "スクリーンショットから確認できるスライド内容が、指示されたトピック・要件をすべてカバーしているか"},
+             "guide": "スクリーンショットから確認できるスライド内容が、指示されたトピック・要件をすべてカバーしているか。"
+                      "【スコア基準】5.0=全要件を漏れなくカバー / 3.0=主要要件はカバーだが一部欠落 / "
+                      "1.0=要件の半分以上が欠落 / 0.0=指示と無関係な内容"},
             {"rule_id": "slide_count", "name_jp": "スライド数の適切性", "weight": 2.0,
-             "guide": "スクリーンショットから確認できるスライド枚数が指定数に従っているか、逸脱の場合は理由が妥当か"},
+             "guide": "スクリーンショットから確認できるスライド枚数が指定数に従っているか。"
+                      "【スコア基準】5.0=指定通り / 3.0=±2枚程度の逸脱 / 1.0=大幅に過不足"},
             {"rule_id": "format_compliance", "name_jp": "形式指定の遵守", "weight": 2.5,
-             "guide": "スクリーンショットから、箇条書き/表/図表の指定、レイアウト指定に従っているか確認"},
+             "guide": "箇条書き/表/図表の指定、レイアウト指定に従っているか。"
+                      "【スコア基準】5.0=指定形式を完全遵守 / 3.0=一部形式を無視 / 1.0=形式指定をほぼ無視"},
             {"rule_id": "audience_awareness", "name_jp": "対象読者への配慮", "weight": 2.0,
-             "guide": "スクリーンショットに表示されたスライドが、指定された対象者（経営層/技術者/新入社員等）に適した表現・深さか"},
+             "guide": "指定された対象者（経営層/技術者/新入社員等）に適した表現・深さか。"
+                      "【スコア基準】5.0=対象者に最適化された内容 / 3.0=汎用的だが対象者意識が薄い / "
+                      "1.0=対象者に全く不適切な表現や深さ"},
         ],
     },
     "cost_performance": {
         "name_jp": "費用対効果",
-        "description": "応答速度、タスク成功率、出力の徹底度から見たコストパフォーマンス",
+        "description": "応答速度、タスク成功率、出力品質から見た投資対効果。日本語で使えないツールは費用対効果が著しく低い。",
         "criteria": [
             {"rule_id": "response_speed", "name_jp": "応答速度", "weight": 2.5,
-             "guide": "タイマーで計測された応答時間（response_time_ms）に基づいて評価。未計測(0ms)の場合はこの項目をスキップ"},
+             "guide": "タイマーで計測された応答時間（response_time_ms）に基づいて評価。未計測(0ms)の場合はこの項目をスキップ。"
+                      "【スコア基準】5.0=10秒以内 / 4.0=30秒以内 / 3.0=60秒以内 / 2.0=120秒以内 / 1.0=120秒超"},
             {"rule_id": "task_success_rate", "name_jp": "タスク成功率", "weight": 3.0,
-             "guide": "スクリーンショットから確認できる範囲で、指示されたタスクを正常に完了できた割合"},
+             "guide": "指示されたタスクを正常に完了できた割合。日本語指示に対して英語で出力された場合は「タスク失敗」として扱う。"
+                      "【スコア基準】5.0=全タスク成功 / 3.0=半数以上成功 / 1.0=ほぼ全タスク失敗 / "
+                      "0.0=全タスク失敗またはエラー"},
             {"rule_id": "output_thoroughness", "name_jp": "出力の徹底度", "weight": 2.5,
-             "guide": "スクリーンショットから確認できるスライドの量と質が十分か、手直しの必要性"},
+             "guide": "スライドの量と質が十分か、そのまま使えるか、手直しの必要性。"
+                      "【スコア基準】5.0=そのまま使える完成度 / 3.0=軽微な修正で使える / "
+                      "1.0=大幅な修正が必要 / 0.0=作り直しが必要"},
+            {"rule_id": "jp_usability", "name_jp": "日本市場での実用性", "weight": 3.0,
+             "guide": "日本のビジネスユーザーがこのツールに課金して使う価値があるか。UIの日本語対応、日本語出力品質、日本のビジネス慣行への適合を総合評価。"
+                      "【スコア基準】5.0=日本のビジネスで問題なく使える / 3.0=一部制約があるが使える / "
+                      "1.0=日本語対応が不十分で実用的でない / 0.0=日本語非対応で使用不可"},
         ],
     },
     "localization": {
         "name_jp": "日本語能力",
-        "description": "ビジネス日本語としての品質、敬語、表現の適切性",
+        "description": "【最重要軸】スライドが日本語で出力されているかを最優先で評価。英語のみの出力は致命的欠陥として0〜1点。日本語出力がある場合のみ、品質を評価する。",
         "criteria": [
+            {"rule_id": "language_output", "name_jp": "出力言語", "weight": 5.0,
+             "guide": "【最重要基準】スクリーンショットに表示されたスライドの本文・見出しが日本語で書かれているかを確認。"
+                      "タイトルや本文のテキストを画像から直接読み取って判定すること。"
+                      "【スコア基準】"
+                      "5.0=スライドの見出し・本文が全て日本語で記述されている / "
+                      "4.0=95%以上が日本語、ごく一部に英語の固有名詞や技術用語が混在（許容範囲）/ "
+                      "3.0=日本語と英語が半々程度混在している / "
+                      "2.0=主に英語だが一部日本語が含まれる / "
+                      "1.0=スライドの見出し・本文がほぼ全て英語で書かれている（日本語プロンプトを無視）/ "
+                      "0.0=完全に英語のみ、または日本語を一切含まない出力"},
             {"rule_id": "keigo_consistency", "name_jp": "敬語の一貫性", "weight": 3.0,
-             "guide": "スクリーンショットに表示された日本語テキストで、です/ます調の統一、敬語レベルの適切性を確認"},
+             "guide": "日本語テキストが存在する場合のみ評価。です/ます調の統一、敬語レベルの適切性。"
+                      "【前提条件】language_outputが2.0以下の場合、この項目は自動的に0.0とする。"
+                      "【スコア基準】5.0=敬語が完璧に統一 / 3.0=概ね統一だが一部不統一 / "
+                      "1.0=敬語が混乱している / 0.0=日本語テキストなし"},
             {"rule_id": "business_expression", "name_jp": "ビジネス表現", "weight": 2.5,
-             "guide": "スクリーンショットのスライド上の表現がビジネスプレゼンにふさわしいか、カタカナ語の適切な使用"},
+             "guide": "日本語テキストが存在する場合のみ評価。ビジネスプレゼンにふさわしい表現か。"
+                      "【前提条件】language_outputが2.0以下の場合、この項目は自動的に0.0とする。"
+                      "【スコア基準】5.0=プロのビジネス文書レベル / 3.0=一般的なビジネス表現 / "
+                      "1.0=カジュアルすぎる / 0.0=日本語テキストなし"},
             {"rule_id": "readability", "name_jp": "可読性", "weight": 2.0,
-             "guide": "スクリーンショットから確認できるスライドの文が簡潔か、箇条書きの並列構造、文字量の適切性"},
+             "guide": "日本語テキストが存在する場合のみ評価。文の簡潔さ、箇条書きの並列構造、文字量の適切性。"
+                      "【前提条件】language_outputが2.0以下の場合、この項目は自動的に0.0とする。"
+                      "【スコア基準】5.0=簡潔で読みやすい / 3.0=やや冗長だが許容範囲 / 1.0=読みにくい / 0.0=日本語テキストなし"},
             {"rule_id": "terminology", "name_jp": "専門用語の正確性", "weight": 2.0,
-             "guide": "スクリーンショットに表示された業界用語の正確な使用、不自然な直訳がないか"},
+             "guide": "日本語テキストが存在する場合のみ評価。業界用語の正確な使用、不自然な直訳の有無。"
+                      "【前提条件】language_outputが2.0以下の場合、この項目は自動的に0.0とする。"
+                      "【スコア基準】5.0=専門用語が正確 / 3.0=概ね正確だが一部不自然 / "
+                      "1.0=直訳が目立つ / 0.0=日本語テキストなし"},
         ],
     },
     "safety": {
         "name_jp": "信頼性・安全性",
-        "description": "生成された情報の正確性、ハルシネーションの有無、事実性",
+        "description": "生成された情報の正確性、ハルシネーションの有無、事実性。英語出力の場合も内容の正確性は評価するが、日本語ユーザーにとっての信頼性は低下する。",
         "criteria": [
             {"rule_id": "factual_accuracy", "name_jp": "事実の正確性", "weight": 3.5,
-             "guide": "スクリーンショットに表示された数値、固有名詞、日付等が正確か"},
+             "guide": "スクリーンショットに表示された数値、固有名詞、日付等が正確か。"
+                      "【スコア基準】5.0=全データが正確 / 3.0=軽微な誤りが1-2箇所 / "
+                      "1.0=重大な事実誤認あり / 0.0=虚偽情報が多数"},
             {"rule_id": "source_attribution", "name_jp": "出典・根拠の提示", "weight": 2.0,
-             "guide": "スクリーンショットのスライド上で、データや主張に対して出典や根拠を示しているか"},
+             "guide": "データや主張に対して出典や根拠を示しているか。"
+                      "【スコア基準】5.0=全データに出典明示 / 3.0=一部データに出典あり / "
+                      "1.0=出典なし / 0.0=出典なしかつ疑わしいデータ"},
             {"rule_id": "no_hallucination", "name_jp": "ハルシネーションなし", "weight": 3.0,
-             "guide": "スクリーンショットに表示された内容に、存在しない製品名、架空の統計、捏造された引用がないか"},
+             "guide": "存在しない製品名、架空の統計、捏造された引用がないか。"
+                      "【スコア基準】5.0=ハルシネーションなし / 3.0=軽微な不正確さ1件 / "
+                      "1.0=明らかなハルシネーション複数 / 0.0=大半が捏造"},
             {"rule_id": "internal_consistency", "name_jp": "内部一貫性", "weight": 2.0,
-             "guide": "スクリーンショット間でスライドの数値や主張が矛盾していないか"},
+             "guide": "スクリーンショット間でスライドの数値や主張が矛盾していないか。"
+                      "【スコア基準】5.0=完全に一貫 / 3.0=軽微な矛盾1箇所 / 1.0=重大な矛盾あり"},
         ],
     },
     "uniqueness": {
         "name_jp": "革新性",
-        "description": "プレゼン全体の構成力、論理的つながり、創造的な問題解決",
+        "description": "プレゼン全体の構成力、論理的つながり、創造的な問題解決。ただし日本語で出力できないツールの革新性は限定的。",
         "criteria": [
             {"rule_id": "story_flow", "name_jp": "ストーリーフロー", "weight": 3.0,
-             "guide": "スクリーンショットから確認できるスライド全体の導入→本論→結論の流れ、スライド間の論理的接続"},
+             "guide": "スライド全体の導入→本論→結論の流れ、スライド間の論理的接続。"
+                      "【スコア基準】5.0=完璧な論理構成 / 3.0=概ね論理的だが飛躍あり / "
+                      "1.0=論理構成が破綻 / 0.0=スライド間の関連性なし"},
             {"rule_id": "slide_purpose", "name_jp": "各スライドの役割明確性", "weight": 2.5,
-             "guide": "スクリーンショットで確認できる各スライドに明確な目的があるか、冗長なスライドがないか"},
+             "guide": "各スライドに明確な目的があるか、冗長なスライドがないか。"
+                      "【スコア基準】5.0=全スライドに明確な役割 / 3.0=一部冗長なスライドあり / "
+                      "1.0=多くのスライドが無目的"},
             {"rule_id": "data_presentation", "name_jp": "データの提示方法", "weight": 2.0,
-             "guide": "スクリーンショットに表示されたグラフ・図表の適切性、数値データの視覚化の質"},
+             "guide": "グラフ・図表の適切性、数値データの視覚化の質。"
+                      "【スコア基準】5.0=データ視覚化が優秀 / 3.0=基本的なグラフはあるが工夫なし / "
+                      "1.0=データの視覚化が不適切"},
             {"rule_id": "contradiction_handling", "name_jp": "矛盾指示への対応力", "weight": 2.5,
-             "guide": "矛盾する指示に対して、スクリーンショットから確認できる対応（代替案や確認質問の提示）"},
+             "guide": "矛盾する指示に対する対応（代替案や確認質問の提示）。"
+                      "【スコア基準】5.0=適切に矛盾を指摘し代替案提示 / 3.0=矛盾を無視するが無難に処理 / "
+                      "1.0=矛盾した内容をそのまま出力"},
             {"rule_id": "executive_summary", "name_jp": "要点の明確化", "weight": 2.0,
-             "guide": "スクリーンショットから確認できるキーメッセージの明示、テイクアウェイの提示"},
+             "guide": "キーメッセージの明示、テイクアウェイの提示。"
+                      "【スコア基準】5.0=明確なテイクアウェイ / 3.0=要点はあるが強調不足 / "
+                      "1.0=要点が不明確"},
         ],
     },
 }
+
+# Mapping: profile_id / category_slug → rubric dict
+# When new categories are added, define their rubrics and add them here.
+CATEGORY_RUBRIC_MAP: dict[str, dict] = {
+    "slide_creation": AXIS_RUBRICS_SLIDE_CREATION,
+    "slide-creation-ai": AXIS_RUBRICS_SLIDE_CREATION,
+}
+
+# Legacy alias — code that references AXIS_RUBRICS directly gets the default
+AXIS_RUBRICS = AXIS_RUBRICS_SLIDE_CREATION
+
+
+def resolve_rubrics(profile_id: str | None = None, category_slug: str | None = None) -> dict:
+    """Resolve the appropriate rubric set for a given tool profile/category.
+
+    Priority: profile_id > category_slug > default (slide_creation).
+    """
+    if profile_id and profile_id in CATEGORY_RUBRIC_MAP:
+        return CATEGORY_RUBRIC_MAP[profile_id]
+    if category_slug and category_slug in CATEGORY_RUBRIC_MAP:
+        return CATEGORY_RUBRIC_MAP[category_slug]
+    # Default
+    return AXIS_RUBRICS_SLIDE_CREATION
 
 
 class LLMScorer:
@@ -113,23 +206,54 @@ class LLMScorer:
     Stops scoring if budget limits are exceeded.
     """
 
+    # Axes that require Sonnet-level visual analysis for accuracy.
+    # These involve reading text from screenshots and making nuanced judgments.
+    # Other axes can use Haiku to stay within budget.
+    SONNET_REQUIRED_AXES = frozenset({"localization", "practicality"})
+
     def __init__(self):
         api_key = settings.anthropic_api_key
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY が設定されていません")
         self.client = anthropic.Anthropic(api_key=api_key)
-        self.model = settings.ai_scoring_model or settings.ai_agent_model or "claude-haiku-4-5-20251001"
+        # Hybrid model strategy: Sonnet for critical axes, Haiku for others
+        self.model = settings.ai_scoring_model or settings.ai_agent_model or "claude-sonnet-4-20250514"
+        self.model_lite = getattr(settings, "ai_scoring_model_lite", None) or settings.ai_agent_model or "claude-haiku-4-5-20251001"
         # Budget tracking per session
         self.api_calls = 0
         self.total_input_tokens = 0
         self.total_output_tokens = 0
         self.max_calls = settings.ai_budget_max_calls
         self.max_cost_jpy = settings.ai_budget_max_cost_jpy
+        # Track per-model token usage for accurate cost estimation
+        self._model_tokens: dict[str, dict[str, int]] = {}
+
+    def _model_for_axis(self, axis: str) -> str:
+        """Return the appropriate model for a given axis.
+
+        Critical axes (localization, practicality) use Sonnet for accurate
+        visual text reading. Others use Haiku to minimize cost.
+        """
+        if axis in self.SONNET_REQUIRED_AXES or axis == "language_precheck":
+            return self.model
+        return self.model_lite
 
     def _estimated_cost_jpy(self) -> float:
-        """Estimate cost in JPY (Haiku: $1/MTok input, $4/MTok output, ~150 JPY/$)."""
-        usd = (self.total_input_tokens / 1_000_000 * 1.0) + (self.total_output_tokens / 1_000_000 * 4.0)
-        return usd * 150  # approximate USD to JPY
+        """Estimate cost in JPY based on per-model token tracking."""
+        total_usd = 0.0
+        for model_name, tokens in self._model_tokens.items():
+            inp = tokens.get("input", 0)
+            out = tokens.get("output", 0)
+            if "sonnet" in model_name:
+                total_usd += (inp / 1_000_000 * 3.0) + (out / 1_000_000 * 15.0)
+            elif "opus" in model_name:
+                total_usd += (inp / 1_000_000 * 15.0) + (out / 1_000_000 * 75.0)
+            else:
+                total_usd += (inp / 1_000_000 * 0.8) + (out / 1_000_000 * 4.0)
+        # Fallback if per-model tracking is empty (legacy)
+        if not self._model_tokens:
+            total_usd = (self.total_input_tokens / 1_000_000 * 3.0) + (self.total_output_tokens / 1_000_000 * 15.0)
+        return total_usd * 150  # approximate USD to JPY
 
     def _check_budget(self, axis: str) -> None:
         """Raise if budget is exceeded."""
@@ -139,12 +263,20 @@ class LLMScorer:
         if cost >= self.max_cost_jpy:
             raise RuntimeError(f"コスト上限({self.max_cost_jpy}円)に到達しました（現在{cost:.1f}円）")
 
-    def _track_usage(self, response) -> None:
+    def _track_usage(self, response, model: str | None = None) -> None:
         """Track token usage from API response."""
         self.api_calls += 1
         if hasattr(response, 'usage'):
-            self.total_input_tokens += getattr(response.usage, 'input_tokens', 0)
-            self.total_output_tokens += getattr(response.usage, 'output_tokens', 0)
+            inp = getattr(response.usage, 'input_tokens', 0)
+            out = getattr(response.usage, 'output_tokens', 0)
+            self.total_input_tokens += inp
+            self.total_output_tokens += out
+            # Per-model tracking for accurate cost estimation
+            m = model or self.model
+            if m not in self._model_tokens:
+                self._model_tokens[m] = {"input": 0, "output": 0}
+            self._model_tokens[m]["input"] += inp
+            self._model_tokens[m]["output"] += out
 
     async def _research_tool_info(self, tool_id: str, db: AsyncSession) -> str:
         """Fetch tool's official info for scoring context."""
@@ -189,16 +321,103 @@ class LLMScorer:
         try:
             import asyncio
             loop = asyncio.get_event_loop()
+            # Tool research is text-only — use lite model to save cost
             response = await loop.run_in_executor(None, lambda: self.client.messages.create(
-                model=self.model,
+                model=self.model_lite,
                 max_tokens=1000,
                 messages=[{"role": "user", "content": research_prompt}],
             ))
-            self._track_usage(response)
+            self._track_usage(response, model=self.model_lite)
             return response.content[0].text if response.content else ""
         except Exception as e:
             logger.warning("Tool research failed for %s: %s", tool_id, e)
             return ""
+
+    async def _precheck_language(self, observations: list[dict]) -> str:
+        """Quick language detection pass using a few sample screenshots.
+
+        Returns "ja", "en", or "mixed". This is used as an authoritative
+        signal to enforce cross-axis penalties even if individual axis
+        scoring is lenient.
+        """
+        # Collect up to 4 diverse screenshots for the check
+        sample_paths: list[str] = []
+        seen: set[str] = set()
+        for obs in observations:
+            for ss_path in obs.get("screenshots", []):
+                if ss_path and ss_path not in seen:
+                    seen.add(ss_path)
+                    sample_paths.append(ss_path)
+                    if len(sample_paths) >= 4:
+                        break
+            if len(sample_paths) >= 4:
+                break
+
+        if not sample_paths:
+            return "unknown"
+
+        # Load screenshots
+        content = []
+        for sp in sample_paths:
+            image_data = self._load_screenshot(sp)
+            if image_data:
+                import base64 as _b64
+                media_type = "image/png"
+                try:
+                    raw_head = _b64.b64decode(image_data[:32])
+                    if raw_head[:3] == b'\xff\xd8\xff':
+                        media_type = "image/jpeg"
+                except Exception:
+                    pass
+                content.append({
+                    "type": "image",
+                    "source": {"type": "base64", "media_type": media_type, "data": image_data},
+                })
+
+        if not content:
+            return "unknown"
+
+        content.append({
+            "type": "text",
+            "text": (
+                "上記のスクリーンショットに表示されているスライドの本文・見出しテキストの言語を判定してください。\n"
+                "スライド内の見出しや本文テキストを実際に読み取り、以下の3つから1つだけ回答してください:\n"
+                "- 「ja」: スライドの見出し・本文の大半が日本語\n"
+                "- 「en」: スライドの見出し・本文の大半が英語\n"
+                "- 「mixed」: 日本語と英語が混在\n\n"
+                "1単語のみ回答してください（ja / en / mixed）。"
+            ),
+        })
+
+        try:
+            import asyncio
+            import functools
+            loop = asyncio.get_event_loop()
+            self._check_budget("language_precheck")
+            response = await loop.run_in_executor(
+                None,
+                functools.partial(
+                    self.client.messages.create,
+                    model=self.model,
+                    max_tokens=10,
+                    temperature=0.0,
+                    system="スクリーンショットのテキスト言語を判定してください。ja / en / mixed のいずれか1単語のみで回答。",
+                    messages=[{"role": "user", "content": content}],
+                ),
+            )
+            self._track_usage(response, model=self.model)
+            result = response.content[0].text.strip().lower()
+            # Normalize response
+            if "ja" in result and "en" not in result:
+                return "ja"
+            elif "en" in result and "ja" not in result:
+                return "en"
+            elif "mixed" in result or ("ja" in result and "en" in result):
+                return "mixed"
+            return result if result in ("ja", "en", "mixed") else "unknown"
+        except Exception as e:
+            logger.warning("Language pre-check failed: %s", e)
+            return "unknown"
 
     async def score_session(
         self,
@@ -206,7 +425,29 @@ class LLMScorer:
         tool_id: str,
         db: AsyncSession,
     ) -> list[dict]:
-        """Score all observations in a session across all 5 axes."""
+        """Score all observations in a session across all 5 axes.
+
+        Rubrics are resolved dynamically based on the tool's profile_id
+        or category slug, so each tool category is evaluated with criteria
+        appropriate to its domain.
+        """
+        # 0. Resolve category-specific rubrics
+        profile_result = await db.execute(text("""
+            SELECT t.profile_id, tc.slug
+            FROM tools t
+            LEFT JOIN tool_categories tc ON t.category_id = tc.id
+            WHERE t.id = :tid
+        """), {"tid": tool_id})
+        profile_row = profile_result.fetchone()
+        tool_profile_id = profile_row[0] if profile_row else None
+        tool_category_slug = profile_row[1] if profile_row else None
+        active_rubrics = resolve_rubrics(tool_profile_id, tool_category_slug)
+        logger.info(
+            "Scoring session %s: profile=%s, category=%s, rubric_set=%s",
+            session_id, tool_profile_id, tool_category_slug,
+            "slide_creation" if active_rubrics is AXIS_RUBRICS_SLIDE_CREATION else "custom",
+        )
+
         # 1. Fetch observations (test results + screenshot evidence)
         result = await db.execute(text("""
             SELECT tr.test_case_id, tr.category, tr.prompt_sent, tr.response_raw,
@@ -288,10 +529,15 @@ class LLMScorer:
                 logger.warning("No observations or screenshots for session %s", session_id)
                 return []
 
-        # 1b. Research tool's official information for scoring context
+        # 1b. Language pre-check: detect output language from a sample of screenshots
+        # This runs BEFORE full scoring to establish an authoritative language verdict
+        self._detected_language = await self._precheck_language(observations)
+        logger.info("Language pre-check for session %s: detected=%s", session_id, self._detected_language)
+
+        # 1c. Research tool's official information for scoring context
         tool_info = await self._research_tool_info(tool_id, db)
 
-        # 1c. Fetch total_planned from session for confidence/prompt calculations
+        # 1d. Fetch total_planned from session for confidence/prompt calculations
         tp_result = await db.execute(text(
             "SELECT total_planned FROM audit_sessions WHERE id = :sid"
         ), {"sid": session_id})
@@ -324,7 +570,7 @@ class LLMScorer:
         # whether the LLM analysis is performed.
         from .score_service import AXIS_MIX
         all_scores = []
-        for axis, rubric in AXIS_RUBRICS.items():
+        for axis, rubric in active_rubrics.items():
             try:
                 # Always call LLM scoring — never skip based on auto_ratio
                 logger.info("Scoring axis %s (auto_ratio=%.0f%%) — LLM analysis always performed",
@@ -453,6 +699,123 @@ class LLMScorer:
                     })
                 except Exception:
                     logger.warning("Failed to write error score for %s/%s", session_id, axis)
+
+        # --- Apply cross-axis localization penalty ---
+        # Uses THREE signals for maximum reliability:
+        #   1. language_output criterion score from localization axis scoring
+        #   2. language pre-check result (self._detected_language)
+        #   3. localization axis overall score
+        loc_score_data = next((s for s in all_scores if s.get("axis") == "localization"), None)
+        if loc_score_data:
+            loc_score = loc_score_data.get("score", 5.0)
+            # Signal 1: language_output criterion
+            loc_details_raw = loc_score_data.get("details", [])
+            language_output_score = None
+            for d in loc_details_raw:
+                if d.get("rule_id") == "language_output":
+                    language_output_score = d.get("score", None)
+                    break
+
+            # Signal 2: pre-check language detection
+            precheck_lang = getattr(self, "_detected_language", "unknown")
+
+            # Determine effective language score using multiple signals
+            effective_lang_score = language_output_score if language_output_score is not None else loc_score
+
+            # If pre-check detected English but LLM was generous, override
+            if precheck_lang == "en" and effective_lang_score > 1.5:
+                logger.warning(
+                    "Language pre-check overriding LLM: precheck=%s but language_output_score=%.1f — forcing to 1.0",
+                    precheck_lang, effective_lang_score,
+                )
+                effective_lang_score = 1.0
+                # Also fix the localization score
+                loc_score_data["score"] = min(loc_score_data["score"], 1.0)
+                for d in loc_details_raw:
+                    if d["rule_id"] == "language_output":
+                        d["score"] = min(d["score"], 1.0)
+                    elif d["rule_id"] in ("keigo_consistency", "business_expression", "readability", "terminology"):
+                        d["score"] = 0.0
+                # Recalculate localization score
+                weighted_sum = sum(d["score"] * d["weight"] for d in loc_details_raw)
+                total_weight = sum(d["weight"] for d in loc_details_raw)
+                if total_weight > 0:
+                    loc_score_data["score"] = round(weighted_sum / total_weight, 2)
+                # Update localization in DB
+                await db.execute(text("""
+                    UPDATE axis_scores SET score = :score
+                    WHERE session_id = :sid AND axis = 'localization'
+                """), {"score": loc_score_data["score"], "sid": session_id})
+            elif precheck_lang == "mixed" and effective_lang_score > 3.0:
+                logger.info("Language pre-check: mixed detected, capping language_output at 3.0")
+                effective_lang_score = min(effective_lang_score, 3.0)
+
+            if effective_lang_score <= 1.5:
+                # Critical: English-only or nearly English-only output
+                # Cap practicality at 2.0, cost_performance at 2.5, others at 2.5
+                CROSS_AXIS_CAPS = {
+                    "practicality": 2.0,
+                    "cost_performance": 2.5,
+                    "safety": 3.0,  # Safety can still be somewhat evaluated
+                    "uniqueness": 2.5,
+                }
+                logger.warning(
+                    "Cross-axis localization penalty: language_output=%.1f, loc_score=%.1f — capping other axes",
+                    effective_lang_score, loc_score,
+                )
+                for s in all_scores:
+                    axis_name = s.get("axis", "")
+                    cap = CROSS_AXIS_CAPS.get(axis_name)
+                    if cap is not None and s["score"] > cap:
+                        old_score = s["score"]
+                        s["score"] = cap
+                        s["risks"] = s.get("risks", []) + [
+                            f"日本語出力不能によるクロス軸ペナルティ適用: {old_score:.1f} → {cap:.1f}"
+                        ]
+                        logger.info(
+                            "Cross-axis cap applied: %s %.1f → %.1f (language_output=%.1f)",
+                            axis_name, old_score, cap, effective_lang_score,
+                        )
+                        # Update DB
+                        await db.execute(text("""
+                            UPDATE axis_scores
+                            SET score = :score, risks = :risks
+                            WHERE session_id = :sid AND axis = :axis
+                        """), {
+                            "score": cap,
+                            "risks": json.dumps(s["risks"], ensure_ascii=False),
+                            "sid": session_id,
+                            "axis": axis_name,
+                        })
+            elif effective_lang_score <= 2.5:
+                # Moderate: Mostly English with some Japanese
+                MODERATE_CAPS = {
+                    "practicality": 3.0,
+                    "cost_performance": 3.5,
+                }
+                logger.info(
+                    "Moderate cross-axis localization penalty: language_output=%.1f",
+                    effective_lang_score,
+                )
+                for s in all_scores:
+                    axis_name = s.get("axis", "")
+                    cap = MODERATE_CAPS.get(axis_name)
+                    if cap is not None and s["score"] > cap:
+                        old_score = s["score"]
+                        s["score"] = cap
+                        s["risks"] = s.get("risks", []) + [
+                            f"日本語出力不足によるクロス軸ペナルティ適用: {old_score:.1f} → {cap:.1f}"
+                        ]
+                        await db.execute(text("""
+                            UPDATE axis_scores
+                            SET score = :score, risks = :risks
+                            WHERE session_id = :sid AND axis = :axis
+                        """), {
+                            "score": cap,
+                            "risks": json.dumps(s["risks"], ensure_ascii=False),
+                            "sid": session_id,
+                            "axis": axis_name,
+                        })
 
         # --- Apply completion rate penalty ---
         # Fetch total_planned / total_executed from session to compute real completion rate
@@ -727,11 +1090,14 @@ class LLMScorer:
         content = []
 
         # Select screenshots relevant to this axis (smart selection for cost optimization)
+        # For Sonnet axes (localization, practicality), use higher resolution for text reading
+        # For Haiku axes, use lower resolution to reduce token cost
+        resize_width = 1024 if axis in self.SONNET_REQUIRED_AXES else 768
         all_paths = self._select_screenshots_for_axis(axis, observations)
         loaded_images = []
         failed_paths = []
         for ss_path in all_paths:
-            image_data = self._load_screenshot(ss_path)
+            image_data = self._load_screenshot(ss_path, max_width=resize_width)
             if image_data:
                 import base64 as _b64
                 media_type = "image/png"
@@ -757,8 +1123,10 @@ class LLMScorer:
         # Budget check before API call
         self._check_budget(axis)
 
-        logger.info("Scoring axis %s with %d screenshots loaded (%d failed, %d total paths), budget: %d calls / %.1f JPY",
-                     axis, len(loaded_images), len(failed_paths), len(all_paths), self.api_calls, self._estimated_cost_jpy())
+        # Select model based on axis criticality (hybrid Sonnet/Haiku)
+        axis_model = self._model_for_axis(axis)
+        logger.info("Scoring axis %s with %d screenshots loaded (%d failed, %d total paths), model=%s, budget: %d calls / %.1f JPY",
+                     axis, len(loaded_images), len(failed_paths), len(all_paths), axis_model.split("/")[-1], self.api_calls, self._estimated_cost_jpy())
 
         import asyncio
         import functools
@@ -771,7 +1139,21 @@ class LLMScorer:
         # Token budget: details array with 4-5 rules × Japanese evidence needs ~2500 tokens
         SINGLE_MAX_TOKENS = 2500
         SYNTHESIS_MAX_TOKENS = 3500
-        SYSTEM_PROMPT = "あなたはAIツール品質評価の専門家です。必ずJSON形式のみで回答してください。JSONの前後に説明文や装飾は一切含めないでください。"
+        SYSTEM_PROMPT = (
+            "あなたは日本企業向けAIツール品質評価の厳格な専門監査員です。\n"
+            "あなたの評価は公開レポートとして消費者の意思決定に直接影響します。\n\n"
+            "【採点哲学】\n"
+            "- 懐疑的かつ厳格に評価してください。「良い」と判断するには明確な肯定的証拠が必要です。\n"
+            "- 証拠不十分な項目はデフォルトで低スコア（2.0以下）としてください。\n"
+            "- 3.0以上のスコアには、スクリーンショットから確認できる具体的な肯定的証拠が必須です。\n"
+            "- 4.0以上は「優秀」を意味し、明らかに高品質な証拠がある場合のみ付与してください。\n"
+            "- 5.0は「完璧」であり、改善点が一切見当たらない場合のみ付与してください。\n\n"
+            "【致命的欠陥の検出】\n"
+            "- 日本語でプロンプトを入力したのに英語のスライドが生成された場合、これは致命的欠陥です。\n"
+            "- 日本語能力(localization)軸は0.0〜1.0とし、他の全軸も最大2.5を上限としてください。\n"
+            "- 日本のビジネスで使えないツールに高スコアを付けることは、消費者を誤導する行為です。\n\n"
+            "必ずJSON形式のみで回答してください。JSONの前後に説明文や装飾は一切含めないでください。"
+        )
 
         if len(loaded_images) <= BATCH_SIZE:
             content = loaded_images + [{"type": "text", "text": prompt_text}]
@@ -779,14 +1161,14 @@ class LLMScorer:
                 None,
                 functools.partial(
                     self.client.messages.create,
-                    model=self.model,
+                    model=axis_model,
                     max_tokens=SINGLE_MAX_TOKENS,
                     temperature=0.0,
                     system=SYSTEM_PROMPT,
                     messages=[{"role": "user", "content": content}],
                 ),
             )
-            self._track_usage(response)
+            self._track_usage(response, model=axis_model)
         else:
             # Batch: split images, score each batch, then merge
             batch_responses = []
@@ -801,14 +1183,14 @@ class LLMScorer:
                     None,
                     functools.partial(
                         self.client.messages.create,
-                        model=self.model,
+                        model=axis_model,
                         max_tokens=SINGLE_MAX_TOKENS,
                         temperature=0.0,
                         system=SYSTEM_PROMPT,
                         messages=[{"role": "user", "content": batch_content}],
                     ),
                 )
-                self._track_usage(batch_resp)
+                self._track_usage(batch_resp, model=axis_model)
                 batch_responses.append(batch_resp)
 
             if len(batch_responses) == 1:
@@ -826,25 +1208,26 @@ class LLMScorer:
                 )
                 for j, br in enumerate(batch_responses):
                     synthesis_prompt += f"--- バッチ{j+1}の結果 ---\n{br.content[0].text}\n\n"
+                # Synthesis uses lite model (text-only, no images) to save cost
                 response = await loop.run_in_executor(
                     None,
                     functools.partial(
                         self.client.messages.create,
-                        model=self.model,
+                        model=self.model_lite,
                         max_tokens=SYNTHESIS_MAX_TOKENS,
                         temperature=0.0,
                         system=SYSTEM_PROMPT,
                         messages=[{"role": "user", "content": synthesis_prompt}],
                     ),
                 )
-                self._track_usage(response)
+                self._track_usage(response, model=self.model_lite)
 
         response_text = response.content[0].text
         logger.info("Axis %s scored (%d chars response). Total budget: %d calls, %.1f JPY",
                      axis, len(response_text), self.api_calls, self._estimated_cost_jpy())
         return self._parse_score_response(axis, rubric, response_text)
 
-    def _load_screenshot(self, screenshot_path: str) -> str | None:
+    def _load_screenshot(self, screenshot_path: str, max_width: int = 1024) -> str | None:
         """Load a screenshot file and return base64 data."""
         import base64
         from pathlib import Path
@@ -877,7 +1260,7 @@ class LLMScorer:
                 logger.warning("Screenshot too large, skipping: %s", file_path)
                 return None
             # Resize to reduce API token cost (retina screenshots can be 2x+)
-            data = self._resize_screenshot(data, max_width=1024)
+            data = self._resize_screenshot(data, max_width=max_width)
             return base64.b64encode(data).decode("ascii")
         except Exception as e:
             logger.warning("Failed to load screenshot %s: %s", file_path, e)
@@ -923,12 +1306,36 @@ class LLMScorer:
         effective_planned = total_planned if total_planned else len(observations)
         completion_rate = len(observations) / max(effective_planned, 1) * 100
 
-        return f"""あなたはスライド作成・資料作成AIツール（Gamma等）の専門的な品質評価者です。
+        return f"""あなたは日本企業向けAIツール品質評価の厳格な専門監査員です。
+消費者保護の観点から、厳密かつ公正な評価を行ってください。
 
-## 評価の前提（重要）
+## 採点哲学（最重要）
+1. **懐疑的スタンス**: デフォルトのスコアは2.5（普通）です。それより上のスコアには肯定的証拠が、下のスコアには否定的証拠が必要です。
+2. **証拠主義**: スクリーンショットから直接確認できる事実のみを根拠としてください。推測や好意的解釈は禁止です。
+3. **日本語出力は必須要件**: このプラットフォームは日本のユーザー向けです。日本語でプロンプトを入力したのに英語のスライドが出力された場合、それは致命的な欠陥です。
+4. **スコアの意味を厳守**:
+   - 5.0 = 完璧（改善点なし。極めて稀）
+   - 4.0〜4.9 = 優秀（明らかに高品質で、軽微な改善点のみ）
+   - 3.0〜3.9 = 合格（実用的だが改善の余地あり）
+   - 2.0〜2.9 = 不十分（実用には問題あり）
+   - 1.0〜1.9 = 深刻な問題（ほぼ使えない）
+   - 0.0〜0.9 = 致命的欠陥（完全に不適格）
+
+## 致命的欠陥の検出ルール（最優先）
+以下に該当する場合、スコアに強制的な上限が適用されます:
+- **英語出力問題**: スクリーンショットのスライドが主に英語で書かれている場合:
+  → localization（日本語能力）軸: 上限 1.5
+  → practicality（実務適性）軸: 上限 2.0
+  → cost_performance（費用対効果）軸: 上限 2.5
+  → 全軸の総合スコア: 上限 2.5
+- **完全英語出力**: スライドに日本語が一切含まれない場合:
+  → localization 軸: 上限 0.5
+  → 他の全軸: 上限 2.0
+
+## 評価の前提
 このシステムは以下の手順で監査データを収集しています:
 1. 人間のテスターがChrome拡張機能を使い、スライド作成AIツールをテストします
-2. 各テストで、テスターはプロンプトをAIツールに入力し、生成されたスライドのスクリーンショットを撮影します
+2. 各テストで、テスターは**日本語の**プロンプトをAIツールに入力し、生成されたスライドのスクリーンショットを撮影します
 3. タイマーが応答時間を計測します（response_time_ms として記録）
 4. スクリーンショットが唯一の出力証拠です — テキスト応答データは存在しません
 
@@ -937,9 +1344,11 @@ class LLMScorer:
 
 ## 評価の原則
 - スクリーンショット画像を主要な評価根拠としてください（テキスト応答は存在しません）
+- **まずスクリーンショット内のテキストが日本語か英語かを確認してください。これが全軸に影響します。**
 - スライドのレイアウト、デザイン、コンテンツの質、日本語テキストの品質を画像から直接評価してください
 - テキスト応答がないことを減点理由にしないでください（そもそもテキスト応答は収集していません）
 - 応答時間データ（response_time_ms）が各テストに記録されています。0ms/未計測の場合は応答速度評価をスキップしてください
+- **「デザインが綺麗」「レイアウトが良い」だけでは高スコアの根拠になりません。内容の品質と日本語対応を重視してください。**
 
 ## 応答時間の評価基準
 応答時間データが提供されている場合、以下の基準で応答速度を評価してください:
@@ -968,13 +1377,14 @@ class LLMScorer:
 以下のJSON形式で出力してください。JSONのみを出力し、他のテキストは含めないでください。
 
 {{
-  "score": 3.5,
+  "score": 2.5,
   "confidence": 0.85,
+  "language_detected": "en",
   "details": [
-    {{"rule_id": "ルールID", "rule_name_jp": "日本語名", "score": 4.0, "weight": 2.0, "evidence": "スクリーンショットから確認した具体的な根拠（日本語）", "severity": "medium"}}
+    {{"rule_id": "ルールID", "rule_name_jp": "日本語名", "score": 2.0, "weight": 2.0, "evidence": "スクリーンショットから確認した具体的な根拠（日本語）", "severity": "high"}}
   ],
-  "strengths": ["強み1", "強み2"],
-  "risks": ["リスク1", "リスク2"]
+  "strengths": ["強み1（具体的な証拠付き）"],
+  "risks": ["リスク1（具体的な証拠付き）"]
 }}
 
 【重要】スコアリング規則:
@@ -982,11 +1392,17 @@ class LLMScorer:
 - details[].score も必ず 0.0〜5.0 のスケールで記述してください。パーセンテージ（例: 80, 300）は禁止です。
   例: 良い→ "score": 4.2  悪い→ "score": 80（これはパーセンテージなので禁止）
 - confidence は 0.0〜1.0（観察データの量と質に基づく信頼度）
-- 【必須】details 配列には上記「評価基準（ルーブリック）」の各項目に1対1で対応するエントリを必ず含めてください。空配列は禁止です。評価基準が5項目あれば、details も必ず5エントリ含めてください。
+- language_detected は "ja"（日本語）/ "en"（英語）/ "mixed"（混在）のいずれかを記述してください
+- 【必須】details 配列には上記「評価基準（ルーブリック）」の各項目に1対1で対応するエントリを必ず含めてください。空配列は禁止です。評価基準が{len(rubric['criteria'])}項目あれば、details も必ず{len(rubric['criteria'])}エントリ含めてください。
 - 各 details エントリの rule_id は評価基準の rule_id と完全に一致させてください
 - severity は critical/high/medium/low/info のいずれか
-- evidence にはスクリーンショットから確認した具体的な視覚的根拠を記述してください
-- strengths と risks もそれぞれ最低2項目ずつ含めてください
+  - critical: 致命的欠陥（英語のみ出力、完全なタスク失敗）
+  - high: 重大な問題（要件の大幅な欠落）
+  - medium: 中程度の問題（改善が望ましい）
+  - low: 軽微な問題
+  - info: 参考情報
+- evidence にはスクリーンショットから確認した**具体的な視覚的根拠**を記述してください（「概ね良い」「問題ない」のような曖昧な表現は不可）
+- strengths と risks もそれぞれ最低2項目ずつ含め、**具体的な証拠を示してください**
 - 日本語で記述してください
 """
 
@@ -1131,6 +1547,33 @@ class LLMScorer:
                         "severity": "info",
                     })
 
+        # Extract language_detected for cross-axis penalty logic
+        language_detected = data.get("language_detected", None)
+
+        # Post-parse validation: if this is localization axis and language is "en",
+        # enforce score cap even if LLM was too generous
+        if axis == "localization" and language_detected == "en":
+            if score > 1.5:
+                logger.warning(
+                    "Localization axis: LLM returned score %.1f but language_detected='en' — capping to 1.0",
+                    score,
+                )
+                score = min(score, 1.0)
+            # Also cap individual criteria that depend on Japanese text
+            for d in details:
+                if d["rule_id"] == "language_output" and d["score"] > 1.0:
+                    d["score"] = min(d["score"], 1.0)
+                elif d["rule_id"] in ("keigo_consistency", "business_expression", "readability", "terminology"):
+                    if d["score"] > 0.5:
+                        d["score"] = 0.0
+                        d["evidence"] += "（日本語テキストが存在しないため0.0）"
+
+            # Recalculate weighted average
+            weighted_sum = sum(d["score"] * d["weight"] for d in details)
+            total_weight = sum(d["weight"] for d in details)
+            if total_weight > 0:
+                score = max(0.0, min(5.0, round(weighted_sum / total_weight, 2)))
+
         return {
             "axis": axis,
             "score": score,
@@ -1138,4 +1581,5 @@ class LLMScorer:
             "details": details,
             "strengths": data.get("strengths", []),
             "risks": data.get("risks", []),
+            "language_detected": language_detected,
         }

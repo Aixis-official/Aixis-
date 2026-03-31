@@ -74,10 +74,11 @@ class Settings(BaseSettings):
     # AI Browser Agent (Haiku Vision — hybrid: learn once, replay without API)
     anthropic_api_key: str = ""
     ai_agent_model: str = "claude-haiku-4-5-20251001"
-    ai_scoring_model: str = "claude-haiku-4-5-20251001"  # LLM rubric scoring model
+    ai_scoring_model: str = "claude-sonnet-4-20250514"  # LLM rubric scoring — Sonnet for accurate multimodal analysis
+    ai_scoring_model_lite: str = "claude-haiku-4-5-20251001"  # Light model for non-critical axes
     ai_budget_max_calls: int = 400   # Discovery ~20 + replay verify ~1/test × ~300 tests
     ai_budget_max_calls_per_case: int = 20
-    ai_budget_max_cost_jpy: int = 200  # 1監査あたりのコスト上限（円）— 18テスト×61枚スクショ対応
+    ai_budget_max_cost_jpy: int = 100  # 1監査あたりのコスト上限（円）— ハイブリッド: Sonnet(重要軸) + Haiku(他)
 
     # SMTP settings
     smtp_host: str = ""
