@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db.models.benchmark import (
@@ -144,11 +144,9 @@ async def compute_leaderboard(db: AsyncSession, suite_id: str) -> None:
     entries = rows.all()
 
     # Clear existing leaderboard entries for this suite
-    existing = await db.execute(
-        select(LeaderboardEntry).where(LeaderboardEntry.suite_id == suite_id)
+    await db.execute(
+        delete(LeaderboardEntry).where(LeaderboardEntry.suite_id == suite_id)
     )
-    for entry in existing.scalars().all():
-        await db.delete(entry)
 
     # Create new entries with ranks
     now = datetime.now(timezone.utc)

@@ -176,6 +176,8 @@ function hideRawKeyModal() {
 
 async function createKey(e) {
     e.preventDefault();
+    var btn = document.querySelector('#create-form button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.textContent = '作成中...'; }
     const name = document.getElementById('key-name').value;
     const scopes = Array.from(document.querySelectorAll('.scope-cb:checked')).map(cb => cb.value);
 
@@ -191,6 +193,8 @@ async function createKey(e) {
         loadKeys();
     } catch (e) {
         alert('APIキーの作成に失敗しました');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '作成'; }
     }
 }
 

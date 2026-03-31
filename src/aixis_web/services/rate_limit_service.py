@@ -3,6 +3,7 @@
 Replaces in-memory rate limiters that don't work with multiple Uvicorn workers.
 """
 
+import random
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, func, select
@@ -23,6 +24,17 @@ async def check_rate_limit(
     """
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(seconds=window_seconds)
+
+    # Probabilistic cleanup (~1% of requests) to prevent unbounded table growth
+    if random.random() < 0.01:
+        try:
+            await db.execute(
+                delete(RateLimitEntry).where(
+                    RateLimitEntry.created_at < now - timedelta(hours=24)
+                )
+            )
+        except Exception:
+            pass
 
     # Count recent entries within the window
     count_result = await db.execute(

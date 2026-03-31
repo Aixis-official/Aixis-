@@ -109,13 +109,14 @@ async def auto_benchmark_category(db: AsyncSession, category_slug: str) -> Compa
     )
     tool_list = tools.scalars().all()
 
-    scored_tools = []
-    for tool in tool_list:
-        score = await db.execute(
-            select(ToolPublishedScore).where(ToolPublishedScore.tool_id == tool.id).limit(1)
-        )
-        if score.scalar_one_or_none():
-            scored_tools.append(tool)
+    # Find tools that have at least one published score (single query instead of N+1)
+    scored_tool_ids_result = await db.execute(
+        select(ToolPublishedScore.tool_id)
+        .where(ToolPublishedScore.tool_id.in_([t.id for t in tool_list]))
+        .distinct()
+    )
+    scored_tool_ids = set(scored_tool_ids_result.scalars().all())
+    scored_tools = [t for t in tool_list if t.id in scored_tool_ids]
 
     if len(scored_tools) < 2:
         return None

@@ -116,6 +116,8 @@ const headers = () => {
     return h;
 };
 
+const esc = (str) => { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; };
+
 const statusBadge = (s) => {
     const colors = {pending:'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400', approved:'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400', rejected:'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400', reviewing:'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'};
     const labels = {pending:'審査待ち', approved:'承認済み', rejected:'却下', reviewing:'審査中'};
@@ -167,10 +169,10 @@ async function loadSubmissions() {
         }
         tbody.innerHTML = data.map(s => `
             <tr class="border-b border-gray-50 dark:border-gray-700/30">
-                <td class="px-6 py-3 text-gray-900 dark:text-gray-100 font-jp">${s.tool_name_jp || s.tool_name}</td>
+                <td class="px-6 py-3 text-gray-900 dark:text-gray-100 font-jp">${esc(s.tool_name_jp || s.tool_name)}</td>
                 <td class="px-6 py-3">${statusBadge(s.status)}</td>
                 <td class="px-6 py-3 text-gray-500 dark:text-gray-400">${new Date(s.created_at).toLocaleDateString('ja-JP')}</td>
-                <td class="px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">${s.reviewer_notes || '-'}</td>
+                <td class="px-6 py-3 text-gray-500 dark:text-gray-400 text-xs">${esc(s.reviewer_notes) || '-'}</td>
             </tr>
         `).join('');
     } catch(e) { console.error(e); }
@@ -192,7 +194,7 @@ async function loadDisputes() {
                     <span class="text-xs text-gray-500">${d.axis || 'overall'}</span>
                     <span class="text-xs text-gray-400">${new Date(d.created_at).toLocaleDateString('ja-JP')}</span>
                 </div>
-                <p class="text-sm text-gray-700 dark:text-gray-300">${d.reason}</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">${esc(d.reason)}</p>
             </div>
         `).join('');
     } catch(e) { console.error(e); }

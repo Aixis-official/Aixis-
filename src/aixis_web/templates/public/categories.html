@@ -171,6 +171,8 @@
         return result;
     }
 
+    function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
     function buildCategoryCard(cat) {
         var slug = slugify(cat.name);
         var toolCount = cat.tools.length;
@@ -185,7 +187,7 @@
                     '<div class="flex items-center justify-between gap-2">' +
                         '<div class="min-w-0">' +
                             '<p class="text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">Top</p>' +
-                            '<span class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate block">' + toolName + '</span>' +
+                            '<span class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate block">' + esc(toolName) + '</span>' +
                         '</div>' +
                         (grade ? getGradeBadge(grade) : '') +
                     '</div>' +
@@ -209,7 +211,7 @@
                         getCategoryIcon() +
                     '</div>' +
                     '<div>' +
-                        '<h3 class="text-base font-bold text-gray-900 dark:text-white group-hover:text-aixis-500 dark:group-hover:text-aixis-300 transition-colors duration-200">' + cat.name + '</h3>' +
+                        '<h3 class="text-base font-bold text-gray-900 dark:text-white group-hover:text-aixis-500 dark:group-hover:text-aixis-300 transition-colors duration-200">' + esc(cat.name) + '</h3>' +
                         '<p class="text-sm text-gray-500 dark:text-gray-400">' + toolCount + ' ツール</p>' +
                     '</div>' +
                 '</div>' +

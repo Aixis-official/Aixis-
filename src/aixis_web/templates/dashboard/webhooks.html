@@ -152,6 +152,9 @@
             return;
         }
 
+        const btn = document.querySelector('button[onclick*="createWebhook"]');
+        if (btn) { btn.disabled = true; btn.textContent = '登録中...'; }
+
         try {
             await aixisAPI('/webhooks', {
                 method: 'POST',
@@ -159,9 +162,12 @@
             });
             showAlert('Webhookを登録しました', 'ok');
             document.getElementById('webhook-url').value = '';
+            document.querySelectorAll('.webhook-event:checked').forEach(cb => cb.checked = false);
             loadWebhooks();
         } catch (e) {
-            showAlert(e.detail || 'Webhookの登録に失敗しました', 'err');
+            showAlert(e.message || 'Webhookの登録に失敗しました', 'err');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = '登録する'; }
         }
     }
 

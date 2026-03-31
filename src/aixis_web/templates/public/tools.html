@@ -74,11 +74,12 @@
         transform: rotateY(180deg);
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 1.5rem;
+        justify-content: flex-start;
+        align-items: flex-start;
+        padding: 1rem 1.25rem;
         background: inherit;
         border-radius: inherit;
+        overflow: hidden;
     }
     .card-back .back-score-bar {
         height: 6px;
@@ -293,6 +294,8 @@ function animateCountUp(elId, target, opts) {
         return LOGO_COLORS[Math.abs(hash) % LOGO_COLORS.length];
     }
 
+    function escBack(s) { return s ? s.replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''; }
+
     // ── Grade helpers (using AIXIS from aixis-common.js) ──
     function gradeForScore(score) {
         if (score == null) return null;
@@ -459,32 +462,43 @@ function animateCountUp(elId, target, opts) {
                 ? `<img src="${tool.logo_url}" alt="${tool.name_jp || tool.name}" class="w-10 h-10 rounded-lg object-contain bg-white border border-gray-100 dark:border-aixis-600/30 shrink-0" onerror="this.outerHTML='<div class=\\'w-10 h-10 rounded-lg ${color} flex items-center justify-center text-white font-semibold text-sm shrink-0\\'>${initial}</div>'">`
                 : `<div class="w-10 h-10 rounded-lg ${color} flex items-center justify-center text-white font-semibold text-sm shrink-0">${initial}</div>`;
 
-            // Build back-side score bars for flip card
-            const backBars = AIXIS.AXIS_KEYS.map(key => {
-                const val = score ? score[key] : null;
-                const pct = val != null ? (val / 5 * 100).toFixed(1) : 0;
-                const level = val != null ? scoreLevel(val) : '';
-                const displayVal = val != null ? val.toFixed(1) : '--';
-                return `
-                    <div class="flex items-center gap-2 w-full">
-                        <span class="text-[10px] text-gray-500 dark:text-gray-400 w-20 shrink-0 text-left">${AIXIS.AXIS_LABELS[key]}</span>
-                        <div class="back-score-bar flex-1"><div class="back-score-fill ${level}" style="width:${pct}%"></div></div>
-                        <span class="text-[10px] font-semibold w-7 text-right ${val != null ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400'}">${displayVal}</span>
-                    </div>`;
-            }).join('');
+            // Build back-side content for flip card
+            // Show pros/cons, description, features instead of duplicating axis scores
+            const prosArr = tool.pros_jp || [];
+            const consArr = tool.cons_jp || [];
+            const descText = tool.executive_summary_jp || tool.description_jp || '';
+            const featArr = tool.features || [];
+            const pricingLabel = { free: '無料', freemium: 'フリーミアム', paid: '有料', enterprise: 'エンタープライズ' }[tool.pricing_model] || '';
 
             const backSide = isLoggedIn ? `
                 <div class="card-back bg-white dark:bg-aixis-800">
-                    <div class="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-3 text-center truncate w-full">${tool.name_jp || tool.name}</div>
-                    <div class="space-y-2 w-full">${backBars}</div>
-                    ${gradeObj ? `
-                    <div class="mt-4 flex items-center gap-2">
-                        <span class="grade-badge grade-badge-stamp grade-${gradeObj.grade}">${gradeObj.grade}</span>
-                        <span class="text-sm font-bold tabular-nums text-gray-800 dark:text-gray-100">${overallScore != null ? overallScore.toFixed(1) : '---'} <span class="text-[10px] font-normal text-gray-400">/ 5.0</span></span>
+                    <div class="flex items-center justify-between w-full mb-2">
+                        <div class="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate">${escBack(tool.name_jp || tool.name)}</div>
+                        ${gradeObj ? `<span class="grade-badge grade-badge-stamp grade-${gradeObj.grade}" style="font-size:10px;width:22px;height:22px;line-height:22px">${gradeObj.grade}</span>` : ''}
+                    </div>
+                    ${descText ? `<p class="text-[10px] text-gray-500 dark:text-gray-400 font-jp leading-relaxed mb-2 line-clamp-3">${escBack(descText)}</p>` : ''}
+                    ${prosArr.length > 0 ? `
+                    <div class="mb-1.5">
+                        <div class="text-[9px] font-medium text-emerald-600 dark:text-emerald-400 mb-0.5 font-jp">メリット</div>
+                        ${prosArr.slice(0, 3).map(p => `<div class="text-[10px] text-gray-600 dark:text-gray-300 font-jp flex items-start gap-1"><span class="text-emerald-500 shrink-0">+</span><span class="line-clamp-1">${escBack(p)}</span></div>`).join('')}
                     </div>` : ''}
+                    ${consArr.length > 0 ? `
+                    <div class="mb-1.5">
+                        <div class="text-[9px] font-medium text-red-500 dark:text-red-400 mb-0.5 font-jp">デメリット</div>
+                        ${consArr.slice(0, 2).map(c => `<div class="text-[10px] text-gray-600 dark:text-gray-300 font-jp flex items-start gap-1"><span class="text-red-400 shrink-0">-</span><span class="line-clamp-1">${escBack(c)}</span></div>`).join('')}
+                    </div>` : ''}
+                    ${prosArr.length === 0 && consArr.length === 0 && featArr.length > 0 ? `
+                    <div class="mb-1.5">
+                        <div class="text-[9px] font-medium text-blue-500 dark:text-blue-400 mb-0.5 font-jp">主要機能</div>
+                        ${featArr.slice(0, 3).map(f => `<div class="text-[10px] text-gray-600 dark:text-gray-300 font-jp line-clamp-1">${escBack(f)}</div>`).join('')}
+                    </div>` : ''}
+                    <div class="mt-auto pt-1 flex items-center justify-between w-full border-t border-gray-100 dark:border-aixis-600/30">
+                        ${pricingLabel ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-aixis-700/50 text-gray-500 dark:text-gray-400 font-jp">${pricingLabel}</span>` : '<span></span>'}
+                        <span class="text-[10px] font-bold tabular-nums text-gray-700 dark:text-gray-200">${overallScore != null ? overallScore.toFixed(1) : '---'} <span class="text-[9px] font-normal text-gray-400">/ 5.0</span></span>
+                    </div>
                 </div>` : `
                 <div class="card-back bg-white dark:bg-aixis-800">
-                    <div class="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-3 text-center truncate w-full">${tool.name_jp || tool.name}</div>
+                    <div class="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-3 text-center truncate w-full">${escBack(tool.name_jp || tool.name)}</div>
                     ${gradeObj ? `
                     <div class="mb-3">
                         <span class="grade-badge grade-badge-stamp grade-badge-lg grade-${gradeObj.grade}">${gradeObj.grade}</span>
@@ -516,16 +530,16 @@ function animateCountUp(elId, target, opts) {
                         ${logoHtml}
                         <div class="min-w-0">
                             <div class="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-aixis-500 dark:group-hover:text-aixis-300 transition-colors duration-150">
-                                ${tool.name_jp || tool.name}
+                                ${escBack(tool.name_jp || tool.name)}
                             </div>
-                            ${tool.vendor ? `<div class="text-[11px] text-gray-400 dark:text-gray-500 truncate">${tool.vendor}</div>` : ''}
+                            ${tool.vendor ? `<div class="text-[11px] text-gray-400 dark:text-gray-500 truncate">${escBack(tool.vendor)}</div>` : ''}
                         </div>
                     </div>
 
                     <!-- Category pill -->
                     ${categoryName ? `
                     <span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-aixis-700/50 text-gray-500 dark:text-gray-400 mb-2.5">
-                        ${categoryName}
+                        ${escBack(categoryName)}
                     </span>` : ''}
 
                     <!-- 5 axis score bars -->

@@ -996,24 +996,34 @@ function animateCountUp(elId, target, opts) {
     var duration = opts.duration || 1200;
     var decimals = opts.decimals || 0;
 
-    // Set final value immediately as fallback (ensures correct value even if rAF doesn't fire)
+    // If target is 0 or invalid, show '--' instead of '0' to avoid distrust
+    if (!target || target <= 0) {
+        el.textContent = '--';
+        return;
+    }
+
     var finalText = decimals > 0 ? target.toFixed(decimals) : String(target);
 
     function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
 
     function runAnimation() {
-        var start = 0;
+        // Start from 1 (not 0) to never show '0' during animation
+        var start = 1;
         var startTime = null;
         function step(ts) {
             if (!startTime) startTime = ts;
             var progress = Math.min((ts - startTime) / duration, 1);
             var val = start + (target - start) * ease(progress);
-            el.textContent = decimals > 0 ? val.toFixed(decimals) : Math.round(val);
+            // Ensure we never display 0 during the animation
+            var displayVal = decimals > 0 ? val.toFixed(decimals) : Math.max(1, Math.round(val));
+            el.textContent = displayVal;
             if (progress < 1) requestAnimationFrame(step);
+            else el.textContent = finalText; // Ensure exact final value
         }
         requestAnimationFrame(step);
     }
 
+    // Keep '--' until animation starts — do NOT set to 0 prematurely
     // Use IntersectionObserver to start animation when element is visible
     if ('IntersectionObserver' in window) {
         var observer = new IntersectionObserver(function(entries) {
@@ -1025,10 +1035,9 @@ function animateCountUp(elId, target, opts) {
             });
         }, { threshold: 0.1 });
         observer.observe(el);
-        // Safety: ensure value is set after a timeout even if observer never fires
-        setTimeout(function() { if (el.textContent === '--' || el.textContent === '0') { el.textContent = finalText; } }, 3000);
+        // Safety: ensure final value is set after timeout (skip animation)
+        setTimeout(function() { if (el.textContent === '--') { el.textContent = finalText; } }, 3000);
     } else {
-        // Fallback: just set the value
         el.textContent = finalText;
     }
 }
@@ -1071,6 +1080,8 @@ function animateCountUp(elId, target, opts) {
         return map[grade] || 'bg-gray-400';
     }
 
+    function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
     function renderToolCard(tool) {
         var initial = (tool.name_jp || tool.name || tool.slug || '?')[0].toUpperCase();
         var latestScore = (tool.scores && tool.scores.length > 0) ? tool.scores[0] : null;
@@ -1080,11 +1091,11 @@ function animateCountUp(elId, target, opts) {
             ? '<span class="grade-badge grade-badge-stamp grade-' + grade + '">' + grade + '</span>'
             : '';
         var category = tool.category_name_jp
-            ? '<span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-aixis-700 text-gray-500 dark:text-gray-400 font-jp">' + tool.category_name_jp + '</span>'
+            ? '<span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-aixis-700 text-gray-500 dark:text-gray-400 font-jp">' + esc(tool.category_name_jp) + '</span>'
             : '';
-        var displayName = tool.name_jp || tool.name || tool.slug;
+        var displayName = esc(tool.name_jp || tool.name || tool.slug);
         var logoHtml = tool.logo_url
-            ? '<img src="' + tool.logo_url + '" alt="' + displayName + '" class="w-10 h-10 rounded-lg object-contain bg-white border border-gray-100 dark:border-aixis-600/30 shrink-0" onerror="this.outerHTML=\'<div class=\\\'w-10 h-10 rounded-lg bg-gray-100 dark:bg-aixis-700 flex items-center justify-center text-base font-bold text-aixis-500 dark:text-aixis-200 shrink-0\\\'>' + initial + '</div>\'">'
+            ? '<img src="' + esc(tool.logo_url) + '" alt="' + displayName + '" class="w-10 h-10 rounded-lg object-contain bg-white border border-gray-100 dark:border-aixis-600/30 shrink-0" onerror="this.outerHTML=\'<div class=\\\'w-10 h-10 rounded-lg bg-gray-100 dark:bg-aixis-700 flex items-center justify-center text-base font-bold text-aixis-500 dark:text-aixis-200 shrink-0\\\'>' + initial + '</div>\'">'
             : '<div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-aixis-700 flex items-center justify-center text-base font-bold text-aixis-500 dark:text-aixis-200 shrink-0">' + initial + '</div>';
 
         return '<a href="/tools/' + (tool.slug || '') + '"' +
@@ -1093,7 +1104,7 @@ function animateCountUp(elId, target, opts) {
                 logoHtml +
                 '<div class="min-w-0 flex-1">' +
                     '<div class="text-sm font-bold text-gray-900 dark:text-white truncate group-hover:text-aixis-500 transition-colors font-jp">' + displayName + '</div>' +
-                    (tool.vendor ? '<div class="text-[11px] text-gray-400 dark:text-gray-500 truncate">' + tool.vendor + '</div>' : '') +
+                    (tool.vendor ? '<div class="text-[11px] text-gray-400 dark:text-gray-500 truncate">' + esc(tool.vendor) + '</div>' : '') +
                 '</div>' +
                 gradeBadge +
             '</div>' +
