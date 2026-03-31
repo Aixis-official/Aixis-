@@ -1,5 +1,6 @@
 """API dependencies for authentication and database access."""
 import hashlib
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
@@ -16,6 +17,7 @@ from ..db.base import get_db
 from ..db.models.user import User
 from ..db.models.api_key import ApiKey
 
+logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)
 
 ALGORITHM = "HS256"
@@ -129,8 +131,8 @@ async def _validate_token(
                     if not session.last_active_at or (now - session.last_active_at).total_seconds() > 300:
                         session.last_active_at = now
                         await db.commit()
-            except Exception:
-                pass  # Session tracking is non-critical; don't block auth
+            except Exception as _sess_err:
+                logger.debug("Session tracking failed (non-critical): %s", _sess_err)
 
     except JWTError:
         return None

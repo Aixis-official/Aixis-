@@ -195,8 +195,7 @@
         btn.textContent = '変更中...';
 
         try {
-            var csrfToken = document.cookie.split('; ').find(function(c) { return c.startsWith('aixis_csrf='); });
-            csrfToken = csrfToken ? csrfToken.split('=')[1] : '';
+            var csrfToken = (typeof getCSRFToken === 'function') ? getCSRFToken() : '';
 
             var resp = await fetch('/api/v1/auth/change-password', {
                 method: 'POST',

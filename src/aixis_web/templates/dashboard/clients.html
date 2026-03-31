@@ -94,8 +94,7 @@
 (function() {
     var token = localStorage.getItem('aixis_token') || '';
     var headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
-    var csrfToken = document.cookie.split(';').map(function(c){return c.trim();}).find(function(c){return c.startsWith('aixis_csrf=');});
-    if (csrfToken) headers['X-CSRF-Token'] = csrfToken.split('=')[1];
+    if (typeof getCSRFToken === 'function') headers['X-CSRF-Token'] = getCSRFToken();
 
     function showAlert(msg, type) {
         var bar = document.getElementById('alert-bar');

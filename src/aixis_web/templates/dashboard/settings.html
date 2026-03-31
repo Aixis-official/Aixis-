@@ -732,8 +732,7 @@
         progressText.textContent = 'Google Driveからダウンロード → 復元中...（数分かかる場合があります）';
 
         try {
-            var csrfToken = document.cookie.split('; ').find(function(c) { return c.startsWith('aixis_csrf='); });
-            csrfToken = csrfToken ? csrfToken.split('=')[1] : '';
+            var csrfToken = (typeof getCSRFToken === 'function') ? getCSRFToken() : '';
 
             var resp = await fetch('/api/v1/settings/backup/restore-from-gdrive/' + encodeURIComponent(filename), {
                 method: 'POST',
@@ -793,8 +792,7 @@
             var formData = new FormData();
             formData.append('file', file);
 
-            var csrfToken = document.cookie.split('; ').find(function(c) { return c.startsWith('aixis_csrf='); });
-            csrfToken = csrfToken ? csrfToken.split('=')[1] : '';
+            var csrfToken = (typeof getCSRFToken === 'function') ? getCSRFToken() : '';
 
             var resp = await fetch('/api/v1/settings/backup/restore', {
                 method: 'POST',

@@ -56,24 +56,25 @@ def _check_due_schedules():
     engine = create_engine(sync_url, pool_pre_ping=True)
 
     now = datetime.now(timezone.utc)
-    with engine.begin() as conn:
-        rows = conn.execute(
-            text(
-                "SELECT s.id, s.tool_id, s.profile_id, s.categories, s.cron_expression, "
-                "t.name as tool_name "
-                "FROM audit_schedules s JOIN tools t ON s.tool_id = t.id "
-                "WHERE s.is_active = true AND s.next_run_at <= :now"
-            ),
-            {"now": now.isoformat()},
-        ).fetchall()
+    try:
+        with engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    "SELECT s.id, s.tool_id, s.profile_id, s.categories, s.cron_expression, "
+                    "t.name as tool_name "
+                    "FROM audit_schedules s JOIN tools t ON s.tool_id = t.id "
+                    "WHERE s.is_active = true AND s.next_run_at <= :now"
+                ),
+                {"now": now.isoformat()},
+            ).fetchall()
 
-        for row in rows:
-            try:
-                _trigger_scheduled_audit(conn, row, now)
-            except Exception:
-                logger.exception("Failed to trigger schedule %s", row[0])
-
-    engine.dispose()
+            for row in rows:
+                try:
+                    _trigger_scheduled_audit(conn, row, now)
+                except Exception:
+                    logger.exception("Failed to trigger schedule %s", row[0])
+    finally:
+        engine.dispose()
 
 
 def _trigger_scheduled_audit(conn, row, now):

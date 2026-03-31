@@ -177,15 +177,23 @@ def _auto_migrate_columns(conn):
         existing_cols = {c["name"] for c in inspector.get_columns(table.name)}
         for col in table.columns:
             if col.name not in existing_cols:
-                # Build ALTER TABLE ADD COLUMN
+                # Build ALTER TABLE ADD COLUMN (identifiers from SQLAlchemy metadata only)
+                import re
                 col_type = col.type.compile(conn.dialect)
+                # Validate identifiers to prevent SQL injection (only alphanumeric + underscore)
+                _IDENT_RE = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+                if not _IDENT_RE.match(table.name) or not _IDENT_RE.match(col.name):
+                    _log.warning("Auto-migrate: skipping unsafe identifier %s.%s", table.name, col.name)
+                    continue
                 default = ""
                 if col.default is not None:
                     val = col.default.arg
                     if callable(val):
                         default = ""  # Skip callable defaults
                     elif isinstance(val, str):
-                        default = f" DEFAULT '{val}'"
+                        # Escape single quotes to prevent SQL injection in defaults
+                        safe_val = val.replace("'", "''")
+                        default = f" DEFAULT '{safe_val}'"
                     elif isinstance(val, bool):
                         # PostgreSQL needs TRUE/FALSE, SQLite accepts 1/0
                         if "sqlite" in settings.database_url:
@@ -196,15 +204,17 @@ def _auto_migrate_columns(conn):
                         default = f" DEFAULT {val}"
                     elif isinstance(val, list):
                         import json
-                        default = f" DEFAULT '{json.dumps(val)}'"
+                        safe_json = json.dumps(val).replace("'", "''")
+                        default = f" DEFAULT '{safe_json}'"
                     elif isinstance(val, dict):
                         import json
-                        default = f" DEFAULT '{json.dumps(val)}'"
+                        safe_json = json.dumps(val).replace("'", "''")
+                        default = f" DEFAULT '{safe_json}'"
                 elif col.nullable:
                     default = " DEFAULT NULL"
                 try:
                     conn.execute(
-                        text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {col_type}{default}')
+                        text(f'ALTER TABLE "{table.name}" ADD COLUMN "{col.name}" {col_type}{default}')
                     )
                 except Exception as e:
                     _log.debug("Auto-migrate: skipping column %s.%s: %s", table.name, col.name, e)

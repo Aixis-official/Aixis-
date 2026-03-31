@@ -3,8 +3,11 @@
 Replaces in-memory rate limiters that don't work with multiple Uvicorn workers.
 """
 
+import logging
 import random
 from datetime import datetime, timedelta, timezone
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,8 +36,8 @@ async def check_rate_limit(
                     RateLimitEntry.created_at < now - timedelta(hours=24)
                 )
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Rate limit cleanup failed: %s", e)
 
     # Count recent entries within the window
     count_result = await db.execute(

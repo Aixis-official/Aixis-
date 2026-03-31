@@ -72,14 +72,15 @@ def _run_trial_checks():
     now = datetime.now(timezone.utc)
     reminder_cutoff = now + timedelta(days=settings.trial_reminder_days_before)
 
-    with engine.begin() as conn:
-        # 1. Send reminders for trials expiring within N days
-        _send_reminders(conn, now, reminder_cutoff)
+    try:
+        with engine.begin() as conn:
+            # 1. Send reminders for trials expiring within N days
+            _send_reminders(conn, now, reminder_cutoff)
 
-        # 2. Expire overdue trials
-        _expire_trials(conn, now)
-
-    engine.dispose()
+            # 2. Expire overdue trials
+            _expire_trials(conn, now)
+    finally:
+        engine.dispose()
 
 
 def _send_reminders(conn, now, reminder_cutoff):

@@ -126,8 +126,8 @@ async def emit_event(
         except Exception:
             plain_secret = sub.secret  # Fallback for pre-encryption secrets
 
-        # Fire background delivery (non-blocking)
-        asyncio.create_task(
+        # Fire background delivery (non-blocking, with error logging)
+        task = asyncio.create_task(
             deliver_webhook(
                 delivery_id=delivery.id,
                 url=sub.url,
@@ -136,6 +136,10 @@ async def emit_event(
                 payload=payload,
                 db=db,
             )
+        )
+        task.add_done_callback(
+            lambda t: logger.error("Webhook delivery failed: %s", t.exception())
+            if not t.cancelled() and t.exception() else None
         )
 
     await db.commit()
