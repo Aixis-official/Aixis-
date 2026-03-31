@@ -851,6 +851,18 @@ async def manifest_json():
     )
 
 
+@page_router.get("/.well-known/security.txt")
+async def security_txt():
+    """RFC 9116 security.txt for vulnerability disclosure."""
+    return PlainTextResponse(
+        "Contact: mailto:security@aixis.jp\n"
+        "Preferred-Languages: ja, en\n"
+        "Canonical: https://platform.aixis.jp/.well-known/security.txt\n"
+        "Expires: 2027-04-01T00:00:00Z\n",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @page_router.get("/robots.txt")
 async def robots_txt():
     """robots.txt for search engine crawlers."""

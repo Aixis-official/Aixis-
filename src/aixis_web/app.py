@@ -75,8 +75,16 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Permissions-Policy"] = (
+            "accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), "
+            "camera=(), cross-origin-isolated=(), display-capture=(), "
+            "document-domain=(), encrypted-media=(), fullscreen=(), "
+            "geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), "
+            "microphone=(), midi=(), navigation-override=(), payment=(), "
+            "picture-in-picture=(), publickey-credentials-get=(), "
+            "screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), "
+            "xr-spatial-tracking=()"
+        )
         response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
         if not settings.debug:
             response.headers["Strict-Transport-Security"] = (
@@ -95,12 +103,22 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         ]
         response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
 
-        # --- Cache-Control for static assets ---
+        # --- Referrer-Policy: stricter for sensitive pages ---
         path = request.url.path
+        if path in ("/login", "/reset-password", "/forgot-password", "/invite"):
+            response.headers["Referrer-Policy"] = "no-referrer"
+        else:
+            response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+        # --- Cache-Control ---
         if path.startswith("/static/"):
             response.headers["Cache-Control"] = "public, max-age=2592000, immutable"  # 30 days
         elif path.startswith(("/screenshots/", "/uploads/")):
             response.headers["Cache-Control"] = "public, max-age=86400"  # 1 day
+        elif path.startswith("/api/") and not path.startswith("/api/public/"):
+            # Prevent browser caching of authenticated API responses
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
 
         # --- CSRF cookie (set on every response if not already present) ---
         if _CSRF_COOKIE not in request.cookies:
@@ -243,6 +261,14 @@ def create_app() -> FastAPI:
 
     # Security middleware (headers + CSRF — single BaseHTTPMiddleware)
     app.add_middleware(SecurityMiddleware)
+
+    # Trusted Host — reject requests with spoofed Host headers
+    if not settings.debug:
+        from starlette.middleware.trustedhost import TrustedHostMiddleware
+        app.add_middleware(
+            TrustedHostMiddleware,
+            allowed_hosts=["platform.aixis.jp", "*.aixis.jp"],
+        )
 
     # CORS middleware — restrict origins in production
     allowed_origins = [
