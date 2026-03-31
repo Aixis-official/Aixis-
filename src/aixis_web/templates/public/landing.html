@@ -440,22 +440,22 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-12 text-center">
             <div class="stat-particles">
                 <span class="stat-particles-extra"></span>
-                <div id="stat-audited" class="text-2xl sm:text-4xl lg:text-5xl font-light text-white tracking-tight font-serif" data-countup="0" data-countup-type="int">--</div>
+                <div class="text-2xl sm:text-4xl lg:text-5xl font-light text-white tracking-tight font-serif">{{ stats.audited_tools }}</div>
                 <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">監査済みツール</div>
             </div>
             <div class="stat-particles">
                 <span class="stat-particles-extra"></span>
-                <div id="stat-categories" class="text-2xl sm:text-4xl lg:text-5xl font-light text-white tracking-tight font-serif" data-countup="0" data-countup-type="int">--</div>
+                <div class="text-2xl sm:text-4xl lg:text-5xl font-light text-white tracking-tight font-serif">{{ stats.categories }}</div>
                 <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">対応カテゴリ</div>
             </div>
             <div class="stat-particles">
                 <span class="stat-particles-extra"></span>
-                <div id="stat-updated" class="text-2xl sm:text-4xl lg:text-5xl font-light text-white tracking-tight font-serif" data-countup-type="date">--</div>
+                <div class="text-2xl sm:text-4xl lg:text-5xl font-light text-white tracking-tight font-serif">{{ stats.last_updated }}</div>
                 <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">最終更新</div>
             </div>
             <div class="stat-particles">
                 <span class="stat-particles-extra"></span>
-                <div id="stat-new" class="text-2xl sm:text-4xl lg:text-5xl font-light text-white tracking-tight font-serif" data-countup="0" data-countup-type="int">--</div>
+                <div class="text-2xl sm:text-4xl lg:text-5xl font-light text-white tracking-tight font-serif">{{ stats.new_this_month }}</div>
                 <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">今月の新規追加</div>
             </div>
         </div>
@@ -988,29 +988,7 @@
 
 {% block scripts %}
 <script>
-// ===== Platform Stats (即時表示) =====
-function setStatText(elId, value) {
-    var el = document.getElementById(elId);
-    if (!el) return;
-    el.textContent = (!value && value !== 0) ? '--' : String(value);
-}
-
-(function() {
-    fetch('/api/v1/stats?_t=' + Date.now(), { cache: 'no-store' })
-        .then(function(resp) {
-            if (!resp.ok) throw new Error('Stats API error');
-            return resp.json();
-        })
-        .then(function(data) {
-            setStatText('stat-audited', parseInt(data.audited_tools) || '--');
-            setStatText('stat-categories', parseInt(data.categories) || '--');
-            setStatText('stat-new', parseInt(data.new_this_month) || '--');
-            setStatText('stat-updated', data.last_updated || '—');
-        })
-        .catch(function() {
-            // Stats will show '--' on error, which is fine
-        });
-})();
+// Platform stats are rendered server-side — no client-side fetch needed.
 
 (function() {
     function getGradeBg(grade) {

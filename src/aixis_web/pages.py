@@ -1,4 +1,5 @@
 """SSR page routes using Jinja2 templates."""
+import logging
 import time
 from datetime import datetime, timezone
 from html import escape as html_escape
@@ -8,13 +9,15 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .api.deps import get_current_user
 from .db.base import get_db
 from .db.models.user import User
 from .i18n import get_translator, detect_language
+
+_page_logger = logging.getLogger(__name__)
 
 try:
     from .services.subscription_service import get_subscription_info
@@ -72,13 +75,91 @@ def _get_template_context(request: Request, user=None, **extra) -> dict:
 _OptionalUser = Annotated[User | None, Depends(get_current_user)]
 
 
+# ──────────── SSR Stats Helper ────────────
+
+async def _get_platform_stats_for_ssr(db: AsyncSession) -> dict:
+    """Fetch platform stats for server-side rendering.
+
+    Reuses the API module's cache to avoid duplicate DB queries.
+    Returns a plain dict suitable for Jinja2 context.
+    """
+    try:
+        from .api.v1.stats import get_platform_stats, _stats_cache, _STATS_TTL
+
+        # Check cache first (same cache as the API endpoint)
+        now_ts = time.time()
+        if _stats_cache["data"] is not None and (now_ts - _stats_cache["ts"]) < _STATS_TTL:
+            cached = _stats_cache["data"]
+            return {
+                "audited_tools": cached.audited_tools,
+                "categories": cached.categories,
+                "last_updated": cached.last_updated or "—",
+                "new_this_month": cached.new_this_month,
+            }
+
+        # Cache miss — run queries directly (lighter than calling the endpoint)
+        from .db.models.tool import Tool
+        from .db.models.score import ToolPublishedScore
+
+        tools_with_scores = await db.execute(
+            select(func.count(func.distinct(ToolPublishedScore.tool_id)))
+        )
+        audited_tools = tools_with_scores.scalar() or 0
+
+        cat_count = await db.execute(
+            select(func.count(func.distinct(Tool.category_id)))
+            .join(ToolPublishedScore, ToolPublishedScore.tool_id == Tool.id)
+            .where(
+                Tool.is_public.is_(True),
+                Tool.is_active.is_(True),
+                Tool.category_id.isnot(None),
+            )
+        )
+        categories = cat_count.scalar() or 0
+
+        last_score = await db.execute(
+            select(func.max(ToolPublishedScore.published_at))
+        )
+        last_updated_dt = last_score.scalar()
+        last_updated = last_updated_dt.strftime("%Y.%m.%d") if last_updated_dt else "—"
+
+        now = datetime.now(timezone.utc)
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        new_month = await db.execute(
+            select(func.count(func.distinct(ToolPublishedScore.tool_id))).where(
+                ToolPublishedScore.published_at >= month_start
+            )
+        )
+        new_this_month = new_month.scalar() or 0
+
+        return {
+            "audited_tools": audited_tools,
+            "categories": categories,
+            "last_updated": last_updated,
+            "new_this_month": new_this_month,
+        }
+    except Exception:
+        _page_logger.debug("SSR stats fetch failed, using defaults", exc_info=True)
+        return {
+            "audited_tools": "--",
+            "categories": "--",
+            "last_updated": "—",
+            "new_this_month": "--",
+        }
+
+
 # ──────────── Legacy /platform redirect ────────────
 
 
 @page_router.get("/platform")
-async def legacy_platform_landing(request: Request, user: _OptionalUser = None):
+async def legacy_platform_landing(
+    request: Request,
+    user: _OptionalUser = None,
+    db: AsyncSession = Depends(get_db),
+):
     """Serve landing page at old /platform URL for cached 301 redirects."""
-    ctx = _get_template_context(request, user=user, title="AIツール比較・一覧 | 独立監査で選ぶ", active_page="home")
+    stats = await _get_platform_stats_for_ssr(db)
+    ctx = _get_template_context(request, user=user, title="AIツール比較・一覧 | 独立監査で選ぶ", active_page="home", stats=stats)
     return _render("public/landing.html", ctx)
 
 
@@ -102,9 +183,14 @@ async def legacy_platform_redirect(path: str):
 
 
 @page_router.get("/")
-async def landing(request: Request, user: _OptionalUser = None):
+async def landing(
+    request: Request,
+    user: _OptionalUser = None,
+    db: AsyncSession = Depends(get_db),
+):
     """Landing page."""
-    ctx = _get_template_context(request, user=user, title="AIツール比較・一覧 | 独立監査で選ぶ", active_page="home")
+    stats = await _get_platform_stats_for_ssr(db)
+    ctx = _get_template_context(request, user=user, title="AIツール比較・一覧 | 独立監査で選ぶ", active_page="home", stats=stats)
     return _render("public/landing.html", ctx)
 
 
