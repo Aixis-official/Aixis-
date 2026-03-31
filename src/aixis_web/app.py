@@ -38,7 +38,7 @@ _CSRF_EXEMPT_PREFIXES = (
     "/api/v1/auth/reset-password",
     "/api/v1/clients/invite/",  # Public invite completion (no session to hijack)
     "/api/v1/extension/",  # Chrome extension uses API key auth, no CSRF needed
-    "/api/v1/auth/logout",  # Logout only clears session; no CSRF risk
+    # Note: logout requires CSRF token (state-changing operation)
 )
 
 
@@ -150,7 +150,16 @@ async def lifespan(app: FastAPI):
     async with async_session() as session:
         await seed_all(session)
 
-    # 5. Restore persisted settings from PostgreSQL
+    # 5. Restore persisted settings from PostgreSQL (whitelisted keys only)
+    _RESTORE_WHITELIST = frozenset({
+        "AIXIS_ANTHROPIC_API_KEY",
+        "AIXIS_AI_BUDGET_MAX_COST_JPY",
+        "AIXIS_AI_BUDGET_MAX_CALLS",
+        "AIXIS_GDRIVE_CREDENTIALS_JSON",
+        "AIXIS_GDRIVE_FOLDER_ID",
+        "AIXIS_GDRIVE_EXPORT_INTERVAL_HOURS",
+        "AIXIS_GDRIVE_ENABLED",
+    })
     try:
         from sqlalchemy import select as _select
         from .db.models.app_setting import AppSetting
@@ -158,6 +167,9 @@ async def lifespan(app: FastAPI):
             result = await session.execute(_select(AppSetting))
             for row in result.scalars():
                 import os
+                if row.key not in _RESTORE_WHITELIST:
+                    logger.warning("Skipping non-whitelisted setting: %s", row.key)
+                    continue
                 os.environ[row.key] = row.value
                 # Also update runtime settings object
                 if row.key == "AIXIS_ANTHROPIC_API_KEY" and row.value:

@@ -26,7 +26,15 @@ logger = logging.getLogger(__name__)
 def _safe_create_task(coro):
     """Create an asyncio task with automatic exception logging."""
     task = asyncio.create_task(coro)
-    task.add_done_callback(lambda t: t.exception() if not t.cancelled() else None)
+
+    def _on_done(t):
+        if t.cancelled():
+            return
+        exc = t.exception()
+        if exc:
+            logger.error("Background task failed: %s: %s", type(exc).__name__, exc)
+
+    task.add_done_callback(_on_done)
     return task
 
 

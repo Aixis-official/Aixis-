@@ -653,14 +653,16 @@ def restore_from_file(file_path: Path) -> dict:
 
 def _verify_pg_after_restore(parsed) -> bool:
     """Quick check that the database is accessible after restore."""
-    import psycopg2  # noqa — fallback sync driver for verification
     try:
-        conn_str = (
-            f"host={parsed.hostname} port={parsed.port or 5432} "
-            f"user={parsed.username} password={parsed.password} "
-            f"dbname={parsed.path.lstrip('/')}"
+        import psycopg2  # noqa — sync driver for post-restore verification
+        conn = psycopg2.connect(
+            host=parsed.hostname or "localhost",
+            port=parsed.port or 5432,
+            user=parsed.username or "postgres",
+            password=parsed.password or "",
+            dbname=parsed.path.lstrip("/"),
+            connect_timeout=10,
         )
-        conn = psycopg2.connect(conn_str, connect_timeout=10)
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'")
         table_count = cur.fetchone()[0]
@@ -668,23 +670,8 @@ def _verify_pg_after_restore(parsed) -> bool:
         logger.info("RESTORE VERIFY: %d tables found in public schema", table_count)
         return table_count > 0
     except ImportError:
-        # psycopg2 not installed — try subprocess with psql
-        try:
-            env = {
-                "PGPASSWORD": parsed.password or "",
-                "PATH": "/usr/bin:/usr/local/bin",
-            }
-            result = subprocess.run(
-                [
-                    "pg_restore", "--list", "--file=-",
-                ],
-                capture_output=True, env=env, timeout=10,
-            )
-            return True  # If we got this far, the system is working
-        except Exception:
-            pass
-        logger.warning("RESTORE VERIFY: Could not verify (psycopg2 not available)")
-        return True  # Assume OK if we can't verify
+        logger.warning("RESTORE VERIFY: psycopg2 not available — skipping verification")
+        return False
     except Exception as e:
         logger.error("RESTORE VERIFY FAILED: %s", e)
         return False

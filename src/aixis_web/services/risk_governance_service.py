@@ -77,6 +77,8 @@ def compute_governance_score(rg: ToolRiskGovernance) -> float:
         return 0.0
 
     total_weight = sum(weights)
+    if total_weight == 0:
+        return 0.0
     return round(sum(s * w for s, w in zip(scores, weights)) / total_weight, 2)
 
 

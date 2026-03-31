@@ -141,12 +141,15 @@ def _calculate_next_run(
             target_hour = int(hour) if hour != "*" else 0
             target_minute = int(minute) if minute != "*" else 0
             days_ahead = target_dow - from_time.weekday()
-            if days_ahead <= 0:
+            if days_ahead < 0:
                 days_ahead += 7
             next_dt = from_time + timedelta(days=days_ahead)
             next_dt = next_dt.replace(
                 hour=target_hour, minute=target_minute, second=0, microsecond=0
             )
+            # If same day but time already passed, jump to next week
+            if next_dt <= from_time:
+                next_dt += timedelta(days=7)
             return next_dt
 
         # Monthly: "M H D * *"

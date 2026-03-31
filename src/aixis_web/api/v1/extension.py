@@ -69,7 +69,8 @@ async def create_extension_session(
         raise
     except Exception as e:
         logger.exception("Session creation failed: %s", e)
-        raise HTTPException(500, f"セッション作成に失敗: {type(e).__name__}: {e}")
+        detail = f"セッション作成に失敗: {type(e).__name__}: {e}" if _ext_settings.debug else "セッション作成に失敗しました"
+        raise HTTPException(500, detail)
 
 
 async def _create_session_impl(body, db, user):

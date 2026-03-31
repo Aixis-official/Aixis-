@@ -1,7 +1,7 @@
 """Session management service — concurrent session tracking and enforcement."""
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -61,7 +61,7 @@ async def enforce_session_limit(db: AsyncSession, user_id: str) -> int:
         # Also revoke the JWT so it can't be used anymore
         revoked = RevokedToken(
             jti=old_session.jti,
-            expires_at=datetime(2099, 1, 1, tzinfo=timezone.utc),  # Far future — token will expire naturally
+            expires_at=datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days),
         )
         db.add(revoked)
         evicted += 1
