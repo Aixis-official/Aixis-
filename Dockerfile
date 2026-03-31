@@ -2,11 +2,19 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# System deps for WeasyPrint + PostgreSQL client (pg_dump for backups)
+# System deps for WeasyPrint
 RUN apt-get update && apt-get install -y \
     libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-xlib-2.0-0 \
     libffi-dev shared-mime-info \
-    postgresql-client \
+    gnupg curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# PostgreSQL 18 client (pg_dump) — must match Railway PG server version
+RUN curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+    | gpg --dearmor -o /usr/share/keyrings/pgdg.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+    > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update && apt-get install -y postgresql-client-18 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy all source first (needed for hatch build)
