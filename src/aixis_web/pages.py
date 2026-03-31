@@ -837,6 +837,19 @@ async def sitemap_xml(db: AsyncSession = Depends(get_db)):
     return Response(content=xml, media_type="application/xml")
 
 
+@page_router.get("/manifest.json")
+async def manifest_json():
+    """Web App Manifest for PWA and browser integration."""
+    import json
+    from pathlib import Path
+    manifest_path = Path(__file__).parent / "static" / "manifest.json"
+    return Response(
+        content=manifest_path.read_text(),
+        media_type="application/manifest+json",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @page_router.get("/robots.txt")
 async def robots_txt():
     """robots.txt for search engine crawlers."""

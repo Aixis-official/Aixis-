@@ -23,6 +23,12 @@
 <meta name="twitter:description" content="Aixisの監査プロセス。AIツールを5つの独立した評価軸で定量的に監査する仕組みをご紹介します。">
 {% endblock %}
 
+{% block structured_data %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"ホーム","item":"https://platform.aixis.jp/"},{"@type":"ListItem","position":2,"name":"AI監査プロセス","item":"https://platform.aixis.jp/audit-process"}]}
+</script>
+{% endblock %}
+
 {% block head %}
 <style>
     .process-step {

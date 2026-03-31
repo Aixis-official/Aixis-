@@ -18,6 +18,14 @@
 <meta property="og:url" content="https://platform.aixis.jp/benchmarks/{{ slug }}/leaderboard">
 <meta property="og:image" content="https://platform.aixis.jp/static/img/Aixis-logo-final.png">
 <meta name="twitter:card" content="summary">
+<meta property="og:description" content="AIツール ベンチマーク・リーダーボード。カテゴリ別のAIツールパフォーマンスランキングをリアルタイムで確認。">
+<meta name="twitter:description" content="AIツール ベンチマーク・リーダーボード。カテゴリ別のAIツールパフォーマンスランキング。">
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"ホーム","item":"https://platform.aixis.jp/"},{"@type":"ListItem","position":2,"name":"リーダーボード","item":"https://platform.aixis.jp/benchmarks/{{ slug }}/leaderboard"}]}
+</script>
 {% endblock %}
 
 {% block content %}

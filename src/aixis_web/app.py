@@ -95,6 +95,13 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         ]
         response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
 
+        # --- Cache-Control for static assets ---
+        path = request.url.path
+        if path.startswith("/static/"):
+            response.headers["Cache-Control"] = "public, max-age=2592000, immutable"  # 30 days
+        elif path.startswith(("/screenshots/", "/uploads/")):
+            response.headers["Cache-Control"] = "public, max-age=86400"  # 1 day
+
         # --- CSRF cookie (set on every response if not already present) ---
         if _CSRF_COOKIE not in request.cookies:
             response.set_cookie(

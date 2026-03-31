@@ -1,0 +1,22 @@
+{
+  "name": "Aixis AI監査プラットフォーム",
+  "short_name": "Aixis",
+  "description": "AIツールを独立した5軸監査で定量評価。企業のAIツール選定をデータで支援する独立系AI監査プラットフォーム。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "/static/img/Aixis-logo-final.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/img/Aixis-logo-final.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
