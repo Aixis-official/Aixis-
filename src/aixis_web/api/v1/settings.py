@@ -373,11 +373,19 @@ async def gdrive_oauth_callback(
     except ValueError as e:
         return RedirectResponse(f"/dashboard/settings?{urlencode({'gdrive_error': str(e)})}")
 
-    # Save credentials
+    # Save credentials to .env + DB
     creds_json = json.dumps(tokens, ensure_ascii=False)
     _write_env_key("AIXIS_GDRIVE_CREDENTIALS_JSON", creds_json)
     os.environ["AIXIS_GDRIVE_CREDENTIALS_JSON"] = creds_json
     settings.gdrive_credentials_json = creds_json
+
+    # Persist to DB so settings survive container restarts
+    from ...db.base import async_session as _sf
+    try:
+        async with _sf() as db:
+            await _db_set(db, "AIXIS_GDRIVE_CREDENTIALS_JSON", creds_json)
+    except Exception:
+        pass  # DB save is best-effort during redirect flow
 
     return RedirectResponse("/dashboard/settings?gdrive=ok")
 
@@ -400,11 +408,19 @@ async def gdrive_exchange_token(
     except ValueError as e:
         raise HTTPException(400, str(e))
 
-    # Save as JSON credentials
+    # Save as JSON credentials to .env + DB
     creds_json = json.dumps(tokens, ensure_ascii=False)
     _write_env_key("AIXIS_GDRIVE_CREDENTIALS_JSON", creds_json)
     os.environ["AIXIS_GDRIVE_CREDENTIALS_JSON"] = creds_json
     settings.gdrive_credentials_json = creds_json
+
+    # Persist to DB so settings survive container restarts
+    from ...db.base import async_session as _sf
+    try:
+        async with _sf() as db:
+            await _db_set(db, "AIXIS_GDRIVE_CREDENTIALS_JSON", creds_json)
+    except Exception:
+        pass
 
     return {"status": "ok", "message": "Google Drive認証が完了しました"}
 
@@ -421,8 +437,9 @@ async def update_gdrive_settings(
     body: GDriveSettingsUpdate,
     user: Annotated[User, Depends(require_admin)],
 ):
-    """Update Google Drive export settings (writes to .env file)."""
+    """Update Google Drive export settings (writes to .env + PostgreSQL)."""
     import os
+    from ...db.base import async_session as _sf
     changes = []
 
     if body.credentials_json is not None:
@@ -488,6 +505,20 @@ async def update_gdrive_settings(
 
     if not changes:
         return {"status": "ok", "message": "変更なし"}
+
+    # Persist all changed GDrive settings to PostgreSQL (survive redeploys)
+    try:
+        async with _sf() as db:
+            if "credentials" in changes:
+                await _db_set(db, "AIXIS_GDRIVE_CREDENTIALS_JSON", settings.gdrive_credentials_json)
+            if "folder_id" in changes:
+                await _db_set(db, "AIXIS_GDRIVE_FOLDER_ID", settings.gdrive_folder_id or "")
+            if "interval" in changes:
+                await _db_set(db, "AIXIS_GDRIVE_EXPORT_INTERVAL_HOURS", str(settings.gdrive_export_interval_hours))
+            if "enabled" in changes:
+                await _db_set(db, "AIXIS_GDRIVE_ENABLED", "true" if settings.gdrive_enabled else "false")
+    except Exception:
+        pass  # DB save is best-effort; .env + os.environ already updated
 
     return {"status": "ok", "message": f"Google Drive設定を更新しました ({', '.join(changes)})"}
 

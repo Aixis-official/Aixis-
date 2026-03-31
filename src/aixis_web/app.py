@@ -169,6 +169,18 @@ async def lifespan(app: FastAPI):
                 elif row.key == "AIXIS_AI_BUDGET_MAX_CALLS" and row.value:
                     settings.ai_budget_max_calls = int(row.value)
                     logger.info("Restored call limit: %s", row.value)
+                elif row.key == "AIXIS_GDRIVE_CREDENTIALS_JSON" and row.value:
+                    settings.gdrive_credentials_json = row.value
+                    logger.info("Restored GDrive credentials from database")
+                elif row.key == "AIXIS_GDRIVE_FOLDER_ID" and row.value:
+                    settings.gdrive_folder_id = row.value
+                    logger.info("Restored GDrive folder ID: %s", row.value[:10] + "...")
+                elif row.key == "AIXIS_GDRIVE_EXPORT_INTERVAL_HOURS" and row.value:
+                    settings.gdrive_export_interval_hours = int(row.value)
+                    logger.info("Restored GDrive interval: %sh", row.value)
+                elif row.key == "AIXIS_GDRIVE_ENABLED" and row.value:
+                    settings.gdrive_enabled = row.value.lower() in ("true", "1", "yes")
+                    logger.info("Restored GDrive enabled: %s", settings.gdrive_enabled)
     except Exception as e:
         logger.warning("Failed to restore settings from DB: %s", e)
 
