@@ -94,7 +94,10 @@
 
 {% block head %}
 <script defer src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script>document.documentElement.classList.add('js-ready');</script>
 <style>
+    /* SSR content is visible for Googlebot (raw HTML), hidden for JS browsers */
+    .js-ready #ssr-content { display: none !important; }
     @keyframes heartbeat-draw {
         0% { stroke-dashoffset: 1000; }
         100% { stroke-dashoffset: 0; }
