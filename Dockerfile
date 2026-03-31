@@ -1,20 +1,19 @@
+FROM postgres:18-bookworm AS pgclient
+
 FROM python:3.12-slim
 
 WORKDIR /app
+
+# Copy pg_dump (v18) + required libs from official PostgreSQL image
+COPY --from=pgclient /usr/lib/postgresql/18/bin/pg_dump /usr/local/bin/pg_dump
+COPY --from=pgclient /usr/lib/postgresql/18/bin/pg_restore /usr/local/bin/pg_restore
+COPY --from=pgclient /usr/lib/*/libpq.so* /usr/lib/
+RUN ldconfig
 
 # System deps for WeasyPrint
 RUN apt-get update && apt-get install -y \
     libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-xlib-2.0-0 \
     libffi-dev shared-mime-info \
-    gnupg curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# PostgreSQL 18 client (pg_dump) — must match Railway PG server version
-RUN curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-    | gpg --dearmor -o /usr/share/keyrings/pgdg.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
-    > /etc/apt/sources.list.d/pgdg.list \
-    && apt-get update && apt-get install -y postgresql-client-18 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy all source first (needed for hatch build)
