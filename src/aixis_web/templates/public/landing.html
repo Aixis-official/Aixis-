@@ -988,61 +988,13 @@
 
 {% block scripts %}
 <script>
-// ===== Count-up animation (shared) =====
-function animateCountUp(elId, target, opts) {
+// ===== Platform Stats (即時表示) =====
+function setStatText(elId, value) {
     var el = document.getElementById(elId);
     if (!el) return;
-    opts = opts || {};
-    var duration = opts.duration || 1200;
-    var decimals = opts.decimals || 0;
-
-    // If target is 0 or invalid, show '--' instead of '0' to avoid distrust
-    if (!target || target <= 0) {
-        el.textContent = '--';
-        return;
-    }
-
-    var finalText = decimals > 0 ? target.toFixed(decimals) : String(target);
-
-    function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
-
-    function runAnimation() {
-        // Start from 1 (not 0) to never show '0' during animation
-        var start = 1;
-        var startTime = null;
-        function step(ts) {
-            if (!startTime) startTime = ts;
-            var progress = Math.min((ts - startTime) / duration, 1);
-            var val = start + (target - start) * ease(progress);
-            // Ensure we never display 0 during the animation
-            var displayVal = decimals > 0 ? val.toFixed(decimals) : Math.max(1, Math.round(val));
-            el.textContent = displayVal;
-            if (progress < 1) requestAnimationFrame(step);
-            else el.textContent = finalText; // Ensure exact final value
-        }
-        requestAnimationFrame(step);
-    }
-
-    // Keep '--' until animation starts — do NOT set to 0 prematurely
-    // Use IntersectionObserver to start animation when element is visible
-    if ('IntersectionObserver' in window) {
-        var observer = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    observer.disconnect();
-                    runAnimation();
-                }
-            });
-        }, { threshold: 0.1 });
-        observer.observe(el);
-        // Safety: ensure final value is set after timeout (skip animation)
-        setTimeout(function() { if (el.textContent === '--') { el.textContent = finalText; } }, 3000);
-    } else {
-        el.textContent = finalText;
-    }
+    el.textContent = (!value && value !== 0) ? '--' : String(value);
 }
 
-// ===== Platform Stats =====
 (function() {
     fetch('/api/v1/stats?_t=' + Date.now(), { cache: 'no-store' })
         .then(function(resp) {
@@ -1050,18 +1002,10 @@ function animateCountUp(elId, target, opts) {
             return resp.json();
         })
         .then(function(data) {
-            animateCountUp('stat-audited', parseInt(data.audited_tools) || 0);
-            animateCountUp('stat-categories', parseInt(data.categories) || 0);
-            animateCountUp('stat-new', parseInt(data.new_this_month) || 0);
-            // Date: animate by typing effect
-            var updEl = document.getElementById('stat-updated');
-            if (updEl) {
-                var dateStr = data.last_updated || '—';
-                updEl.textContent = '';
-                dateStr.split('').forEach(function(ch, i) {
-                    setTimeout(function() { updEl.textContent += ch; }, 60 * i + 400);
-                });
-            }
+            setStatText('stat-audited', parseInt(data.audited_tools) || '--');
+            setStatText('stat-categories', parseInt(data.categories) || '--');
+            setStatText('stat-new', parseInt(data.new_this_month) || '--');
+            setStatText('stat-updated', data.last_updated || '—');
         })
         .catch(function() {
             // Stats will show '--' on error, which is fine

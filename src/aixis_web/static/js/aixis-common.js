@@ -309,45 +309,20 @@ function toggleMobileNav() {
 }
 
 
-// ===== COUNTUP ANIMATION =====
-function countUp(el, target, duration) {
-    duration = duration || 1200;
-    var start = 0;
-    var startTime = null;
-    var isFloat = String(target).indexOf('.') !== -1;
-    var decimalPlaces = isFloat ? (String(target).split('.')[1] || '').length : 0;
-
-    function step(timestamp) {
-        if (!startTime) startTime = timestamp;
-        var progress = Math.min((timestamp - startTime) / duration, 1);
-        var eased = 1 - Math.pow(1 - progress, 3);
-        var current = start + (target - start) * eased;
-        el.textContent = isFloat ? current.toFixed(decimalPlaces) : Math.floor(current).toLocaleString('ja-JP');
-        if (progress < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-}
-
-function initCountUpOnLoad() {
+// ===== STAT VALUE DISPLAY (即時表示) =====
+// data-countup 属性を持つ要素に値を即時セット（アニメーションなし）
+function initStatValues() {
     var els = document.querySelectorAll('[data-countup]');
-    if (!els.length) return;
-
-    var observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-            if (entry.isIntersecting) {
-                var el = entry.target;
-                var target = parseFloat(el.dataset.countup);
-                if (!isNaN(target) && !el.dataset.counted) {
-                    el.dataset.counted = 'true';
-                    countUp(el, target, 1200);
-                }
-                observer.unobserve(el);
-            }
-        });
-    }, { threshold: 0.3 });
-
-    els.forEach(function(el) { observer.observe(el); });
+    els.forEach(function(el) {
+        var target = parseFloat(el.dataset.countup);
+        if (!isNaN(target)) {
+            var isFloat = String(el.dataset.countup).indexOf('.') !== -1;
+            el.textContent = isFloat
+                ? target.toFixed((String(el.dataset.countup).split('.')[1] || '').length)
+                : Math.floor(target).toLocaleString('ja-JP');
+        }
+    });
 }
 
-document.addEventListener('DOMContentLoaded', initCountUpOnLoad);
-AIXIS.countUp = countUp;
+document.addEventListener('DOMContentLoaded', initStatValues);
+AIXIS.setStatValue = function(el, value) { el.textContent = String(value); };

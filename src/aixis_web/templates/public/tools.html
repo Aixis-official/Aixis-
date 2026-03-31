@@ -232,24 +232,14 @@
 
 {% block scripts %}
 <script>
-// Count-up animation utility
-function animateCountUp(elId, target, opts) {
+// Stats display utility (即時表示)
+function setStatValue(elId, target, opts) {
     var el = document.getElementById(elId);
     if (!el) return;
     opts = opts || {};
-    var duration = opts.duration || 1200;
     var decimals = opts.decimals || 0;
-    var start = 0;
-    var startTime = null;
-    function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
-    function step(ts) {
-        if (!startTime) startTime = ts;
-        var progress = Math.min((ts - startTime) / duration, 1);
-        var val = start + (target - start) * ease(progress);
-        el.textContent = decimals > 0 ? val.toFixed(decimals) : Math.round(val);
-        if (progress < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
+    if (!target && target !== 0) { el.textContent = '--'; return; }
+    el.textContent = decimals > 0 ? Number(target).toFixed(decimals) : String(target);
 }
 
 (function() {
@@ -324,7 +314,7 @@ function animateCountUp(elId, target, opts) {
             const cats = await aixisAPI('/tools/categories');
             allCategories = cats;
             renderCategoryPills(cats);
-            animateCountUp('stat-categories', cats.length);
+            setStatValue('stat-categories', cats.length);
         } catch (e) {
             console.warn('カテゴリ取得失敗:', e);
         }
@@ -377,7 +367,7 @@ function animateCountUp(elId, target, opts) {
             const tools = data.items || [];
 
             resultCount.textContent = `${totalItems}件のツール`;
-            animateCountUp('stat-tools', totalItems);
+            setStatValue('stat-tools', totalItems);
 
             var statsRow = document.getElementById('stats-row');
             if (statsRow && tools.length > 0) {
@@ -721,8 +711,8 @@ function animateCountUp(elId, target, opts) {
         });
 
         const avg = countScore > 0 ? parseFloat((sumScore / countScore).toFixed(2)) : 0;
-        animateCountUp('stat-avg-score', avg, { decimals: 2 });
-        animateCountUp('stat-audits', totalAudits || 0);
+        setStatValue('stat-avg-score', avg, { decimals: 2 });
+        setStatValue('stat-audits', totalAudits || 0);
     }
 
     // ── Event listeners ──
