@@ -766,7 +766,8 @@ async def sitemap_xml(db: AsyncSession = Depends(get_db)):
 
     lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
+        ' xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">',
     ]
 
     # Static pages
@@ -777,20 +778,29 @@ async def sitemap_xml(db: AsyncSession = Depends(get_db)):
             f"<priority>{prio}</priority></url>"
         )
 
-    # Tool detail pages (only public + active)
+    # Tool detail pages (only public + active) with image entries
     result = await db.execute(
-        select(Tool.slug, Tool.updated_at).where(
+        select(Tool.slug, Tool.updated_at, Tool.name_jp, Tool.name, Tool.vendor).where(
             Tool.is_active == True, Tool.is_public == True  # noqa: E712
         )
     )
-    for slug, updated_at in result.all():
+    for t_slug, updated_at, name_jp, name, vendor in result.all():
         lastmod = ""
         if updated_at:
             lastmod = f"<lastmod>{updated_at.strftime('%Y-%m-%d')}</lastmod>"
+        t_name = html_escape(name_jp or name or t_slug)
+        t_vendor = html_escape(vendor or "")
+        caption = html_escape(f"{t_name} - Aixis AI監査スコアカード")
         lines.append(
-            f"  <url><loc>{SITE_ORIGIN}/tools/{slug}</loc>"
+            f"  <url><loc>{SITE_ORIGIN}/tools/{t_slug}</loc>"
             f"{lastmod}<changefreq>weekly</changefreq>"
-            f"<priority>0.8</priority></url>"
+            f"<priority>0.8</priority>"
+            f"<image:image>"
+            f"<image:loc>{SITE_ORIGIN}/card/{t_slug}.png</image:loc>"
+            f"<image:title>{t_name} AI監査スコア - Aixis</image:title>"
+            f"<image:caption>{caption}</image:caption>"
+            f"</image:image>"
+            f"</url>"
         )
 
     # Category pages
@@ -849,6 +859,157 @@ async def indexnow_key_file(key: str):
         from fastapi import HTTPException
         raise HTTPException(404)
     return PlainTextResponse(content=key)
+
+
+@page_router.get("/card/{slug}.png")
+async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
+    """Generate a PNG card image for Google Images indexing.
+
+    Produces a clean card-like image showing tool name, grade, score, category,
+    and 5-axis score bars — designed for image search discoverability.
+    """
+    from .db.models.tool import Tool, ToolCategory
+    from .db.models.score import ToolPublishedScore
+    from sqlalchemy.orm import selectinload
+    from PIL import Image, ImageDraw, ImageFont
+    import io
+
+    result = await db.execute(
+        select(Tool).where(Tool.slug == slug, Tool.is_public == True)  # noqa: E712
+        .options(selectinload(Tool.scores), selectinload(Tool.category))
+    )
+    tool = result.scalar_one_or_none()
+    if not tool:
+        return Response(status_code=404)
+
+    latest_score = tool.scores[0] if tool.scores else None
+    category_name = tool.category.name_jp if tool.category else ""
+    tool_name = tool.name_jp or tool.name or slug
+
+    # Card dimensions (2x for retina)
+    W, H = 800, 480
+    BG = (255, 255, 255)
+    DARK = (15, 23, 42)  # slate-900
+    GRAY = (100, 116, 139)  # slate-500
+    LIGHT_GRAY = (226, 232, 240)  # slate-200
+    BRAND = (99, 102, 241)  # indigo-500
+
+    GRADE_COLORS = {
+        "S": (212, 175, 55), "A": (56, 161, 105), "B": (43, 108, 176),
+        "C": (237, 137, 54), "D": (229, 62, 62),
+    }
+    AXIS_COLORS = {
+        "practicality": (56, 161, 105), "cost_performance": (56, 161, 105),
+        "localization": (43, 108, 176), "safety": (56, 161, 105),
+        "uniqueness": (237, 137, 54),
+    }
+    AXIS_LABELS = {
+        "practicality": "実務適性", "cost_performance": "費用対効果",
+        "localization": "日本語能力", "safety": "信頼性・安全性", "uniqueness": "革新性",
+    }
+
+    img = Image.new("RGB", (W, H), BG)
+    draw = ImageDraw.Draw(img)
+
+    # Try to load TrueType font, fall back to default
+    try:
+        font_lg = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28)
+        font_md = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
+        font_sm = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
+        font_grade = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 36)
+        font_score = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 22)
+    except (IOError, OSError):
+        font_lg = ImageFont.load_default()
+        font_md = font_lg
+        font_sm = font_lg
+        font_grade = font_lg
+        font_score = font_lg
+
+    # --- Card border ---
+    draw.rounded_rectangle([0, 0, W - 1, H - 1], radius=12, outline=LIGHT_GRAY, width=2)
+
+    # --- Header: tool name + vendor ---
+    y = 32
+    draw.text((40, y), tool_name[:30], fill=DARK, font=font_lg)
+    y += 40
+    if tool.vendor:
+        draw.text((40, y), tool.vendor[:40], fill=GRAY, font=font_md)
+        y += 28
+
+    # --- Category badge ---
+    if category_name:
+        y += 8
+        bbox = draw.textbbox((0, 0), category_name, font=font_sm)
+        tw = bbox[2] - bbox[0]
+        draw.rounded_rectangle([38, y - 2, 52 + tw, y + 20], radius=4, fill=(241, 245, 249))
+        draw.text((44, y), category_name, fill=GRAY, font=font_sm)
+        y += 30
+
+    # --- Grade badge (top-right) ---
+    if latest_score and latest_score.overall_grade:
+        grade = latest_score.overall_grade
+        gc = GRADE_COLORS.get(grade, (148, 163, 184))
+        gx, gy, gs = W - 100, 28, 56
+        draw.rounded_rectangle([gx, gy, gx + gs, gy + gs], radius=10, fill=gc)
+        # Center grade letter
+        gbbox = draw.textbbox((0, 0), grade, font=font_grade)
+        gw = gbbox[2] - gbbox[0]
+        gh = gbbox[3] - gbbox[1]
+        draw.text((gx + (gs - gw) // 2, gy + (gs - gh) // 2 - 4), grade, fill=(255, 255, 255), font=font_grade)
+
+    # --- 5-axis score bars ---
+    y = max(y + 12, 160)
+    bar_x, bar_w, bar_h = 180, 380, 14
+
+    if latest_score:
+        for axis_key in ["practicality", "cost_performance", "localization", "safety", "uniqueness"]:
+            val = getattr(latest_score, axis_key, None)
+            label = AXIS_LABELS.get(axis_key, axis_key)
+            color = AXIS_COLORS.get(axis_key, BRAND)
+
+            draw.text((40, y), label, fill=GRAY, font=font_sm)
+            # Background bar
+            draw.rounded_rectangle([bar_x, y + 2, bar_x + bar_w, y + 2 + bar_h], radius=4, fill=LIGHT_GRAY)
+            # Fill bar
+            if val and val > 0:
+                fill_w = max(8, int(bar_w * val / 5.0))
+                if val >= 4.0:
+                    color = (56, 161, 105)  # green
+                elif val >= 3.0:
+                    color = (43, 108, 176)  # blue
+                elif val >= 2.0:
+                    color = (214, 158, 46)  # yellow
+                else:
+                    color = (229, 62, 62)  # red
+                draw.rounded_rectangle([bar_x, y + 2, bar_x + fill_w, y + 2 + bar_h], radius=4, fill=color)
+            # Score value
+            score_text = f"{val:.1f}" if val else "--"
+            draw.text((bar_x + bar_w + 16, y), score_text, fill=DARK, font=font_sm)
+            y += 30
+
+    # --- Overall score ---
+    y = H - 60
+    draw.line([(40, y - 12), (W - 40, y - 12)], fill=LIGHT_GRAY, width=1)
+    draw.text((40, y), "総合スコア", fill=GRAY, font=font_sm)
+    if latest_score and latest_score.overall_score is not None:
+        score_str = f"{latest_score.overall_score:.1f} / 5.0"
+        sbbox = draw.textbbox((0, 0), score_str, font=font_score)
+        sw = sbbox[2] - sbbox[0]
+        draw.text((W - 40 - sw, y - 4), score_str, fill=DARK, font=font_score)
+
+    # --- Branding ---
+    draw.text((W - 180, H - 24), "platform.aixis.jp", fill=(148, 163, 184), font=font_sm)
+
+    # Encode to PNG
+    buf = io.BytesIO()
+    img.save(buf, format="PNG", optimize=True)
+    buf.seek(0)
+
+    return Response(
+        content=buf.getvalue(),
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @page_router.get("/og/{slug}.svg")

@@ -63,6 +63,21 @@
     }{% endif %}
 }
 </script>
+{% if ssr and ssr.score %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "ImageObject",
+    "contentUrl": "https://platform.aixis.jp/card/{{ slug }}.png",
+    "name": "{{ tool_data.name_jp or tool_data.name if tool_data else title }} AI監査スコアカード",
+    "description": "{{ tool_data.name_jp or tool_data.name if tool_data else title }}の独立AI監査スコア（5軸評価）",
+    "width": "800",
+    "height": "480",
+    "author": {"@type": "Organization", "name": "Aixis"},
+    "datePublished": "{{ ssr.score.published_at }}"
+}
+</script>
+{% endif %}
 <script type="application/ld+json">
 {
     "@context": "https://schema.org",
@@ -274,6 +289,18 @@
                 {% endfor %}
             </div>
         </section>
+        {% endif %}
+
+        <!-- Card image for Google Images indexing -->
+        {% if ssr.score %}
+        <figure class="mb-6">
+            <img src="/card/{{ slug }}.png"
+                 alt="{{ ssr.name }}のAI監査スコアカード — 総合{{ ssr.score.overall }}/5.0（{{ ssr.score.grade }}グレード）| Aixis独立監査"
+                 title="{{ ssr.name }} AI監査スコア - Aixis"
+                 width="800" height="480" loading="lazy"
+                 class="w-full max-w-2xl rounded-sm border border-gray-200 dark:border-aixis-600/30">
+            <figcaption class="sr-only">{{ ssr.name }}の5軸AI監査スコアカード。実務適性・費用対効果・日本語能力・信頼性/安全性・革新性の各軸スコアと総合評価を表示。</figcaption>
+        </figure>
         {% endif %}
 
         <!-- Pros/Cons (SSR) -->
