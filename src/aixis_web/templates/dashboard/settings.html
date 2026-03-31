@@ -113,6 +113,62 @@
         </details>
     </div>
 
+    <!-- Database Restore Section -->
+    <div class="bg-white rounded-xl shadow-sm border border-red-100 p-6 mb-6">
+        <div class="flex items-center gap-2 mb-1">
+            <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+            <h2 class="text-lg font-semibold text-gray-900 font-jp">データベース復元</h2>
+        </div>
+        <p class="text-sm text-gray-500 font-jp mb-4">
+            Google DriveまたはローカルPCの .pgdump バックアップファイルからデータベースを復元します。
+            <strong class="text-red-600">現在のデータは上書きされます。</strong>
+        </p>
+
+        <div id="restore-alert" class="hidden mb-4 p-3 rounded-lg text-sm font-jp"></div>
+
+        <!-- Restore from Google Drive -->
+        <div class="mb-4">
+            <h3 class="text-sm font-semibold text-gray-700 font-jp mb-2">Google Driveから復元</h3>
+            <div id="restore-gdrive-files" class="space-y-1 max-h-48 overflow-y-auto">
+                <p class="text-xs text-gray-400 font-jp">GDriveバックアップ読込中...</p>
+            </div>
+        </div>
+
+        <div class="border-t border-gray-100 pt-4">
+            <h3 class="text-sm font-semibold text-gray-700 font-jp mb-2">ローカルファイルから復元</h3>
+            <div class="flex items-center gap-3">
+                <label class="flex-1 relative">
+                    <input type="file" id="restore-file-input" accept=".pgdump,.dump,.backup"
+                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer">
+                </label>
+                <button onclick="restoreFromFile()"
+                    id="restore-file-btn"
+                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors font-jp whitespace-nowrap">
+                    復元実行
+                </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-2 font-jp">
+                対応形式: .pgdump（pg_dump カスタム形式）/ 上限 500MB / 復元前に自動バックアップが作成されます
+            </p>
+        </div>
+
+        <!-- Restore progress -->
+        <div id="restore-progress" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-3">
+                <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <div>
+                    <p class="text-sm font-medium text-gray-700 font-jp" id="restore-progress-text">復元中...</p>
+                    <p class="text-xs text-gray-500 font-jp">復元前の安全バックアップを作成 → pg_restore 実行 → データベース検証</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Google Drive Auto-Export Section -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
         <div class="flex items-center justify-between mb-1">
@@ -620,5 +676,151 @@
     document.querySelector('details')?.addEventListener('toggle', function(e) {
         if (e.target.open) loadBackupList();
     });
+
+    // ── Database Restore ──
+
+    function showRestoreAlert(msg, type) {
+        var el = document.getElementById('restore-alert');
+        el.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'bg-red-50', 'text-red-800', 'bg-amber-50', 'text-amber-800');
+        if (type === 'ok') el.classList.add('bg-emerald-50', 'text-emerald-800');
+        else if (type === 'warn') el.classList.add('bg-amber-50', 'text-amber-800');
+        else el.classList.add('bg-red-50', 'text-red-800');
+        el.textContent = msg;
+    }
+
+    async function loadRestoreGDriveFiles() {
+        try {
+            var data = await aixisAPI('/settings/gdrive/files');
+            var container = document.getElementById('restore-gdrive-files');
+            if (!data.files || data.files.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-400 font-jp">Google Driveにバックアップファイルがありません</p>';
+                return;
+            }
+            container.innerHTML = '';
+            data.files.forEach(function(f) {
+                var dt = new Date(f.created_at).toLocaleString('ja-JP');
+                var row = document.createElement('div');
+                row.className = 'flex items-center justify-between py-2 px-3 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-200 transition-all text-xs group';
+                row.innerHTML =
+                    '<div class="flex-1 min-w-0">' +
+                        '<span class="font-mono text-gray-700 truncate block">' + f.name + '</span>' +
+                        '<span class="text-gray-400">' + f.size_mb + ' MB &middot; ' + dt + '</span>' +
+                    '</div>' +
+                    '<button onclick="restoreFromGDrive(\'' + f.name + '\')" ' +
+                        'class="ml-3 px-3 py-1.5 bg-white border border-red-300 text-red-600 hover:bg-red-600 hover:text-white rounded-md text-xs font-medium transition-colors font-jp opacity-0 group-hover:opacity-100">' +
+                        'この版に復元' +
+                    '</button>';
+                container.appendChild(row);
+            });
+        } catch (e) {
+            document.getElementById('restore-gdrive-files').innerHTML =
+                '<p class="text-xs text-gray-400 font-jp">GDriveファイル一覧の取得に失敗しました（GDrive連携が未設定の可能性）</p>';
+        }
+    }
+
+    async function restoreFromGDrive(filename) {
+        if (!confirm('⚠️ データベース復元の確認\n\n「' + filename + '」からデータベースを復元します。\n\n現在のデータは全て上書きされます。\n復元前に安全バックアップが自動作成されます。\n\n本当に実行しますか？')) {
+            return;
+        }
+        if (!confirm('最終確認：本当にデータベースを復元しますか？\n\nこの操作は取り消せません。')) {
+            return;
+        }
+
+        var progress = document.getElementById('restore-progress');
+        var progressText = document.getElementById('restore-progress-text');
+        progress.classList.remove('hidden');
+        progressText.textContent = 'Google Driveからダウンロード → 復元中...（数分かかる場合があります）';
+
+        try {
+            var csrfToken = document.cookie.split('; ').find(function(c) { return c.startsWith('aixis_csrf='); });
+            csrfToken = csrfToken ? csrfToken.split('=')[1] : '';
+
+            var resp = await fetch('/api/v1/settings/backup/restore-from-gdrive/' + encodeURIComponent(filename), {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': csrfToken },
+            });
+            var result = await resp.json();
+            if (!resp.ok) {
+                var errMsg = typeof result.detail === 'object' ? (result.detail.error || JSON.stringify(result.detail)) : (result.detail || '復元に失敗しました');
+                showRestoreAlert('復元エラー: ' + errMsg, 'err');
+                if (result.detail && result.detail.safety_backup) {
+                    showRestoreAlert('復元エラー: ' + errMsg + '（安全バックアップ: ' + result.detail.safety_backup + '）', 'err');
+                }
+            } else {
+                showRestoreAlert('✅ データベースを復元しました (' + result.filename + ', ' + result.size_mb + ' MB)' +
+                    (result.safety_backup ? ' — 安全バックアップ: ' + result.safety_backup : '') +
+                    (result.db_accessible ? ' — DB検証: OK' : ' — DB検証: 未確認'), 'ok');
+                loadBackupHealth();
+                loadBackupList();
+            }
+        } catch (e) {
+            showRestoreAlert('復元中にエラーが発生しました: ' + e.message, 'err');
+        } finally {
+            progress.classList.add('hidden');
+        }
+    }
+
+    async function restoreFromFile() {
+        var fileInput = document.getElementById('restore-file-input');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            showRestoreAlert('.pgdump ファイルを選択してください', 'warn');
+            return;
+        }
+
+        var file = fileInput.files[0];
+        if (!file.name.match(/\.(pgdump|dump|backup)$/)) {
+            showRestoreAlert('対応形式: .pgdump, .dump, .backup', 'err');
+            return;
+        }
+
+        if (!confirm('⚠️ データベース復元の確認\n\n「' + file.name + '」(' + (file.size / 1024 / 1024).toFixed(1) + ' MB) からデータベースを復元します。\n\n現在のデータは全て上書きされます。\n復元前に安全バックアップが自動作成されます。\n\n本当に実行しますか？')) {
+            return;
+        }
+        if (!confirm('最終確認：本当にデータベースを復元しますか？\n\nこの操作は取り消せません。')) {
+            return;
+        }
+
+        var btn = document.getElementById('restore-file-btn');
+        btn.disabled = true;
+        btn.textContent = '復元中...';
+
+        var progress = document.getElementById('restore-progress');
+        var progressText = document.getElementById('restore-progress-text');
+        progress.classList.remove('hidden');
+        progressText.textContent = 'ファイルアップロード → 安全バックアップ作成 → pg_restore 実行中...';
+
+        try {
+            var formData = new FormData();
+            formData.append('file', file);
+
+            var csrfToken = document.cookie.split('; ').find(function(c) { return c.startsWith('aixis_csrf='); });
+            csrfToken = csrfToken ? csrfToken.split('=')[1] : '';
+
+            var resp = await fetch('/api/v1/settings/backup/restore', {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': csrfToken },
+                body: formData,
+            });
+            var result = await resp.json();
+            if (!resp.ok) {
+                var errMsg = typeof result.detail === 'object' ? (result.detail.error || JSON.stringify(result.detail)) : (result.detail || '復元に失敗しました');
+                showRestoreAlert('復元エラー: ' + errMsg, 'err');
+            } else {
+                showRestoreAlert('✅ データベースを復元しました (' + result.filename + ', ' + result.size_mb + ' MB)' +
+                    (result.safety_backup ? ' — 安全バックアップ: ' + result.safety_backup : '') +
+                    (result.db_accessible ? ' — DB検証: OK' : ' — DB検証: 未確認'), 'ok');
+                loadBackupHealth();
+                loadBackupList();
+            }
+        } catch (e) {
+            showRestoreAlert('復元中にエラーが発生しました: ' + e.message, 'err');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '復元実行';
+            progress.classList.add('hidden');
+        }
+    }
+
+    loadRestoreGDriveFiles();
 </script>
 {% endblock %}

@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -246,6 +246,124 @@ async def verify_backup_endpoint(
     if "error" in result:
         raise HTTPException(404, result["error"])
     return result
+
+
+@router.post("/backup/restore")
+async def restore_backup(
+    user: Annotated[User, Depends(require_admin)],
+    file: UploadFile = File(...),
+):
+    """Restore database from an uploaded .pgdump file.
+
+    This endpoint:
+      1. Validates the uploaded file is a valid pg_dump custom-format file
+      2. Creates a safety backup before restoring
+      3. Runs pg_restore --clean --if-exists --single-transaction
+      4. Verifies the database is accessible after restore
+    """
+    import tempfile
+    from ...services.backup_service import restore_from_file
+
+    # Validate filename
+    if not file.filename:
+        raise HTTPException(400, "ファイル名がありません")
+
+    if not file.filename.endswith((".pgdump", ".dump", ".backup")):
+        raise HTTPException(
+            400,
+            "対応していないファイル形式です。.pgdump, .dump, .backup ファイルをアップロードしてください。"
+        )
+
+    # Read uploaded file to a temporary location
+    content = await file.read()
+    if len(content) < 100:
+        raise HTTPException(400, "ファイルが小さすぎます（破損の可能性があります）")
+
+    # Size limit: 500 MB
+    if len(content) > 500 * 1024 * 1024:
+        raise HTTPException(400, "ファイルサイズが大きすぎます（上限: 500 MB）")
+
+    # Save to /data/backups/restore_upload_<filename> for pg_restore
+    from ...services.backup_service import BACKUP_DIR
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    restore_path = BACKUP_DIR / f"restore_upload_{file.filename}"
+
+    try:
+        restore_path.write_bytes(content)
+
+        # Run restore (synchronous — runs pg_restore subprocess)
+        result = restore_from_file(restore_path)
+
+        if "error" in result:
+            raise HTTPException(400, result)
+
+        return result
+    finally:
+        # Clean up uploaded restore file
+        restore_path.unlink(missing_ok=True)
+
+
+@router.post("/backup/restore-from-gdrive/{filename}")
+async def restore_from_gdrive(
+    filename: str,
+    user: Annotated[User, Depends(require_admin)],
+):
+    """Download a backup from Google Drive and restore it.
+
+    This is a convenience endpoint that downloads the file from GDrive
+    and then runs the same restore process.
+    """
+    from ...services.backup_service import BACKUP_DIR, restore_from_file
+
+    try:
+        from ...services.gdrive_export_service import _get_drive_service
+        service = _get_drive_service()
+    except Exception as e:
+        raise HTTPException(400, f"Google Drive接続に失敗しました: {str(e)[:200]}")
+
+    # Find the file in GDrive
+    try:
+        results = service.files().list(
+            q=f"name='{filename}' and '{settings.gdrive_folder_id}' in parents and trashed=false",
+            pageSize=1,
+            fields="files(id, name, size)",
+        ).execute()
+        files = results.get("files", [])
+    except Exception as e:
+        raise HTTPException(400, f"Google Driveファイル検索に失敗しました: {str(e)[:200]}")
+
+    if not files:
+        raise HTTPException(404, f"Google Driveにファイル '{filename}' が見つかりません")
+
+    gdrive_file = files[0]
+    file_id = gdrive_file["id"]
+
+    # Download the file
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    restore_path = BACKUP_DIR / f"restore_gdrive_{filename}"
+
+    try:
+        import io
+        from googleapiclient.http import MediaIoBaseDownload
+
+        request_dl = service.files().get_media(fileId=file_id)
+        with open(restore_path, "wb") as f:
+            downloader = MediaIoBaseDownload(f, request_dl)
+            done = False
+            while not done:
+                _, done = downloader.next_chunk()
+
+        # Run restore
+        result = restore_from_file(restore_path)
+        if "error" in result:
+            raise HTTPException(400, result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(400, f"復元に失敗しました: {str(e)[:200]}")
+    finally:
+        restore_path.unlink(missing_ok=True)
 
 
 # ── Google Drive Export ──────────────────────────────────────────────
