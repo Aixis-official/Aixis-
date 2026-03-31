@@ -8,12 +8,17 @@ WORKDIR /app
 COPY --from=pgclient /usr/lib/postgresql/18/bin/pg_dump /usr/local/bin/pg_dump
 COPY --from=pgclient /usr/lib/postgresql/18/bin/pg_restore /usr/local/bin/pg_restore
 
-# System deps: WeasyPrint + pg_dump runtime libraries (libpq, Kerberos, LDAP, SASL)
+# Copy LDAP/SASL libs from postgres image (not available in python:3.12-slim)
+COPY --from=pgclient /usr/lib/*/libldap-2*.so* /usr/lib/
+COPY --from=pgclient /usr/lib/*/liblber-2*.so* /usr/lib/
+COPY --from=pgclient /usr/lib/*/libsasl2.so* /usr/lib/
+
+# System deps: WeasyPrint + pg_dump runtime libraries (libpq, Kerberos)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-xlib-2.0-0 \
     libffi-dev shared-mime-info \
-    libpq5 libkrb5-3 libgssapi-krb5-2 libldap-2.5-0 libsasl2-2 \
-    && rm -rf /var/lib/apt/lists/*
+    libpq5 libkrb5-3 libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/* && ldconfig
 
 # Copy all source first (needed for hatch build)
 COPY . .
