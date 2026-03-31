@@ -247,7 +247,7 @@ async def get_audit(
         raise
     except Exception as e:
         logger.error("get_audit error for %s: %s\n%s", session_id, e, _tb.format_exc())
-        raise HTTPException(500, f"Internal error: {type(e).__name__}: {e}")
+        raise HTTPException(500, "内部エラーが発生しました")
 
 
 async def _get_audit_impl(session_id: str, db: AsyncSession):

@@ -136,15 +136,18 @@ def validate_settings():
     warnings = []
 
     if settings.secret_key == _DEFAULT_SECRET:
-        # In production this is critical; in development, auto-generate
         if not settings.debug:
             logger.critical(
                 "SECURITY: secret_key is set to the default value! "
-                "Set SECRET_KEY environment variable to a secure random string (min 32 chars). "
-                "Auto-generating a temporary key for this session."
+                "Set SECRET_KEY environment variable to a secure random string (min 32 chars)."
             )
+            raise SystemExit(
+                "FATAL: SECRET_KEY must be set in production. "
+                "Run: export SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
+            )
+        # Development only: auto-generate temporary key
         settings.secret_key = secrets.token_urlsafe(48)
-        warnings.append("secret_key was default — auto-generated temporary key")
+        warnings.append("secret_key was default — auto-generated temporary key (dev only)")
 
     if len(settings.secret_key) < 32:
         logger.warning(
@@ -157,7 +160,10 @@ def validate_settings():
             "SECURITY: admin_password is set to the default value! "
             "Set ADMIN_PASSWORD environment variable to a secure password."
         )
-        warnings.append("Default admin password in production")
+        raise SystemExit(
+            "FATAL: ADMIN_PASSWORD must be changed in production. "
+            "Set ADMIN_PASSWORD environment variable to a secure password."
+        )
 
     if "sqlite" in settings.database_url and not settings.debug:
         logger.critical(

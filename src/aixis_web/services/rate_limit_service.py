@@ -4,7 +4,7 @@ Replaces in-memory rate limiters that don't work with multiple Uvicorn workers.
 """
 
 import logging
-import random
+import secrets
 from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ async def check_rate_limit(
     cutoff = now - timedelta(seconds=window_seconds)
 
     # Probabilistic cleanup (~1% of requests) to prevent unbounded table growth
-    if random.random() < 0.01:
+    if secrets.randbelow(100) == 0:
         try:
             await db.execute(
                 delete(RateLimitEntry).where(

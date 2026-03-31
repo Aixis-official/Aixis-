@@ -284,9 +284,14 @@ async def restore_backup(
         raise HTTPException(400, "ファイルサイズが大きすぎます（上限: 500 MB）")
 
     # Save to /data/backups/restore_upload_<filename> for pg_restore
+    import os
+    import re as _re
     from ...services.backup_service import BACKUP_DIR
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-    restore_path = BACKUP_DIR / f"restore_upload_{file.filename}"
+    # Sanitize filename: strip directory components and dangerous characters
+    safe_name = os.path.basename(file.filename or "backup")
+    safe_name = _re.sub(r'[^a-zA-Z0-9._-]', '_', safe_name)[:100]
+    restore_path = BACKUP_DIR / f"restore_upload_{safe_name}"
 
     try:
         restore_path.write_bytes(content)

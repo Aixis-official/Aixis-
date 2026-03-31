@@ -101,7 +101,7 @@ async def get_api_key_record(
     except HTTPException:
         raise
     except Exception:
-        logger.warning("API rate limit check failed (non-critical)", exc_info=True)
+        logger.warning("API rate limit check failed (non-critical)")
 
     # Update last_used_at
     api_key.last_used_at = datetime.now(timezone.utc)

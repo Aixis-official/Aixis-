@@ -69,7 +69,8 @@ async def create_extension_session(
         raise
     except Exception as e:
         logger.exception("Session creation failed: %s", e)
-        detail = f"セッション作成に失敗: {type(e).__name__}: {e}" if _ext_settings.debug else "セッション作成に失敗しました"
+        # Never expose internal exception details to clients, even in debug mode
+        detail = "セッション作成に失敗しました"
         raise HTTPException(500, detail)
 
 
@@ -154,7 +155,7 @@ async def _create_session_impl(body, db, user):
 
         except Exception as e:
             logger.exception("Test case generation failed: %s", e)
-            raise HTTPException(500, f"テストケース生成に失敗しました: {type(e).__name__}: {e}")
+            raise HTTPException(500, "テストケース生成に失敗しました")
 
     if body.recording_mode == "protocol" and not cases:
         raise HTTPException(500, "テストケースが0件です。パターンファイルの設定を確認してください。")

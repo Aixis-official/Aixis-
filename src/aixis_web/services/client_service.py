@@ -28,11 +28,24 @@ class PasswordPolicyError(ValueError):
 
 
 def validate_password_policy(password: str) -> None:
-    """Check password meets minimum requirements."""
+    """Check password meets minimum requirements.
+
+    Enforces NIST 800-63B inspired rules:
+    - Minimum 8 characters
+    - At least one uppercase letter
+    - At least one digit
+    - Maximum 256 characters (bcrypt limit handled via pre-hash)
+    """
     if len(password) < _MIN_PASSWORD_LENGTH:
         raise PasswordPolicyError(
             f"パスワードは{_MIN_PASSWORD_LENGTH}文字以上にしてください"
         )
+    if len(password) > 256:
+        raise PasswordPolicyError("パスワードは256文字以内にしてください")
+    if not any(c.isupper() for c in password):
+        raise PasswordPolicyError("パスワードに大文字を1文字以上含めてください")
+    if not any(c.isdigit() for c in password):
+        raise PasswordPolicyError("パスワードに数字を1文字以上含めてください")
 
 
 async def check_password_hibp(password: str) -> bool:

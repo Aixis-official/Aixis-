@@ -69,7 +69,7 @@ async def login(
             raise
         except Exception:
             import logging
-            logging.getLogger(__name__).warning("Rate limit check failed (non-critical)", exc_info=True)
+            logging.getLogger(__name__).warning("Rate limit check failed (non-critical)")
 
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
@@ -105,10 +105,10 @@ async def login(
             detail="アカウントが無効化されています",
         )
 
-    # Remember Me: extend token lifetime from default (60min) to 30 days
+    # Remember Me: extend token lifetime from default (60min) to 7 days
     from datetime import timedelta
     if body.remember_me:
-        token_expiry = timedelta(days=30)
+        token_expiry = timedelta(days=7)
     else:
         token_expiry = timedelta(minutes=settings.access_token_expire_minutes)
 
@@ -134,7 +134,7 @@ async def login(
         await enforce_session_limit(db, user.id)
     except Exception:
         import logging
-        logging.getLogger(__name__).warning("Session tracking failed (non-critical)", exc_info=True)
+        logging.getLogger(__name__).warning("Session tracking failed (non-critical)")
 
     # Set HttpOnly cookie for SSR page authentication
     max_age = int(token_expiry.total_seconds())
@@ -281,7 +281,7 @@ async def change_password(
         await revoke_all_user_sessions(db, user.id)
     except Exception:
         import logging
-        logging.getLogger(__name__).warning("Session revocation after password change failed", exc_info=True)
+        logging.getLogger(__name__).warning("Session revocation after password change failed")
 
     await db.commit()
 
@@ -376,7 +376,7 @@ https://platform.aixis.jp
             send_email(user.email, subject, text, _wrap_html(html_content))
         except Exception:
             import logging
-            logging.getLogger(__name__).warning("Password reset email failed", exc_info=True)
+            logging.getLogger(__name__).warning("Password reset email failed")
 
     # Always return success to prevent email enumeration
     return {"message": "メールを送信しました。受信トレイをご確認ください。"}
@@ -452,7 +452,7 @@ async def reset_password(
         await revoke_all_user_sessions(db, user.id)
     except Exception:
         import logging
-        logging.getLogger(__name__).warning("Session revocation after password reset failed", exc_info=True)
+        logging.getLogger(__name__).warning("Session revocation after password reset failed")
 
     # Mark token as used
     reset_record.used_at = now

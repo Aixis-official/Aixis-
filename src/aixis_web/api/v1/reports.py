@@ -138,7 +138,10 @@ async def download_report(
     db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
 ):
-    """Download report file (requires analyst auth)."""
+    """Download report file (requires analyst auth).
+
+    Non-admin users can only download reports from their own sessions (IDOR prevention).
+    """
     result = await db.execute(
         select(AuditReportRecord).where(AuditReportRecord.id == report_id)
     )
@@ -148,6 +151,19 @@ async def download_report(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="レポートが見つかりません",
         )
+
+    # IDOR prevention: non-admin users can only access reports from their own sessions
+    if _user.role != "admin":
+        from ...db.models.audit import AuditSession
+        session_result = await db.execute(
+            select(AuditSession.initiated_by).where(AuditSession.id == report.session_id)
+        )
+        owner_id = session_result.scalar_one_or_none()
+        if owner_id != _user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="このレポートへのアクセス権限がありません",
+            )
 
     if not report.file_path:
         raise HTTPException(
