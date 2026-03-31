@@ -130,40 +130,26 @@
                             <textarea id="f-executive-summary" rows="3" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y transition-colors font-jp" placeholder="企業担当者向けの概要。数値を使わず、ツールの本質・強み・注意点を3-4行で。"></textarea>
                         </div>
 
-                        <!-- Article Content (collapsible) -->
-                        <details class="border border-gray-100 dark:border-gray-700/50 rounded-lg">
-                            <summary class="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 font-jp cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg">記事コンテンツ・SEO項目</summary>
-                            <div class="p-3 space-y-3">
-                                <div>
-                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">メリット（1行1つ）</label>
-                                    <textarea id="f-pros-jp" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="高精度な日本語処理&#10;豊富なAPI連携"></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">デメリット（1行1つ）</label>
-                                    <textarea id="f-cons-jp" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="料金が高め&#10;学習コストが高い"></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">リスク・注意点</label>
-                                    <textarea id="f-risks-jp" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="データの第三者提供リスク..."></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">料金詳細</label>
-                                    <textarea id="f-pricing-detail-jp" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="月額プラン/年額プラン/エンタープライズ..."></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">SEOタイトル</label>
-                                    <input type="text" id="f-seo-title" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 font-jp" placeholder="【2026年】ツール名の評判・料金・リスク">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">SEOディスクリプション</label>
-                                    <textarea id="f-seo-desc" rows="2" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y font-jp" placeholder="ツール名の料金・機能・リスクを第三者視点で..."></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 font-jp">SEOキーワード（カンマ区切り）</label>
-                                    <input type="text" id="f-seo-keywords" class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 font-jp" placeholder="AI,ツール名,評判,料金">
-                                </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">料金詳細</label>
+                            <textarea id="f-pricing-detail-jp" rows="2" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y transition-colors font-jp" placeholder="フリープラン：無料（資料3個まで）&#10;パーソナルプラン：1,848円/人（税込）"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">メリット（1行1つ）</label>
+                                <textarea id="f-pros-jp" rows="2" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y transition-colors font-jp" placeholder="高精度な日本語処理&#10;豊富なAPI連携"></textarea>
                             </div>
-                        </details>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">デメリット（1行1つ）</label>
+                                <textarea id="f-cons-jp" rows="2" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y transition-colors font-jp" placeholder="料金が高め&#10;学習コストが高い"></textarea>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">リスク・注意点</label>
+                            <textarea id="f-risks-jp" rows="2" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y transition-colors font-jp" placeholder="データの第三者提供リスク..."></textarea>
+                        </div>
 
                         <div class="flex items-center gap-3">
                             <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 font-jp cursor-pointer">
@@ -372,9 +358,6 @@
         document.getElementById('f-cons-jp').value = (tool.cons_jp || []).join('\n');
         document.getElementById('f-risks-jp').value = tool.risks_jp || '';
         document.getElementById('f-pricing-detail-jp').value = tool.pricing_detail_jp || '';
-        document.getElementById('f-seo-title').value = tool.seo_title_jp || '';
-        document.getElementById('f-seo-desc').value = tool.seo_description_jp || '';
-        document.getElementById('f-seo-keywords').value = (tool.seo_keywords_jp || []).join(',');
 
         document.getElementById('modal-title').textContent = 'ツール編集: ' + (tool.name_jp || tool.name);
         document.getElementById('form-submit-btn').textContent = '更新';
@@ -394,7 +377,7 @@
         document.getElementById('f-slug').value = '';
         document.getElementById('f-slug').readOnly = false;
         document.getElementById('f-slug').classList.remove('bg-gray-100', 'dark:bg-gray-800', 'cursor-not-allowed');
-        ['f-name','f-name-jp','f-vendor','f-url','f-desc-jp','f-features','f-executive-summary','f-pros-jp','f-cons-jp','f-risks-jp','f-pricing-detail-jp','f-seo-title','f-seo-desc','f-seo-keywords'].forEach(function(id) {
+        ['f-name','f-name-jp','f-vendor','f-url','f-desc-jp','f-features','f-executive-summary','f-pros-jp','f-cons-jp','f-risks-jp','f-pricing-detail-jp'].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) el.value = '';
         });
@@ -444,14 +427,8 @@
         if (consText) body.cons_jp = consText.split('\n').map(function(s){return s.trim();}).filter(Boolean);
         var risksJp = document.getElementById('f-risks-jp').value.trim();
         var pricingJp = document.getElementById('f-pricing-detail-jp').value.trim();
-        var seoTitle = document.getElementById('f-seo-title').value.trim();
-        var seoDesc = document.getElementById('f-seo-desc').value.trim();
-        var seoKw = document.getElementById('f-seo-keywords').value.trim();
         if (risksJp) body.risks_jp = risksJp;
         if (pricingJp) body.pricing_detail_jp = pricingJp;
-        if (seoTitle) body.seo_title_jp = seoTitle;
-        if (seoDesc) body.seo_description_jp = seoDesc;
-        if (seoKw) body.seo_keywords_jp = seoKw.split(',').map(function(s){return s.trim();}).filter(Boolean);
 
         try {
             var existing = document.getElementById('edit-slug').value;
