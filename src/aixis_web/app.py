@@ -262,23 +262,6 @@ def create_app() -> FastAPI:
     # Security middleware (headers + CSRF — single BaseHTTPMiddleware)
     app.add_middleware(SecurityMiddleware)
 
-    # Trusted Host — reject requests with spoofed Host headers
-    # Railway's health checker and internal routing use hostnames like
-    # *.railway.internal or localhost. These are safe to allow because
-    # external traffic always arrives via Railway's reverse proxy with
-    # the real Host header set.
-    if not settings.debug:
-        from starlette.middleware.trustedhost import TrustedHostMiddleware
-        app.add_middleware(
-            TrustedHostMiddleware,
-            allowed_hosts=[
-                "platform.aixis.jp",
-                "*.aixis.jp",
-                "localhost",
-                "*.railway.internal",
-            ],
-        )
-
     # CORS middleware — restrict origins in production
     allowed_origins = [
         "https://aixis.jp",
