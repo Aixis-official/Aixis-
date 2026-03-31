@@ -51,6 +51,12 @@
 
 {% block head %}
 <style>
+/* Hide card back on touch devices (no hover) */
+@media not all and (hover: hover) and (pointer: fine) {
+    .card-back {
+        display: none !important;
+    }
+}
 /* 3D Card Flip - only on devices that support hover */
 @media (hover: hover) and (pointer: fine) {
     .tool-card-flip {

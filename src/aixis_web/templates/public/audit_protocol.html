@@ -122,7 +122,7 @@
                         <li>- 無料プランの実用性（手動）</li>
                         <li>- 有料プランの機能制限の妥当性（手動）</li>
                         <li>- 乗り換えコスト・ロックインリスク（手動）</li>
-                        <li>- 応答速度（Chrome拡張タイマーによる参考計測）（自動）</li>
+                        <li>- 応答速度（タイマーによる参考計測）（自動）</li>
                     </ul>
                 </div>
             </div>
@@ -212,13 +212,13 @@
         <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-0 border border-gray-200 rounded-sm overflow-hidden">
             <!-- Automated -->
             <div class="p-6 border-b md:border-b-0 md:border-r border-gray-200 bg-white">
-                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-sans">自動テスト（Automated）</span>
-                <p class="mt-3 text-sm text-gray-600 leading-relaxed">Chrome拡張とLLM画像解析による成果物の定量評価</p>
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-sans">定量テスト（Automated）</span>
+                <p class="mt-3 text-sm text-gray-600 leading-relaxed">実環境テストとAI解析による成果物の定量評価</p>
                 <ul class="mt-4 space-y-2 text-sm text-gray-600">
-                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>スクリーンショットのLLM画像解析による成果物品質評価</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>成果物のAI画像解析による品質評価</li>
                     <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>テストプロンプトに対するAI出力の忠実度判定</li>
                     <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>日本語出力の品質・敬語適切性の自動評価</li>
-                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>応答時間の手動計測（Chrome拡張タイマー）</li>
+                    <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>応答時間の計測</li>
                     <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>矛盾指示への対応力の自動判定</li>
                     <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>情報の正確性・ハルシネーション検出</li>
                 </ul>
@@ -230,7 +230,7 @@
             <!-- Manual -->
             <div class="p-6 bg-white">
                 <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-sans">AI定性評価（Qualitative）</span>
-                <p class="mt-3 text-sm text-gray-600 leading-relaxed">LLM解析および手動補完による定性評価</p>
+                <p class="mt-3 text-sm text-gray-600 leading-relaxed">AI解析および手動補完による定性評価</p>
                 <ul class="mt-4 space-y-2 text-sm text-gray-600">
                     <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>UX設計品質・直感性</li>
                     <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">-</span>ドキュメント充実度</li>

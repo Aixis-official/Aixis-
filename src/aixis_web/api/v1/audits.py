@@ -13,7 +13,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, s
 logger = logging.getLogger(__name__)
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from sqlalchemy import func, select, text
+from sqlalchemy import and_, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import Response
 
@@ -103,8 +103,13 @@ async def list_audits(
 ):
     """List audit sessions (analyst+ only). Non-admin users see only their own audits."""
     try:
-        query = select(AuditSession).where(AuditSession.deleted_at.is_(None))
-        count_query = select(func.count()).select_from(AuditSession).where(AuditSession.deleted_at.is_(None))
+        # Exclude deleted and auto-cancelled empty sessions (orphaned by extension re-creation)
+        base_filter = and_(
+            AuditSession.deleted_at.is_(None),
+            ~and_(AuditSession.status == "cancelled", AuditSession.total_executed == 0),
+        )
+        query = select(AuditSession).where(base_filter)
+        count_query = select(func.count()).select_from(AuditSession).where(base_filter)
 
         # Row-level authorization: non-admin users see only their own audits
         if _user.role != "admin":

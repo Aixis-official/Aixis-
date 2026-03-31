@@ -165,26 +165,45 @@
         <!-- 2. Tool Hero Section -->
         <section id="hero-section" class="relative overflow-hidden rounded-sm mb-6 bg-gradient-to-br from-aixis-600/90 via-aixis-700/90 to-aixis-800/90 dark:from-aixis-800/80 dark:via-aixis-900/90 dark:to-gray-900">
             <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.04),transparent_60%)]"></div>
-            <div class="relative flex flex-col md:flex-row items-start md:items-center gap-5 px-7 py-7 md:px-10 md:py-9">
-                <!-- Left: Icon + Tool info -->
-                <div class="flex-1 text-white flex items-start gap-5">
-                    <div id="hero-icon-wrapper" class="flex-shrink-0 hidden">
-                        <img id="hero-icon" class="w-14 h-14 rounded bg-white/10 p-1.5 object-contain" alt="" />
+            <div class="relative px-7 py-7 md:px-10 md:py-9">
+                <!-- Mobile: compact header with icon + name + grade in one row -->
+                <div class="flex items-center gap-3.5 md:hidden mb-4">
+                    <div id="hero-icon-wrapper-mobile" class="flex-shrink-0 hidden">
+                        <img id="hero-icon-mobile" class="w-12 h-12 rounded bg-white/10 p-1 object-contain" alt="" />
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2.5 mb-3">
-                            <span id="hero-category" class="inline-block px-2.5 py-0.5 rounded text-[10px] font-medium bg-white/10 border border-white/15 font-jp"></span>
-                        </div>
-                        <h1 id="hero-name" class="text-2xl md:text-3xl font-bold mb-1.5 font-jp tracking-tight"></h1>
-                        <p id="hero-vendor" class="text-white/55 text-sm mb-2.5 font-jp"></p>
-                        <p id="hero-description" class="text-white/70 text-sm leading-relaxed font-jp max-w-2xl"></p>
+                        <span id="hero-category-mobile" class="inline-block px-2 py-0.5 rounded text-[9px] font-medium bg-white/10 border border-white/15 font-jp mb-1.5"></span>
+                        <h1 id="hero-name-mobile" class="text-xl font-bold text-white font-jp tracking-tight leading-tight"></h1>
+                        <p id="hero-vendor-mobile" class="text-white/55 text-xs font-jp mt-0.5"></p>
+                    </div>
+                    <div id="hero-grade-area-mobile" class="flex-shrink-0 text-center pl-2">
+                        <div id="hero-grade-badge-mobile" class="grade-badge grade-badge-lg"></div>
+                        <div id="hero-score-value-mobile" class="text-lg font-bold text-white mt-1.5 tabular-nums"></div>
+                        <div class="text-white/40 text-[9px] font-jp">総合スコア</div>
                     </div>
                 </div>
-                <!-- Right: Grade + Score -->
-                <div id="hero-grade-area" class="flex-shrink-0 text-center md:text-right md:pl-8">
-                    <div id="hero-grade-badge" class="grade-badge grade-badge-lg mx-auto md:ml-auto md:mr-0"></div>
-                    <div id="hero-score-value" class="text-3xl font-bold text-white mt-3 tabular-nums"></div>
-                    <div class="text-white/45 text-xs font-jp mt-0.5">総合スコア</div>
+                <p id="hero-description-mobile" class="text-white/70 text-xs leading-relaxed font-jp md:hidden"></p>
+
+                <!-- Desktop: original horizontal layout -->
+                <div class="hidden md:flex md:flex-row items-center gap-5">
+                    <div class="flex-1 text-white flex items-start gap-5">
+                        <div id="hero-icon-wrapper" class="flex-shrink-0 hidden">
+                            <img id="hero-icon" class="w-14 h-14 rounded bg-white/10 p-1.5 object-contain" alt="" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2.5 mb-3">
+                                <span id="hero-category" class="inline-block px-2.5 py-0.5 rounded text-[10px] font-medium bg-white/10 border border-white/15 font-jp"></span>
+                            </div>
+                            <h1 id="hero-name" class="text-3xl font-bold mb-1.5 font-jp tracking-tight"></h1>
+                            <p id="hero-vendor" class="text-white/55 text-sm mb-2.5 font-jp"></p>
+                            <p id="hero-description" class="text-white/70 text-sm leading-relaxed font-jp max-w-2xl"></p>
+                        </div>
+                    </div>
+                    <div id="hero-grade-area" class="flex-shrink-0 text-right pl-8">
+                        <div id="hero-grade-badge" class="grade-badge grade-badge-lg ml-auto mr-0"></div>
+                        <div id="hero-score-value" class="text-3xl font-bold text-white mt-3 tabular-nums"></div>
+                        <div class="text-white/45 text-xs font-jp mt-0.5">総合スコア</div>
+                    </div>
                 </div>
             </div>
             <!-- Audit metadata bar -->
@@ -660,36 +679,66 @@
     // --- Render functions ---
 
     function renderHero(tool, scores) {
-        document.getElementById('breadcrumb-name').textContent = tool.name_jp || tool.name || slug;
-        document.getElementById('hero-category').textContent = tool.category_name_jp || tool.category || '';
-        document.getElementById('hero-name').textContent = tool.name_jp || tool.name || slug;
-        document.getElementById('hero-vendor').textContent = tool.vendor || '';
-        document.getElementById('hero-description').textContent = tool.description_jp || tool.description || '';
+        const toolName = tool.name_jp || tool.name || slug;
+        const categoryText = tool.category_name_jp || tool.category || '';
+        const vendorText = tool.vendor || '';
+        const descText = tool.description_jp || tool.description || '';
+
+        document.getElementById('breadcrumb-name').textContent = toolName;
+
+        // Desktop elements
+        document.getElementById('hero-category').textContent = categoryText;
+        document.getElementById('hero-name').textContent = toolName;
+        document.getElementById('hero-vendor').textContent = vendorText;
+        document.getElementById('hero-description').textContent = descText;
+        // Mobile elements
+        document.getElementById('hero-category-mobile').textContent = categoryText;
+        document.getElementById('hero-name-mobile').textContent = toolName;
+        document.getElementById('hero-vendor-mobile').textContent = vendorText;
+        document.getElementById('hero-description-mobile').textContent = descText;
 
         // Tool icon from logo_url (Google favicon or custom)
         if (tool.logo_url) {
+            var logoSrc = tool.logo_url;
+            var altText = (tool.name || tool.name_jp || '') + ' icon';
+            if (logoSrc.includes('google.com/s2/favicons')) {
+                logoSrc = logoSrc.replace(/sz=\d+/, 'sz=128');
+            }
+            // Desktop icon
             const iconWrapper = document.getElementById('hero-icon-wrapper');
             const iconImg = document.getElementById('hero-icon');
-            iconImg.src = tool.logo_url;
-            iconImg.alt = (tool.name || tool.name_jp || '') + ' icon';
-            // Use higher-res favicon if it's a Google favicon
-            if (tool.logo_url.includes('google.com/s2/favicons')) {
-                iconImg.src = tool.logo_url.replace(/sz=\d+/, 'sz=128');
-            }
+            iconImg.src = logoSrc;
+            iconImg.alt = altText;
             iconWrapper.classList.remove('hidden');
-            // Fallback: if image fails to load, hide it
             iconImg.onerror = () => { iconWrapper.classList.add('hidden'); };
+            // Mobile icon
+            const iconWrapperM = document.getElementById('hero-icon-wrapper-mobile');
+            const iconImgM = document.getElementById('hero-icon-mobile');
+            iconImgM.src = logoSrc;
+            iconImgM.alt = altText;
+            iconWrapperM.classList.remove('hidden');
+            iconImgM.onerror = () => { iconWrapperM.classList.add('hidden'); };
         }
 
         const gradeArea = document.getElementById('hero-grade-area');
+        const gradeAreaM = document.getElementById('hero-grade-area-mobile');
         if (scores && scores.overall_score != null) {
             const gradeInfo = getGrade(scores.overall_score);
+            const gradeStr = scores.overall_grade || gradeInfo.grade;
+            const gradeClass = 'grade-badge grade-badge-stamp grade-badge-lg grade-' + gradeStr;
+            // Desktop
             const badge = document.getElementById('hero-grade-badge');
-            badge.textContent = scores.overall_grade || gradeInfo.grade;
-            badge.className = 'grade-badge grade-badge-stamp grade-badge-lg grade-' + (scores.overall_grade || gradeInfo.grade);
+            badge.textContent = gradeStr;
+            badge.className = gradeClass;
             document.getElementById('hero-score-value').textContent = scores.overall_score.toFixed(1) + ' / 5.0';
+            // Mobile
+            const badgeM = document.getElementById('hero-grade-badge-mobile');
+            badgeM.textContent = gradeStr;
+            badgeM.className = gradeClass;
+            document.getElementById('hero-score-value-mobile').textContent = scores.overall_score.toFixed(1) + ' / 5.0';
         } else {
             gradeArea.innerHTML = '<div class="text-white/50 text-lg font-jp">未評価</div>';
+            gradeAreaM.innerHTML = '<div class="text-white/50 text-sm font-jp">未評価</div>';
         }
     }
 

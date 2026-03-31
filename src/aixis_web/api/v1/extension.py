@@ -92,6 +92,18 @@ async def _create_session_impl(body, db, user):
     if not tool_row:
         raise HTTPException(404, f"ツールが見つかりません: {body.tool_id}")
 
+    # Auto-cancel orphaned "running" sessions for the same tool by the same user.
+    # This prevents ghost sessions when dashboard creates a session and then
+    # the Chrome extension creates a separate one for the same tool.
+    await db.execute(
+        text(
+            "UPDATE audit_sessions SET status = 'cancelled' "
+            "WHERE tool_id = :tid AND initiated_by = :uid "
+            "AND status IN ('running', 'pending') AND deleted_at IS NULL"
+        ),
+        {"tid": body.tool_id, "uid": user.id},
+    )
+
     # Generate test cases in memory first (don't insert yet — FK requires session)
     test_cases_out: list[TestCaseOut] = []
     cases = []
