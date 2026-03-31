@@ -226,6 +226,28 @@ async def list_backups(
     return {"backups": do_list()}
 
 
+@router.get("/backup/health")
+async def backup_health(
+    user: Annotated[User, Depends(require_admin)],
+):
+    """Return backup system health status for monitoring."""
+    from ...services.backup_service import get_backup_health
+    return get_backup_health()
+
+
+@router.post("/backup/verify/{filename}")
+async def verify_backup_endpoint(
+    filename: str,
+    user: Annotated[User, Depends(require_admin)],
+):
+    """Verify a specific backup's checksum and integrity."""
+    from ...services.backup_service import verify_backup
+    result = verify_backup(filename)
+    if "error" in result:
+        raise HTTPException(404, result["error"])
+    return result
+
+
 # ── Google Drive Export ──────────────────────────────────────────────
 
 

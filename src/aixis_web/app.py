@@ -180,9 +180,14 @@ async def lifespan(app: FastAPI):
     from .services.trial_service import start_trial_checker, stop_trial_checker
     start_trial_checker()
 
+    # 7. Start automatic backup scheduler (hourly + daily + weekly)
+    from .services.backup_service import start_backup_scheduler, stop_backup_scheduler
+    start_backup_scheduler()
+
     yield
 
     # Shutdown
+    stop_backup_scheduler()
     stop_trial_checker()
     stop_gdrive_export()
     stop_scheduler()
