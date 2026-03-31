@@ -30,13 +30,13 @@ METADATA_FILE = BACKUP_DIR / "backup_manifest.json"
 
 # Tiered retention limits
 RETENTION = {
-    "hourly": 48,
-    "daily": 30,
-    "weekly": 12,
-    "manual": 20,
-    "pre_deploy": 20,
-    "pre_restore": 10,
-    "admin_manual": 20,
+    "hourly": 24,     # 1日分（1時間×24）
+    "daily": 14,      # 2週間分
+    "weekly": 8,      # 2ヶ月分
+    "manual": 10,
+    "pre_deploy": 5,  # 直近5デプロイ分
+    "pre_restore": 5,
+    "admin_manual": 10,
 }
 DEFAULT_RETENTION = 30
 
@@ -394,17 +394,33 @@ def stop_backup_scheduler():
     logger.info("Backup scheduler stopped")
 
 
+def _find_latest_backup_time(reason: str) -> datetime | None:
+    """Find the most recent backup timestamp for a given reason from existing files."""
+    if not BACKUP_DIR.exists():
+        return None
+    files = [f for f in BACKUP_DIR.glob(f"aixis_*_{reason}.*") if f.is_file()]
+    if not files:
+        return None
+    latest = max(files, key=lambda p: p.stat().st_mtime)
+    return datetime.fromtimestamp(latest.stat().st_mtime, tz=timezone.utc)
+
+
 def _backup_scheduler_loop():
     """Main loop: create hourly backups, promote to daily/weekly as needed."""
     HOURLY_INTERVAL = 3600  # 1 hour
 
-    # Wait 5 minutes after startup before first scheduled backup
-    # (pre_deploy backup already runs on startup)
-    if _backup_stop.wait(300):
+    # Wait 60 minutes after startup before first scheduled backup.
+    # pre_deploy backup already runs on startup, so no urgency.
+    if _backup_stop.wait(3600):
         return
 
-    last_daily: datetime | None = None
-    last_weekly: datetime | None = None
+    # Initialize from existing backup files to avoid duplicate promotions after restart
+    last_daily = _find_latest_backup_time("daily")
+    last_weekly = _find_latest_backup_time("weekly")
+    if last_daily:
+        logger.info("Resuming daily schedule from existing backup: %s", last_daily.isoformat())
+    if last_weekly:
+        logger.info("Resuming weekly schedule from existing backup: %s", last_weekly.isoformat())
 
     while not _backup_stop.is_set():
         now = datetime.now(timezone.utc)
@@ -415,16 +431,16 @@ def _backup_scheduler_loop():
             if "error" not in result:
                 _update_last_status(result, "hourly")
 
-                # Auto-upload to Google Drive if enabled (every hourly backup)
-                _sync_to_gdrive_if_enabled(result)
-
-                # Daily promotion: once per day (at the first hourly backup after midnight UTC)
+                # Daily promotion: once per day (>23h since last daily)
                 if last_daily is None or (now - last_daily) >= timedelta(hours=23):
                     _promote_backup(result, "daily")
                     last_daily = now
 
-                    # Weekly promotion: once per week
-                    if last_weekly is None or (now - last_weekly) >= timedelta(days=6, hours=23):
+                    # Sync daily backup to Google Drive (not every hourly)
+                    _sync_to_gdrive_if_enabled(result)
+
+                    # Weekly promotion: once per week (>6.5 days since last weekly)
+                    if last_weekly is None or (now - last_weekly) >= timedelta(days=6, hours=12):
                         _promote_backup(result, "weekly")
                         last_weekly = now
             else:
