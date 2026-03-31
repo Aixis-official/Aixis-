@@ -151,6 +151,106 @@
                             <textarea id="f-risks-jp" rows="2" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y transition-colors font-jp" placeholder="データの第三者提供リスク..."></textarea>
                         </div>
 
+                        <!-- 導入企業像 -->
+                        <div class="pt-3 border-t border-gray-200 dark:border-gray-700/50">
+                            <p class="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider mb-3">導入企業像</p>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">企業プロフィール</label>
+                                    <textarea id="f-target-company-profile" rows="2" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y transition-colors font-jp" placeholder="中堅〜大企業のマーケティング部門で、AI活用による業務効率化を検討している企業。"></textarea>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">企業規模（複数可）</label>
+                                        <div class="space-y-1">
+                                            <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 font-jp cursor-pointer"><input type="checkbox" id="f-size-startup" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"> スタートアップ</label>
+                                            <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 font-jp cursor-pointer"><input type="checkbox" id="f-size-smb" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"> 中小企業</label>
+                                            <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 font-jp cursor-pointer"><input type="checkbox" id="f-size-mid" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"> 中堅企業</label>
+                                            <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 font-jp cursor-pointer"><input type="checkbox" id="f-size-enterprise" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"> 大企業</label>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">対象部門（1行1つ）</label>
+                                        <textarea id="f-target-departments" rows="3" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y transition-colors font-jp" placeholder="マーケティング&#10;営業&#10;法務"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- リスク・ガバナンス -->
+                        <div class="pt-3 border-t border-gray-200 dark:border-gray-700/50">
+                            <p class="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider mb-3">リスク・ガバナンス</p>
+                            <div class="space-y-3">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">リスクレベル</label>
+                                        <select id="f-gov-risk-level" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors font-jp">
+                                            <option value="">未設定</option>
+                                            <option value="low">低</option>
+                                            <option value="medium">中</option>
+                                            <option value="high">高</option>
+                                            <option value="critical">重大</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">データ保持ポリシー</label>
+                                        <select id="f-gov-data-retention" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors font-jp">
+                                            <option value="">未設定</option>
+                                            <option value="明確">明確</option>
+                                            <option value="一部明記">一部明記</option>
+                                            <option value="不明確">不明確</option>
+                                            <option value="なし">なし</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 font-jp cursor-pointer"><input type="checkbox" id="f-gov-data-residency" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"> 国内データ保管</label>
+                                    <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 font-jp cursor-pointer"><input type="checkbox" id="f-gov-training-optout" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"> 学習オプトアウト</label>
+                                    <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 font-jp cursor-pointer"><input type="checkbox" id="f-gov-data-deletion" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"> データ削除可</label>
+                                </div>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">AI事業GL</label>
+                                        <select id="f-gov-ai-guideline" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors font-jp">
+                                            <option value="">未設定</option>
+                                            <option value="compliant">準拠</option>
+                                            <option value="partial">一部準拠</option>
+                                            <option value="non_compliant">非準拠</option>
+                                            <option value="unknown">不明</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">個人情報保護法</label>
+                                        <select id="f-gov-appi" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors font-jp">
+                                            <option value="">未設定</option>
+                                            <option value="compliant">準拠</option>
+                                            <option value="partial">一部準拠</option>
+                                            <option value="non_compliant">非準拠</option>
+                                            <option value="unknown">不明</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">GDPR</label>
+                                        <select id="f-gov-gdpr" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors font-jp">
+                                            <option value="">未設定</option>
+                                            <option value="compliant">準拠</option>
+                                            <option value="partial">一部準拠</option>
+                                            <option value="non_compliant">非準拠</option>
+                                            <option value="unknown">不明</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">認証（カンマ区切り）</label>
+                                    <input type="text" id="f-gov-certifications" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors font-jp" placeholder="SOC2_TYPE2, ISO27001, ISMAP">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 font-jp">ガバナンスサマリー</label>
+                                    <textarea id="f-gov-summary" rows="2" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-[#161929] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y transition-colors font-jp" placeholder="データプライバシーへの配慮が高く、国内保管にも対応..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="flex items-center gap-3">
                             <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 font-jp cursor-pointer">
                                 <input type="checkbox" id="f-public" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
@@ -359,6 +459,21 @@
         document.getElementById('f-risks-jp').value = tool.risks_jp || '';
         document.getElementById('f-pricing-detail-jp').value = tool.pricing_detail_jp || '';
 
+        // Target company
+        document.getElementById('f-target-company-profile').value = tool.target_company_profile_jp || '';
+        var sizes = tool.target_company_sizes || [];
+        document.getElementById('f-size-startup').checked = sizes.includes('startup');
+        document.getElementById('f-size-smb').checked = sizes.includes('smb');
+        document.getElementById('f-size-mid').checked = sizes.includes('mid');
+        document.getElementById('f-size-enterprise').checked = sizes.includes('enterprise');
+        document.getElementById('f-target-departments').value = (tool.target_departments || []).join('\n');
+
+        // Load governance data
+        currentGovId = '';
+        if (tool.id) {
+            loadGovernanceData(tool.id);
+        }
+
         document.getElementById('modal-title').textContent = 'ツール編集: ' + (tool.name_jp || tool.name);
         document.getElementById('form-submit-btn').textContent = '更新';
         document.getElementById('llm-research-btn').classList.remove('hidden');
@@ -366,18 +481,40 @@
         document.body.style.overflow = 'hidden';
     };
 
+    async function loadGovernanceData(toolId) {
+        try {
+            var data = await aixisAPI('/risk-governance/tools/' + toolId);
+            if (data) {
+                currentGovId = data.id || '';
+                document.getElementById('f-gov-risk-level').value = data.risk_level || '';
+                document.getElementById('f-gov-data-retention').value = data.data_retention_policy || '';
+                document.getElementById('f-gov-data-residency').checked = !!data.data_residency_japan;
+                document.getElementById('f-gov-training-optout').checked = !!data.training_data_optout;
+                document.getElementById('f-gov-data-deletion').checked = !!data.data_deletion_available;
+                document.getElementById('f-gov-ai-guideline').value = data.ai_business_guideline_status || '';
+                document.getElementById('f-gov-appi').value = data.appi_status || '';
+                document.getElementById('f-gov-gdpr').value = data.gdpr_status || '';
+                document.getElementById('f-gov-certifications').value = (data.certifications || []).join(', ');
+                document.getElementById('f-gov-summary').value = data.governance_summary_jp || '';
+            }
+        } catch (e) { /* no governance data yet */ }
+    }
+
     window.closeToolModal = function() {
         document.getElementById('tool-modal').classList.add('hidden');
         document.body.style.overflow = '';
     };
 
+    var currentGovId = ''; // Track existing governance assessment ID for updates
+
     function resetForm() {
         editingSlug = '';
+        currentGovId = '';
         document.getElementById('edit-slug').value = '';
         document.getElementById('f-slug').value = '';
         document.getElementById('f-slug').readOnly = false;
         document.getElementById('f-slug').classList.remove('bg-gray-100', 'dark:bg-gray-800', 'cursor-not-allowed');
-        ['f-name','f-name-jp','f-vendor','f-url','f-desc-jp','f-features','f-executive-summary','f-pros-jp','f-cons-jp','f-risks-jp','f-pricing-detail-jp'].forEach(function(id) {
+        ['f-name','f-name-jp','f-vendor','f-url','f-desc-jp','f-features','f-executive-summary','f-pros-jp','f-cons-jp','f-risks-jp','f-pricing-detail-jp','f-target-company-profile','f-target-departments','f-gov-certifications','f-gov-summary'].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) el.value = '';
         });
@@ -385,6 +522,17 @@
         document.getElementById('f-japanese-supported').checked = false;
         document.getElementById('f-category').value = '';
         document.getElementById('f-pricing-model').value = '';
+        // Target company sizes
+        ['f-size-startup','f-size-smb','f-size-mid','f-size-enterprise'].forEach(function(id) {
+            document.getElementById(id).checked = false;
+        });
+        // Governance fields
+        ['f-gov-risk-level','f-gov-data-retention','f-gov-ai-guideline','f-gov-appi','f-gov-gdpr'].forEach(function(id) {
+            document.getElementById(id).value = '';
+        });
+        ['f-gov-data-residency','f-gov-training-optout','f-gov-data-deletion'].forEach(function(id) {
+            document.getElementById(id).checked = false;
+        });
         document.getElementById('modal-error').classList.add('hidden');
         document.getElementById('modal-success').classList.add('hidden');
     }
@@ -430,15 +578,68 @@
         if (risksJp) body.risks_jp = risksJp;
         if (pricingJp) body.pricing_detail_jp = pricingJp;
 
+        // Target company
+        var tcProfile = document.getElementById('f-target-company-profile').value.trim();
+        if (tcProfile) body.target_company_profile_jp = tcProfile;
+        var tcSizes = [];
+        if (document.getElementById('f-size-startup').checked) tcSizes.push('startup');
+        if (document.getElementById('f-size-smb').checked) tcSizes.push('smb');
+        if (document.getElementById('f-size-mid').checked) tcSizes.push('mid');
+        if (document.getElementById('f-size-enterprise').checked) tcSizes.push('enterprise');
+        if (tcSizes.length) body.target_company_sizes = tcSizes;
+        var depts = document.getElementById('f-target-departments').value.trim();
+        if (depts) body.target_departments = depts.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+
         try {
             var existing = document.getElementById('edit-slug').value;
+            var toolResult;
             if (existing) {
-                await aixisAPI('/tools/' + encodeURIComponent(existing), { method: 'PUT', body: JSON.stringify(body) });
+                toolResult = await aixisAPI('/tools/' + encodeURIComponent(existing), { method: 'PUT', body: JSON.stringify(body) });
                 succEl.textContent = 'ツールを更新しました。';
             } else {
-                await aixisAPI('/tools', { method: 'POST', body: JSON.stringify(body) });
+                toolResult = await aixisAPI('/tools', { method: 'POST', body: JSON.stringify(body) });
                 succEl.textContent = 'ツールを登録しました。';
             }
+
+            // Save governance data (separate API)
+            var govBody = {};
+            var govRiskLevel = document.getElementById('f-gov-risk-level').value;
+            var govDataRetention = document.getElementById('f-gov-data-retention').value;
+            var govAiGuideline = document.getElementById('f-gov-ai-guideline').value;
+            var govAppi = document.getElementById('f-gov-appi').value;
+            var govGdpr = document.getElementById('f-gov-gdpr').value;
+            var govCerts = document.getElementById('f-gov-certifications').value.trim();
+            var govSummary = document.getElementById('f-gov-summary').value.trim();
+            if (govRiskLevel) govBody.risk_level = govRiskLevel;
+            if (govDataRetention) govBody.data_retention_policy = govDataRetention;
+            govBody.data_residency_japan = document.getElementById('f-gov-data-residency').checked;
+            govBody.training_data_optout = document.getElementById('f-gov-training-optout').checked;
+            govBody.data_deletion_available = document.getElementById('f-gov-data-deletion').checked;
+            if (govAiGuideline) govBody.ai_business_guideline_status = govAiGuideline;
+            if (govAppi) govBody.appi_status = govAppi;
+            if (govGdpr) govBody.gdpr_status = govGdpr;
+            if (govCerts) govBody.certifications = govCerts.split(',').map(function(s){return s.trim();}).filter(Boolean);
+            if (govSummary) govBody.governance_summary_jp = govSummary;
+
+            // Only save governance if at least one field is set
+            var hasGovData = govRiskLevel || govDataRetention || govAiGuideline || govAppi || govGdpr || govCerts || govSummary
+                || govBody.data_residency_japan || govBody.training_data_optout || govBody.data_deletion_available;
+            if (hasGovData) {
+                var toolId = toolResult.id || (existing ? allTools.find(function(t){return t.slug === existing;})?.id : null);
+                if (toolId) {
+                    try {
+                        if (currentGovId) {
+                            await aixisAPI('/risk-governance/' + currentGovId, { method: 'PUT', body: JSON.stringify(govBody) });
+                        } else {
+                            await aixisAPI('/risk-governance/tools/' + toolId, { method: 'POST', body: JSON.stringify(govBody) });
+                        }
+                        succEl.textContent += ' ガバナンスデータも保存しました。';
+                    } catch (govErr) {
+                        succEl.textContent += ' ※ガバナンスの保存に失敗: ' + (govErr.message || '');
+                    }
+                }
+            }
+
             succEl.classList.remove('hidden');
             await loadTools();
             setTimeout(closeToolModal, 800);
