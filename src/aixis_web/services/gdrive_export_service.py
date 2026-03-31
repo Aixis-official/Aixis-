@@ -28,7 +28,7 @@ _export_thread: threading.Thread | None = None
 _export_stop = threading.Event()
 _last_export: dict | None = None
 
-SCOPES = ["https://www.googleapis.com/auth/drive.file"]
+SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 
 # ---------------------------------------------------------------------------

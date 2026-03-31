@@ -437,13 +437,27 @@ async def update_gdrive_settings(
     if body.folder_id is not None:
         val = body.folder_id.strip()
         if val:
-            # Validate folder exists
+            # Validate folder is accessible (try listing contents)
             try:
                 from ...services.gdrive_export_service import _get_drive_service
                 service = _get_drive_service()
-                service.files().get(fileId=val, supportsAllDrives=True).execute()
+                # Use files().list with folder query — works with broader scopes
+                # and avoids 404 on folders not created by the app
+                service.files().list(
+                    q=f"'{val}' in parents",
+                    pageSize=1,
+                    fields="files(id)",
+                    supportsAllDrives=True,
+                ).execute()
             except Exception as e:
-                raise HTTPException(400, f"指定されたフォルダIDが無効です: {str(e)[:100]}")
+                err_msg = str(e)
+                if "404" in err_msg:
+                    raise HTTPException(
+                        400,
+                        f"フォルダID '{val}' にアクセスできません。"
+                        f"フォルダが存在し、認証アカウントにアクセス権があることを確認してください。"
+                    )
+                raise HTTPException(400, f"Google Driveフォルダの検証に失敗: {err_msg[:200]}")
         _write_env_key("AIXIS_GDRIVE_FOLDER_ID", val)
         os.environ["AIXIS_GDRIVE_FOLDER_ID"] = val
         settings.gdrive_folder_id = val
