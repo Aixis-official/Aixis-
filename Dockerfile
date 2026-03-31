@@ -2,10 +2,11 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# System deps for WeasyPrint
+# System deps for WeasyPrint + PostgreSQL client (pg_dump for backups)
 RUN apt-get update && apt-get install -y \
     libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-xlib-2.0-0 \
     libffi-dev shared-mime-info \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy all source first (needed for hatch build)
@@ -19,7 +20,7 @@ RUN pip install --no-cache-dir --force-reinstall "jinja2>=3.1,<3.2" && pip insta
 
 # NOTE: Use PostgreSQL in production (Railway addon).
 # SQLite data is LOST on every deploy because containers are ephemeral.
-RUN mkdir -p /data
+RUN mkdir -p /data /app/backups
 
 ENV PYTHONPATH=/app/src
 
