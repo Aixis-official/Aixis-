@@ -30,9 +30,12 @@
     {% block ogp %}
     <meta property="og:title" content="{{ title | default('Aixis') }} - Aixis AI監査プラットフォーム">
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://platform.aixis.jp{{ request.path }}">
+    <meta property="og:description" content="AIツールを独立した5軸監査で定量評価。企業のAIツール選定をデータで支援する独立系AI監査プラットフォーム。">
     <meta property="og:image" content="https://platform.aixis.jp/static/img/Aixis-logo-final.png">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="{{ title | default('Aixis') }} - Aixis AI監査プラットフォーム">
+    <meta name="twitter:description" content="AIツールを独立した5軸監査で定量評価。企業のAIツール選定をデータで支援する独立系AI監査プラットフォーム。">
     {% endblock %}
     {% block structured_data %}{% endblock %}
 
@@ -443,6 +446,7 @@
                         </h3>
                         <ul class="mt-3 space-y-2">
                             <li><a href="/pricing" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">料金</a></li>
+                            <li><a href="/faq" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">よくある質問</a></li>
                             <li><a href="/contact" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">お問い合わせ</a></li>
                             <li><a href="https://aixis.jp/privacy-policy/" target="_blank" rel="noopener" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">プライバシーポリシー</a></li>
                             <li><a href="/terms" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">利用規約</a></li>

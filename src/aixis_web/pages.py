@@ -175,8 +175,8 @@ async def legacy_platform_redirect(path: str):
     # Strip leading slashes to prevent //evil.com open redirect
     safe_path = safe_path.lstrip('/')
     if not safe_path:
-        return RedirectResponse(url="/", status_code=302)
-    return RedirectResponse(url=f"/{safe_path}", status_code=302)
+        return RedirectResponse(url="/", status_code=301)
+    return RedirectResponse(url=f"/{safe_path}", status_code=301)
 
 
 # ──────────── Public Pages ────────────
@@ -346,6 +346,13 @@ async def audit_protocol_page(request: Request, user: _OptionalUser = None):
     """Detailed audit protocol page."""
     ctx = _get_template_context(request, user=user, title="監査プロトコル | 5軸評価フレームワーク詳細", active_page="audit-protocol")
     return _render("public/audit_protocol.html", ctx)
+
+
+@page_router.get("/faq")
+async def faq_page(request: Request, user: _OptionalUser = None):
+    """FAQ page with FAQPage structured data for rich results."""
+    ctx = _get_template_context(request, user=user, title="よくある質問（FAQ） | AIツール監査について", active_page="faq")
+    return _render("public/faq.html", ctx)
 
 
 @page_router.get("/contact")
@@ -745,6 +752,7 @@ _STATIC_PAGES = [
     ("/independence", "monthly", "0.4"),
     ("/transparency", "monthly", "0.4"),
     ("/audit-protocol", "monthly", "0.4"),
+    ("/faq", "monthly", "0.5"),
     ("/contact", "monthly", "0.3"),
     ("/terms", "yearly", "0.2"),
     ("/tokushoho", "yearly", "0.2"),

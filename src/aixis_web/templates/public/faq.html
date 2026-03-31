@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% set active_page = 'faq' %}
+
+{% block meta_description %}
+<meta name="description" content="Aixisに関するよくある質問。AIツール監査の仕組み、5軸評価の基準、料金体系、利用方法など、お客様からのご質問にお答えします。">
+{% endblock %}
+
+{% block meta_keywords %}
+<meta name="keywords" content="Aixis FAQ,AIツール監査 よくある質問,AI評価 質問,AIツール比較 使い方,Aixis 料金">
+{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="https://platform.aixis.jp/faq">
+{% endblock %}
+
+{% block ogp %}
+<meta property="og:title" content="よくある質問（FAQ） - Aixis">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://platform.aixis.jp/faq">
+<meta property="og:description" content="Aixisに関するよくある質問。AIツール監査の仕組み、5軸評価の基準、料金体系、利用方法をご案内します。">
+<meta property="og:image" content="https://platform.aixis.jp/static/img/Aixis-logo-final.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:description" content="Aixisに関するよくある質問。AIツール監査の仕組み、評価基準、料金体系をご案内します。">
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Aixisとは何ですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Aixisは、AIツールを独立した立場で客観的に評価する監査プラットフォームです。実務適性・費用対効果・日本語能力・信頼性/安全性・革新性の5軸で定量スコアを算出し、企業のAIツール選定をデータで支援します。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "5軸評価とは何ですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Aixis独自の評価フレームワークで、AIツールを「実務適性（Practicality）」「費用対効果（Cost Performance）」「日本語能力（Localization）」「信頼性・安全性（Safety）」「革新性（Uniqueness）」の5つの軸で0.0〜5.0のスコアで定量評価します。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "監査はどのように行われますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "独自の監査プロトコルに基づき、実際の利用環境でAIツールを操作し、テストプロトコルに沿った評価を実施します。操作記録とスクリーンショットを基にAI解析を行い、客観的・再現可能なスコアを算出します。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "グレード（S〜D）はどのように決まりますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "5軸の総合スコアに基づきグレードが付与されます。S（4.5以上）：卓越、A（3.5以上）：優秀、B（2.5以上）：標準以上、C（1.5以上）：改善余地あり、D（1.5未満）：要注意の5段階です。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "評価の独立性はどのように担保されていますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Aixisはベンダーから一切の報酬・広告費を受け取りません。評価対象のAIツール提供元との利益相反を完全に排除し、独立した第三者機関として評価を行っています。詳しくは独立性宣言ページをご覧ください。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "無料で利用できますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "AIツールの監査スコア・グレードの閲覧は完全無料です。すべての公開ツールの評価結果をどなたでもご覧いただけます。法人向けの詳細レポートや独自監査のご依頼は有料プランをご用意しています。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "自社のAIツールを監査してもらえますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "はい、法人様向けに個別の監査依頼を承っております。お問い合わせページからご連絡いただければ、ご要望に応じた監査プランをご提案いたします。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "評価結果はどのくらいの頻度で更新されますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "AIツールのアップデートや市場環境の変化に応じて定期的に再監査を実施しています。スコアにはバージョン情報と公開日が記載されており、常に最新の評価をご確認いただけます。"
+      }
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "ホーム", "item": "https://platform.aixis.jp/"},
+    {"@type": "ListItem", "position": 2, "name": "よくある質問", "item": "https://platform.aixis.jp/faq"}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-12 sm:py-16">
+    <!-- Breadcrumb -->
+    <nav class="mb-8 text-sm text-slate-500" aria-label="パンくずリスト">
+        <ol class="flex items-center space-x-2">
+            <li><a href="/" class="hover:text-indigo-600 transition-colors">ホーム</a></li>
+            <li><span class="mx-1">/</span></li>
+            <li class="text-slate-800 font-medium">よくある質問</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">よくある質問（FAQ）</h1>
+        <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+            Aixisのサービスや監査方法について、お客様からよくいただくご質問をまとめました。
+        </p>
+    </div>
+
+    <!-- FAQ Accordion -->
+    <div class="space-y-4" id="faq-list">
+
+        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+            <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-slate-50 transition-colors" aria-expanded="false">
+                <span class="text-base font-semibold text-slate-900 pr-4">Aixisとは何ですか？</span>
+                <svg class="faq-icon w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content hidden px-6 pb-5">
+                <p class="text-slate-600 leading-relaxed">Aixisは、AIツールを独立した立場で客観的に評価する監査プラットフォームです。実務適性・費用対効果・日本語能力・信頼性/安全性・革新性の5軸で定量スコアを算出し、企業のAIツール選定をデータで支援します。</p>
+            </div>
+        </div>
+
+        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+            <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-slate-50 transition-colors" aria-expanded="false">
+                <span class="text-base font-semibold text-slate-900 pr-4">5軸評価とは何ですか？</span>
+                <svg class="faq-icon w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content hidden px-6 pb-5">
+                <p class="text-slate-600 leading-relaxed">Aixis独自の評価フレームワークで、AIツールを「実務適性（Practicality）」「費用対効果（Cost Performance）」「日本語能力（Localization）」「信頼性・安全性（Safety）」「革新性（Uniqueness）」の5つの軸で0.0〜5.0のスコアで定量評価します。</p>
+            </div>
+        </div>
+
+        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+            <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-slate-50 transition-colors" aria-expanded="false">
+                <span class="text-base font-semibold text-slate-900 pr-4">監査はどのように行われますか？</span>
+                <svg class="faq-icon w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content hidden px-6 pb-5">
+                <p class="text-slate-600 leading-relaxed">独自の監査プロトコルに基づき、実際の利用環境でAIツールを操作し、テストプロトコルに沿った評価を実施します。操作記録とスクリーンショットを基にAI解析を行い、客観的・再現可能なスコアを算出します。</p>
+            </div>
+        </div>
+
+        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+            <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-slate-50 transition-colors" aria-expanded="false">
+                <span class="text-base font-semibold text-slate-900 pr-4">グレード（S〜D）はどのように決まりますか？</span>
+                <svg class="faq-icon w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content hidden px-6 pb-5">
+                <p class="text-slate-600 leading-relaxed">5軸の総合スコアに基づきグレードが付与されます。<strong>S（4.5以上）</strong>：卓越、<strong>A（3.5以上）</strong>：優秀、<strong>B（2.5以上）</strong>：標準以上、<strong>C（1.5以上）</strong>：改善余地あり、<strong>D（1.5未満）</strong>：要注意の5段階です。</p>
+            </div>
+        </div>
+
+        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+            <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-slate-50 transition-colors" aria-expanded="false">
+                <span class="text-base font-semibold text-slate-900 pr-4">評価の独立性はどのように担保されていますか？</span>
+                <svg class="faq-icon w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content hidden px-6 pb-5">
+                <p class="text-slate-600 leading-relaxed">Aixisはベンダーから一切の報酬・広告費を受け取りません。評価対象のAIツール提供元との利益相反を完全に排除し、独立した第三者機関として評価を行っています。詳しくは<a href="/independence" class="text-indigo-600 hover:text-indigo-800 underline">独立性宣言ページ</a>をご覧ください。</p>
+            </div>
+        </div>
+
+        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+            <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-slate-50 transition-colors" aria-expanded="false">
+                <span class="text-base font-semibold text-slate-900 pr-4">無料で利用できますか？</span>
+                <svg class="faq-icon w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content hidden px-6 pb-5">
+                <p class="text-slate-600 leading-relaxed">AIツールの監査スコア・グレードの閲覧は完全無料です。すべての公開ツールの評価結果をどなたでもご覧いただけます。法人向けの詳細レポートや独自監査のご依頼は<a href="/pricing" class="text-indigo-600 hover:text-indigo-800 underline">有料プラン</a>をご用意しています。</p>
+            </div>
+        </div>
+
+        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+            <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-slate-50 transition-colors" aria-expanded="false">
+                <span class="text-base font-semibold text-slate-900 pr-4">自社のAIツールを監査してもらえますか？</span>
+                <svg class="faq-icon w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content hidden px-6 pb-5">
+                <p class="text-slate-600 leading-relaxed">はい、法人様向けに個別の監査依頼を承っております。<a href="/contact" class="text-indigo-600 hover:text-indigo-800 underline">お問い合わせページ</a>からご連絡いただければ、ご要望に応じた監査プランをご提案いたします。</p>
+            </div>
+        </div>
+
+        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+            <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-slate-50 transition-colors" aria-expanded="false">
+                <span class="text-base font-semibold text-slate-900 pr-4">評価結果はどのくらいの頻度で更新されますか？</span>
+                <svg class="faq-icon w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content hidden px-6 pb-5">
+                <p class="text-slate-600 leading-relaxed">AIツールのアップデートや市場環境の変化に応じて定期的に再監査を実施しています。スコアにはバージョン情報と公開日が記載されており、常に最新の評価をご確認いただけます。</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CTA -->
+    <div class="mt-12 text-center bg-gradient-to-r from-indigo-50 to-violet-50 rounded-2xl p-8">
+        <h2 class="text-xl font-bold text-slate-900 mb-3">解決しない疑問がありますか？</h2>
+        <p class="text-slate-600 mb-6">お気軽にお問い合わせください。担当者が丁寧にお答えします。</p>
+        <a href="/contact" class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+            お問い合わせ
+            <svg class="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.faq-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var content = this.nextElementSibling;
+        var icon = this.querySelector('.faq-icon');
+        var expanded = this.getAttribute('aria-expanded') === 'true';
+        // Close all others
+        document.querySelectorAll('.faq-toggle').forEach(function(other) {
+            if (other !== btn) {
+                other.setAttribute('aria-expanded', 'false');
+                other.nextElementSibling.classList.add('hidden');
+                other.querySelector('.faq-icon').style.transform = '';
+            }
+        });
+        // Toggle current
+        this.setAttribute('aria-expanded', !expanded);
+        content.classList.toggle('hidden');
+        icon.style.transform = expanded ? '' : 'rotate(180deg)';
+    });
+});
+</script>
+{% endblock %}
