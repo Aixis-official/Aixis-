@@ -37,11 +37,59 @@ def _scheduler_loop():
     """Main loop: check for due schedules at configured interval."""
     from ..config import settings
     interval = settings.scheduler_check_interval_seconds
+    _cleanup_counter = 0
     while not _scheduler_stop.wait(interval):
         try:
             _check_due_schedules()
         except Exception:
             logger.exception("Scheduler check failed")
+
+        # Periodic DB cleanup: run every ~12 cycles (1 hour at 300s interval)
+        _cleanup_counter += 1
+        if _cleanup_counter % 12 == 0:
+            try:
+                _periodic_db_cleanup()
+            except Exception:
+                logger.debug("Periodic cleanup failed", exc_info=True)
+
+
+def _periodic_db_cleanup():
+    """Clean up expired rate limit entries and revoked tokens."""
+    from sqlalchemy import create_engine, text
+    from ..config import settings
+
+    sync_url = settings.database_url.replace(
+        "sqlite+aiosqlite", "sqlite"
+    ).replace("postgresql+asyncpg", "postgresql+psycopg2")
+    engine = create_engine(sync_url, pool_pre_ping=True)
+
+    now = datetime.now(timezone.utc)
+    try:
+        with engine.begin() as conn:
+            # Clean up expired rate limit entries (older than 24h)
+            cutoff = now - timedelta(hours=24)
+            rl_result = conn.execute(
+                text("DELETE FROM rate_limit_entries WHERE created_at < :cutoff"),
+                {"cutoff": cutoff.isoformat()},
+            )
+            rl_count = rl_result.rowcount or 0
+
+            # Clean up expired revoked tokens
+            rt_result = conn.execute(
+                text("DELETE FROM revoked_tokens WHERE expires_at < :now"),
+                {"now": now.isoformat()},
+            )
+            rt_count = rt_result.rowcount or 0
+
+            if rl_count > 0 or rt_count > 0:
+                logger.info(
+                    "Periodic cleanup: deleted %d rate_limit_entries, %d revoked_tokens",
+                    rl_count, rt_count,
+                )
+    except Exception:
+        logger.debug("Periodic DB cleanup tables may not exist yet", exc_info=True)
+    finally:
+        engine.dispose()
 
 
 def _check_due_schedules():

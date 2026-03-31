@@ -101,10 +101,15 @@ async def list_audits(
     tool_id: str | None = None,
     audit_status: str | None = Query(None, alias="status"),
 ):
-    """List audit sessions (analyst+ only). Returns raw dict to avoid serialization errors."""
+    """List audit sessions (analyst+ only). Non-admin users see only their own audits."""
     try:
         query = select(AuditSession).where(AuditSession.deleted_at.is_(None))
         count_query = select(func.count()).select_from(AuditSession).where(AuditSession.deleted_at.is_(None))
+
+        # Row-level authorization: non-admin users see only their own audits
+        if _user.role != "admin":
+            query = query.where(AuditSession.initiated_by == _user.id)
+            count_query = count_query.where(AuditSession.initiated_by == _user.id)
 
         if tool_id:
             query = query.where(AuditSession.tool_id == tool_id)
@@ -218,6 +223,20 @@ async def get_audit(
     """Get audit session detail with test results and scores."""
     import traceback as _tb
     try:
+        # Row-level authorization: non-admin users can only view their own audits
+        if _user.role != "admin":
+            ownership_check = await db.execute(
+                select(AuditSession.id).where(
+                    AuditSession.id == session_id,
+                    AuditSession.initiated_by == _user.id,
+                    AuditSession.deleted_at.is_(None),
+                )
+            )
+            if not ownership_check.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="監査セッションが見つかりません",
+                )
         return await _get_audit_impl(session_id, db)
     except HTTPException:
         raise
