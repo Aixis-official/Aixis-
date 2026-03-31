@@ -210,15 +210,26 @@ async def categories_index(request: Request, user: _OptionalUser = None):
 
 @page_router.get("/tools/{slug}")
 async def tool_detail_page(request: Request, slug: str, user: _OptionalUser = None, db: AsyncSession = Depends(get_db)):
-    """Tool detail page with dynamic SEO meta tags."""
-    from .db.models.tool import Tool
-    result = await db.execute(select(Tool).where(Tool.slug == slug))
+    """Tool detail page with full SSR for SEO (Googlebot sees real content)."""
+    from .db.models.tool import Tool, ToolCategory
+    from sqlalchemy.orm import selectinload
+
+    result = await db.execute(
+        select(Tool)
+        .where(Tool.slug == slug)
+        .options(selectinload(Tool.scores), selectinload(Tool.category))
+    )
     tool = result.scalar_one_or_none()
 
     if tool:
         seo_title = tool.seo_title_jp or f"{tool.name_jp or tool.name} レビュー・評価"
         seo_desc = tool.seo_description_jp or tool.description_jp or f"{tool.name_jp or tool.name}の実務適性・費用対効果・日本語能力・安全性・革新性を独立監査で5軸評価。"
         seo_keywords = tool.seo_keywords_jp or []
+
+        # Build SSR data for visible HTML content (Googlebot can read this)
+        latest_score = tool.scores[0] if tool.scores else None
+        category_name = tool.category.name_jp if tool.category else ""
+
         tool_data = {
             "name": tool.name,
             "name_jp": tool.name_jp,
@@ -228,17 +239,48 @@ async def tool_detail_page(request: Request, slug: str, user: _OptionalUser = No
             "url": tool.url,
             "category_id": tool.category_id,
         }
+
+        # Full SSR context for server-rendered HTML
+        ssr = {
+            "name": tool.name_jp or tool.name,
+            "vendor": tool.vendor or "",
+            "description": tool.description_jp or "",
+            "logo_url": tool.logo_url,
+            "category": category_name,
+            "pricing_model": tool.pricing_model or "",
+            "executive_summary": tool.executive_summary_jp or "",
+            "pros": tool.pros_jp or [],
+            "cons": tool.cons_jp or [],
+            "features": tool.features or [],
+            "url": tool.url or "",
+        }
+        if latest_score:
+            ssr["score"] = {
+                "overall": round(latest_score.overall_score, 1) if latest_score.overall_score else None,
+                "grade": latest_score.overall_grade,
+                "practicality": round(latest_score.practicality, 1) if latest_score.practicality else None,
+                "cost_performance": round(latest_score.cost_performance, 1) if latest_score.cost_performance else None,
+                "localization": round(latest_score.localization, 1) if latest_score.localization else None,
+                "safety": round(latest_score.safety, 1) if latest_score.safety else None,
+                "uniqueness": round(latest_score.uniqueness, 1) if latest_score.uniqueness else None,
+                "version": latest_score.version,
+                "published_at": latest_score.published_at.strftime("%Y年%m月") if latest_score.published_at else "",
+            }
+        else:
+            ssr["score"] = None
     else:
         seo_title = "ツール詳細レビュー・評価"
         seo_desc = "AIツールの詳細レビュー・5軸評価スコア。"
         seo_keywords = []
         tool_data = None
+        ssr = None
 
     ctx = _get_template_context(
         request, user=user, title=seo_title, slug=slug, active_page="tools",
         seo_description=seo_desc,
         seo_keywords=seo_keywords,
         tool_data=tool_data,
+        ssr=ssr,
     )
     return _render("public/tool_detail.html", ctx)
 
@@ -735,9 +777,11 @@ async def sitemap_xml(db: AsyncSession = Depends(get_db)):
             f"<priority>{prio}</priority></url>"
         )
 
-    # Tool detail pages
+    # Tool detail pages (only public + active)
     result = await db.execute(
-        select(Tool.slug, Tool.updated_at).where(Tool.is_active == True)  # noqa: E712
+        select(Tool.slug, Tool.updated_at).where(
+            Tool.is_active == True, Tool.is_public == True  # noqa: E712
+        )
     )
     for slug, updated_at in result.all():
         lastmod = ""
@@ -795,6 +839,16 @@ async def robots_txt():
         f"Sitemap: {SITE_ORIGIN}/sitemap.xml\n"
     )
     return PlainTextResponse(content=content)
+
+
+@page_router.get("/{key}.txt")
+async def indexnow_key_file(key: str):
+    """Serve IndexNow key verification file (any slug used as key returns itself)."""
+    import re
+    if not re.match(r'^[a-z0-9_-]+$', key, re.IGNORECASE) or len(key) > 128:
+        from fastapi import HTTPException
+        raise HTTPException(404)
+    return PlainTextResponse(content=key)
 
 
 @page_router.get("/og/{slug}.svg")

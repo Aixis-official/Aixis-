@@ -242,7 +242,55 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
         import logging
         logging.getLogger(__name__).warning("Failed to emit score.published webhook")
 
+    # Notify search engines about the new/updated tool page (best-effort)
+    try:
+        await _notify_search_engines(tool_id, db)
+    except Exception:
+        logger.warning("Failed to notify search engines for tool %s", tool_id)
+
     return published
+
+
+async def _notify_search_engines(tool_id: str, db: AsyncSession):
+    """Ping Google and IndexNow to request indexing of updated tool page."""
+    import httpx
+
+    tool_result = await db.execute(select(Tool).where(Tool.id == tool_id))
+    tool_obj = tool_result.scalar_one_or_none()
+    if not tool_obj or not tool_obj.slug:
+        return
+
+    page_url = f"https://platform.aixis.jp/tools/{tool_obj.slug}"
+    sitemap_url = "https://platform.aixis.jp/sitemap.xml"
+
+    # Invalidate sitemap cache so the next crawl sees updated data
+    from ..pages import _sitemap_cache
+    _sitemap_cache["xml"] = None
+    _sitemap_cache["ts"] = 0
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        # 1. Google Ping (sitemap ping)
+        try:
+            await client.get(
+                "https://www.google.com/ping",
+                params={"sitemap": sitemap_url},
+            )
+        except Exception:
+            pass
+
+        # 2. IndexNow (Bing, Yandex, etc.)
+        try:
+            await client.post(
+                "https://api.indexnow.org/indexnow",
+                json={
+                    "host": "platform.aixis.jp",
+                    "urlList": [page_url, sitemap_url],
+                    "key": tool_obj.slug,  # Self-hosted key
+                },
+                headers={"Content-Type": "application/json"},
+            )
+        except Exception:
+            pass
 
 
 AXIS_NAMES_JP = {

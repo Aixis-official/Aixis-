@@ -45,8 +45,22 @@
         "@type": "Review",
         "author": {"@type": "Organization", "name": "Aixis"},
         "publisher": {"@type": "Organization", "name": "Aixis", "url": "https://platform.aixis.jp"},
-        "reviewBody": "独立第三者機関による5軸AI監査レポート"
-    }
+        "reviewBody": "独立第三者機関による5軸AI監査レポート"{% if ssr and ssr.score and ssr.score.overall %},
+        "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "{{ ssr.score.overall }}",
+            "bestRating": "5",
+            "worstRating": "0"
+        }{% endif %}
+    }{% if ssr and ssr.score and ssr.score.overall %},
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "{{ ssr.score.overall }}",
+        "bestRating": "5",
+        "worstRating": "0",
+        "ratingCount": "1",
+        "reviewCount": "1"
+    }{% endif %}
 }
 </script>
 <script type="application/ld+json">
@@ -147,6 +161,144 @@
             <a href="/tools" class="btn btn-primary font-jp">データベースに戻る</a>
         </div>
     </div>
+
+    <!-- ============================================================
+         SSR Content: Server-rendered for SEO (visible to Googlebot).
+         Hidden by JS once the interactive version loads.
+         ============================================================ -->
+    {% if ssr %}
+    <article id="ssr-content" class="mb-8">
+        <nav class="mb-5" aria-label="パンくずリスト">
+            <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
+                <li><a href="/" class="hover:text-aixis-500 transition-colors">ホーム</a></li>
+                <li><span class="mx-1 text-gray-300">/</span></li>
+                <li><a href="/tools" class="hover:text-aixis-500 transition-colors">監査データベース</a></li>
+                <li><span class="mx-1 text-gray-300">/</span></li>
+                <li class="text-gray-600 dark:text-gray-300 font-medium">{{ ssr.name }}</li>
+            </ol>
+        </nav>
+
+        <!-- Hero -->
+        <section class="relative overflow-hidden rounded-sm mb-6 bg-gradient-to-br from-aixis-600/90 via-aixis-700/90 to-aixis-800/90 dark:from-aixis-800/80 dark:via-aixis-900/90 dark:to-gray-900">
+            <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.04),transparent_60%)]"></div>
+            <div class="relative flex flex-col md:flex-row items-start md:items-center gap-5 px-7 py-7 md:px-10 md:py-9">
+                <div class="flex-1 text-white flex items-start gap-5">
+                    {% if ssr.logo_url %}
+                    <div class="flex-shrink-0">
+                        <img src="{{ ssr.logo_url }}" class="w-14 h-14 rounded bg-white/10 p-1.5 object-contain" alt="{{ ssr.name }} icon" loading="lazy" />
+                    </div>
+                    {% endif %}
+                    <div class="flex-1 min-w-0">
+                        {% if ssr.category %}
+                        <span class="inline-block px-2.5 py-0.5 rounded text-[10px] font-medium bg-white/10 border border-white/15 font-jp mb-3">{{ ssr.category }}</span>
+                        {% endif %}
+                        <h1 class="text-2xl md:text-3xl font-bold mb-1.5 font-jp tracking-tight">{{ ssr.name }}</h1>
+                        {% if ssr.vendor %}<p class="text-white/55 text-sm mb-2.5 font-jp">{{ ssr.vendor }}</p>{% endif %}
+                        {% if ssr.description %}<p class="text-white/70 text-sm leading-relaxed font-jp max-w-2xl">{{ ssr.description }}</p>{% endif %}
+                    </div>
+                </div>
+                {% if ssr.score %}
+                <div class="flex-shrink-0 text-center md:text-right md:pl-8">
+                    <div class="grade-badge grade-badge-stamp grade-badge-lg grade-{{ ssr.score.grade }} mx-auto md:ml-auto md:mr-0">{{ ssr.score.grade }}</div>
+                    <div class="text-3xl font-bold text-white mt-3 tabular-nums">{{ ssr.score.overall }} / 5.0</div>
+                    <div class="text-white/45 text-xs font-jp mt-0.5">総合スコア</div>
+                </div>
+                {% endif %}
+            </div>
+            {% if ssr.score and ssr.score.published_at %}
+            <div class="relative border-t border-white/10 px-7 md:px-10 py-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-white/50 font-jp">
+                <span>監査実施: {{ ssr.score.published_at }}時点</span>
+                <span>評価バージョン: v{{ ssr.score.version }}</span>
+            </div>
+            {% endif %}
+        </section>
+
+        {% if ssr.executive_summary and user %}
+        <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-3">エグゼクティブサマリー</h2>
+            <p class="text-xs text-gray-600 dark:text-gray-300 font-jp leading-relaxed">{{ ssr.executive_summary }}</p>
+        </section>
+        {% endif %}
+
+        <!-- Tool info -->
+        <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">ツール情報</h2>
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                <div class="flex items-start gap-3">
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">ツール名</dt>
+                    <dd class="text-xs font-semibold text-gray-800 dark:text-gray-200 font-jp">{{ ssr.name }}</dd>
+                </div>
+                {% if ssr.vendor %}
+                <div class="flex items-start gap-3">
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">提供元</dt>
+                    <dd class="text-xs text-gray-600 dark:text-gray-300 font-jp">{{ ssr.vendor }}</dd>
+                </div>
+                {% endif %}
+                {% if ssr.category %}
+                <div class="flex items-start gap-3">
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">カテゴリ</dt>
+                    <dd class="text-xs text-gray-600 dark:text-gray-300 font-jp">{{ ssr.category }}</dd>
+                </div>
+                {% endif %}
+                {% if ssr.pricing_model %}
+                <div class="flex items-start gap-3">
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">料金モデル</dt>
+                    <dd class="text-xs text-gray-600 dark:text-gray-300 font-jp">{{ ssr.pricing_model }}</dd>
+                </div>
+                {% endif %}
+                {% if ssr.url %}
+                <div class="flex items-start gap-3">
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">公式サイト</dt>
+                    <dd class="text-xs"><a href="{{ ssr.url }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">{{ ssr.url }}</a></dd>
+                </div>
+                {% endif %}
+            </dl>
+        </section>
+
+        <!-- 5-axis scores (SSR) -->
+        {% if ssr.score and user %}
+        <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">5軸評価スコア</h2>
+            <div class="space-y-3">
+                {% set axes = [("実務適性", ssr.score.practicality), ("費用対効果", ssr.score.cost_performance), ("日本語能力", ssr.score.localization), ("信頼性・安全性", ssr.score.safety), ("革新性", ssr.score.uniqueness)] %}
+                {% for label, val in axes %}
+                {% if val is not none %}
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-500 font-jp w-24 shrink-0">{{ label }}</span>
+                    <div class="flex-1 h-2 bg-gray-100 dark:bg-aixis-700/50 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full {% if val >= 4.0 %}bg-green-500{% elif val >= 3.0 %}bg-blue-500{% elif val >= 2.0 %}bg-yellow-500{% else %}bg-red-500{% endif %}" style="width:{{ (val / 5 * 100) | round(1) }}%"></div>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700 dark:text-gray-200 w-8 text-right tabular-nums">{{ val }}</span>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Pros/Cons (SSR) -->
+        {% if ssr.pros or ssr.cons %}
+        <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6">
+            {% if ssr.pros %}
+            <h3 class="text-xs font-semibold text-emerald-600 font-jp mb-2">メリット</h3>
+            <ul class="space-y-1 mb-4">
+                {% for p in ssr.pros[:5] %}
+                <li class="text-xs text-gray-600 dark:text-gray-300 font-jp flex items-start gap-1.5"><span class="text-emerald-500 shrink-0">+</span>{{ p }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% if ssr.cons %}
+            <h3 class="text-xs font-semibold text-red-500 font-jp mb-2">デメリット</h3>
+            <ul class="space-y-1">
+                {% for c in ssr.cons[:5] %}
+                <li class="text-xs text-gray-600 dark:text-gray-300 font-jp flex items-start gap-1.5"><span class="text-red-400 shrink-0">-</span>{{ c }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </section>
+        {% endif %}
+    </article>
+    {% endif %}
 
     <!-- Main content (hidden until data loads) -->
     <div id="tool-detail-content" class="hidden">
@@ -657,6 +809,9 @@
     function showMain() {
         loadingEl.classList.add('hidden');
         errorEl.classList.add('hidden');
+        // Hide SSR content (replaced by interactive JS version)
+        var ssrEl = document.getElementById('ssr-content');
+        if (ssrEl) ssrEl.classList.add('hidden');
         mainEl.classList.remove('hidden');
     }
 
