@@ -383,65 +383,203 @@
                 </div>
             </div>
 
-            <!-- Right: Mock Audit Cards -->
-            <div class="hidden lg:block relative flex-shrink-0" style="width: 420px; height: 320px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.3));">
-                <!-- Card 2 (Back) -->
-                <div style="position: absolute; top: -8px; left: 16px; width: 360px; height: 240px; transform: perspective(800px) rotateY(-12deg) rotateX(3deg); opacity: 0.6; filter: blur(1.5px);"
-                     class="bg-white/95 border border-[#E2E8F0] rounded-sm overflow-hidden">
-                    <div class="p-5">
-                        <span class="text-[10px] font-mono tracking-wider text-gray-400">AI-TOOL-002</span>
-                        <div class="mt-4 flex items-center justify-center" style="height: 130px;">
-                            <svg viewBox="0 0 200 200" width="140" height="140">
-                                <polygon points="100,25 175,72 155,155 45,155 25,72" fill="none" stroke="#E2E8F0" stroke-width="1"/>
-                                <polygon points="100,50 155,82 142,140 58,140 45,82" fill="none" stroke="#E2E8F0" stroke-width="0.5"/>
-                                <polygon points="100,75 135,92 128,125 72,125 65,92" fill="none" stroke="#E2E8F0" stroke-width="0.5"/>
-                                <polygon points="100,40 160,75 145,148 55,148 40,75" fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.3)" stroke-width="1.5"/>
-                            </svg>
+            <!-- Right: Mock Audit Report Card -->
+            <div class="hidden lg:block relative flex-shrink-0" style="width: 440px; height: 380px;">
+                <style>
+                    .hero-mock-card {
+                        transform: perspective(1200px) rotateY(-14deg) rotateX(4deg);
+                        transform-style: preserve-3d;
+                        transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+                    }
+                    .hero-mock-card:hover {
+                        transform: perspective(1200px) rotateY(-8deg) rotateX(2deg);
+                    }
+                    .hero-mock-back {
+                        transform: perspective(1200px) rotateY(-14deg) rotateX(4deg) translateZ(-20px);
+                    }
+                    @keyframes hero-radar-draw {
+                        from { stroke-dashoffset: 600; }
+                        to { stroke-dashoffset: 0; }
+                    }
+                    @keyframes hero-radar-fill {
+                        from { opacity: 0; }
+                        to { opacity: 0.15; }
+                    }
+                    @keyframes hero-dot-appear {
+                        from { r: 0; opacity: 0; }
+                        to { r: 3.5; opacity: 1; }
+                    }
+                    @keyframes hero-bar-fill {
+                        from { width: 0; }
+                    }
+                    @keyframes hero-score-up {
+                        from { opacity: 0; transform: translateY(6px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    .hero-radar-data {
+                        stroke-dasharray: 600;
+                        stroke-dashoffset: 600;
+                        animation: hero-radar-draw 1.8s ease-out 0.5s forwards;
+                    }
+                    .hero-radar-fill {
+                        opacity: 0;
+                        animation: hero-radar-fill 0.8s ease-out 1.6s forwards;
+                    }
+                    .hero-dot { r: 0; opacity: 0; }
+                    .hero-dot-1 { animation: hero-dot-appear 0.3s ease-out 1.2s forwards; }
+                    .hero-dot-2 { animation: hero-dot-appear 0.3s ease-out 1.35s forwards; }
+                    .hero-dot-3 { animation: hero-dot-appear 0.3s ease-out 1.5s forwards; }
+                    .hero-dot-4 { animation: hero-dot-appear 0.3s ease-out 1.65s forwards; }
+                    .hero-dot-5 { animation: hero-dot-appear 0.3s ease-out 1.8s forwards; }
+                    .hero-bar-1 { animation: hero-bar-fill 0.6s ease-out 0.8s both; }
+                    .hero-bar-2 { animation: hero-bar-fill 0.6s ease-out 0.95s both; }
+                    .hero-bar-3 { animation: hero-bar-fill 0.6s ease-out 1.1s both; }
+                    .hero-bar-4 { animation: hero-bar-fill 0.6s ease-out 1.25s both; }
+                    .hero-bar-5 { animation: hero-bar-fill 0.6s ease-out 1.4s both; }
+                    .hero-score-anim { animation: hero-score-up 0.5s ease-out 0.6s both; }
+                    .hero-glow {
+                        filter: drop-shadow(0 0 12px rgba(99,102,241,0.2));
+                    }
+                </style>
+
+                <!-- Card Shadow (Back) -->
+                <div class="hero-mock-back absolute rounded-sm overflow-hidden"
+                     style="top: 6px; left: 20px; width: 390px; height: 340px; opacity: 0.35; filter: blur(2px);">
+                    <div class="w-full h-full bg-white/90 border border-gray-300/50"></div>
+                </div>
+
+                <!-- Main Card (Front) -->
+                <div class="hero-mock-card absolute rounded-sm overflow-hidden"
+                     style="top: 0; left: 0; width: 390px; height: 340px; box-shadow: 0 25px 60px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.2);">
+                    <!-- Mini Hero Header (gradient matching DB detail) -->
+                    <div class="relative overflow-hidden" style="background: linear-gradient(135deg, #2d3555 0%, #1e293b 50%, #111827 100%); height: 72px;">
+                        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(255,255,255,0.04),transparent 60%)"></div>
+                        <div class="relative flex items-center gap-3 px-5 py-3.5">
+                            <div class="w-9 h-9 rounded bg-white/10 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-white/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <span class="inline-block px-1.5 py-0.5 rounded text-[7px] font-medium bg-white/10 border border-white/15 text-white/60 mb-1">AI文書作成</span>
+                                <div class="text-[13px] font-bold text-white tracking-tight leading-tight" style="font-family:'Noto Sans JP',sans-serif">Sample AI Tool</div>
+                                <div class="text-[9px] text-white/40" style="font-family:'Noto Sans JP',sans-serif">Sample Inc.</div>
+                            </div>
+                            <div class="text-right flex-shrink-0 pl-3">
+                                <div class="w-8 h-8 rounded flex items-center justify-center text-[13px] font-black text-white" style="background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 2px 8px rgba(34,197,94,0.3);">A</div>
+                                <div class="text-[15px] font-bold text-white mt-1 tabular-nums hero-score-anim">4.2</div>
+                                <div class="text-[7px] text-white/35">/ 5.0</div>
+                            </div>
                         </div>
-                        <div class="mt-2 flex items-center justify-between">
-                            <span class="text-[10px] text-gray-400 font-sans">総合グレード</span>
-                            <span class="text-[11px] font-bold text-gray-400 font-sans px-2 py-0.5 bg-gray-100 rounded-sm">B+</span>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="bg-white" style="height: 268px;">
+                        <div class="flex" style="height: 100%;">
+                            <!-- Left: Radar Chart -->
+                            <div class="flex-1 flex items-center justify-center px-2 pt-1" style="min-width: 0;">
+                                <svg viewBox="-10 -10 220 220" width="180" height="180" class="hero-glow">
+                                    <!-- Grid pentagons -->
+                                    <polygon points="100,10 185.5,62 153.1,172 46.9,172 14.5,62" fill="none" stroke="#E8ECF2" stroke-width="0.8"/>
+                                    <polygon points="100,28 171.1,68.4 138.5,156.4 61.5,156.4 28.9,68.4" fill="none" stroke="#F0F3F7" stroke-width="0.5"/>
+                                    <polygon points="100,46 156.6,74.8 123.8,140.8 76.2,140.8 43.4,74.8" fill="none" stroke="#F4F6F9" stroke-width="0.5"/>
+                                    <polygon points="100,64 142.2,81.2 109.2,125.2 90.8,125.2 57.8,81.2" fill="none" stroke="#F7F9FB" stroke-width="0.5"/>
+                                    <!-- Axis lines -->
+                                    <line x1="100" y1="100" x2="100" y2="10" stroke="#E8ECF2" stroke-width="0.5"/>
+                                    <line x1="100" y1="100" x2="185.5" y2="62" stroke="#E8ECF2" stroke-width="0.5"/>
+                                    <line x1="100" y1="100" x2="153.1" y2="172" stroke="#E8ECF2" stroke-width="0.5"/>
+                                    <line x1="100" y1="100" x2="46.9" y2="172" stroke="#E8ECF2" stroke-width="0.5"/>
+                                    <line x1="100" y1="100" x2="14.5" y2="62" stroke="#E8ECF2" stroke-width="0.5"/>
+                                    <!-- Data fill -->
+                                    <polygon points="100,18 178,65 140,165 58,158 28,68"
+                                             fill="rgba(99,102,241,0.15)" class="hero-radar-fill"/>
+                                    <!-- Data stroke -->
+                                    <polygon points="100,18 178,65 140,165 58,158 28,68"
+                                             fill="none" stroke="rgba(99,102,241,0.7)" stroke-width="1.8"
+                                             stroke-linejoin="round" class="hero-radar-data"/>
+                                    <!-- Data dots with glow -->
+                                    <circle cx="100" cy="18" fill="#6366F1" class="hero-dot hero-dot-1"><animate attributeName="r" values="3.5;4.5;3.5" dur="3s" repeatCount="indefinite" begin="2.5s"/></circle>
+                                    <circle cx="178" cy="65" fill="#6366F1" class="hero-dot hero-dot-2"/>
+                                    <circle cx="140" cy="165" fill="#6366F1" class="hero-dot hero-dot-3"/>
+                                    <circle cx="58" cy="158" fill="#6366F1" class="hero-dot hero-dot-4"/>
+                                    <circle cx="28" cy="68" fill="#6366F1" class="hero-dot hero-dot-5"/>
+                                    <!-- Dot glow rings -->
+                                    <circle cx="100" cy="18" r="7" fill="none" stroke="rgba(99,102,241,0.2)" stroke-width="1" class="hero-dot hero-dot-1"/>
+                                    <!-- Axis labels -->
+                                    <text x="100" y="2" text-anchor="middle" fill="#64748B" font-size="8" font-family="'Noto Sans JP',sans-serif" font-weight="500">実務適性</text>
+                                    <text x="195" y="64" text-anchor="start" fill="#64748B" font-size="7.5" font-family="'Noto Sans JP',sans-serif">信頼性</text>
+                                    <text x="158" y="184" text-anchor="start" fill="#64748B" font-size="7.5" font-family="'Noto Sans JP',sans-serif">革新性</text>
+                                    <text x="42" y="184" text-anchor="end" fill="#64748B" font-size="7.5" font-family="'Noto Sans JP',sans-serif">日本語</text>
+                                    <text x="5" y="64" text-anchor="end" fill="#64748B" font-size="7.5" font-family="'Noto Sans JP',sans-serif">費用対効果</text>
+                                </svg>
+                            </div>
+
+                            <!-- Right: Score Bars + Info -->
+                            <div class="flex-shrink-0 pr-5 pt-4 pb-4 flex flex-col justify-between" style="width: 160px;">
+                                <!-- 5-Axis Score Bars -->
+                                <div class="space-y-2.5">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-0.5">
+                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Sans JP',sans-serif">実務適性</span>
+                                            <span class="text-[9px] font-bold text-gray-700 tabular-nums hero-score-anim">4.5</span>
+                                        </div>
+                                        <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full hero-bar-1" style="width:90%;background:linear-gradient(90deg,#22c55e,#16a34a)"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-0.5">
+                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Sans JP',sans-serif">費用対効果</span>
+                                            <span class="text-[9px] font-bold text-gray-700 tabular-nums hero-score-anim">4.0</span>
+                                        </div>
+                                        <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full hero-bar-2" style="width:80%;background:linear-gradient(90deg,#3b82f6,#2563eb)"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-0.5">
+                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Sans JP',sans-serif">日本語能力</span>
+                                            <span class="text-[9px] font-bold text-gray-700 tabular-nums hero-score-anim">4.3</span>
+                                        </div>
+                                        <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full hero-bar-3" style="width:86%;background:linear-gradient(90deg,#22c55e,#16a34a)"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-0.5">
+                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Sans JP',sans-serif">信頼性</span>
+                                            <span class="text-[9px] font-bold text-gray-700 tabular-nums hero-score-anim">4.1</span>
+                                        </div>
+                                        <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full hero-bar-4" style="width:82%;background:linear-gradient(90deg,#3b82f6,#2563eb)"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-0.5">
+                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Sans JP',sans-serif">革新性</span>
+                                            <span class="text-[9px] font-bold text-gray-700 tabular-nums hero-score-anim">4.2</span>
+                                        </div>
+                                        <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full hero-bar-5" style="width:84%;background:linear-gradient(90deg,#3b82f6,#2563eb)"></div></div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom: Compliance badges -->
+                                <div class="mt-3 pt-3 border-t border-gray-100">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[7px] font-medium bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                            <svg class="w-2 h-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                            APPI準拠
+                                        </span>
+                                        <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[7px] font-medium bg-blue-50 text-blue-600 border border-blue-100">
+                                            <svg class="w-2 h-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                            ISO27001
+                                        </span>
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[7px] font-medium bg-gray-50 text-gray-500 border border-gray-200">
+                                            国内保管
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <!-- Card 1 (Front) -->
-                <div style="position: absolute; top: 0; left: 0; width: 360px; height: 240px; transform: perspective(800px) rotateY(-12deg) rotateX(3deg);"
-                     class="bg-white border border-[#E2E8F0] rounded-sm">
-                    <div class="p-5">
-                        <span class="text-[10px] font-mono tracking-wider text-gray-400">AI-TOOL-001</span>
-                        <div class="mt-4 flex items-center justify-center" style="height: 130px;">
-                            <svg viewBox="-75 5 350 180" width="200" height="145" overflow="visible">
-                                <!-- Grid lines -->
-                                <polygon points="100,25 175,72 155,155 45,155 25,72" fill="none" stroke="#E2E8F0" stroke-width="1"/>
-                                <polygon points="100,50 155,82 142,140 58,140 45,82" fill="none" stroke="#E2E8F0" stroke-width="0.5"/>
-                                <polygon points="100,75 135,92 128,125 72,125 65,92" fill="none" stroke="#E2E8F0" stroke-width="0.5"/>
-                                <!-- Axes -->
-                                <line x1="100" y1="100" x2="100" y2="25" stroke="#E2E8F0" stroke-width="0.5"/>
-                                <line x1="100" y1="100" x2="175" y2="72" stroke="#E2E8F0" stroke-width="0.5"/>
-                                <line x1="100" y1="100" x2="155" y2="155" stroke="#E2E8F0" stroke-width="0.5"/>
-                                <line x1="100" y1="100" x2="45" y2="155" stroke="#E2E8F0" stroke-width="0.5"/>
-                                <line x1="100" y1="100" x2="25" y2="72" stroke="#E2E8F0" stroke-width="0.5"/>
-                                <!-- Data polygon -->
-                                <polygon points="100,35 165,68 148,148 52,148 35,68" fill="rgba(59,130,246,0.1)" stroke="rgba(59,130,246,0.6)" stroke-width="1.5"/>
-                                <!-- Data points -->
-                                <circle cx="100" cy="35" r="3" fill="#3B82F6"/>
-                                <circle cx="165" cy="68" r="3" fill="#3B82F6"/>
-                                <circle cx="148" cy="148" r="3" fill="#3B82F6"/>
-                                <circle cx="52" cy="148" r="3" fill="#3B82F6"/>
-                                <circle cx="35" cy="68" r="3" fill="#3B82F6"/>
-                                <!-- Labels -->
-                                <text x="100" y="16" text-anchor="middle" fill="#64748B" font-size="9" font-family="'Noto Sans JP', sans-serif">実務適性</text>
-                                <text x="184" y="66" text-anchor="start" fill="#64748B" font-size="8" font-family="'Noto Sans JP', sans-serif">信頼性・</text>
-                                <text x="184" y="77" text-anchor="start" fill="#64748B" font-size="8" font-family="'Noto Sans JP', sans-serif">安全性</text>
-                                <text x="162" y="170" text-anchor="start" fill="#64748B" font-size="9" font-family="'Noto Sans JP', sans-serif">革新性</text>
-                                <text x="36" y="170" text-anchor="end" fill="#64748B" font-size="8" font-family="'Noto Sans JP', sans-serif">日本語能力</text>
-                                <text x="16" y="70" text-anchor="end" fill="#64748B" font-size="8" font-family="'Noto Sans JP', sans-serif">費用対効果</text>
-                            </svg>
-                        </div>
-                        <div class="mt-2 flex items-center justify-between">
-                            <span class="text-[10px] text-gray-500 font-sans">総合グレード</span>
-                            <span class="text-[11px] font-bold text-blue-600 font-sans px-2 py-0.5 bg-blue-50 rounded-sm">A</span>
-                        </div>
+
+                <!-- Floating micro-badge (glassmorphism) -->
+                <div class="absolute hero-score-anim" style="bottom: 12px; left: -20px; z-index: 10; transform: perspective(800px) rotateY(-8deg);">
+                    <div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/10 text-[10px]"
+                         style="background: rgba(255,255,255,0.08); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="text-white/70 font-medium" style="font-family:'Noto Sans JP',sans-serif">独立第三者監査済み</span>
                     </div>
                 </div>
             </div>
