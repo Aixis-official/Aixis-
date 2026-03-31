@@ -69,7 +69,7 @@ class ToolPublishedScore(Base):
     uniqueness = Column(Float, default=0.0)
     overall_score = Column(Float, default=0.0)
     overall_grade = Column(String(2))  # S|A|B|C|D|F
-    source_session_id = Column(String(36), ForeignKey("audit_sessions.id"))
+    source_session_id = Column(String(36), ForeignKey("audit_sessions.id", ondelete="SET NULL"))
     version = Column(Integer, default=1)
     published_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     published_by = Column(String(36), ForeignKey("users.id"))
@@ -91,7 +91,7 @@ class ScoreHistory(Base):
     overall_score = Column(Float, nullable=True)
     overall_grade = Column(String(2), nullable=True)
     recorded_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    source_session_id = Column(String(36), ForeignKey("audit_sessions.id"))
+    source_session_id = Column(String(36), ForeignKey("audit_sessions.id", ondelete="SET NULL"))
 
     __table_args__ = (
         Index("ix_score_history_tool_recorded", "tool_id", "recorded_at"),

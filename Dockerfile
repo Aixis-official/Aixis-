@@ -23,17 +23,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy all source first (needed for hatch build)
 COPY . .
 
-# Force-bust cache on every build
-ARG CACHEBUST=1
-
 # Force install compatible Jinja2 first, then install the rest
 RUN pip install --no-cache-dir --force-reinstall "jinja2>=3.1,<3.2" && pip install --no-cache-dir .
 
-# NOTE: Use PostgreSQL in production (Railway addon).
-# SQLite data is LOST on every deploy because containers are ephemeral.
-RUN mkdir -p /data/backups /data/output /data/screenshots /data/uploads
+# Create data directories and non-root user
+RUN mkdir -p /data/backups /data/output /data/screenshots /data/uploads \
+    && useradd -r -m -u 1000 appuser \
+    && chown -R appuser:appuser /data /app
 
 ENV PYTHONPATH=/app/src
 
 EXPOSE 8000
+
+# Run as non-root user for security hardening
+USER appuser
 CMD uvicorn aixis_web.app:app --host 0.0.0.0 --port ${PORT:-8000}

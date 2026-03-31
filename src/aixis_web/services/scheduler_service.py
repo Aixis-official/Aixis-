@@ -137,8 +137,8 @@ def _calculate_next_run(
         # Weekly pattern: "M H * * D" (D = 0-6, 0=Sun)
         if dom == "*" and month == "*" and dow != "*":
             cron_dow = int(dow.split("-")[0].split(",")[0])  # take first value
-            # Convert cron dow (0=Sun) to Python weekday (0=Mon)
-            target_dow = (cron_dow - 1) % 7
+            # Convert cron dow (0=Sun, 6=Sat) to Python weekday (0=Mon, 6=Sun)
+            target_dow = (cron_dow + 6) % 7  # Sun(0)->6, Mon(1)->0, Sat(6)->5
             target_hour = int(hour) if hour != "*" else 0
             target_minute = int(minute) if minute != "*" else 0
             days_ahead = target_dow - from_time.weekday()

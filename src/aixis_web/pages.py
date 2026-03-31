@@ -808,8 +808,21 @@ async def og_image(slug: str, db: AsyncSession = Depends(get_db)):
     if not tool:
         return Response(status_code=404)
 
-    tool_name = html_escape(tool.name_jp or tool.name)
-    vendor = html_escape(tool.vendor or "")
+    # Sanitize for SVG/XML context: escape XML special chars AND strip any
+    # SVG injection vectors (event handlers, scripts, CDATA).
+    import re as _re
+    def _svg_safe(text: str, max_len: int = 40) -> str:
+        """Escape text for safe inclusion in SVG <text> elements."""
+        safe = html_escape(text or "")
+        # Strip any remaining XML/SVG injection patterns
+        safe = _re.sub(r'<[^>]*>', '', safe)
+        safe = _re.sub(r'on\w+\s*=', '', safe, flags=_re.IGNORECASE)
+        if len(safe) > max_len:
+            safe = safe[:max_len - 1] + "…"
+        return safe
+
+    tool_name = _svg_safe(tool.name_jp or tool.name, max_len=20)
+    vendor = _svg_safe(tool.vendor or "", max_len=30)
 
     # Get overall score if available
     score_result = await db.execute(
@@ -819,11 +832,8 @@ async def og_image(slug: str, db: AsyncSession = Depends(get_db)):
         )
     )
     score_row = score_result.first()
-    overall_score = f"{score_row[0]:.1f}" if score_row else "—"
-
-    # Truncate long names
-    if len(tool_name) > 20:
-        tool_name = tool_name[:19] + "…"
+    # Score is numeric — format safely (no user input)
+    overall_score = f"{float(score_row[0]):.1f}" if score_row and score_row[0] is not None else "—"
 
     svg = f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">

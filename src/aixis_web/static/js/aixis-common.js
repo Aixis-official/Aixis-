@@ -217,7 +217,7 @@ function getCSRFToken() {
 if (typeof htmx !== 'undefined') {
   document.addEventListener('DOMContentLoaded', function() {
     document.body.addEventListener('htmx:configRequest', function(evt) {
-      if (evt.detail.verb !== 'get') {
+      if (evt.detail && evt.detail.headers && evt.detail.verb !== 'get') {
         evt.detail.headers['X-CSRF-Token'] = getCSRFToken();
       }
     });

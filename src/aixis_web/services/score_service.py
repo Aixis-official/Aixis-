@@ -34,10 +34,14 @@ async def get_auto_scores(db: AsyncSession, session_id: str) -> tuple[dict[str, 
     The LLM scorer stores scores with source='llm' or 'hybrid', while the
     legacy agent scorer uses source='auto'. The manual editor uses 'manual_edit'.
     """
+    # Filter out scores from soft-deleted sessions to prevent orphaned data
     result = await db.execute(
-        select(AxisScoreRecord).where(
+        select(AxisScoreRecord)
+        .join(AuditSession, AxisScoreRecord.session_id == AuditSession.id)
+        .where(
             AxisScoreRecord.session_id == session_id,
             AxisScoreRecord.source.in_(["auto", "llm", "hybrid", "manual_edit", "manual"]),
+            AuditSession.deleted_at.is_(None),
         )
     )
     scores = {}

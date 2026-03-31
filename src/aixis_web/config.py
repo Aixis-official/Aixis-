@@ -153,10 +153,11 @@ def validate_settings():
         )
 
     if settings.admin_password == _DEFAULT_ADMIN_PW and not settings.debug:
-        logger.warning(
-            "SECURITY: admin_password is set to the default value. "
+        logger.critical(
+            "SECURITY: admin_password is set to the default value! "
             "Set ADMIN_PASSWORD environment variable to a secure password."
         )
+        warnings.append("Default admin password in production")
 
     if "sqlite" in settings.database_url and not settings.debug:
         logger.critical(
