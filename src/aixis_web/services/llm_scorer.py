@@ -806,7 +806,7 @@ class LLMScorer:
                     "confidence": 0.0,
                     "details": [],
                     "strengths": [],
-                    "risks": [f"スコアリングエラー: {str(e)[:200]}"],
+                    "risks": ["この評価軸のスコアを算出できませんでした。再評価が必要です。"],
                 }
                 all_scores.append(error_score)
                 # Write error score to DB — use DO UPDATE so error is always visible
@@ -835,7 +835,7 @@ class LLMScorer:
                         "score": 0.0, "conf": 0.0, "source": "error",
                         "details": json.dumps(error_details, ensure_ascii=False),
                         "strengths": "[]",
-                        "risks": json.dumps([f"スコアリングエラー: {str(e)[:200]}"], ensure_ascii=False),
+                        "risks": json.dumps(["この評価軸のスコアを算出できませんでした。再評価が必要です。"], ensure_ascii=False),
                     })
                 except Exception:
                     logger.warning("Failed to write error score for %s/%s", session_id, axis)
@@ -928,7 +928,7 @@ class LLMScorer:
                         old_score = s["score"]
                         s["score"] = cap
                         s["risks"] = s.get("risks", []) + [
-                            f"日本語出力不能によるクロス軸ペナルティ適用: {old_score:.1f} → {cap:.1f}"
+                            f"日本語でのスライド生成に対応していないため、評価が制限されています（ {old_score:.1f} → {cap:.1f}"
                         ]
                         logger.info(
                             "Cross-axis cap applied: %s %.1f → %.1f (language_output=%.1f)",
@@ -957,7 +957,7 @@ class LLMScorer:
                         old_score = s["score"]
                         s["score"] = cap
                         s["risks"] = s.get("risks", []) + [
-                            f"日本語出力不足によるクロス軸ペナルティ適用: {old_score:.1f} → {cap:.1f}"
+                            f"日本語出力が不十分なため、評価が制限されています（ {old_score:.1f} → {cap:.1f}"
                         ]
                         s["auto_score"] = cap
                         await self._update_axis_score_and_details(
@@ -1320,13 +1320,13 @@ class LLMScorer:
                         "rule_name_jp": c["name_jp"],
                         "score": 0.0,
                         "weight": c["weight"],
-                        "evidence": "スクリーンショットファイルがディスク上に存在しないため評価不可",
+                        "evidence": "評価に必要なデータが不足しているため評価不可",
                         "severity": "critical",
                     }
                     for c in rubric.get("criteria", [])
                 ],
                 "strengths": [],
-                "risks": ["スクリーンショットが全てディスクから読み込めませんでした。監査の再実行が必要です。"],
+                "risks": ["この評価軸のスコアを算出できませんでした。再評価が必要です。"],
                 "language_detected": None,
             }
 
@@ -1600,35 +1600,53 @@ class LLMScorer:
         # Build observations text (limit to avoid token overflow)
         obs_entries = []
         for i, obs in enumerate(observations[:50]):  # Cap at 50
-            entry = f"--- 観察 {i+1} ---\n"
-            entry += f"カテゴリ: {obs['category']}\n"
+            entry = f"--- テスト {i+1} ---\n"
             prompt_text_preview = obs['prompt'][:500] if obs['prompt'] else '(プロンプトなし)'
             screenshots = obs.get("screenshots", [])
             rt_ms = obs.get('response_time_ms', 0) or 0
             if rt_ms > 0:
                 rt_sec = rt_ms / 1000.0
-                entry += f"テスト「{prompt_text_preview}」— 応答時間: {rt_sec:.1f}秒, スクリーンショット{len(screenshots)}枚\n"
+                entry += f"指示内容「{prompt_text_preview}」— 応答時間: {rt_sec:.1f}秒\n"
             else:
-                entry += f"テスト「{prompt_text_preview}」— 応答時間: 未計測, スクリーンショット{len(screenshots)}枚\n"
+                entry += f"指示内容「{prompt_text_preview}」\n"
             if screenshots:
-                entry += f"（上記の画像を参照してスライド品質を評価してください）\n"
+                entry += f"（添付画像を参照して出力品質を評価してください）\n"
             if obs['error']:
-                entry += f"エラー: {obs['error']}\n"
+                entry += f"ツール側エラー: {obs['error']}\n"
             if obs['expected_behaviors']:
                 entry += f"期待される動作: {', '.join(obs['expected_behaviors'][:5])}\n"
             obs_entries.append(entry)
 
         observations_text = "\n".join(obs_entries)
 
-        effective_planned = total_planned if total_planned else len(observations)
-        completion_rate = len(observations) / max(effective_planned, 1) * 100
-
         return f"""あなたは日本企業向けAIツール品質評価の厳格な専門監査員です。
 消費者保護の観点から、厳密かつ公正な評価を行ってください。
 
-## 採点哲学（最重要）
+## 最重要ルール: レポートは一般消費者向けです
+あなたの出力は、AIツールの購入を検討している一般企業ユーザーが直接読むレポートです。
+以下の表現は**絶対に禁止**です:
+- 「バッチ」「テスト完遂率」「テスト数」「観察N件」等の監査プロセスの内部用語
+- 「スクリーンショットN枚」「エビデンス」等の監査方法への言及
+- 「スコアリング」「API」「トークン」等のシステム用語
+- 「評価不十分」「データ不足」等の監査プロセスの問題に関する言及
+
+代わりに、**ツールそのものの品質・機能・性能**について、具体的な事実に基づいて記述してください。
+例: ×「バッチ2でテストした結果」→ ○「複数の指示パターンで検証した結果」
+例: ×「テスト完遂率27.8%で低い」→ ○「複雑な業務要件への対応力に課題がある」
+例: ×「スクリーンショットから確認」→ ○「実際の出力を確認したところ」
+
+## 「強み」と「注意点」の分類ルール
+- **strengths（強み）**: ツールの明確な長所のみ。ポジティブな内容だけを書いてください。
+  - ○「日本語プロンプトに対して自然な日本語スライドを生成できる」
+  - ×「セキュリティ面で注意が必要」（これは注意点であり強みではない）
+  - ×「データ取扱いポリシーの確認を推奨」（これは注意点であり強みではない）
+- **risks（注意点）**: ツールの具体的な課題や制限事項。
+  - ○「敬語と体言止めが混在し、フォーマルな文書での一貫性に欠ける」
+  - ×「スコアリングエラー: コスト上限に到達」（これはシステムの問題でありツールの問題ではない）
+
+## 採点哲学
 1. **懐疑的スタンス**: デフォルトのスコアは2.5（普通）です。それより上のスコアには肯定的証拠が、下のスコアには否定的証拠が必要です。
-2. **証拠主義**: スクリーンショットから直接確認できる事実のみを根拠としてください。推測や好意的解釈は禁止です。
+2. **証拠主義**: 実際の出力から直接確認できる事実のみを根拠としてください。推測や好意的解釈は禁止です。
 3. **日本語出力は必須要件**: このプラットフォームは日本のユーザー向けです。日本語でプロンプトを入力したのに英語のスライドが出力された場合、それは致命的な欠陥です。
 4. **スコアの意味を厳守**:
    - 5.0 = 完璧（改善点なし。極めて稀）
@@ -1640,46 +1658,35 @@ class LLMScorer:
 
 ## 致命的欠陥の検出ルール（最優先）
 以下に該当する場合、スコアに強制的な上限が適用されます:
-- **英語出力問題**: スクリーンショットのスライドが主に英語で書かれている場合:
+- **英語出力問題**: スライドが主に英語で書かれている場合:
   → localization（日本語能力）軸: 上限 1.5
   → practicality（実務適性）軸: 上限 2.0
   → cost_performance（費用対効果）軸: 上限 2.5
-  → 全軸の総合スコア: 上限 2.5
 - **完全英語出力**: スライドに日本語が一切含まれない場合:
   → localization 軸: 上限 0.5
   → 他の全軸: 上限 2.0
 
 ## 評価の前提
-このシステムは以下の手順で監査データを収集しています:
-1. 人間のテスターがChrome拡張機能を使い、スライド作成AIツールをテストします
-2. 各テストで、テスターは**日本語の**プロンプトをAIツールに入力し、生成されたスライドのスクリーンショットを撮影します
-3. タイマーが応答時間を計測します（response_time_ms として記録）
-4. スクリーンショットが唯一の出力証拠です — テキスト応答データは存在しません
+このツールは、日本語のプロンプトを入力してスライドを生成するAIツールです。
+添付されたスクリーンショットは、日本語で様々な指示を与えた際の実際の出力結果です。
 
-あなたの役割は、添付されたスクリーンショット画像を視覚的に分析し、
+あなたの役割は、実際の出力結果を視覚的に分析し、
 「{rubric['name_jp']}」（{axis}）軸のスコアを算出することです。
 
 ## 評価の原則
-- スクリーンショット画像を主要な評価根拠としてください（テキスト応答は存在しません）
-- **まずスクリーンショット内のテキストが日本語か英語かを確認してください。これが全軸に影響します。**
+- 添付画像を主要な評価根拠としてください
+- **まず出力テキストが日本語か英語かを確認してください。これが全軸に影響します。**
 - スライドのレイアウト、デザイン、コンテンツの質、日本語テキストの品質を画像から直接評価してください
-- テキスト応答がないことを減点理由にしないでください（そもそもテキスト応答は収集していません）
 - 応答時間データ（response_time_ms）が各テストに記録されています。0ms/未計測の場合は応答速度評価をスキップしてください
 - **「デザインが綺麗」「レイアウトが良い」だけでは高スコアの根拠になりません。内容の品質と日本語対応を重視してください。**
 
 ## 応答時間の評価基準
-応答時間データが提供されている場合、以下の基準で応答速度を評価してください:
 - 10秒以内: 優秀 (5.0)
 - 30秒以内: 良好 (4.0)
 - 60秒以内: 許容範囲 (3.0)
 - 120秒以内: やや遅い (2.0)
 - 120秒超: 遅い (1.0)
 - 未計測(0ms): この項目はスキップし、他の項目のみで評価
-
-## テストの完遂率
-- 完遂率: {completion_rate:.0f}%（{len(observations)}件/{total_planned}件）
-- 未実施のテストが多い場合、confidenceを低く設定してください（完遂率に比例）
-- テスト完遂率が低い場合（30%未満）、確信度を大幅に下げ、スコアには「評価不十分」と注記してください
 
 ## 軸の定義
 {rubric['description']}
@@ -1698,10 +1705,10 @@ class LLMScorer:
   "confidence": 0.85,
   "language_detected": "en",
   "details": [
-    {{"rule_id": "ルールID", "rule_name_jp": "日本語名", "score": 2.0, "weight": 2.0, "evidence": "スクリーンショットから確認した具体的な根拠（日本語）", "severity": "high"}}
+    {{"rule_id": "ルールID", "rule_name_jp": "日本語名", "score": 2.0, "weight": 2.0, "evidence": "具体的な根拠（日本語、消費者向けの表現で）", "severity": "high"}}
   ],
-  "strengths": ["強み1（具体的な証拠付き）"],
-  "risks": ["リスク1（具体的な証拠付き）"]
+  "strengths": ["このツールの具体的な強み（消費者向け）"],
+  "risks": ["このツールの具体的な注意点（消費者向け）"]
 }}
 
 【重要】スコアリング規則:
@@ -1713,12 +1720,9 @@ class LLMScorer:
 - 【必須】details 配列には上記「評価基準（ルーブリック）」の各項目に1対1で対応するエントリを必ず含めてください。空配列は禁止です。評価基準が{len(rubric['criteria'])}項目あれば、details も必ず{len(rubric['criteria'])}エントリ含めてください。
 - 各 details エントリの rule_id は評価基準の rule_id と完全に一致させてください
 - severity は critical/high/medium/low/info のいずれか
-  - critical: 致命的欠陥（英語のみ出力、完全なタスク失敗）
-  - high: 重大な問題（要件の大幅な欠落）
-  - medium: 中程度の問題（改善が望ましい）
-  - low: 軽微な問題
-  - info: 参考情報
-- evidence にはスクリーンショットから確認した**具体的な視覚的根拠**を記述してください（「概ね良い」「問題ない」のような曖昧な表現は不可）
+- evidence には**具体的な根拠**を消費者が理解できる表現で記述してください（「概ね良い」「問題ない」のような曖昧な表現は不可）
+- strengths にはツールの**明確な長所のみ**を書いてください。懸念事項や注意喚起は strengths に含めないでください。
+- risks にはツールの**具体的な課題や制限**のみを書いてください。監査プロセスの問題は含めないでください。
 - strengths と risks もそれぞれ最低2項目ずつ含め、**具体的な証拠を示してください**
 - 日本語で記述してください
 """
@@ -1860,7 +1864,7 @@ class LLMScorer:
                         "rule_name_jp": c["name_jp"],
                         "score": score,  # Use overall axis score as estimate
                         "weight": c["weight"],
-                        "evidence": "（LLMが個別評価を返さなかったため、軸スコアを暫定適用）",
+                        "evidence": "（個別評価データなし。総合スコアを暫定適用）",
                         "severity": "info",
                     })
 
@@ -1891,12 +1895,61 @@ class LLMScorer:
             if total_weight > 0:
                 score = max(0.0, min(5.0, round(weighted_sum / total_weight, 2)))
 
+        # Sanitize strengths/risks: remove internal/process-related items
+        # that should not appear in consumer-facing reports
+        raw_strengths = data.get("strengths", [])
+        raw_risks = data.get("risks", [])
+        strengths = self._sanitize_report_items(raw_strengths, is_strength=True)
+        risks = self._sanitize_report_items(raw_risks, is_strength=False)
+
         return {
             "axis": axis,
             "score": score,
             "confidence": confidence,
             "details": details,
-            "strengths": data.get("strengths", []),
-            "risks": data.get("risks", []),
+            "strengths": strengths,
+            "risks": risks,
             "language_detected": language_detected,
         }
+
+    # Keywords that indicate internal/process language not suitable for consumer reports
+    _INTERNAL_KEYWORDS = (
+        "バッチ", "テスト完遂", "テスト完了率", "完遂率", "テスト数",
+        "スコアリング", "スクリーンショット", "エビデンス",
+        "観察", "API", "トークン", "コスト上限", "バジェット",
+        "LLM", "パース", "データ不足", "評価不十分",
+    )
+
+    @classmethod
+    def _sanitize_report_items(cls, items: list, is_strength: bool = False) -> list[str]:
+        """Filter out internal/process-related items from consumer-facing report.
+
+        Also detects misclassified items: negative statements in strengths,
+        or positive-only statements in risks.
+        """
+        if not items or not isinstance(items, list):
+            return []
+
+        # Negative indicators that should NOT appear in strengths
+        NEGATIVE_MARKERS = ("注意が必要", "課題", "懸念", "不足", "改善が必要", "リスク", "問題", "確認を推奨", "推奨")
+
+        sanitized = []
+        for item in items:
+            if not isinstance(item, str) or not item.strip():
+                continue
+            text = item.strip()
+
+            # Filter out items containing internal keywords
+            if any(kw in text for kw in cls._INTERNAL_KEYWORDS):
+                logger.debug("Filtered internal item from %s: %s",
+                            "strengths" if is_strength else "risks", text[:80])
+                continue
+
+            # Detect misclassified strengths (negative content in strengths list)
+            if is_strength and any(neg in text for neg in NEGATIVE_MARKERS):
+                logger.debug("Reclassified negative item from strengths: %s", text[:80])
+                continue  # Drop it; the LLM should have put it in risks
+
+            sanitized.append(text)
+
+        return sanitized
