@@ -839,12 +839,14 @@ class LLMScorer:
                     "language_override_applied": True,
                     "precheck_language": precheck_lang,
                 }
-                # Preserve existing confidence_dimensions / auto_score if they exist
-                for existing_key in ("confidence_dimensions", "auto_ratio", "manual_ratio", "auto_score", "manual_score"):
-                    # Retrieve from the original details stored in score_data
+                # Preserve existing metadata, but auto_score MUST be the overridden value
+                # (get_auto_scores prefers details.auto_score over record.score)
+                for existing_key in ("confidence_dimensions", "auto_ratio", "manual_ratio", "manual_score"):
                     original_details = loc_score_data.get(existing_key)
                     if original_details is not None:
                         loc_details_meta[existing_key] = original_details
+                # CRITICAL: auto_score must match the overridden score, not the original
+                loc_details_meta["auto_score"] = loc_score_data["score"]
                 await db.execute(text("""
                     UPDATE axis_scores SET score = :score, details = :details
                     WHERE session_id = :sid AND axis = 'localization'
