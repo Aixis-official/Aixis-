@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -258,6 +259,9 @@ def create_app() -> FastAPI:
         openapi_url=openapi_url,
         redirect_slashes=False,
     )
+
+    # GZip compression (text assets: HTML, CSS, JS, JSON, SVG)
+    app.add_middleware(GZipMiddleware, minimum_size=500)
 
     # Security middleware (headers + CSRF — single BaseHTTPMiddleware)
     app.add_middleware(SecurityMiddleware)
