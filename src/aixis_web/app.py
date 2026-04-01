@@ -93,7 +93,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 "max-age=31536000; includeSubDomains; preload"
             )
         # --- CSP: relax for admin pages (Tailwind Play CDN needs unsafe-eval) ---
-        admin_path = request.url.path.startswith("/admin")
+        admin_path = request.url.path.startswith("/admin") or request.url.path.startswith("/dashboard")
         if admin_path:
             csp_directives = [
                 "default-src 'self'",
