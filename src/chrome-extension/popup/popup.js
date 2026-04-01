@@ -25,6 +25,12 @@ document.getElementById("showPanelBtn").addEventListener("click", async () => {
   } catch {
     // Content script not loaded or orphaned — inject fresh
     try {
+      // Set a DOM flag so the content script knows to replace the stale panel
+      // (popup only reaches this path when SHOW_PANEL failed → old script is orphaned)
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => { window.__aixis_force_reinject = true; },
+      });
       // Inject both CSS and JS (CSS is needed for selection overlay)
       await chrome.scripting.insertCSS({
         target: { tabId: tab.id },

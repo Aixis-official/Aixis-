@@ -10,20 +10,19 @@
   "use strict";
 
   // Prevent double-injection — but handle extension reload/update gracefully.
-  // After extension reload, old content script is orphaned (chrome.runtime.id gone)
-  // but old DOM elements (#aixis-panel-host) remain. We must detect this and
-  // replace the stale panel with a fresh one.
+  // After extension reload, old content script is orphaned but its DOM panel
+  // (#aixis-panel-host) remains. popup.js sets window.__aixis_force_reinject
+  // before re-injecting, so we know the old panel must be replaced.
   const existingHost = document.getElementById("aixis-panel-host");
   if (existingHost) {
-    try {
-      // Test if our extension context is still valid
-      if (chrome.runtime?.id) {
-        // Context is valid — this is a true duplicate injection, bail out
-        return;
-      }
-    } catch {}
-    // Extension context is invalid (orphaned) — remove stale panel and recreate
-    try { existingHost.remove(); } catch {}
+    if (window.__aixis_force_reinject) {
+      // Popup explicitly told us to replace the stale panel
+      delete window.__aixis_force_reinject;
+      try { existingHost.remove(); } catch {}
+    } else {
+      // No force flag — this is a normal duplicate injection, bail out
+      return;
+    }
   }
 
   // -------------------------------------------------------------------------
