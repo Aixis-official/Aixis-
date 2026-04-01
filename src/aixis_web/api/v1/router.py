@@ -29,7 +29,39 @@ api_router = APIRouter()
 
 @api_router.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    """Basic health check + /data volume write test."""
+    import os
+    import tempfile
+    from pathlib import Path
+
+    volume_checks = {}
+    for dirname in ("screenshots", "backups", "output", "uploads"):
+        dirpath = Path(f"/data/{dirname}")
+        check = {"exists": dirpath.exists(), "writable": False}
+        if dirpath.exists():
+            try:
+                test_file = dirpath / ".write_test"
+                test_file.write_text("ok")
+                test_file.unlink()
+                check["writable"] = True
+            except Exception as e:
+                check["error"] = str(e)
+        else:
+            try:
+                dirpath.mkdir(parents=True, exist_ok=True)
+                check["exists"] = True
+                check["writable"] = True
+            except Exception as e:
+                check["error"] = str(e)
+        volume_checks[dirname] = check
+
+    screenshots_ok = volume_checks.get("screenshots", {}).get("writable", False)
+
+    return {
+        "status": "ok" if screenshots_ok else "degraded",
+        "screenshots_writable": screenshots_ok,
+        "volume_checks": volume_checks,
+    }
 
 
 api_router.include_router(auth_router, prefix="/auth", tags=["認証"])
