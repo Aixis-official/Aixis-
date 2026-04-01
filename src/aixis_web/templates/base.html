@@ -11,12 +11,13 @@
             input, select, textarea { font-size: 16px !important; }
         }
     </style>
-    <meta name="description" content="Aixis - AI実装の投資判断を科学する、独立系AI調査・監査機関">
+    <meta name="description" content="Aixis（アイクシス） - AI実装の投資判断を科学する、独立系AI調査・監査機関">
+    <meta name="author" content="Aixis">
     {% block meta_robots %}<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">{% endblock %}
     {% block google_verification %}{% endblock %}
     {% block meta_description %}{% endblock %}
     {% block meta_keywords %}{% endblock %}
-    <title>{{ title | default("Aixis") }} - Aixis AI監査プラットフォーム</title>
+    {% block page_title_tag %}<title>{{ title | default("Aixis") }} - Aixis AI監査プラットフォーム</title>{% endblock %}
     <link rel="icon" type="image/png" sizes="32x32" href="/static/img/Aixis-logo-final.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/static/img/Aixis-logo-final.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/img/Aixis-logo-final.png">
@@ -33,11 +34,16 @@
     <meta property="og:title" content="{{ title | default('Aixis') }} - Aixis AI監査プラットフォーム">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://platform.aixis.jp{{ request.path }}">
-    <meta property="og:description" content="AIツールを独立した5軸監査で定量評価。企業のAIツール選定をデータで支援する独立系AI監査プラットフォーム。">
+    <meta property="og:description" content="Aixis（アイクシス） — AIツールを独立した5軸監査で定量評価。企業のAIツール選定をデータで支援する独立系AI監査プラットフォーム。">
     <meta property="og:image" content="https://platform.aixis.jp/static/img/Aixis-logo-final.png">
+    <meta property="og:image:alt" content="Aixis（アイクシス）ロゴ — 独立系AI監査プラットフォーム">
+    <meta property="og:image:width" content="192">
+    <meta property="og:image:height" content="192">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="{{ title | default('Aixis') }} - Aixis AI監査プラットフォーム">
-    <meta name="twitter:description" content="AIツールを独立した5軸監査で定量評価。企業のAIツール選定をデータで支援する独立系AI監査プラットフォーム。">
+    <meta name="twitter:description" content="Aixis（アイクシス） — AIツールを独立した5軸監査で定量評価。企業のAIツール選定をデータで支援。">
+    <meta name="twitter:image" content="https://platform.aixis.jp/static/img/Aixis-logo-final.png">
+    <meta name="twitter:image:alt" content="Aixis ロゴ">
     {% endblock %}
     {% block structured_data %}{% endblock %}
 

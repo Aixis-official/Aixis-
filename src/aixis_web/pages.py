@@ -160,7 +160,7 @@ async def legacy_platform_landing(
 ):
     """Serve landing page at old /platform URL for cached 301 redirects."""
     stats = await _get_platform_stats_for_ssr(db)
-    ctx = _get_template_context(request, user=user, title="AIツール比較・一覧 | 独立監査で選ぶ", active_page="home", stats=stats)
+    ctx = _get_template_context(request, user=user, title="Aixis（アイクシス） | AIツール独立5軸監査・比較", active_page="home", stats=stats)
     return _render("public/landing.html", ctx)
 
 
@@ -191,14 +191,14 @@ async def landing(
 ):
     """Landing page."""
     stats = await _get_platform_stats_for_ssr(db)
-    ctx = _get_template_context(request, user=user, title="AIツール比較・一覧 | 独立監査で選ぶ", active_page="home", stats=stats)
+    ctx = _get_template_context(request, user=user, title="Aixis（アイクシス） | AIツール独立5軸監査・比較", active_page="home", stats=stats)
     return _render("public/landing.html", ctx)
 
 
 @page_router.get("/tools")
 async def tools_page(request: Request, user: _OptionalUser = None):
     """Tool catalog page."""
-    ctx = _get_template_context(request, user=user, title="AIツール一覧・比較データベース | カテゴリ別評価", active_page="tools")
+    ctx = _get_template_context(request, user=user, title="AIツール監査データベース | 独立5軸評価で比較", active_page="tools")
     return _render("public/tools.html", ctx)
 
 
@@ -319,21 +319,21 @@ async def tokushoho_page(request: Request, user: _OptionalUser = None):
 @page_router.get("/pricing")
 async def pricing_page(request: Request, user: _OptionalUser = None):
     """Pricing plans page."""
-    ctx = _get_template_context(request, user=user, title="料金プラン | AI監査プラットフォーム", active_page="pricing")
+    ctx = _get_template_context(request, user=user, title="料金プラン | Aixis AI監査サービス", active_page="pricing")
     return _render("public/pricing.html", ctx)
 
 
 @page_router.get("/audit-process")
 async def audit_process_page(request: Request, user: _OptionalUser = None):
     """Audit process explanation page."""
-    ctx = _get_template_context(request, user=user, title="AI監査プロセス | 評価方法の詳細", active_page="audit-process")
+    ctx = _get_template_context(request, user=user, title="Aixis監査プロセス | AI評価方法の詳細", active_page="audit-process")
     return _render("public/audit_process.html", ctx)
 
 
 @page_router.get("/independence")
 async def independence_page(request: Request, user: _OptionalUser = None):
     """Independence declaration page."""
-    ctx = _get_template_context(request, user=user, title="独立性宣言 | ベンダー非依存の評価体制", active_page="about")
+    ctx = _get_template_context(request, user=user, title="Aixis独立性宣言 | ベンダー非依存の評価体制", active_page="about")
     return _render("public/independence.html", ctx)
 
 
@@ -347,21 +347,21 @@ async def transparency_page(request: Request, user: _OptionalUser = None):
 @page_router.get("/audit-protocol")
 async def audit_protocol_page(request: Request, user: _OptionalUser = None):
     """Detailed audit protocol page."""
-    ctx = _get_template_context(request, user=user, title="監査プロトコル | 5軸評価フレームワーク詳細", active_page="audit-protocol")
+    ctx = _get_template_context(request, user=user, title="Aixis監査プロトコル | 5軸評価フレームワーク詳細", active_page="audit-protocol")
     return _render("public/audit_protocol.html", ctx)
 
 
 @page_router.get("/faq")
 async def faq_page(request: Request, user: _OptionalUser = None):
     """FAQ page with FAQPage structured data for rich results."""
-    ctx = _get_template_context(request, user=user, title="よくある質問（FAQ） | AIツール監査について", active_page="faq")
+    ctx = _get_template_context(request, user=user, title="よくある質問（FAQ） | Aixis AI監査について", active_page="faq")
     return _render("public/faq.html", ctx)
 
 
 @page_router.get("/contact")
 async def contact_page(request: Request, user: _OptionalUser = None):
     """Contact form page."""
-    ctx = _get_template_context(request, user=user, title="お問い合わせ | AI監査のご相談・トライアル申請", active_page="contact")
+    ctx = _get_template_context(request, user=user, title="お問い合わせ | Aixis AI監査のご相談・トライアル申請", active_page="contact")
     return _render("public/contact.html", ctx)
 
 

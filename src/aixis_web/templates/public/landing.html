@@ -1,12 +1,14 @@
 {% extends "base.html" %}
 {% set active_page = 'home' %}
 
+{% block page_title_tag %}<title>Aixis（アイクシス） | AIツール独立5軸監査・比較プラットフォーム</title>{% endblock %}
+
 {% block meta_description %}
-<meta name="description" content="AIツールを独立した5軸監査で徹底比較。実務適性・費用対効果・日本語能力・信頼性/安全性・革新性を定量評価。企業のAIツール選定を、感覚ではなくデータで支援します。">
+<meta name="description" content="Aixis（アイクシス）は独立系AI監査プラットフォーム。AIツールを5軸監査（実務適性・費用対効果・日本語能力・信頼性/安全性・革新性）で徹底比較。企業のAIツール選定を、感覚ではなくデータで支援します。">
 {% endblock %}
 
 {% block meta_keywords %}
-<meta name="keywords" content="AIツール 比較,AIツール 一覧,AIツール 評価,AI監査,AIツール ランキング,AIツール おすすめ,企業向けAI,AI導入 比較,AIツール レビュー">
+<meta name="keywords" content="Aixis,アイクシス,AI監査,AIツール 比較,AIツール 一覧,AIツール 評価,AIツール ランキング,AIツール おすすめ,企業向けAI,AI導入 比較,AIツール レビュー,独立系AI監査">
 {% endblock %}
 
 {% block canonical %}
@@ -30,10 +32,20 @@
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "Aixis",
+  "alternateName": ["アイクシス", "Aixis AI監査プラットフォーム", "Aixis Research"],
   "url": "https://platform.aixis.jp",
-  "logo": "https://platform.aixis.jp/static/img/Aixis-logo-final.png",
-  "description": "独立系AI調査・監査機関。AIツールを5軸評価フレームワークで定量的に監査・比較。",
-  "sameAs": [],
+  "logo": {
+    "@type": "ImageObject",
+    "url": "https://platform.aixis.jp/static/img/Aixis-logo-final.png",
+    "width": 192,
+    "height": 192
+  },
+  "image": "https://platform.aixis.jp/static/img/Aixis-logo-final.png",
+  "description": "Aixis（アイクシス）は独立系AI調査・監査機関。AIツールを5軸評価フレームワーク（実務適性・費用対効果・日本語能力・信頼性/安全性・革新性）で定量的に監査・比較するプラットフォームを運営。",
+  "foundingDate": "2025",
+  "slogan": "AI実装の投資判断を科学する",
+  "knowsAbout": ["AIツール評価", "AI監査", "AI導入支援", "5軸評価フレームワーク"],
+  "areaServed": {"@type": "Country", "name": "JP"},
   "contactPoint": {
     "@type": "ContactPoint",
     "contactType": "customer service",
@@ -47,7 +59,11 @@
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "Aixis AI監査プラットフォーム",
+  "alternateName": ["Aixis", "アイクシス", "Aixis Research"],
   "url": "https://platform.aixis.jp",
+  "description": "AIツールを独立した5軸監査で定量評価する独立系AI監査プラットフォーム",
+  "inLanguage": "ja",
+  "publisher": {"@type": "Organization", "name": "Aixis", "url": "https://platform.aixis.jp"},
   "potentialAction": {
     "@type": "SearchAction",
     "target": "https://platform.aixis.jp/tools?q={search_term_string}",
@@ -66,9 +82,9 @@
     {"@type": "SiteNavigationElement", "position": 4, "name": "監査プロトコル", "url": "https://platform.aixis.jp/audit-protocol"},
     {"@type": "SiteNavigationElement", "position": 5, "name": "独立性宣言", "url": "https://platform.aixis.jp/independence"},
     {"@type": "SiteNavigationElement", "position": 6, "name": "透明性ポリシー", "url": "https://platform.aixis.jp/transparency"},
-    {"@type": "SiteNavigationElement", "position": 8, "name": "よくある質問", "url": "https://platform.aixis.jp/faq"},
-    {"@type": "SiteNavigationElement", "position": 9, "name": "料金プラン", "url": "https://platform.aixis.jp/pricing"},
-    {"@type": "SiteNavigationElement", "position": 10, "name": "お問い合わせ", "url": "https://platform.aixis.jp/contact"}
+    {"@type": "SiteNavigationElement", "position": 7, "name": "よくある質問", "url": "https://platform.aixis.jp/faq"},
+    {"@type": "SiteNavigationElement", "position": 8, "name": "料金プラン", "url": "https://platform.aixis.jp/pricing"},
+    {"@type": "SiteNavigationElement", "position": 9, "name": "お問い合わせ", "url": "https://platform.aixis.jp/contact"}
   ]
 }
 </script>
@@ -358,6 +374,7 @@
                 <h1 class="mt-6 text-[2.1rem] sm:text-4xl lg:text-[3.2rem] xl:text-[3.6rem] font-bold font-serif text-white tracking-tight leading-[1.2] lg:whitespace-nowrap">
                     感覚ではなく、<br class="sm:hidden">数値で選ぶ。
                 </h1>
+                <p class="sr-only">Aixis（アイクシス）は独立系AI監査プラットフォームです。AIツールを5軸評価フレームワークで定量監査し、企業のAI導入判断をデータで支援します。</p>
                 <p class="mt-8 text-lg sm:text-xl lg:text-2xl text-slate-300/90 max-w-3xl leading-relaxed italic" style="font-family: 'Cormorant Garamond', 'Georgia', serif; font-weight: 400; letter-spacing: 0.06em;">
                     Precision over Perception.
                 </p>
