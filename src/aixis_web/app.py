@@ -93,8 +93,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             )
         csp_directives = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.tailwindcss.com https://cdn.plot.ly https://unpkg.com",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com",
+            "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.plot.ly https://unpkg.com",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com",
             "img-src 'self' data: https:",
             "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com",

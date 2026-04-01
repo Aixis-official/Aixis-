@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
     <link rel="dns-prefetch" href="https://unpkg.com">
     <link rel="dns-prefetch" href="https://www.googletagmanager.com">
     <style>
@@ -86,54 +85,8 @@
         })();
     </script>
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        aixis: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            200: '#c7d2fe',
-                            300: '#a5b4fc',
-                            400: '#818cf8',
-                            500: '#1a365d',
-                            600: '#162d4d',
-                            700: '#0f1f36',
-                            800: '#0a1628',
-                            900: '#060d19'
-                        },
-                        grade: {
-                            s: '#d4af37',
-                            a: '#38a169',
-                            b: '#2b6cb0',
-                            c: '#ed8936',
-                            d: '#e53e3e'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-                        jp: ['"Noto Sans JP"', 'sans-serif'],
-                        mixed: ['Inter', '"Noto Sans JP"', 'sans-serif'],
-                        serif: ['"Noto Serif JP"', 'serif'],
-                    },
-                    letterSpacing: {
-                        'heading': '-0.02em'
-                    },
-                    lineHeight: {
-                        'body-jp': '1.9'
-                    },
-                    maxWidth: {
-                        'prose-narrow': '760px',
-                        'full-bleed': '1200px'
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Tailwind CSS (pre-built static, replaces 3.6MB CDN JIT compiler) -->
+    <link rel="stylesheet" href="/static/css/tailwind.min.css">
 
     <!-- Google Fonts (preconnect + single stylesheet with display=swap) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
