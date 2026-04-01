@@ -506,6 +506,40 @@ class LLMScorer:
             session_id, len(ss_map_ids), len(obs_ids),
             len(matched_ids), len(unmatched_ss_ids), len(all_screenshot_paths),
         )
+
+        # CRITICAL: Check file existence for all screenshots BEFORE scoring
+        # This catches disk issues early with clear logging
+        if all_screenshot_paths:
+            from pathlib import Path as _Path
+            sample_paths = all_screenshot_paths[:5]
+            files_found = 0
+            files_missing = 0
+            for sp in all_screenshot_paths:
+                rel = sp.lstrip("/")
+                if rel.startswith("screenshots/"):
+                    rel = rel[len("screenshots/"):]
+                    fp = _Path(settings.screenshots_dir) / rel
+                else:
+                    fp = _Path(__file__).parent.parent / "static" / rel
+                if fp.exists():
+                    files_found += 1
+                else:
+                    files_missing += 1
+            logger.info(
+                "Session %s screenshot FILE CHECK: %d found on disk, %d MISSING "
+                "(screenshots_dir=%s, sample_paths=%s)",
+                session_id, files_found, files_missing,
+                settings.screenshots_dir, sample_paths,
+            )
+            if files_missing > 0 and files_found == 0:
+                logger.error(
+                    "Session %s: ALL %d screenshot files MISSING from disk! "
+                    "Screenshots were saved during audit but are now gone. "
+                    "Possible causes: ephemeral filesystem, volume not mounted, "
+                    "or screenshots_dir mismatch (config=%s).",
+                    session_id, files_missing, settings.screenshots_dir,
+                )
+
         if unmatched_ss_ids:
             # Log sample of unmatched IDs for debugging
             sample_unmatched = list(unmatched_ss_ids)[:5]
@@ -769,22 +803,31 @@ class LLMScorer:
                     "risks": [f"スコアリングエラー: {str(e)[:200]}"],
                 }
                 all_scores.append(error_score)
-                # Write error score to DB ONLY if no valid score exists for this axis
-                # (never overwrite a good score with an error)
+                # Write error score to DB — use DO UPDATE so error is always visible
+                # (previously used DO NOTHING which hid errors behind stale data)
                 try:
                     err_id = str(uuid.uuid4())
+                    error_details = {
+                        "error": str(e)[:500],
+                        "auto_score": 0.0,
+                        "rule_results": [],
+                    }
                     await db.execute(text("""
                         INSERT INTO axis_scores
                         (id, session_id, tool_id, axis, axis_name_jp, score, confidence,
                          source, details, strengths, risks, scored_at, scored_by)
                         VALUES (:id, :sid, :tid, :axis, :name, :score, :conf,
                                 :source, :details, :strengths, :risks, CURRENT_TIMESTAMP, NULL)
-                        ON CONFLICT (session_id, axis) DO NOTHING
+                        ON CONFLICT (session_id, axis) DO UPDATE SET
+                            score = EXCLUDED.score, confidence = EXCLUDED.confidence,
+                            source = EXCLUDED.source, details = EXCLUDED.details,
+                            strengths = EXCLUDED.strengths,
+                            risks = EXCLUDED.risks, scored_at = CURRENT_TIMESTAMP
                     """), {
                         "id": err_id, "sid": session_id, "tid": tool_id,
                         "axis": axis, "name": rubric["name_jp"],
                         "score": 0.0, "conf": 0.0, "source": "error",
-                        "details": json.dumps({"error": str(e)[:500]}, ensure_ascii=False),
+                        "details": json.dumps(error_details, ensure_ascii=False),
                         "strengths": "[]",
                         "risks": json.dumps([f"スコアリングエラー: {str(e)[:200]}"], ensure_ascii=False),
                     })
@@ -1144,12 +1187,23 @@ class LLMScorer:
 
         try:
             img = Image.open(io.BytesIO(img_data))
-            if img.width > max_width:
-                ratio = max_width / img.width
-                new_size = (max_width, int(img.height * ratio))
-                img = img.resize(new_size, Image.LANCZOS)
+            if img.width <= max_width:
+                # No resize needed — return original data to avoid format conversion
+                return img_data
+            ratio = max_width / img.width
+            new_size = (max_width, int(img.height * ratio))
+            img = img.resize(new_size, Image.LANCZOS)
             buf = io.BytesIO()
-            img.save(buf, format="PNG", optimize=True)
+            # Preserve original format: JPEG stays JPEG, PNG stays PNG
+            # This avoids JPEG→PNG size inflation (JPEG 200KB → PNG 500KB+)
+            if img_data[:3] == b'\xff\xd8\xff':
+                # JPEG input: save as JPEG
+                if img.mode == "RGBA":
+                    img = img.convert("RGB")
+                img.save(buf, format="JPEG", quality=85, optimize=True)
+            else:
+                # PNG or other: save as PNG
+                img.save(buf, format="PNG", optimize=True)
             return buf.getvalue()
         except Exception as e:
             logger.warning("Failed to resize screenshot: %s", e)

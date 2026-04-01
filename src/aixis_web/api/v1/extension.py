@@ -480,12 +480,20 @@ async def upload_observation(
             WHERE id = :sid
         """), {"sid": session_id})
     else:
-        # Still update started_at if needed
-        await db.execute(text("""
-            UPDATE audit_sessions
-            SET started_at = COALESCE(started_at, CURRENT_TIMESTAMP)
-            WHERE id = :sid
-        """), {"sid": session_id})
+        # Screenshot evidence: update started_at + increment screenshot counter
+        if screenshot_path:
+            await db.execute(text("""
+                UPDATE audit_sessions
+                SET started_at = COALESCE(started_at, CURRENT_TIMESTAMP),
+                    ai_screenshots_captured = COALESCE(ai_screenshots_captured, 0) + 1
+                WHERE id = :sid
+            """), {"sid": session_id})
+        else:
+            await db.execute(text("""
+                UPDATE audit_sessions
+                SET started_at = COALESCE(started_at, CURRENT_TIMESTAMP)
+                WHERE id = :sid
+            """), {"sid": session_id})
 
     await db.commit()
 
@@ -782,6 +790,19 @@ async def _run_llm_scoring_background(session_id: str, tool_id: str) -> None:
             scorer = LLMScorer()
             all_scores = await scorer.score_session(session_id, tool_id, db)
 
+            # Log scoring results summary for diagnostics
+            for s in all_scores:
+                _axis = s.get("axis", "?")
+                _score = s.get("score", 0)
+                _conf = s.get("confidence", 0)
+                _n_details = len(s.get("details", []))
+                _n_risks = len(s.get("risks", []))
+                _risks_sample = [r[:80] if isinstance(r, str) else str(r)[:80] for r in s.get("risks", [])[:2]]
+                logger.info(
+                    "Session %s axis %s: score=%.2f conf=%.2f details=%d risks=%d %s",
+                    session_id, _axis, _score, _conf, _n_details, _n_risks, _risks_sample,
+                )
+
             # Calculate reliability scores from actual audit data
             try:
                 # Fetch test results and cases for reliability calculation
@@ -827,11 +848,34 @@ async def _run_llm_scoring_background(session_id: str, tool_id: str) -> None:
             except Exception as rel_err:
                 logger.warning("Reliability calculation failed for session %s: %s", session_id, rel_err)
 
-            # Set to awaiting_manual for human checklist evaluation
-            await db.execute(
-                text("UPDATE audit_sessions SET status = 'awaiting_manual' WHERE id = :sid"),
-                {"sid": session_id},
-            )
+            # Check if ALL axes failed (source="error") — if so, mark session as failed
+            # instead of silently showing 0 scores on the dashboard
+            error_count = sum(1 for s in all_scores if s.get("score", 0) == 0 and not s.get("details"))
+            total_axes = len(all_scores) if all_scores else 0
+            all_zero = all(s.get("score", 0) < 0.01 for s in all_scores) if all_scores else True
+
+            if total_axes == 0 or (all_zero and error_count == total_axes):
+                # Every axis failed — surface the error instead of showing silent 0s
+                error_reasons = []
+                for s in all_scores:
+                    for r in s.get("risks", []):
+                        if isinstance(r, str) and ("エラー" in r or "error" in r.lower() or "読み込め" in r):
+                            error_reasons.append(r)
+                error_msg = "; ".join(error_reasons[:3]) if error_reasons else "全軸のスコアリングが失敗しました"
+                logger.error(
+                    "Session %s: ALL %d axes scored 0 — marking as failed. Reasons: %s",
+                    session_id, total_axes, error_msg,
+                )
+                await db.execute(
+                    text("UPDATE audit_sessions SET status = 'failed', error_message = :err WHERE id = :sid"),
+                    {"sid": session_id, "err": error_msg[:2000]},
+                )
+            else:
+                # Normal: set to awaiting_manual for human checklist evaluation
+                await db.execute(
+                    text("UPDATE audit_sessions SET status = 'awaiting_manual' WHERE id = :sid"),
+                    {"sid": session_id},
+                )
             await db.commit()
 
         logger.info("=== LLM scoring COMPLETED for session %s ===", session_id)

@@ -35,12 +35,14 @@ async def get_auto_scores(db: AsyncSession, session_id: str) -> tuple[dict[str, 
     legacy agent scorer uses source='auto'. The manual editor uses 'manual_edit'.
     """
     # Filter out scores from soft-deleted sessions to prevent orphaned data
+    # Include "error" source so that scoring failures are visible on the dashboard
+    # (previously excluded, causing silent 0 scores with no explanation)
     result = await db.execute(
         select(AxisScoreRecord)
         .join(AuditSession, AxisScoreRecord.session_id == AuditSession.id)
         .where(
             AxisScoreRecord.session_id == session_id,
-            AxisScoreRecord.source.in_(["auto", "llm", "hybrid", "manual_edit", "manual"]),
+            AxisScoreRecord.source.in_(["auto", "llm", "hybrid", "manual_edit", "manual", "error"]),
             AuditSession.deleted_at.is_(None),
         )
     )
@@ -51,6 +53,14 @@ async def get_auto_scores(db: AsyncSession, session_id: str) -> tuple[dict[str, 
             # Manual edits are final scores — no blending needed
             scores[record.axis] = record.score
             manual_edit_axes.add(record.axis)
+            continue
+
+        # Error scores: use the score directly (0.0) — they should be visible
+        # so users can see that scoring failed rather than seeing mysterious 0s
+        if record.source == "error":
+            # Only use error score if no better score exists for this axis
+            if record.axis not in scores:
+                scores[record.axis] = record.score
             continue
 
         # Use the raw auto_score if available in details (stored by LLM scorer),
