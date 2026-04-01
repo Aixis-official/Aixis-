@@ -87,9 +87,10 @@
 
 {% block head %}
 <script defer src="https://cdn.plot.ly/plotly-2.27.0.min.js" integrity="sha384-Hl48Kq2HifOWdXEjMsKo6qxqvRLTYqIGbvlENBmkHAxZKIGCXv43H6W1jA671RzC" crossorigin="anonymous"></script>
+<script>document.documentElement.classList.add('js-ready');</script>
 <style>
-    /* SSR content stays visible until JS successfully renders interactive version.
-       The JS calls document.getElementById('ssr-content').remove() after render. */
+    /* SSR content is visible for Googlebot (raw HTML), hidden for JS browsers */
+    .js-ready #ssr-content { display: none !important; }
     @keyframes heartbeat-draw {
         0% { stroke-dashoffset: 1000; }
         100% { stroke-dashoffset: 0; }
@@ -115,9 +116,8 @@
 
 {% block content %}
 <div id="tool-detail" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">
-    <!-- Loading state: animated 5-axis pentagon with status text.
-         Hidden when SSR content is present (SSR already shows content). -->
-    <div id="loading-state" class="{% if ssr %}hidden{% endif %} flex flex-col items-center justify-center py-24">
+    <!-- Loading state: animated 5-axis pentagon with status text -->
+    <div id="loading-state" class="flex flex-col items-center justify-center py-24">
         <div class="relative" style="width:80px;height:80px;">
             <svg viewBox="0 0 100 100" class="w-full h-full">
                 <!-- Outer pentagon (faint) -->
