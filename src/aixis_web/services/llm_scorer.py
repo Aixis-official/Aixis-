@@ -550,15 +550,24 @@ class LLMScorer:
                         fallback_linked += len(ss_paths)
                         break
 
-            # If partial matching also failed, assign all screenshots to all observations
+            # If partial matching also failed, distribute screenshots proportionally
+            # (NOT all-to-all, which wastes tokens and confuses LLM)
             if fallback_linked == 0:
                 logger.warning(
                     "Session %s: partial-match fallback also failed. "
-                    "Attaching all %d screenshots to every observation.",
-                    session_id, len(all_screenshot_paths),
+                    "Distributing %d screenshots proportionally across %d observations.",
+                    session_id, len(all_screenshot_paths), len(observations),
                 )
-                for obs in observations:
-                    obs["screenshots"] = all_screenshot_paths
+                n_obs = len(observations)
+                n_ss = len(all_screenshot_paths)
+                per_obs = max(1, n_ss // n_obs) if n_obs > 0 else n_ss
+                for i, obs in enumerate(observations):
+                    start = (i * per_obs) % n_ss
+                    end = min(start + per_obs, n_ss)
+                    obs["screenshots"] = all_screenshot_paths[start:end]
+                    # Ensure at least the last observations get something
+                    if not obs["screenshots"] and all_screenshot_paths:
+                        obs["screenshots"] = [all_screenshot_paths[i % n_ss]]
 
             total_after_fallback = sum(len(obs.get("screenshots", [])) for obs in observations)
             logger.info(
@@ -686,8 +695,23 @@ class LLMScorer:
                 # Store the raw auto score (not blended) in the DB
                 score_data["score"] = max(0.0, min(5.0, auto_score))
 
+                # Derive confidence from calculated dimensions (not LLM self-report)
+                # Weighted average: correctness and comprehensiveness matter most
+                derived_confidence = (
+                    confidence_dimensions["consistency"] * 0.15
+                    + confidence_dimensions["correctness"] * 0.35
+                    + confidence_dimensions["comprehensiveness"] * 0.30
+                    + confidence_dimensions["intelligibility"] * 0.20
+                )
+                derived_confidence = round(max(0.0, min(1.0, derived_confidence)), 3)
+                # Use the LOWER of LLM-reported and derived confidence (conservative)
+                llm_confidence = score_data["confidence"]
+                score_data["confidence"] = min(llm_confidence, derived_confidence) if llm_confidence > 0 else derived_confidence
+
                 # Merge per-axis confidence dimensions into score metadata
                 score_data["confidence_dimensions"] = confidence_dimensions
+                score_data["llm_raw_confidence"] = llm_confidence
+                score_data["derived_confidence"] = derived_confidence
                 score_data["auto_ratio"] = auto_ratio
                 score_data["manual_ratio"] = manual_ratio
                 score_data["auto_score"] = auto_score
@@ -808,11 +832,27 @@ class LLMScorer:
                 total_weight = sum(d["weight"] for d in loc_details_raw)
                 if total_weight > 0:
                     loc_score_data["score"] = round(weighted_sum / total_weight, 2)
-                # Update localization in DB
+                # Update localization in DB (score AND details to keep them consistent)
+                # Rebuild details_with_meta for localization axis
+                loc_details_meta = {
+                    "rule_results": loc_details_raw,
+                    "language_override_applied": True,
+                    "precheck_language": precheck_lang,
+                }
+                # Preserve existing confidence_dimensions / auto_score if they exist
+                for existing_key in ("confidence_dimensions", "auto_ratio", "manual_ratio", "auto_score", "manual_score"):
+                    # Retrieve from the original details stored in score_data
+                    original_details = loc_score_data.get(existing_key)
+                    if original_details is not None:
+                        loc_details_meta[existing_key] = original_details
                 await db.execute(text("""
-                    UPDATE axis_scores SET score = :score
+                    UPDATE axis_scores SET score = :score, details = :details
                     WHERE session_id = :sid AND axis = 'localization'
-                """), {"score": loc_score_data["score"], "sid": session_id})
+                """), {
+                    "score": loc_score_data["score"],
+                    "details": json.dumps(loc_details_meta, ensure_ascii=False),
+                    "sid": session_id,
+                })
             elif precheck_lang == "mixed" and effective_lang_score > 3.0:
                 logger.info("Language pre-check: mixed detected, capping language_output at 3.0")
                 effective_lang_score = min(effective_lang_score, 3.0)
@@ -843,17 +883,12 @@ class LLMScorer:
                             "Cross-axis cap applied: %s %.1f → %.1f (language_output=%.1f)",
                             axis_name, old_score, cap, effective_lang_score,
                         )
-                        # Update DB
-                        await db.execute(text("""
-                            UPDATE axis_scores
-                            SET score = :score, risks = :risks
-                            WHERE session_id = :sid AND axis = :axis
-                        """), {
-                            "score": cap,
-                            "risks": json.dumps(s["risks"], ensure_ascii=False),
-                            "sid": session_id,
-                            "axis": axis_name,
-                        })
+                        # Update DB — also sync details.auto_score so get_auto_scores()
+                        # reads the penalized value (it prefers details.auto_score over record.score)
+                        s["auto_score"] = cap  # sync in-memory too
+                        await self._update_axis_score_and_details(
+                            db, session_id, axis_name, cap, s["risks"],
+                        )
             elif effective_lang_score <= 2.5:
                 # Moderate: Mostly English with some Japanese
                 MODERATE_CAPS = {
@@ -873,16 +908,10 @@ class LLMScorer:
                         s["risks"] = s.get("risks", []) + [
                             f"日本語出力不足によるクロス軸ペナルティ適用: {old_score:.1f} → {cap:.1f}"
                         ]
-                        await db.execute(text("""
-                            UPDATE axis_scores
-                            SET score = :score, risks = :risks
-                            WHERE session_id = :sid AND axis = :axis
-                        """), {
-                            "score": cap,
-                            "risks": json.dumps(s["risks"], ensure_ascii=False),
-                            "sid": session_id,
-                            "axis": axis_name,
-                        })
+                        s["auto_score"] = cap
+                        await self._update_axis_score_and_details(
+                            db, session_id, axis_name, cap, s["risks"],
+                        )
 
         # --- Apply completion rate penalty ---
         # Fetch total_planned / total_executed from session to compute real completion rate
@@ -1187,6 +1216,36 @@ class LLMScorer:
             logger.warning("Failed to load %d/%d screenshots for axis %s: %s",
                           len(failed_paths), len(all_paths), axis, failed_paths[:5])
 
+        # CRITICAL: If screenshot paths existed but NONE loaded, this means files
+        # are missing from disk. Scoring without images produces garbage results.
+        if not loaded_images and all_paths:
+            logger.error(
+                "Axis %s: ALL %d screenshots failed to load! Files missing from disk. "
+                "Returning zero score to prevent garbage LLM output.",
+                axis, len(all_paths),
+            )
+            # Return a zero score with clear error message rather than asking
+            # LLM to evaluate slides without any visual evidence
+            return {
+                "axis": axis,
+                "score": 0.0,
+                "confidence": 0.0,
+                "details": [
+                    {
+                        "rule_id": c["rule_id"],
+                        "rule_name_jp": c["name_jp"],
+                        "score": 0.0,
+                        "weight": c["weight"],
+                        "evidence": "スクリーンショットファイルがディスク上に存在しないため評価不可",
+                        "severity": "critical",
+                    }
+                    for c in rubric.get("criteria", [])
+                ],
+                "strengths": [],
+                "risks": ["スクリーンショットが全てディスクから読み込めませんでした。監査の再実行が必要です。"],
+                "language_detected": None,
+            }
+
         # Budget check before API call
         self._check_budget(axis)
 
@@ -1293,6 +1352,43 @@ class LLMScorer:
         logger.info("Axis %s scored (%d chars response). Total budget: %d calls, %.1f JPY",
                      axis, len(response_text), self.api_calls, self._estimated_cost_jpy())
         return self._parse_score_response(axis, rubric, response_text)
+
+    @staticmethod
+    async def _update_axis_score_and_details(
+        db, session_id: str, axis: str, new_score: float, risks: list,
+    ):
+        """Update axis score, risks, AND sync details.auto_score in DB.
+
+        get_auto_scores() prefers details.auto_score over record.score,
+        so we must keep them in sync when applying penalties.
+        """
+        # Read current details, update auto_score, write back
+        result = await db.execute(text(
+            "SELECT details FROM axis_scores WHERE session_id = :sid AND axis = :axis"
+        ), {"sid": session_id, "axis": axis})
+        row = result.fetchone()
+        details_json = "{}"
+        if row and row[0]:
+            if isinstance(row[0], str):
+                details_json = row[0]
+            elif isinstance(row[0], dict):
+                details_json = json.dumps(row[0], ensure_ascii=False)
+        try:
+            details_dict = json.loads(details_json) if isinstance(details_json, str) else details_json
+        except (json.JSONDecodeError, TypeError):
+            details_dict = {}
+        details_dict["auto_score"] = new_score
+        await db.execute(text("""
+            UPDATE axis_scores
+            SET score = :score, risks = :risks, details = :details
+            WHERE session_id = :sid AND axis = :axis
+        """), {
+            "score": new_score,
+            "risks": json.dumps(risks, ensure_ascii=False),
+            "details": json.dumps(details_dict, ensure_ascii=False),
+            "sid": session_id,
+            "axis": axis,
+        })
 
     def _load_screenshot(self, screenshot_path: str, max_width: int = 1024) -> str | None:
         """Load a screenshot file and return base64 data."""
