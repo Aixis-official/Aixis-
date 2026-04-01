@@ -71,11 +71,20 @@ async def get_platform_stats(
         total_audits = audit_count.scalar() or 0
 
         # Last updated (most recent completed audit or published score)
+        # Convert to JST (UTC+9) for Japanese users
+        JST = timezone(timedelta(hours=9))
         last_score = await db.execute(
             select(func.max(ToolPublishedScore.published_at))
         )
         last_updated_dt = last_score.scalar()
-        last_updated = last_updated_dt.strftime("%Y.%m.%d") if last_updated_dt else None
+        if last_updated_dt:
+            # Ensure timezone-aware, then convert to JST
+            if last_updated_dt.tzinfo is None:
+                last_updated_dt = last_updated_dt.replace(tzinfo=timezone.utc)
+            last_updated_jst = last_updated_dt.astimezone(JST)
+            last_updated = last_updated_jst.strftime("%Y.%m.%d")
+        else:
+            last_updated = None
 
         # New this month (distinct tools that got a new published score)
         now = datetime.now(timezone.utc)

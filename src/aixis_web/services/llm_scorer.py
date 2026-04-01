@@ -1598,10 +1598,12 @@ class LLMScorer:
         )
 
         # Build observations text (limit to avoid token overflow)
+        # NOTE: Use neutral labels ("検証N") instead of internal terms ("テストN")
+        # to prevent internal terminology from leaking into consumer-facing reports.
         obs_entries = []
         for i, obs in enumerate(observations[:50]):  # Cap at 50
-            entry = f"--- テスト {i+1} ---\n"
-            prompt_text_preview = obs['prompt'][:500] if obs['prompt'] else '(プロンプトなし)'
+            entry = f"--- 検証 {i+1} ---\n"
+            prompt_text_preview = obs['prompt'][:500] if obs['prompt'] else '(指示なし)'
             screenshots = obs.get("screenshots", [])
             rt_ms = obs.get('response_time_ms', 0) or 0
             if rt_ms > 0:
@@ -1610,7 +1612,7 @@ class LLMScorer:
             else:
                 entry += f"指示内容「{prompt_text_preview}」\n"
             if screenshots:
-                entry += f"（添付画像を参照して出力品質を評価してください）\n"
+                entry += f"（添付画像を参照して出力品質を評価すること）\n"
             if obs['error']:
                 entry += f"ツール側エラー: {obs['error']}\n"
             if obs['expected_behaviors']:
@@ -1622,25 +1624,32 @@ class LLMScorer:
         return f"""あなたは日本企業向けAIツール品質評価の厳格な専門監査員です。
 消費者保護の観点から、厳密かつ公正な評価を行ってください。
 
-## 最重要ルール: レポートは一般消費者向けです
-あなたの出力は、AIツールの購入を検討している一般企業ユーザーが直接読むレポートです。
-以下の表現は**絶対に禁止**です:
-- 「バッチ」「テスト完遂率」「テスト数」「観察N件」等の監査プロセスの内部用語
-- 「スクリーンショットN枚」「エビデンス」等の監査方法への言及
+## 最重要ルール: レポートは一般消費者向けである
+あなたの出力は、AIツールの購入を検討している一般企業ユーザーが直接読むレポートである。
+以下の表現は**絶対に禁止**である:
+- 「バッチ」「テスト」「テスト完遂率」「テスト数」「テストN」「観察N件」等の監査プロセスの内部用語
+- 「スクリーンショットN枚」「エビデンス」「検証N」等の監査方法への言及
 - 「スコアリング」「API」「トークン」等のシステム用語
 - 「評価不十分」「データ不足」等の監査プロセスの問題に関する言及
 
-代わりに、**ツールそのものの品質・機能・性能**について、具体的な事実に基づいて記述してください。
-例: ×「バッチ2でテストした結果」→ ○「複数の指示パターンで検証した結果」
+代わりに、**ツールそのものの品質・機能・性能**について、具体的な事実に基づいて記述すること。
+例: ×「テスト9で確認した結果」「検証3の結果」→ ○「実際の出力を確認した結果」
 例: ×「テスト完遂率27.8%で低い」→ ○「複雑な業務要件への対応力に課題がある」
 例: ×「スクリーンショットから確認」→ ○「実際の出力を確認したところ」
 
+## 文体ルール: 常体（だ・である調）で統一すること
+レポート全体を**常体（だ・である調）**で統一すること。敬体（です・ます調）は使用禁止である。
+例: ×「生成されています」→ ○「生成されている」
+例: ×「確認できました」→ ○「確認できた」
+例: ×「課題があります」→ ○「課題がある」
+例: ×「対応していません」→ ○「対応していない」
+
 ## 「強み」と「注意点」の分類ルール
-- **strengths（強み）**: ツールの明確な長所のみ。ポジティブな内容だけを書いてください。
+- **strengths（強み）**: ツールの明確な長所のみ。ポジティブな内容だけを記載すること。
   - ○「日本語プロンプトに対して自然な日本語スライドを生成できる」
   - ×「セキュリティ面で注意が必要」（これは注意点であり強みではない）
   - ×「データ取扱いポリシーの確認を推奨」（これは注意点であり強みではない）
-- **risks（注意点）**: ツールの具体的な課題や制限事項。
+- **risks（注意点）**: ツールの具体的な課題や制限事項のみ。
   - ○「敬語と体言止めが混在し、フォーマルな文書での一貫性に欠ける」
   - ×「スコアリングエラー: コスト上限に到達」（これはシステムの問題でありツールの問題ではない）
 
@@ -1919,6 +1928,9 @@ class LLMScorer:
         "観察", "API", "トークン", "コスト上限", "バジェット",
         "LLM", "パース", "データ不足", "評価不十分",
     )
+    # Regex pattern for "テストN" or "検証N" references (e.g., "テスト9で", "検証12の")
+    import re as _re
+    _INTERNAL_PATTERN = _re.compile(r'(?:テスト|検証)\s*\d+')
 
     @classmethod
     def _sanitize_report_items(cls, items: list, is_strength: bool = False) -> list[str]:
@@ -1942,6 +1954,12 @@ class LLMScorer:
             # Filter out items containing internal keywords
             if any(kw in text for kw in cls._INTERNAL_KEYWORDS):
                 logger.debug("Filtered internal item from %s: %s",
+                            "strengths" if is_strength else "risks", text[:80])
+                continue
+
+            # Filter out items with "テストN" or "検証N" references
+            if cls._INTERNAL_PATTERN.search(text):
+                logger.debug("Filtered test-reference item from %s: %s",
                             "strengths" if is_strength else "risks", text[:80])
                 continue
 

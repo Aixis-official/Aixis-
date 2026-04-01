@@ -1,7 +1,7 @@
 """SSR page routes using Jinja2 templates."""
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from html import escape as html_escape
 from typing import Annotated
 
@@ -122,7 +122,14 @@ async def _get_platform_stats_for_ssr(db: AsyncSession) -> dict:
             select(func.max(ToolPublishedScore.published_at))
         )
         last_updated_dt = last_score.scalar()
-        last_updated = last_updated_dt.strftime("%Y.%m.%d") if last_updated_dt else "—"
+        if last_updated_dt:
+            # Convert to JST (UTC+9) for Japanese users
+            JST = timezone(timedelta(hours=9))
+            if last_updated_dt.tzinfo is None:
+                last_updated_dt = last_updated_dt.replace(tzinfo=timezone.utc)
+            last_updated = last_updated_dt.astimezone(JST).strftime("%Y.%m.%d")
+        else:
+            last_updated = "—"
 
         now = datetime.now(timezone.utc)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
