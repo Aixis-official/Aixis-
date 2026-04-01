@@ -205,29 +205,58 @@
         <!-- Hero -->
         <section class="relative overflow-hidden rounded-sm mb-6 bg-gradient-to-br from-aixis-600/90 via-aixis-700/90 to-aixis-800/90 dark:from-aixis-800/80 dark:via-aixis-900/90 dark:to-gray-900">
             <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.04),transparent_60%)]"></div>
-            <div class="relative flex flex-col md:flex-row items-start md:items-center gap-5 px-7 py-7 md:px-10 md:py-9">
-                <div class="flex-1 text-white flex items-start gap-5">
+            <div class="relative px-7 py-7 md:px-10 md:py-9">
+                <!-- Mobile: compact header with icon + name + grade in one row -->
+                <div class="flex items-center gap-3.5 md:hidden mb-4">
                     {% if ssr.logo_url %}
                     <div class="flex-shrink-0">
-                        <img src="{{ ssr.logo_url }}" class="w-14 h-14 rounded bg-white/10 p-1.5 object-contain" alt="{{ ssr.name }} icon" loading="lazy" />
+                        <img src="{{ ssr.logo_url }}" class="w-12 h-12 rounded bg-white/10 p-1 object-contain" alt="{{ ssr.name }} icon" loading="lazy" />
                     </div>
                     {% endif %}
                     <div class="flex-1 min-w-0">
                         {% if ssr.category %}
-                        <span class="inline-block px-2.5 py-0.5 rounded text-[10px] font-medium bg-white/10 border border-white/15 font-jp mb-3">{{ ssr.category }}</span>
+                        <span class="inline-block px-2 py-0.5 rounded text-[9px] font-medium bg-white/10 border border-white/15 font-jp mb-1.5">{{ ssr.category }}</span>
                         {% endif %}
-                        <h1 class="text-2xl md:text-3xl font-bold mb-1.5 font-jp tracking-tight">{{ ssr.name }}</h1>
-                        {% if ssr.vendor %}<p class="text-white/55 text-sm mb-2.5 font-jp">{{ ssr.vendor }}</p>{% endif %}
-                        {% if ssr.description %}<p class="text-white/70 text-sm leading-relaxed font-jp max-w-2xl">{{ ssr.description }}</p>{% endif %}
+                        <h1 class="text-xl font-bold text-white font-jp tracking-tight leading-tight">{{ ssr.name }}</h1>
+                        {% if ssr.vendor %}<p class="text-white/55 text-xs font-jp mt-0.5">{{ ssr.vendor }}</p>{% endif %}
                     </div>
+                    {% if ssr.score %}
+                    <div class="flex-shrink-0 text-center pl-2">
+                        <div class="grade-badge grade-badge-stamp grade-badge-lg grade-{{ ssr.score.grade }}">{{ ssr.score.grade }}</div>
+                        <div class="text-lg font-bold text-white mt-1.5 tabular-nums">{{ ssr.score.overall }} / 5.0</div>
+                        <div class="text-white/40 text-[9px] font-jp">総合スコア</div>
+                    </div>
+                    {% endif %}
                 </div>
-                {% if ssr.score %}
-                <div class="flex-shrink-0 text-center md:text-right md:pl-8">
-                    <div class="grade-badge grade-badge-stamp grade-badge-lg grade-{{ ssr.score.grade }} mx-auto md:ml-auto md:mr-0">{{ ssr.score.grade }}</div>
-                    <div class="text-3xl font-bold text-white mt-3 tabular-nums">{{ ssr.score.overall }} / 5.0</div>
-                    <div class="text-white/45 text-xs font-jp mt-0.5">総合スコア</div>
-                </div>
+                {% if ssr.description %}
+                <p class="text-white/70 text-xs leading-relaxed font-jp md:hidden">{{ ssr.description }}</p>
                 {% endif %}
+
+                <!-- Desktop: original horizontal layout -->
+                <div class="hidden md:flex md:flex-row items-center gap-5">
+                    <div class="flex-1 text-white flex items-start gap-5">
+                        {% if ssr.logo_url %}
+                        <div class="flex-shrink-0">
+                            <img src="{{ ssr.logo_url }}" class="w-14 h-14 rounded bg-white/10 p-1.5 object-contain" alt="{{ ssr.name }} icon" loading="lazy" />
+                        </div>
+                        {% endif %}
+                        <div class="flex-1 min-w-0">
+                            {% if ssr.category %}
+                            <span class="inline-block px-2.5 py-0.5 rounded text-[10px] font-medium bg-white/10 border border-white/15 font-jp mb-3">{{ ssr.category }}</span>
+                            {% endif %}
+                            <h1 class="text-2xl md:text-3xl font-bold mb-1.5 font-jp tracking-tight">{{ ssr.name }}</h1>
+                            {% if ssr.vendor %}<p class="text-white/55 text-sm mb-2.5 font-jp">{{ ssr.vendor }}</p>{% endif %}
+                            {% if ssr.description %}<p class="text-white/70 text-sm leading-relaxed font-jp max-w-2xl">{{ ssr.description }}</p>{% endif %}
+                        </div>
+                    </div>
+                    {% if ssr.score %}
+                    <div class="flex-shrink-0 text-center md:text-right md:pl-8">
+                        <div class="grade-badge grade-badge-stamp grade-badge-lg grade-{{ ssr.score.grade }} mx-auto md:ml-auto md:mr-0">{{ ssr.score.grade }}</div>
+                        <div class="text-3xl font-bold text-white mt-3 tabular-nums">{{ ssr.score.overall }} / 5.0</div>
+                        <div class="text-white/45 text-xs font-jp mt-0.5">総合スコア</div>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
             {% if ssr.score and ssr.score.published_at %}
             <div class="relative border-t border-white/10 px-7 md:px-10 py-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-white/50 font-jp">
@@ -921,7 +950,7 @@
                 <span id="gov-score-value" class="text-sm font-bold text-gray-700 dark:text-gray-200 tabular-nums"></span>
             </div>
             <!-- Compliance status -->
-            <div id="gov-compliance" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4"></div>
+            <div id="gov-compliance" class="flex flex-wrap gap-2 mb-4"></div>
             <!-- Certifications -->
             <div id="gov-certifications" class="mb-4 hidden">
                 <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">セキュリティ認証:</span>
