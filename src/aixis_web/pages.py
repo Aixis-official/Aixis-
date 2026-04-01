@@ -32,16 +32,16 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.globals["now"] = lambda: datetime.now(timezone.utc)
 
 
-def _render(name: str, ctx: dict):
+def _render(name: str, ctx: dict, status_code: int = 200):
     """Render template compatible with both old and new Starlette APIs."""
     request = ctx.pop("request")
     try:
         # Starlette 0.46+: TemplateResponse(request, name, context)
-        return templates.TemplateResponse(request, name, ctx)
+        return templates.TemplateResponse(request, name, ctx, status_code=status_code)
     except TypeError:
         # Fallback for older Starlette
         ctx["request"] = request
-        return templates.TemplateResponse(name, ctx)
+        return templates.TemplateResponse(name, ctx, status_code=status_code)
 
 page_router = APIRouter(default_response_class=HTMLResponse)
 
@@ -217,7 +217,7 @@ async def tool_detail_page(request: Request, slug: str, user: _OptionalUser = No
 
     result = await db.execute(
         select(Tool)
-        .where(Tool.slug == slug)
+        .where(Tool.slug == slug, Tool.is_public == True)  # noqa: E712
         .options(selectinload(Tool.scores), selectinload(Tool.category))
     )
     tool = result.scalar_one_or_none()
@@ -283,7 +283,9 @@ async def tool_detail_page(request: Request, slug: str, user: _OptionalUser = No
         tool_data=tool_data,
         ssr=ssr,
     )
-    return _render("public/tool_detail.html", ctx)
+    # Return 404 status when tool not found so Google doesn't index empty pages
+    status = 404 if tool is None else 200
+    return _render("public/tool_detail.html", ctx, status_code=status)
 
 
 @page_router.get("/compare")

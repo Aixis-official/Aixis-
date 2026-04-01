@@ -267,8 +267,8 @@
             </dl>
         </section>
 
-        <!-- 5-axis scores (SSR) -->
-        {% if ssr.score and user %}
+        <!-- 5-axis scores (SSR) — always visible for Googlebot SEO -->
+        {% if ssr.score %}
         <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">5軸評価スコア</h2>
             <div class="space-y-3">
@@ -319,6 +319,18 @@
                 {% endfor %}
             </ul>
             {% endif %}
+        </section>
+        {% endif %}
+
+        <!-- Features (SSR) -->
+        {% if ssr.features %}
+        <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6">
+            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-3">主な機能</h2>
+            <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {% for f in ssr.features[:10] %}
+                <li class="text-xs text-gray-600 dark:text-gray-300 font-jp flex items-start gap-1.5"><span class="text-aixis-500 shrink-0">•</span>{{ f }}</li>
+                {% endfor %}
+            </ul>
         </section>
         {% endif %}
     </article>
