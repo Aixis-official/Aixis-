@@ -227,6 +227,9 @@ class LLMScorer:
         self.max_cost_jpy = settings.ai_budget_max_cost_jpy
         # Track per-model token usage for accurate cost estimation
         self._model_tokens: dict[str, dict[str, int]] = {}
+        # Image cache: (screenshot_path, max_width) -> base64 string
+        # Avoids re-loading and re-resizing the same image for different axes
+        self._image_cache: dict[tuple[str, int], str | None] = {}
 
     def _model_for_axis(self, axis: str) -> str:
         """Return the appropriate model for a given axis.
@@ -234,7 +237,7 @@ class LLMScorer:
         Critical axes (localization, practicality) use Sonnet for accurate
         visual text reading. Others use Haiku to minimize cost.
         """
-        if axis in self.SONNET_REQUIRED_AXES or axis == "language_precheck":
+        if axis in self.SONNET_REQUIRED_AXES:
             return self.model
         return self.model_lite
 
@@ -340,7 +343,8 @@ class LLMScorer:
         signal to enforce cross-axis penalties even if individual axis
         scoring is lenient.
         """
-        # Collect up to 4 diverse screenshots for the check
+        # Collect up to 2 diverse screenshots for the check (cost optimization:
+        # language detection doesn't need many images, 2 is sufficient for ja/en verdict)
         sample_paths: list[str] = []
         seen: set[str] = set()
         for obs in observations:
@@ -348,9 +352,9 @@ class LLMScorer:
                 if ss_path and ss_path not in seen:
                     seen.add(ss_path)
                     sample_paths.append(ss_path)
-                    if len(sample_paths) >= 4:
+                    if len(sample_paths) >= 2:
                         break
-            if len(sample_paths) >= 4:
+            if len(sample_paths) >= 2:
                 break
 
         if not sample_paths:
@@ -394,18 +398,20 @@ class LLMScorer:
             import functools
             loop = asyncio.get_event_loop()
             self._check_budget("language_precheck")
+            # Language detection is a simple classification task — Haiku is sufficient
+            # and much cheaper than Sonnet for this purpose
             response = await loop.run_in_executor(
                 None,
                 functools.partial(
                     self.client.messages.create,
-                    model=self.model,
+                    model=self.model_lite,
                     max_tokens=10,
                     temperature=0.0,
                     system="スクリーンショットのテキスト言語を判定してください。ja / en / mixed のいずれか1単語のみで回答。",
                     messages=[{"role": "user", "content": content}],
                 ),
             )
-            self._track_usage(response, model=self.model)
+            self._track_usage(response, model=self.model_lite)
             result = response.content[0].text.strip().lower()
             # Normalize response
             if "ja" in result and "en" not in result:
@@ -1126,13 +1132,25 @@ class LLMScorer:
         },
     }
 
+    # Per-axis screenshot budget: controls token cost by limiting images per API call.
+    # Sonnet axes (localization, practicality) need more images for text reading accuracy.
+    # Haiku axes can score well with fewer images since they evaluate structure/UX.
+    AXIS_SCREENSHOT_BUDGET = {
+        "localization": 10,
+        "practicality": 10,
+        "cost_performance": 6,
+        "safety": 6,
+        "uniqueness": 6,
+    }
+
     def _select_screenshots_for_axis(self, axis: str, observations: list[dict]) -> list[str]:
         """Select screenshots relevant to this specific axis.
 
         Every screenshot is analyzed by at least one axis. Primary categories
-        get all their screenshots included; secondary categories get up to 3.
-        This ensures comprehensive coverage while reducing redundant API calls.
+        get priority, secondary categories fill remaining budget.
+        Total per axis is capped by AXIS_SCREENSHOT_BUDGET to control API cost.
         """
+        budget = self.AXIS_SCREENSHOT_BUDGET.get(axis, 8)
         relevance = self.AXIS_RELEVANT_CATEGORIES.get(axis, {})
         primary_cats = set(relevance.get("primary", []))
         secondary_cats = set(relevance.get("secondary", []))
@@ -1140,33 +1158,42 @@ class LLMScorer:
         seen: set[str] = set()
         paths: list[str] = []
 
-        # Phase 1: ALL screenshots from primary categories
-        for obs in observations:
-            cat = obs.get("category", "unknown")
-            if cat in primary_cats or cat == "protocol":
-                # "protocol" is a fallback category — include based on test index
-                for ss_path in obs.get("screenshots", []):
-                    if ss_path and ss_path not in seen:
-                        seen.add(ss_path)
-                        paths.append(ss_path)
+        # Phase 1: Screenshots from primary categories (up to budget)
+        # Distribute evenly across observations to get diverse coverage
+        primary_obs = [
+            obs for obs in observations
+            if obs.get("category", "unknown") in primary_cats or obs.get("category") == "protocol"
+        ]
+        # Take at most 2 screenshots per observation for diversity, then fill remaining
+        for obs in primary_obs:
+            if len(paths) >= budget:
+                break
+            for ss_path in obs.get("screenshots", [])[:2]:
+                if ss_path and ss_path not in seen and len(paths) < budget:
+                    seen.add(ss_path)
+                    paths.append(ss_path)
 
-        # Phase 2: Up to 3 screenshots per secondary category
-        for cat in secondary_cats:
-            count = 0
-            for obs in observations:
-                if obs.get("category") == cat:
-                    for ss_path in obs.get("screenshots", []):
-                        if ss_path and ss_path not in seen and count < 3:
-                            seen.add(ss_path)
-                            paths.append(ss_path)
-                            count += 1
+        # Phase 2: Fill remaining budget from secondary categories
+        remaining = budget - len(paths)
+        if remaining > 0:
+            for cat in secondary_cats:
+                count = 0
+                for obs in observations:
+                    if obs.get("category") == cat:
+                        for ss_path in obs.get("screenshots", []):
+                            if ss_path and ss_path not in seen and count < 2 and len(paths) < budget:
+                                seen.add(ss_path)
+                                paths.append(ss_path)
+                                count += 1
 
         # If no screenshots were selected (e.g., all categories are "protocol"),
-        # fall back to selecting all unique screenshots
+        # fall back to selecting diverse screenshots up to budget
         if not paths:
             for obs in observations:
-                for ss_path in obs.get("screenshots", []):
-                    if ss_path and ss_path not in seen:
+                if len(paths) >= budget:
+                    break
+                for ss_path in obs.get("screenshots", [])[:2]:
+                    if ss_path and ss_path not in seen and len(paths) < budget:
                         seen.add(ss_path)
                         paths.append(ss_path)
 
@@ -1243,8 +1270,9 @@ class LLMScorer:
 
         # Select screenshots relevant to this axis (smart selection for cost optimization)
         # For Sonnet axes (localization, practicality), use higher resolution for text reading
-        # For Haiku axes, use lower resolution to reduce token cost
-        resize_width = 1024 if axis in self.SONNET_REQUIRED_AXES else 768
+        # For Haiku axes, use lower resolution to reduce image token cost significantly
+        # (768→600px saves ~40% image tokens with minimal quality loss for structure/UX evaluation)
+        resize_width = 1024 if axis in self.SONNET_REQUIRED_AXES else 600
         all_paths = self._select_screenshots_for_axis(axis, observations)
         loaded_images = []
         failed_paths = []
@@ -1321,21 +1349,30 @@ class LLMScorer:
         # Token budget: details array with 4-5 rules × Japanese evidence needs ~2500 tokens
         SINGLE_MAX_TOKENS = 2500
         SYNTHESIS_MAX_TOKENS = 3500
-        SYSTEM_PROMPT = (
-            "あなたは日本企業向けAIツール品質評価の厳格な専門監査員です。\n"
-            "あなたの評価は公開レポートとして消費者の意思決定に直接影響します。\n\n"
-            "【採点哲学】\n"
-            "- 懐疑的かつ厳格に評価してください。「良い」と判断するには明確な肯定的証拠が必要です。\n"
-            "- 証拠不十分な項目はデフォルトで低スコア（2.0以下）としてください。\n"
-            "- 3.0以上のスコアには、スクリーンショットから確認できる具体的な肯定的証拠が必須です。\n"
-            "- 4.0以上は「優秀」を意味し、明らかに高品質な証拠がある場合のみ付与してください。\n"
-            "- 5.0は「完璧」であり、改善点が一切見当たらない場合のみ付与してください。\n\n"
-            "【致命的欠陥の検出】\n"
-            "- 日本語でプロンプトを入力したのに英語のスライドが生成された場合、これは致命的欠陥です。\n"
-            "- 日本語能力(localization)軸は0.0〜1.0とし、他の全軸も最大2.5を上限としてください。\n"
-            "- 日本のビジネスで使えないツールに高スコアを付けることは、消費者を誤導する行為です。\n\n"
-            "必ずJSON形式のみで回答してください。JSONの前後に説明文や装飾は一切含めないでください。"
-        )
+        # System prompt with cache_control for Anthropic prompt caching.
+        # This caches the system prompt across all 5+ API calls in a session,
+        # reducing input token costs by ~90% for the system portion after the first call.
+        SYSTEM_PROMPT = [
+            {
+                "type": "text",
+                "text": (
+                    "あなたは日本企業向けAIツール品質評価の厳格な専門監査員です。\n"
+                    "あなたの評価は公開レポートとして消費者の意思決定に直接影響します。\n\n"
+                    "【採点哲学】\n"
+                    "- 懐疑的かつ厳格に評価してください。「良い」と判断するには明確な肯定的証拠が必要です。\n"
+                    "- 証拠不十分な項目はデフォルトで低スコア（2.0以下）としてください。\n"
+                    "- 3.0以上のスコアには、スクリーンショットから確認できる具体的な肯定的証拠が必須です。\n"
+                    "- 4.0以上は「優秀」を意味し、明らかに高品質な証拠がある場合のみ付与してください。\n"
+                    "- 5.0は「完璧」であり、改善点が一切見当たらない場合のみ付与してください。\n\n"
+                    "【致命的欠陥の検出】\n"
+                    "- 日本語でプロンプトを入力したのに英語のスライドが生成された場合、これは致命的欠陥です。\n"
+                    "- 日本語能力(localization)軸は0.0〜1.0とし、他の全軸も最大2.5を上限としてください。\n"
+                    "- 日本のビジネスで使えないツールに高スコアを付けることは、消費者を誤導する行為です。\n\n"
+                    "必ずJSON形式のみで回答してください。JSONの前後に説明文や装飾は一切含めないでください。"
+                ),
+                "cache_control": {"type": "ephemeral"},
+            }
+        ]
 
         if len(loaded_images) <= BATCH_SIZE:
             content = loaded_images + [{"type": "text", "text": prompt_text}]
@@ -1449,6 +1486,10 @@ class LLMScorer:
     def _load_screenshot(self, screenshot_path: str, max_width: int = 1024) -> str | None:
         """Load a screenshot file and return base64 data.
 
+        Uses in-memory cache to avoid re-loading the same image at the same
+        resolution across multiple axes. This is a significant optimization:
+        the same screenshot may be relevant to 2-3 different axes.
+
         Primary: read from disk (fast, no DB query).
         Fallback: read base64 from DB `screenshot_data` column (survives container restarts).
         """
@@ -1457,6 +1498,11 @@ class LLMScorer:
 
         if not screenshot_path:
             return None
+
+        # Check cache first (keyed by path + target width)
+        cache_key = (screenshot_path, max_width)
+        if cache_key in self._image_cache:
+            return self._image_cache[cache_key]
 
         rel_path = screenshot_path.lstrip("/")
 
@@ -1479,9 +1525,12 @@ class LLMScorer:
                 data = file_path.read_bytes()
                 if len(data) > 5 * 1024 * 1024:
                     logger.warning("Screenshot too large, skipping: %s", file_path)
+                    self._image_cache[cache_key] = None
                     return None
                 data = self._resize_screenshot(data, max_width=max_width)
-                return base64.b64encode(data).decode("ascii")
+                result = base64.b64encode(data).decode("ascii")
+                self._image_cache[cache_key] = result
+                return result
             except Exception as e:
                 logger.warning("Failed to load screenshot from disk %s: %s", file_path, e)
 
@@ -1494,13 +1543,17 @@ class LLMScorer:
                 # Decode, resize, re-encode
                 data = base64.b64decode(db_b64)
                 if len(data) > 5 * 1024 * 1024:
+                    self._image_cache[cache_key] = None
                     return None
                 data = self._resize_screenshot(data, max_width=max_width)
-                return base64.b64encode(data).decode("ascii")
+                result = base64.b64encode(data).decode("ascii")
+                self._image_cache[cache_key] = result
+                return result
         except Exception as e:
             logger.warning("DB fallback also failed for %s: %s", screenshot_path, e)
 
         logger.warning("Screenshot not found on disk OR in DB: %s (disk path: %s)", screenshot_path, file_path)
+        self._image_cache[cache_key] = None
         return None
 
     @staticmethod
