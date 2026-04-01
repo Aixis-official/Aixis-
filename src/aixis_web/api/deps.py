@@ -24,6 +24,15 @@ ALGORITHM = "HS256"
 COOKIE_NAME = "aixis_token"
 
 
+def get_client_ip(request: Request) -> str:
+    """Extract real client IP, respecting X-Forwarded-For behind reverse proxies."""
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        # First IP in the chain is the original client
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
 def _prehash(password: str) -> bytes:
     """SHA-256 pre-hash to safely handle passwords longer than bcrypt's 72-byte limit.
 

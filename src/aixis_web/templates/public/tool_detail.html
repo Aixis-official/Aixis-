@@ -46,22 +46,15 @@
         "@type": "Review",
         "author": {"@type": "Organization", "name": "Aixis"},
         "publisher": {"@type": "Organization", "name": "Aixis", "url": "https://platform.aixis.jp"},
-        "reviewBody": "独立第三者機関による5軸AI監査レポート"{% if ssr and ssr.score and ssr.score.overall %},
+        "datePublished": "{% if ssr and ssr.score and ssr.score.published_at %}{{ ssr.score.published_at }}{% else %}2025-01-01{% endif %}",
+        "reviewBody": "独立第三者機関による5軸AI監査レポート（実務適性・費用対効果・日本語能力・信頼性/安全性・革新性）"{% if ssr and ssr.score and ssr.score.overall %},
         "reviewRating": {
             "@type": "Rating",
             "ratingValue": "{{ ssr.score.overall }}",
             "bestRating": "5",
             "worstRating": "0"
         }{% endif %}
-    }{% if ssr and ssr.score and ssr.score.overall %},
-    "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "{{ ssr.score.overall }}",
-        "bestRating": "5",
-        "worstRating": "0",
-        "ratingCount": "1",
-        "reviewCount": "1"
-    }{% endif %}
+    }
 }
 </script>
 {% if ssr and ssr.score %}
@@ -430,7 +423,7 @@
                 </div>
                 <div id="info-url-row" class="flex items-start gap-3 hidden">
                     <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">公式サイト</dt>
-                    <dd><a id="info-url" href="#" target="_blank" rel="noopener" class="text-xs text-aixis-500 dark:text-aixis-400 hover:underline font-jp truncate block max-w-[200px]"></a></dd>
+                    <dd><a id="info-url" href="#" target="_blank" rel="noopener noreferrer" class="text-xs text-aixis-500 dark:text-aixis-400 hover:underline font-jp truncate block max-w-[200px]"></a></dd>
                 </div>
                 <div id="info-vendor-location-row" class="flex items-start gap-3 hidden">
                     <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">本社所在地</dt>

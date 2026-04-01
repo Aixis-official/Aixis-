@@ -18,7 +18,7 @@ from ...db.base import get_db
 from ...db.models.user import User
 from ...schemas.contact import ContactRequest, ContactResponse
 from ...services.rate_limit_service import check_rate_limit
-from ..deps import require_admin
+from ..deps import get_client_ip, require_admin
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -223,7 +223,7 @@ async def submit_contact(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Receive contact form submission and send notification email."""
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = get_client_ip(request)
     allowed, _retry = await check_rate_limit(
         db,
         f"contact:{client_ip}",

@@ -521,6 +521,11 @@ main.main-constrained {
     color: var(--text-light);
 }
 
+html.dark .status-pending {
+    background: #2d3748;
+    color: #a0aec0;
+}
+
 .status-running {
     background: #bee3f8;
     color: #2a4365;

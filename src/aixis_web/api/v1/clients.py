@@ -35,15 +35,7 @@ def _build_invite_url(request: Request, raw_token: str) -> str:
     return f"{settings.site_origin}/invite/{raw_token}"
 
 
-async def _client_to_response(db: AsyncSession, user: User) -> ClientResponse:
-    org_name = None
-    if user.organization_id:
-        from sqlalchemy import select
-        result = await db.execute(
-            select(Organization.name).where(Organization.id == user.organization_id)
-        )
-        org_name = result.scalar_one_or_none()
-
+def _client_to_response(user: User, org_name: str | None = None) -> ClientResponse:
     return ClientResponse(
         id=user.id,
         email=user.email,
@@ -63,6 +55,30 @@ async def _client_to_response(db: AsyncSession, user: User) -> ClientResponse:
     )
 
 
+async def _batch_org_names(db: AsyncSession, users: list[User]) -> dict[str, str]:
+    """Batch-fetch organization names for a list of users (avoids N+1)."""
+    org_ids = {u.organization_id for u in users if u.organization_id}
+    if not org_ids:
+        return {}
+    from sqlalchemy import select
+    result = await db.execute(
+        select(Organization.id, Organization.name).where(Organization.id.in_(org_ids))
+    )
+    return {row[0]: row[1] for row in result.all()}
+
+
+async def _client_response_with_org(db: AsyncSession, user: User) -> ClientResponse:
+    """Build ClientResponse for a single user, fetching org name if needed."""
+    org_name = None
+    if user.organization_id:
+        from sqlalchemy import select
+        result = await db.execute(
+            select(Organization.name).where(Organization.id == user.organization_id)
+        )
+        org_name = result.scalar_one_or_none()
+    return _client_to_response(user, org_name)
+
+
 # ---------------------------------------------------------------------------
 # Admin endpoints
 # ---------------------------------------------------------------------------
@@ -77,7 +93,8 @@ async def list_clients(
 ):
     """List all client accounts with pagination."""
     clients, total = await client_service.list_clients(db, page, per_page)
-    items = [await _client_to_response(db, c) for c in clients]
+    org_names = await _batch_org_names(db, clients)
+    items = [_client_to_response(c, org_names.get(c.organization_id)) for c in clients]
     return ClientListResponse(items=items, total=total, page=page, per_page=per_page)
 
 
@@ -112,7 +129,7 @@ async def create_client(
         logger.exception("Failed to send invite email to %s", user.email)
         # Don't fail the request — account is created, can resend later
 
-    return await _client_to_response(db, user)
+    return await _client_response_with_org(db, user)
 
 
 @router.post("/{client_id}/suspend", response_model=ClientResponse)
@@ -130,7 +147,7 @@ async def suspend_client(
         if "internal" in error_msg.lower() or "sql" in error_msg.lower():
             error_msg = "リクエストの処理に失敗しました"
         raise HTTPException(status_code=404, detail=error_msg)
-    return await _client_to_response(db, user)
+    return await _client_response_with_org(db, user)
 
 
 @router.post("/{client_id}/reactivate", response_model=ClientResponse)
@@ -148,7 +165,7 @@ async def reactivate_client(
         if "internal" in error_msg.lower() or "sql" in error_msg.lower():
             error_msg = "リクエストの処理に失敗しました"
         raise HTTPException(status_code=404, detail=error_msg)
-    return await _client_to_response(db, user)
+    return await _client_response_with_org(db, user)
 
 
 @router.post("/{client_id}/resend-invite", response_model=ClientResponse)
@@ -174,7 +191,7 @@ async def resend_invite(
     except Exception:
         logger.exception("Failed to resend invite email to %s", user.email)
 
-    return await _client_to_response(db, user)
+    return await _client_response_with_org(db, user)
 
 
 # ---------------------------------------------------------------------------

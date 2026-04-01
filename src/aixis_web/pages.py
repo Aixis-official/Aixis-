@@ -945,13 +945,17 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
     img = Image.new("RGB", (W, H), BG)
     draw = ImageDraw.Draw(img)
 
-    # Try to load TrueType font, fall back to default
+    # Load Japanese-capable font (bundled Noto Sans JP)
+    _FONT_DIR = Path(__file__).resolve().parent / "static" / "fonts"
+    _FONT_BOLD = str(_FONT_DIR / "NotoSansJP-Bold.ttf")
+    _FONT_MEDIUM = str(_FONT_DIR / "NotoSansJP-Medium.ttf")
+
     try:
-        font_lg = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28)
-        font_md = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
-        font_sm = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
-        font_grade = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 36)
-        font_score = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 22)
+        font_lg = ImageFont.truetype(_FONT_BOLD, 28)
+        font_md = ImageFont.truetype(_FONT_MEDIUM, 16)
+        font_sm = ImageFont.truetype(_FONT_MEDIUM, 13)
+        font_grade = ImageFont.truetype(_FONT_BOLD, 36)
+        font_score = ImageFont.truetype(_FONT_BOLD, 22)
     except (IOError, OSError):
         font_lg = ImageFont.load_default()
         font_md = font_lg

@@ -21,8 +21,8 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/static/img/Aixis-logo-final.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/img/Aixis-logo-final.png">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#6366f1">
-    <meta name="msapplication-TileColor" content="#6366f1">
+    <meta name="theme-color" content="#1a365d">
+    <meta name="msapplication-TileColor" content="#1a365d">
     {% block canonical %}{% endblock %}
     <link rel="alternate" hreflang="ja" href="https://platform.aixis.jp{{ request.path }}">
     <link rel="alternate" hreflang="x-default" href="https://platform.aixis.jp{{ request.path }}">
@@ -229,7 +229,7 @@
                            class="px-4 py-1.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-blue-500 dark:hover:bg-blue-400 dark:text-white rounded-lg shadow-sm transition-all duration-150">
                             {% if user.role in ('admin', 'analyst', 'auditor') %}管理画面{% else %}マイページ{% endif %}
                         </a>
-                        <button onclick="aixisLogout()"
+                        <button type="button" onclick="aixisLogout()"
                                 class="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-red-500 transition-colors duration-150">
                             ログアウト
                         </button>
@@ -337,7 +337,7 @@
                    class="block w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-aixis-500 dark:bg-blue-500 text-center transition-colors duration-150">
                     {% if user.role in ('admin', 'analyst', 'auditor') %}管理画面{% else %}マイページ{% endif %}
                 </a>
-                <button onclick="aixisLogout(); closeMobileDrawer();"
+                <button type="button" onclick="aixisLogout(); closeMobileDrawer();"
                         class="block w-full mt-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-aixis-700/50 text-center transition-colors duration-150">
                     ログアウト
                 </button>
@@ -374,7 +374,7 @@
                     <p class="mt-3 text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed font-serif">
                         AI実装の投資判断を科学する、<br>独立系AI調査・監査機関
                     </p>
-                    <a href="https://aixis.jp" target="_blank" rel="noopener" class="inline-flex items-center gap-1 mt-2 text-[12px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">
+                    <a href="https://aixis.jp" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 mt-2 text-[12px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">
                         コーポレートサイト
                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
                     </a>
@@ -403,7 +403,7 @@
                             <li><a href="/pricing" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">料金</a></li>
                             <li><a href="/faq" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">よくある質問</a></li>
                             <li><a href="/contact" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">お問い合わせ</a></li>
-                            <li><a href="https://aixis.jp/privacy-policy/" target="_blank" rel="noopener" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">プライバシーポリシー</a></li>
+                            <li><a href="https://aixis.jp/privacy-policy/" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">プライバシーポリシー</a></li>
                             <li><a href="/terms" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">利用規約</a></li>
                             <li><a href="/tokushoho" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">特定商取引法に基づく表記</a></li>
                             <li><a href="/independence" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150">独立性宣言</a></li>

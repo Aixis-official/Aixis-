@@ -1,5 +1,6 @@
 """Aixis AI Audit Platform - FastAPI Application."""
 import logging
+import os
 import secrets
 import uvicorn
 from contextlib import asynccontextmanager
@@ -292,7 +293,7 @@ def create_app() -> FastAPI:
     app.mount("/screenshots", StaticFiles(directory=str(screenshots_dir)), name="screenshots")
 
     # Mount uploaded files from persistent volume (before /static)
-    uploads_dir = Path("/data/uploads")
+    uploads_dir = Path(os.environ.get("UPLOADS_DIR", "/data/uploads"))
     uploads_dir.mkdir(parents=True, exist_ok=True)
     app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 

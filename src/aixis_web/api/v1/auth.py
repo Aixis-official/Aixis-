@@ -15,6 +15,7 @@ from ..deps import (
     COOKIE_NAME,
     create_access_token,
     create_refresh_token,
+    get_client_ip,
     require_auth,
     verify_password,
 )
@@ -43,7 +44,7 @@ async def login(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Authenticate user and return JWT tokens."""
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = get_client_ip(request)
 
     # Admin IP bypass — skip rate limiting entirely
     if client_ip not in _ADMIN_IPS:
@@ -226,7 +227,8 @@ async def logout(
                 await deactivate_session(db, jti)
                 await db.commit()
         except Exception:
-            pass  # Token parse failure — cookie cleared anyway
+            import logging
+            logging.getLogger(__name__).warning("Logout token revocation failed", exc_info=True)
 
     return {"message": "ログアウトしました"}
 
@@ -281,7 +283,7 @@ async def change_password(
         await revoke_all_user_sessions(db, user.id)
     except Exception:
         import logging
-        logging.getLogger(__name__).warning("Session revocation after password change failed")
+        logging.getLogger(__name__).warning("Session revocation after password change failed", exc_info=True)
 
     await db.commit()
 
@@ -302,7 +304,7 @@ async def forgot_password(
     body = ForgotPasswordRequest(**(await request.json()))
 
     # Rate limit password reset requests by IP
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = get_client_ip(request)
     if client_ip not in _ADMIN_IPS:
         try:
             reset_key = f"pw_reset:{client_ip}"
