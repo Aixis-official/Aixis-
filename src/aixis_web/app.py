@@ -92,17 +92,32 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             response.headers["Strict-Transport-Security"] = (
                 "max-age=31536000; includeSubDomains; preload"
             )
-        csp_directives = [
-            "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.plot.ly https://unpkg.com",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-            "font-src 'self' https://fonts.gstatic.com",
-            "img-src 'self' data: https:",
-            "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com",
-            "frame-ancestors 'none'",
-            "base-uri 'self'",
-            "form-action 'self'",
-        ]
+        # --- CSP: relax for admin pages (Tailwind Play CDN needs unsafe-eval) ---
+        admin_path = request.url.path.startswith("/admin")
+        if admin_path:
+            csp_directives = [
+                "default-src 'self'",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.plot.ly https://unpkg.com",
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+                "font-src 'self' https://fonts.gstatic.com",
+                "img-src 'self' data: https:",
+                "connect-src 'self'",
+                "frame-ancestors 'none'",
+                "base-uri 'self'",
+                "form-action 'self'",
+            ]
+        else:
+            csp_directives = [
+                "default-src 'self'",
+                "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.plot.ly https://unpkg.com",
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+                "font-src 'self' https://fonts.gstatic.com",
+                "img-src 'self' data: https:",
+                "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com",
+                "frame-ancestors 'none'",
+                "base-uri 'self'",
+                "form-action 'self'",
+            ]
         response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
 
         # --- Referrer-Policy: stricter for sensitive pages ---
