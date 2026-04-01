@@ -99,6 +99,9 @@ class DBTestResult(Base):
     response_time_ms = Column(Integer, default=0)
     error = Column(Text)
     screenshot_path = Column(String(500))
+    # Fallback: store screenshot base64 in DB for ephemeral filesystem resilience
+    # Only populated for screenshot_evidence rows (not test completions)
+    screenshot_data = Column(Text, nullable=True)
     page_url = Column(String(500))
     executed_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     metadata_json = Column(JSON, default=dict)

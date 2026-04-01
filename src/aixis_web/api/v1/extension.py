@@ -430,13 +430,26 @@ async def upload_observation(
             "tags": '["freeform"]',
         })
 
-    # Store as DBTestResult
+    # Store as DBTestResult (include screenshot_data for ephemeral filesystem resilience)
+    # Only store base64 in DB for screenshot_evidence rows (test completions don't have screenshots)
+    screenshot_data_for_db = None
+    if is_screenshot_evidence and body.screenshot_base64:
+        # Store the raw base64 (without data URL prefix) in DB as fallback
+        raw_b64 = body.screenshot_base64
+        if raw_b64.startswith("data:"):
+            comma_idx = raw_b64.find(",")
+            if comma_idx > 0:
+                raw_b64 = raw_b64[comma_idx + 1:]
+        screenshot_data_for_db = raw_b64
+
     await db.execute(text("""
         INSERT INTO db_test_results
         (session_id, test_case_id, category, prompt_sent, response_raw,
-         response_time_ms, error, screenshot_path, page_url, executed_at, metadata_json)
+         response_time_ms, error, screenshot_path, screenshot_data, page_url,
+         executed_at, metadata_json)
         VALUES (:session_id, :test_case_id, :category, :prompt, :response,
-                :time_ms, :error, :screenshot, :page_url, CURRENT_TIMESTAMP, :metadata)
+                :time_ms, :error, :screenshot, :screenshot_data, :page_url,
+                CURRENT_TIMESTAMP, :metadata)
     """), {
         "session_id": session_id,
         "test_case_id": test_case_id,
@@ -446,6 +459,7 @@ async def upload_observation(
         "time_ms": body.response_time_ms,
         "error": None,
         "screenshot": screenshot_path,
+        "screenshot_data": screenshot_data_for_db,
         "page_url": body.page_url,
         "metadata": json.dumps(body.metadata, ensure_ascii=False) if body.metadata else "{}",
     })

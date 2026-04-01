@@ -8,3 +8,10 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 healthcheckPath = "/api/v1/health"
 healthcheckTimeout = 120
+
+# Persistent volume for screenshots, uploads, and backups.
+# Without this, /data is ephemeral and files are lost on every deploy.
+# NOTE: You must also create the volume in the Railway dashboard
+# (Settings > Volumes > Add Volume, mount path: /data)
+[[deploy.volumes]]
+mountPath = "/data"

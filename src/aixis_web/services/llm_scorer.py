@@ -1447,7 +1447,11 @@ class LLMScorer:
         })
 
     def _load_screenshot(self, screenshot_path: str, max_width: int = 1024) -> str | None:
-        """Load a screenshot file and return base64 data."""
+        """Load a screenshot file and return base64 data.
+
+        Primary: read from disk (fast, no DB query).
+        Fallback: read base64 from DB `screenshot_data` column (survives container restarts).
+        """
         import base64
         from pathlib import Path
 
@@ -1468,22 +1472,62 @@ class LLMScorer:
         else:
             static_dir = Path(__file__).parent.parent / "static"
             file_path = static_dir / rel_path
-        if not file_path.exists():
-            logger.warning("Screenshot file not found on disk: %s (from path: %s, screenshots_dir: %s)",
-                          file_path, screenshot_path, settings.screenshots_dir)
-            return None
 
+        # PRIMARY: Try disk first
+        if file_path.exists():
+            try:
+                data = file_path.read_bytes()
+                if len(data) > 5 * 1024 * 1024:
+                    logger.warning("Screenshot too large, skipping: %s", file_path)
+                    return None
+                data = self._resize_screenshot(data, max_width=max_width)
+                return base64.b64encode(data).decode("ascii")
+            except Exception as e:
+                logger.warning("Failed to load screenshot from disk %s: %s", file_path, e)
+
+        # FALLBACK: File not on disk — try loading from DB (screenshot_data column)
+        # This handles ephemeral filesystems (e.g., Railway without persistent volume)
+        logger.info("Screenshot file not on disk, trying DB fallback: %s", screenshot_path)
         try:
-            data = file_path.read_bytes()
-            # Skip if too large (> 5MB)
-            if len(data) > 5 * 1024 * 1024:
-                logger.warning("Screenshot too large, skipping: %s", file_path)
-                return None
-            # Resize to reduce API token cost (retina screenshots can be 2x+)
-            data = self._resize_screenshot(data, max_width=max_width)
-            return base64.b64encode(data).decode("ascii")
+            db_b64 = self._load_screenshot_from_db(screenshot_path)
+            if db_b64:
+                # Decode, resize, re-encode
+                data = base64.b64decode(db_b64)
+                if len(data) > 5 * 1024 * 1024:
+                    return None
+                data = self._resize_screenshot(data, max_width=max_width)
+                return base64.b64encode(data).decode("ascii")
         except Exception as e:
-            logger.warning("Failed to load screenshot %s: %s", file_path, e)
+            logger.warning("DB fallback also failed for %s: %s", screenshot_path, e)
+
+        logger.warning("Screenshot not found on disk OR in DB: %s (disk path: %s)", screenshot_path, file_path)
+        return None
+
+    @staticmethod
+    def _load_screenshot_from_db(screenshot_path: str) -> str | None:
+        """Load screenshot base64 from the database (synchronous for executor compatibility)."""
+        import asyncio
+        from ..db.base import async_session
+
+        async def _fetch():
+            async with async_session() as db:
+                result = await db.execute(
+                    text("SELECT screenshot_data FROM db_test_results WHERE screenshot_path = :path AND screenshot_data IS NOT NULL LIMIT 1"),
+                    {"path": screenshot_path},
+                )
+                row = result.fetchone()
+                return row[0] if row else None
+
+        # Run the async DB query synchronously (we're already in an executor thread)
+        try:
+            loop = asyncio.new_event_loop()
+            result = loop.run_until_complete(_fetch())
+            loop.close()
+            if result:
+                logger.info("Screenshot loaded from DB fallback: %s (%d chars)", screenshot_path, len(result))
+            return result
+        except Exception as e:
+            logger.warning("DB screenshot fetch failed for %s: %s", screenshot_path, e)
             return None
 
     def _build_rubric_prompt(
