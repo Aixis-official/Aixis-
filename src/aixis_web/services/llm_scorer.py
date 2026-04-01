@@ -977,8 +977,8 @@ class LLMScorer:
             penalty_factor = completion_rate / 0.3  # 0.0 to 1.0
             await db.execute(text("""
                 UPDATE axis_scores
-                SET score = MIN(score * :factor, 2.0),
-                    confidence = MIN(confidence * :factor, 0.30)
+                SET score = LEAST(score * :factor, 2.0),
+                    confidence = LEAST(confidence * :factor, 0.30)
                 WHERE session_id = :sid
             """), {
                 "factor": penalty_factor,
@@ -999,7 +999,7 @@ class LLMScorer:
             confidence_factor = 0.5 + (completion_rate - 0.3) / 0.6
             await db.execute(text("""
                 UPDATE axis_scores
-                SET confidence = MIN(confidence * :factor, 0.60)
+                SET confidence = LEAST(confidence * :factor, 0.60)
                 WHERE session_id = :sid
             """), {
                 "factor": confidence_factor,
