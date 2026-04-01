@@ -62,11 +62,10 @@
   "itemListElement": [
     {"@type": "SiteNavigationElement", "position": 1, "name": "AIツール一覧", "url": "https://platform.aixis.jp/tools"},
     {"@type": "SiteNavigationElement", "position": 2, "name": "AIツール比較", "url": "https://platform.aixis.jp/compare"},
-    {"@type": "SiteNavigationElement", "position": 3, "name": "カテゴリ別", "url": "https://platform.aixis.jp/categories"},
-    {"@type": "SiteNavigationElement", "position": 4, "name": "監査プロセス", "url": "https://platform.aixis.jp/audit-process"},
-    {"@type": "SiteNavigationElement", "position": 5, "name": "監査プロトコル", "url": "https://platform.aixis.jp/audit-protocol"},
-    {"@type": "SiteNavigationElement", "position": 6, "name": "独立性宣言", "url": "https://platform.aixis.jp/independence"},
-    {"@type": "SiteNavigationElement", "position": 7, "name": "透明性ポリシー", "url": "https://platform.aixis.jp/transparency"},
+    {"@type": "SiteNavigationElement", "position": 3, "name": "監査プロセス", "url": "https://platform.aixis.jp/audit-process"},
+    {"@type": "SiteNavigationElement", "position": 4, "name": "監査プロトコル", "url": "https://platform.aixis.jp/audit-protocol"},
+    {"@type": "SiteNavigationElement", "position": 5, "name": "独立性宣言", "url": "https://platform.aixis.jp/independence"},
+    {"@type": "SiteNavigationElement", "position": 6, "name": "透明性ポリシー", "url": "https://platform.aixis.jp/transparency"},
     {"@type": "SiteNavigationElement", "position": 8, "name": "よくある質問", "url": "https://platform.aixis.jp/faq"},
     {"@type": "SiteNavigationElement", "position": 9, "name": "料金プラン", "url": "https://platform.aixis.jp/pricing"},
     {"@type": "SiteNavigationElement", "position": 10, "name": "お問い合わせ", "url": "https://platform.aixis.jp/contact"}
@@ -384,7 +383,7 @@
             </div>
 
             <!-- Right: Mock Audit Report Card -->
-            <div class="hidden lg:block relative flex-shrink-0" style="width: 430px; height: 340px;">
+            <div class="hidden lg:block relative flex-shrink-0" style="width: 490px; height: 380px;">
                 <style>
                     .hero-mock-card {
                         transform: perspective(1200px) rotateY(-14deg) rotateX(4deg);
@@ -440,74 +439,77 @@
                 </style>
 
                 <!-- Card Shadow (Back) -->
-                <div class="hero-mock-back absolute rounded-sm overflow-hidden"
-                     style="top: 6px; left: 20px; width: 400px; height: 320px; opacity: 0.3; filter: blur(2px);">
-                    <div class="w-full h-full bg-white/90 border border-gray-300/50"></div>
+                <div class="hero-mock-back absolute rounded-lg"
+                     style="top: 10px; left: 28px; width: 450px; height: 360px; opacity: 0.25; filter: blur(3px);">
+                    <div class="w-full h-full bg-white/80 border border-gray-300/40 rounded-lg"></div>
                 </div>
 
                 <!-- Main Card (Front) -->
-                <div class="hero-mock-card absolute rounded-sm overflow-hidden"
-                     style="top: 0; left: 0; width: 400px; height: 320px; box-shadow: 0 25px 60px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.2);">
-                    <!-- Mini Hero Header (gradient matching DB detail) -->
-                    <div class="relative overflow-hidden" style="background: linear-gradient(135deg, #2d3555 0%, #1e293b 50%, #111827 100%); height: 64px;">
+                <div class="hero-mock-card absolute rounded-lg"
+                     style="top: 0; left: 0; width: 450px; height: 360px; box-shadow: 0 25px 60px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.2); overflow: hidden;">
+                    <!-- Mini Hero Header -->
+                    <div class="relative" style="background: linear-gradient(135deg, #2d3555 0%, #1e293b 50%, #111827 100%); height: 72px;">
                         <div style="position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(255,255,255,0.04),transparent 60%)"></div>
-                        <div class="relative flex items-center gap-2.5 px-4 py-3">
-                            <div class="w-8 h-8 rounded bg-white/10 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4.5 h-4.5 text-white/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+                        <div class="relative flex items-center gap-3 px-5 h-full">
+                            <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/10">
+                                <svg class="w-5 h-5 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <span class="inline-block px-1.5 py-0.5 rounded text-[7px] font-medium bg-white/10 border border-white/15 text-white/50 mb-0.5">AI文書作成</span>
-                                <div class="text-[12px] font-bold text-white tracking-tight leading-tight" style="font-family:'Noto Sans JP',sans-serif">Sample AI Tool</div>
+                                <div class="text-[13px] font-bold text-white tracking-tight leading-tight" style="font-family:'Noto Sans JP',sans-serif">Sample AI Tool</div>
+                                <span class="inline-block px-1.5 py-0.5 rounded text-[7px] font-medium bg-white/8 border border-white/12 text-white/50 mt-1">AI文書作成</span>
                             </div>
-                            <div class="text-right flex-shrink-0 pl-2">
-                                <div class="w-7 h-7 rounded flex items-center justify-center text-[12px] font-black text-white mx-auto" style="background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 2px 8px rgba(34,197,94,0.3);">A</div>
-                                <div class="text-[13px] font-bold text-white mt-0.5 tabular-nums hero-score-anim">4.2<span class="text-[8px] font-normal text-white/35"> / 5.0</span></div>
+                            <div class="flex items-center gap-3 flex-shrink-0 pl-2">
+                                <div class="text-right">
+                                    <div class="text-[9px] text-white/40 font-medium" style="font-family:'Noto Sans JP',sans-serif">総合スコア</div>
+                                    <div class="text-[16px] font-bold text-white tabular-nums hero-score-anim leading-tight">4.2<span class="text-[9px] font-normal text-white/35"> / 5.0</span></div>
+                                </div>
+                                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-[13px] font-black text-white" style="background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 2px 8px rgba(34,197,94,0.3);">A</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Card Body -->
-                    <div class="bg-white" style="height: 256px;">
+                    <div class="bg-white" style="height: 288px;">
                         <div class="flex" style="height: 100%;">
                             <!-- Left: Radar Chart -->
-                            <div class="flex items-center justify-center" style="width: 210px; padding: 8px 0 8px 12px;">
-                                <svg viewBox="0 0 200 200" width="190" height="190" overflow="visible">
-                                    <!-- Grid pentagons (center at 100,100; outer r=80) -->
-                                    <polygon points="100,20 176.2,55.3 147,148.7 53,148.7 23.8,55.3" fill="none" stroke="#E8ECF2" stroke-width="0.8"/>
-                                    <polygon points="100,40 157.1,66.5 127.7,136.5 72.3,136.5 42.9,66.5" fill="none" stroke="#F0F3F7" stroke-width="0.5"/>
-                                    <polygon points="100,60 138.1,77.6 108.5,124.4 91.5,124.4 61.9,77.6" fill="none" stroke="#F4F6F9" stroke-width="0.5"/>
+                            <div class="flex items-center justify-center" style="width: 250px; padding: 6px 0 6px 8px;">
+                                <svg viewBox="0 0 280 220" width="240" height="192">
+                                    <!-- Grid pentagons (center at 140,110; outer r=68) -->
+                                    <polygon points="140,42 204.7,89.0 180.0,165.0 100.0,165.0 75.3,89.0" fill="none" stroke="#E8ECF2" stroke-width="0.8"/>
+                                    <polygon points="140,59 188.5,94.2 170.0,151.2 110.0,151.2 91.5,94.2" fill="none" stroke="#F0F3F7" stroke-width="0.5"/>
+                                    <polygon points="140,76 172.3,99.5 160.0,137.5 120.0,137.5 107.7,99.5" fill="none" stroke="#F4F6F9" stroke-width="0.5"/>
                                     <!-- Axis lines -->
-                                    <line x1="100" y1="100" x2="100" y2="20" stroke="#E8ECF2" stroke-width="0.5"/>
-                                    <line x1="100" y1="100" x2="176.2" y2="55.3" stroke="#E8ECF2" stroke-width="0.5"/>
-                                    <line x1="100" y1="100" x2="147" y2="148.7" stroke="#E8ECF2" stroke-width="0.5"/>
-                                    <line x1="100" y1="100" x2="53" y2="148.7" stroke="#E8ECF2" stroke-width="0.5"/>
-                                    <line x1="100" y1="100" x2="23.8" y2="55.3" stroke="#E8ECF2" stroke-width="0.5"/>
+                                    <line x1="140" y1="110" x2="140" y2="42" stroke="#E8ECF2" stroke-width="0.5"/>
+                                    <line x1="140" y1="110" x2="204.7" y2="89.0" stroke="#E8ECF2" stroke-width="0.5"/>
+                                    <line x1="140" y1="110" x2="180.0" y2="165.0" stroke="#E8ECF2" stroke-width="0.5"/>
+                                    <line x1="140" y1="110" x2="100.0" y2="165.0" stroke="#E8ECF2" stroke-width="0.5"/>
+                                    <line x1="140" y1="110" x2="75.3" y2="89.0" stroke="#E8ECF2" stroke-width="0.5"/>
                                     <!-- Data fill -->
-                                    <polygon points="100,26 168,58 138,144 60,140 32,62"
+                                    <polygon points="140,47 196,92 172,154 107,156 83,95"
                                              fill="rgba(99,102,241,0.15)" class="hero-radar-fill"/>
                                     <!-- Data stroke -->
-                                    <polygon points="100,26 168,58 138,144 60,140 32,62"
+                                    <polygon points="140,47 196,92 172,154 107,156 83,95"
                                              fill="none" stroke="rgba(99,102,241,0.7)" stroke-width="1.5"
                                              stroke-linejoin="round" class="hero-radar-data"/>
                                     <!-- Data dots -->
-                                    <circle cx="100" cy="26" fill="#6366F1" class="hero-dot hero-dot-1"><animate attributeName="r" values="3;4;3" dur="3s" repeatCount="indefinite" begin="2.5s"/></circle>
-                                    <circle cx="168" cy="58" fill="#6366F1" class="hero-dot hero-dot-2"/>
-                                    <circle cx="138" cy="144" fill="#6366F1" class="hero-dot hero-dot-3"/>
-                                    <circle cx="60" cy="140" fill="#6366F1" class="hero-dot hero-dot-4"/>
-                                    <circle cx="32" cy="62" fill="#6366F1" class="hero-dot hero-dot-5"/>
-                                    <!-- Axis labels (positioned well outside the chart) -->
-                                    <text x="100" y="10" text-anchor="middle" fill="#64748B" font-size="9" font-family="'Noto Sans JP',sans-serif" font-weight="500">実務適性</text>
-                                    <text x="186" y="54" text-anchor="start" fill="#64748B" font-size="8.5" font-family="'Noto Sans JP',sans-serif">信頼性・安全性</text>
-                                    <text x="154" y="160" text-anchor="start" fill="#64748B" font-size="8.5" font-family="'Noto Sans JP',sans-serif">革新性</text>
-                                    <text x="46" y="160" text-anchor="end" fill="#64748B" font-size="8.5" font-family="'Noto Sans JP',sans-serif">日本語能力</text>
-                                    <text x="14" y="54" text-anchor="end" fill="#64748B" font-size="8.5" font-family="'Noto Sans JP',sans-serif">費用対効果</text>
+                                    <circle cx="140" cy="47" fill="#6366F1" class="hero-dot hero-dot-1"><animate attributeName="r" values="3;4;3" dur="3s" repeatCount="indefinite" begin="2.5s"/></circle>
+                                    <circle cx="196" cy="92" fill="#6366F1" class="hero-dot hero-dot-2"/>
+                                    <circle cx="172" cy="154" fill="#6366F1" class="hero-dot hero-dot-3"/>
+                                    <circle cx="107" cy="156" fill="#6366F1" class="hero-dot hero-dot-4"/>
+                                    <circle cx="83" cy="95" fill="#6366F1" class="hero-dot hero-dot-5"/>
+                                    <!-- Axis labels -->
+                                    <text x="140" y="28" text-anchor="middle" fill="#64748B" font-size="9" font-family="'Noto Sans JP',sans-serif" font-weight="500">実務適性</text>
+                                    <text x="212" y="88" text-anchor="start" fill="#64748B" font-size="8.5" font-family="'Noto Sans JP',sans-serif">信頼性・安全性</text>
+                                    <text x="186" y="178" text-anchor="start" fill="#64748B" font-size="8.5" font-family="'Noto Sans JP',sans-serif">革新性</text>
+                                    <text x="94" y="178" text-anchor="end" fill="#64748B" font-size="8.5" font-family="'Noto Sans JP',sans-serif">日本語能力</text>
+                                    <text x="68" y="88" text-anchor="end" fill="#64748B" font-size="8.5" font-family="'Noto Sans JP',sans-serif">費用対効果</text>
                                 </svg>
                             </div>
 
                             <!-- Right: Score Bars + Info -->
-                            <div class="flex-1 pr-4 pl-1 pt-3 pb-3 flex flex-col justify-between" style="min-width: 0;">
+                            <div class="flex-1 pr-5 pl-1 pt-4 pb-3 flex flex-col justify-between" style="min-width: 0;">
                                 <!-- 5-Axis Score Bars -->
-                                <div class="space-y-2">
+                                <div class="space-y-2.5">
                                     <div>
                                         <div class="flex items-center justify-between mb-0.5">
                                             <span class="text-[8px] text-gray-500" style="font-family:'Noto Sans JP',sans-serif">実務適性</span>
@@ -546,7 +548,7 @@
                                 </div>
 
                                 <!-- Bottom: Compliance badges -->
-                                <div class="pt-2.5 mt-2 border-t border-gray-100">
+                                <div class="pt-3 mt-2 border-t border-gray-100">
                                     <div class="flex flex-wrap gap-1">
                                         <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[7px] font-medium bg-emerald-50 text-emerald-600 border border-emerald-100">
                                             <svg class="w-2 h-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
