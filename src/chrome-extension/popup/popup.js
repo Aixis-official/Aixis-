@@ -19,16 +19,23 @@ document.getElementById("showPanelBtn").addEventListener("click", async () => {
 
   try {
     // Try sending message to existing content script first
-    await chrome.tabs.sendMessage(tab.id, { type: "SHOW_PANEL" });
+    const resp = await chrome.tabs.sendMessage(tab.id, { type: "SHOW_PANEL" });
+    // If we got a response but the content script is orphaned, it won't have resp.ok
+    if (!resp || !resp.ok) throw new Error("stale");
   } catch {
-    // Content script not loaded — inject it
+    // Content script not loaded or orphaned — inject fresh
     try {
+      // Inject both CSS and JS (CSS is needed for selection overlay)
+      await chrome.scripting.insertCSS({
+        target: { tabId: tab.id },
+        files: ["content/content.css"],
+      });
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         files: ["content/content.js"],
       });
       // Wait for content script to initialize
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 600));
       // Now send SHOW_PANEL
       try {
         await chrome.tabs.sendMessage(tab.id, { type: "SHOW_PANEL" });

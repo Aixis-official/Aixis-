@@ -9,8 +9,22 @@
 (() => {
   "use strict";
 
-  // Prevent double-injection
-  if (document.getElementById("aixis-panel-host")) return;
+  // Prevent double-injection — but handle extension reload/update gracefully.
+  // After extension reload, old content script is orphaned (chrome.runtime.id gone)
+  // but old DOM elements (#aixis-panel-host) remain. We must detect this and
+  // replace the stale panel with a fresh one.
+  const existingHost = document.getElementById("aixis-panel-host");
+  if (existingHost) {
+    try {
+      // Test if our extension context is still valid
+      if (chrome.runtime?.id) {
+        // Context is valid — this is a true duplicate injection, bail out
+        return;
+      }
+    } catch {}
+    // Extension context is invalid (orphaned) — remove stale panel and recreate
+    try { existingHost.remove(); } catch {}
+  }
 
   // -------------------------------------------------------------------------
   // Constants
