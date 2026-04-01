@@ -83,6 +83,29 @@
     ]
 }
 </script>
+{% if tool_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "{{ tool_data.name_jp or tool_data.name }} レビュー・評価 - Aixis",
+    "url": "https://platform.aixis.jp/tools/{{ slug }}",
+    "isAccessibleForFree": false,
+    "hasPart": [
+        {
+            "@type": "WebPageElement",
+            "isAccessibleForFree": true,
+            "cssSelector": "#ssr-content"
+        },
+        {
+            "@type": "WebPageElement",
+            "isAccessibleForFree": false,
+            "cssSelector": ".paywall-section"
+        }
+    ]
+}
+</script>
+{% endif %}
 {% endblock %}
 
 {% block head %}
