@@ -183,17 +183,8 @@
         </script>
     </div>
 
-    <!-- Error state (hidden by default) -->
-    <div id="error-state" class="hidden">
-        <div class="card text-center py-16">
-            <svg class="mx-auto w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-            </svg>
-            <h2 class="text-xl font-bold text-gray-700 dark:text-gray-300 font-jp mb-2">ツールが見つかりません</h2>
-            <p class="text-gray-500 dark:text-gray-400 font-jp mb-6" id="error-message"></p>
-            <a href="/tools" class="btn btn-primary font-jp">データベースに戻る</a>
-        </div>
-    </div>
+    <!-- Error state: injected by JS only when needed (kept out of static HTML for SEO) -->
+    <div id="error-state" class="hidden"></div>
 
     <!-- ============================================================
          SSR Content: Server-rendered for SEO (visible to Googlebot).
@@ -942,5 +933,5 @@
 
 {% block scripts %}
 <script>window.__AIXIS_PAGE = { slug: '{{ slug }}', isLoggedIn: {{ 'true' if user else 'false' }} };</script>
-<script defer src="/static/js/tool-detail-page.min.js?v=20260401b"></script>
+<script defer src="/static/js/tool-detail-page.min.js?v=20260401c"></script>
 {% endblock %}
