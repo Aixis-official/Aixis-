@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <link rel="dns-prefetch" href="https://unpkg.com">
     <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+    {% block preload %}{% endblock %}
     <style>
         /* Prevent iOS zoom on input focus */
         @supports (-webkit-touch-callout: none) {
@@ -90,6 +91,7 @@
             }
         })();
     </script>
+    <script src="/static/js/ga4-events.min.js" defer></script>
 
     <!-- Tailwind CSS (pre-built static, replaces 3.6MB CDN JIT compiler) -->
     <link rel="stylesheet" href="/static/css/tailwind.min.css">
@@ -246,7 +248,7 @@
                         </a>
                         <a href="/contact"
                            class="nav-auth-cta px-4 py-1.5 text-xs sm:text-sm font-medium tracking-wide text-gray-700 border border-gray-300 hover:border-gray-500 rounded-none transition-all duration-200 whitespace-nowrap">
-                            無料トライアルを申請
+                            14日間無料トライアル
                         </a>
                         {% endif %}
                     </div>
@@ -354,7 +356,7 @@
                 </a>
                 <a href="/contact"
                    class="block w-full mt-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-aixis-500 text-center transition-colors duration-150">
-                    無料トライアルを申請する
+                    14日間無料トライアルを申請
                 </a>
                 {% endif %}
             </div>
@@ -524,5 +526,10 @@
     </script>
 
     {% block scripts %}{% endblock %}
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/static/sw.js', { scope: '/' });
+    }
+    </script>
 </body>
 </html>

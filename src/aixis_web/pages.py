@@ -853,6 +853,12 @@ async def manifest_json():
     )
 
 
+@page_router.get("/offline")
+async def offline_page(request: Request):
+    """Offline fallback page for PWA/service worker."""
+    return templates.TemplateResponse("public/offline.html", {"request": request})
+
+
 @page_router.get("/.well-known/security.txt")
 async def security_txt():
     """RFC 9116 security.txt for vulnerability disclosure."""

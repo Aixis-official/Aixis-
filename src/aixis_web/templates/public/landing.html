@@ -90,6 +90,10 @@
 </script>
 {% endblock %}
 
+{% block preload %}
+<link rel="preload" as="image" type="image/webp" href="/static/img/Aixis-platform-hero.webp">
+{% endblock %}
+
 {% block head %}
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
@@ -398,7 +402,7 @@
                     {% else %}
                     <a href="/contact"
                        class="w-full sm:w-auto inline-flex flex-col items-center justify-center px-6 sm:px-8 py-3.5 rounded-none text-sm sm:text-base font-bold text-white border-2 border-white/30 hover:border-white/60 hover:bg-white/5 transition-all duration-200 text-center leading-snug">
-                        無料トライアルを申請する
+                        14日間無料トライアルを申請する
                         <span class="block text-[10px] sm:text-[11px] font-normal text-slate-300/80 mt-1 font-serif tracking-wide">お問い合わせ後、1営業日以内にアカウントを発行します</span>
                     </a>
                     {% endif %}
@@ -893,7 +897,7 @@
                     <span class="text-3xl font-bold text-gray-900 dark:text-white">&yen;29,800</span>
                     <span class="text-sm text-gray-500 dark:text-gray-400">/月（税別）</span>
                 </div>
-                <p class="mt-1 text-xs text-blue-500 dark:text-blue-400 font-bold">お問い合わせ後、無料トライアル開始</p>
+                <p class="mt-1 text-xs text-blue-500 dark:text-blue-400 font-bold">お問い合わせ後、14日間無料トライアル開始</p>
 
                 <ul class="mt-6 space-y-3 flex-1">
                     <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
@@ -922,7 +926,7 @@
                 {% else %}
                 <a href="/contact"
                    class="btn-blue-hover mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-none text-sm font-bold bg-aixis-500 dark:bg-aixis-400 text-white dark:text-aixis-900 hover:bg-aixis-600 dark:hover:bg-aixis-300 transition-all duration-200">
-                    無料トライアルを始める
+                    14日間無料トライアルを始める
                 </a>
                 {% endif %}
 
@@ -1142,7 +1146,7 @@
                 {% else %}
                 <a href="/contact"
                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3.5 rounded-none text-sm sm:text-base font-bold text-white border-2 border-white/30 hover:border-white/60 hover:bg-white/5 transition-all duration-200 text-center leading-snug">
-                    無料トライアルを申請する
+                    14日間無料トライアルを申請する
                 </a>
                 {% endif %}
             </div>

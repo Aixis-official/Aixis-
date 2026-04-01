@@ -271,6 +271,197 @@ https://platform.aixis.jp
 
 
 # ---------------------------------------------------------------------------
+# Welcome email series (3-part onboarding)
+# ---------------------------------------------------------------------------
+
+
+def send_welcome_email_day1(user_name: str, user_email: str) -> None:
+    """Day 1: Welcome + Quick Start guide."""
+    subject = "[Aixis] ようこそ！14日間無料トライアルの始め方"
+
+    body_text = f"""{user_name} 様
+
+Aixis プラットフォームへようこそ！
+14日間の無料トライアルが始まりました。
+
+まずは以下の3ステップで、Aixis を使い始めましょう。
+
+1. 監査データベースを見る
+   主要なAIツールの監査レポートを閲覧できます。
+
+2. ツールを比較する
+   複数のAIツールを並べて比較し、最適なものを選べます。
+
+3. レポートを活用する
+   監査結果をもとに、組織のAIガバナンスに役立てましょう。
+
+ツール一覧はこちら: https://platform.aixis.jp/tools
+
+ご不明な点がありましたら、お気軽にお問い合わせください。
+
+{"─" * 30}
+Aixis | 独立系AI調査・監査機関
+https://platform.aixis.jp
+{"─" * 30}
+
+※ このメールは自動送信されています。"""
+
+    html_content = f"""\
+<p style="margin:0 0 16px;font-size:16px;font-weight:600;">{user_name} 様</p>
+<p>Aixis プラットフォームへようこそ！<br>
+14日間の無料トライアルが始まりました。</p>
+<p style="font-weight:600;">まずは以下の3ステップで始めましょう：</p>
+<table cellpadding="0" cellspacing="0" style="margin:16px 0 24px;">
+<tr><td style="padding:12px 16px;border-left:3px solid #0f172a;">
+<strong>1. 監査データベースを見る</strong><br>
+<span style="font-size:13px;color:#64748b;">主要なAIツールの監査レポートを閲覧できます。</span>
+</td></tr>
+<tr><td style="padding:12px 16px;border-left:3px solid #0f172a;">
+<strong>2. ツールを比較する</strong><br>
+<span style="font-size:13px;color:#64748b;">複数のAIツールを並べて比較し、最適なものを選べます。</span>
+</td></tr>
+<tr><td style="padding:12px 16px;border-left:3px solid #0f172a;">
+<strong>3. レポートを活用する</strong><br>
+<span style="font-size:13px;color:#64748b;">監査結果をもとに、組織のAIガバナンスに役立てましょう。</span>
+</td></tr>
+</table>
+<table cellpadding="0" cellspacing="0" style="margin:24px 0;">
+<tr><td style="background:#0f172a;padding:14px 32px;">
+<a href="https://platform.aixis.jp/tools" style="color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;letter-spacing:0.02em;">ツール一覧を見る →</a>
+</td></tr>
+</table>
+<p style="font-size:13px;color:#64748b;">ご不明な点がありましたら、お気軽にお問い合わせください。</p>"""
+
+    send_email(user_email, subject, body_text, _wrap_html(html_content))
+    logger.info("Welcome day-1 email sent to %s", user_email)
+
+
+def send_welcome_email_day3(user_name: str, user_email: str) -> None:
+    """Day 3: Feature Highlight — 5-axis scoring and comparison."""
+    subject = "[Aixis] 活用ヒント：5軸スコアの読み方と比較機能"
+
+    body_text = f"""{user_name} 様
+
+Aixis をご利用いただきありがとうございます。
+今日は、プラットフォームの主要機能をご紹介します。
+
+■ 5軸スコア（Five-Axis Score）
+Aixis の監査レポートでは、AIツールを以下の5軸で評価しています。
+各スコアを確認することで、ツールの強みと課題を把握できます。
+
+■ 比較機能
+複数のAIツールを並べて比較し、用途に最適なツールを選べます。
+比較画面: https://platform.aixis.jp/compare
+
+■ リスク・ガバナンス情報
+AIツール導入時のリスク評価やガバナンス対応状況も確認できます。
+
+ツール一覧: https://platform.aixis.jp/tools
+
+{"─" * 30}
+Aixis | 独立系AI調査・監査機関
+https://platform.aixis.jp
+{"─" * 30}
+
+※ このメールは自動送信されています。"""
+
+    html_content = f"""\
+<p style="margin:0 0 16px;font-size:16px;font-weight:600;">{user_name} 様</p>
+<p>Aixis をご利用いただきありがとうございます。<br>
+今日は、プラットフォームの主要機能をご紹介します。</p>
+<table cellpadding="0" cellspacing="0" style="margin:16px 0 24px;width:100%%;">
+<tr><td style="padding:16px;background:#f8fafc;border-left:3px solid #0f172a;margin-bottom:8px;">
+<strong style="font-size:14px;">5軸スコア（Five-Axis Score）</strong><br>
+<span style="font-size:13px;color:#64748b;">AIツールを5つの軸で評価。各スコアでツールの強みと課題を把握できます。</span>
+</td></tr>
+<tr><td style="height:8px;"></td></tr>
+<tr><td style="padding:16px;background:#f8fafc;border-left:3px solid #0f172a;">
+<strong style="font-size:14px;">比較機能</strong><br>
+<span style="font-size:13px;color:#64748b;">複数のAIツールを並べて比較し、用途に最適なツールを選べます。</span>
+</td></tr>
+<tr><td style="height:8px;"></td></tr>
+<tr><td style="padding:16px;background:#f8fafc;border-left:3px solid #0f172a;">
+<strong style="font-size:14px;">リスク・ガバナンス情報</strong><br>
+<span style="font-size:13px;color:#64748b;">AIツール導入時のリスク評価やガバナンス対応状況も確認できます。</span>
+</td></tr>
+</table>
+<table cellpadding="0" cellspacing="0" style="margin:24px 0;">
+<tr>
+<td style="background:#0f172a;padding:14px 32px;">
+<a href="https://platform.aixis.jp/tools" style="color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;">ツール一覧 →</a>
+</td>
+<td style="width:12px;"></td>
+<td style="border:1px solid #d1d5db;padding:14px 24px;">
+<a href="https://platform.aixis.jp/compare" style="color:#374151;text-decoration:none;font-size:14px;font-weight:600;">比較する</a>
+</td>
+</tr>
+</table>"""
+
+    send_email(user_email, subject, body_text, _wrap_html(html_content))
+    logger.info("Welcome day-3 email sent to %s", user_email)
+
+
+def send_welcome_email_day7(user_name: str, user_email: str) -> None:
+    """Day 7: Value reminder — trial midpoint, encourage upgrade."""
+    subject = "[Aixis] トライアル残り7日 — 監査データの活用法"
+
+    body_text = f"""{user_name} 様
+
+Aixis 無料トライアルの折り返し地点です。残り7日となりました。
+
+■ Aixis でできること
+- 主要AIツールの独立監査レポートを閲覧
+- 5軸スコアで客観的にツールを評価・比較
+- 組織のAIガバナンス・リスク管理に活用
+
+■ トライアル終了後
+トライアル終了後は、監査データベースへのアクセスが制限されます。
+継続してご利用いただくには、プランのご契約をお願いいたします。
+
+プラン・料金: https://platform.aixis.jp/pricing
+お問い合わせ: https://platform.aixis.jp/contact
+
+{"─" * 30}
+Aixis | 独立系AI調査・監査機関
+https://platform.aixis.jp
+{"─" * 30}
+
+※ このメールは自動送信されています。"""
+
+    html_content = f"""\
+<p style="margin:0 0 16px;font-size:16px;font-weight:600;">{user_name} 様</p>
+<p>Aixis 無料トライアルの折り返し地点です。<strong>残り7日</strong>となりました。</p>
+<p style="font-weight:600;margin:24px 0 12px;">Aixis でできること：</p>
+<table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+<tr><td style="padding:8px 16px;">
+・主要AIツールの独立監査レポートを閲覧
+</td></tr>
+<tr><td style="padding:8px 16px;">
+・5軸スコアで客観的にツールを評価・比較
+</td></tr>
+<tr><td style="padding:8px 16px;">
+・組織のAIガバナンス・リスク管理に活用
+</td></tr>
+</table>
+<p>トライアル終了後は、監査データベースへのアクセスが制限されます。<br>
+継続してご利用いただくには、プランのご契約をお願いいたします。</p>
+<table cellpadding="0" cellspacing="0" style="margin:24px 0;">
+<tr>
+<td style="background:#0f172a;padding:14px 32px;">
+<a href="https://platform.aixis.jp/contact?type=subscription" style="color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;">プランを契約する →</a>
+</td>
+<td style="width:12px;"></td>
+<td style="border:1px solid #d1d5db;padding:14px 24px;">
+<a href="https://platform.aixis.jp/pricing" style="color:#374151;text-decoration:none;font-size:14px;font-weight:600;">料金を見る</a>
+</td>
+</tr>
+</table>"""
+
+    send_email(user_email, subject, body_text, _wrap_html(html_content))
+    logger.info("Welcome day-7 email sent to %s", user_email)
+
+
+# ---------------------------------------------------------------------------
 # Admin notification: new client created
 # ---------------------------------------------------------------------------
 
