@@ -43,6 +43,7 @@ class ObservationUpload(BaseModel):
 class ObservationResponse(BaseModel):
     observation_id: int
     sequence_number: int
+    screenshot_saved: bool = False  # Whether screenshot was saved to disk
 
 
 class SessionProgressResponse(BaseModel):

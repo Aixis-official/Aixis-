@@ -312,9 +312,25 @@ async def upload_observation(
 
     # Handle screenshot
     screenshot_path = None
+    capture_type = (body.metadata or {}).get("capture_type", "")
+    is_screenshot_upload = capture_type in (
+        "manual_screenshot", "full_screenshot", "partial_screenshot"
+    )
+    ss_b64_len = len(body.screenshot_base64) if body.screenshot_base64 else 0
+
     if body.screenshot_base64:
         try:
-            img_data = base64.b64decode(body.screenshot_base64)
+            # Strip accidental data URL prefix if present
+            raw_b64 = body.screenshot_base64
+            if raw_b64.startswith("data:"):
+                # e.g., "data:image/jpeg;base64,/9j/4AA..."
+                comma_idx = raw_b64.find(",")
+                if comma_idx > 0:
+                    raw_b64 = raw_b64[comma_idx + 1:]
+                    logger.info("Stripped data URL prefix from screenshot (%d → %d chars)",
+                               ss_b64_len, len(raw_b64))
+
+            img_data = base64.b64decode(raw_b64)
             session_dir = _SCREENSHOTS_DIR / session_id
             session_dir.mkdir(parents=True, exist_ok=True)
             # Detect image format from magic bytes to use correct extension
@@ -325,14 +341,31 @@ async def upload_observation(
             img_path.write_bytes(img_data)
             # Path relative to screenshots mount; accessible via /screenshots/...
             screenshot_path = f"/screenshots/{session_id}/{sequence_number:04d}.{img_ext}"
+            logger.info(
+                "Screenshot saved: %s (%d bytes, %s, base64_len=%d)",
+                screenshot_path, len(img_data), img_ext, ss_b64_len,
+            )
         except Exception as e:
-            logger.warning("Screenshot save failed: %s", e)
+            logger.error(
+                "Screenshot save FAILED for session %s seq %d: %s "
+                "(base64_len=%d, starts_with=%s, screenshots_dir=%s, dir_exists=%s)",
+                session_id, sequence_number, e,
+                ss_b64_len,
+                repr(body.screenshot_base64[:40]) if body.screenshot_base64 else "None",
+                _SCREENSHOTS_DIR,
+                _SCREENSHOTS_DIR.exists(),
+            )
+    elif is_screenshot_upload:
+        # This is a screenshot capture request but screenshot_base64 is empty!
+        logger.error(
+            "Screenshot upload with EMPTY screenshot_base64! session=%s seq=%d "
+            "capture_type=%s test_case_id=%s metadata=%s",
+            session_id, sequence_number, capture_type,
+            body.test_case_id, body.metadata,
+        )
 
     # Determine observation type: screenshot evidence vs test progression
-    capture_type = (body.metadata or {}).get("capture_type", "")
-    is_screenshot_evidence = capture_type in (
-        "manual_screenshot", "full_screenshot", "partial_screenshot"
-    )
+    is_screenshot_evidence = is_screenshot_upload
     is_manual_screenshot = is_screenshot_evidence
 
     test_case_id = body.test_case_id
@@ -459,6 +492,7 @@ async def upload_observation(
     return ObservationResponse(
         observation_id=obs_id,
         sequence_number=sequence_number,
+        screenshot_saved=screenshot_path is not None,
     )
 
 

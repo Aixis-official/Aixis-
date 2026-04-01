@@ -646,8 +646,13 @@ async function captureFullScreenshot() {
       if (!dataUrl || typeof dataUrl !== "string") {
         throw new Error("captureVisibleTab returned empty result");
       }
-      // Strip any data URL prefix (handle both jpeg and png formats)
-      screenshotBase64 = dataUrl.replace(/^data:image\/[a-z]+;base64,/, "");
+      // Strip data URL prefix — use robust regex with case-insensitive flag
+      screenshotBase64 = dataUrl.replace(/^data:image\/[a-zA-Z]+;base64,/, "");
+      // Validate: base64 data must be non-empty
+      if (!screenshotBase64 || screenshotBase64.length < 100) {
+        console.error("Screenshot base64 is too short after prefix strip:", screenshotBase64?.length, "dataUrl length:", dataUrl.length);
+        throw new Error("スクリーンショットデータが空です");
+      }
       // Use same capture for thumbnail (no second call)
       thumbDataUrl = dataUrl;
 
@@ -655,6 +660,8 @@ async function captureFullScreenshot() {
       try {
         await chrome.tabs.sendMessage(tab.id, { type: "SHOW_PANEL" });
       } catch {}
+    } else {
+      return { error: "アクティブなタブが見つかりません" };
     }
   } catch (err) {
     console.warn("Screenshot capture failed:", err);
@@ -663,7 +670,13 @@ async function captureFullScreenshot() {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab) await chrome.tabs.sendMessage(tab.id, { type: "SHOW_PANEL" });
     } catch {}
-    return { error: "スクリーンショットの取得に失敗しました" };
+    return { error: "スクリーンショットの取得に失敗しました: " + (err.message || "") };
+  }
+
+  // Safety check: never upload without screenshot data
+  if (!screenshotBase64) {
+    console.error("screenshotBase64 is null/empty after capture — aborting upload");
+    return { error: "スクリーンショットデータが取得できませんでした" };
   }
 
   const currentTest = state.testCases[state.currentTestIndex];
@@ -680,35 +693,70 @@ async function captureFullScreenshot() {
       page_title: pageTitle || "",
       test_index: state.currentTestIndex,
       timestamp: new Date().toISOString(),
+      screenshot_base64_length: screenshotBase64.length,
     },
   };
 
-  try {
-    const result = await AixisAPI.uploadObservation(state.currentSession.id, obsData);
-    state.captureCount++;
-
-    // Track screenshot per test with thumbnail for preview (string key for storage compat)
-    const key = _ssKey();
-    if (!state.testScreenshots[key]) state.testScreenshots[key] = [];
-    state.testScreenshots[key].push({
-      thumbDataUrl: thumbDataUrl || null,
-      timestamp: new Date().toISOString(),
-      type: "full",
-      pageUrl: pageUrl,
-      pageTitle: pageTitle,
-    });
-
-    await persistState();
-    broadcastToContentScripts({
-      type: "CAPTURE_COUNT_UPDATE",
-      count: state.captureCount,
-      screenshots: state.testScreenshots[key],
-    });
-    return { ok: true, captureCount: state.captureCount, screenshots: state.testScreenshots[key] };
-  } catch (err) {
-    console.error("Screenshot upload failed:", err);
-    return { error: err.message };
+  // Upload with retry (once) for transient network issues
+  let result = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      result = await AixisAPI.uploadObservation(state.currentSession.id, obsData);
+      // Verify server actually saved the screenshot
+      if (result && result.screenshot_saved === false) {
+        console.warn(`Server did NOT save screenshot (attempt ${attempt + 1}). Retrying...`);
+        if (attempt < 1) {
+          await new Promise(r => setTimeout(r, 500));
+          continue;
+        }
+      }
+      break;
+    } catch (err) {
+      console.error(`Screenshot upload failed (attempt ${attempt + 1}):`, err);
+      if (attempt < 1) {
+        await new Promise(r => setTimeout(r, 1000));
+        continue;
+      }
+      return { error: err.message };
+    }
   }
+
+  if (!result) {
+    return { error: "スクリーンショットのアップロードに失敗しました（2回リトライ済み）" };
+  }
+
+  state.captureCount++;
+
+  // Track screenshot per test with thumbnail for preview (string key for storage compat)
+  const key = _ssKey();
+  if (!state.testScreenshots[key]) state.testScreenshots[key] = [];
+  state.testScreenshots[key].push({
+    thumbDataUrl: thumbDataUrl || null,
+    timestamp: new Date().toISOString(),
+    type: "full",
+    pageUrl: pageUrl,
+    pageTitle: pageTitle,
+    savedOnServer: result.screenshot_saved !== false,
+  });
+
+  await persistState();
+  broadcastToContentScripts({
+    type: "CAPTURE_COUNT_UPDATE",
+    count: state.captureCount,
+    screenshots: state.testScreenshots[key],
+  });
+
+  // Warn user if screenshot wasn't saved despite successful upload
+  if (result.screenshot_saved === false) {
+    return {
+      ok: true,
+      warning: "スクリーンショットがサーバーに保存されませんでした。再度お試しください。",
+      captureCount: state.captureCount,
+      screenshots: state.testScreenshots[key],
+    };
+  }
+
+  return { ok: true, captureCount: state.captureCount, screenshots: state.testScreenshots[key] };
 }
 
 // ---------------------------------------------------------------------------
