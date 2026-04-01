@@ -467,6 +467,7 @@ class LLMScorer:
         # Build observations list, grouping screenshots per test
         observations = []
         screenshot_map = {}  # test_case_id -> [screenshot_paths]
+        all_screenshot_paths = []  # ALL screenshot paths for fallback
 
         for row in rows:
             test_case_id = row[0]
@@ -479,6 +480,7 @@ class LLMScorer:
                     screenshot_map[test_case_id] = []
                 if screenshot_path:
                     screenshot_map[test_case_id].append(screenshot_path)
+                    all_screenshot_paths.append(screenshot_path)
                 continue
 
             observations.append({
@@ -493,11 +495,76 @@ class LLMScorer:
                 "failure_indicators": row[8] if isinstance(row[8], list) else (json.loads(row[8]) if row[8] else []),
             })
 
+        # Diagnostic logging: show screenshot_map keys vs observation test_case_ids
+        obs_ids = {obs["test_case_id"] for obs in observations}
+        ss_map_ids = set(screenshot_map.keys())
+        matched_ids = obs_ids & ss_map_ids
+        unmatched_ss_ids = ss_map_ids - obs_ids
+        logger.info(
+            "Session %s screenshot linkage: %d screenshot groups, %d observations, "
+            "%d matched, %d unmatched screenshot groups, %d total screenshot files",
+            session_id, len(ss_map_ids), len(obs_ids),
+            len(matched_ids), len(unmatched_ss_ids), len(all_screenshot_paths),
+        )
+        if unmatched_ss_ids:
+            # Log sample of unmatched IDs for debugging
+            sample_unmatched = list(unmatched_ss_ids)[:5]
+            sample_obs = list(obs_ids)[:5]
+            logger.warning(
+                "Session %s: screenshot test_case_ids not matching observations! "
+                "Screenshot IDs (sample): %s | Observation IDs (sample): %s",
+                session_id, sample_unmatched, sample_obs,
+            )
+
         # Attach grouped screenshots to their test observations
         for obs in observations:
             obs["screenshots"] = screenshot_map.get(obs["test_case_id"], [])
             if obs["screenshot_path"] and obs["screenshot_path"] not in obs["screenshots"]:
                 obs["screenshots"].insert(0, obs["screenshot_path"])
+
+        # CRITICAL FALLBACK: If screenshot_map linkage produced zero matches but
+        # screenshots DO exist in the session, distribute all screenshots across
+        # observations. This handles edge cases like:
+        #   - test_case_id mismatch between screenshot_evidence and test_completion rows
+        #   - Service worker restart causing different IDs
+        #   - Storage quota exceeded clearing testCases in extension
+        total_linked = sum(len(obs.get("screenshots", [])) for obs in observations)
+        if total_linked == 0 and all_screenshot_paths:
+            logger.warning(
+                "Session %s: FALLBACK — 0 screenshots linked via test_case_id but %d exist. "
+                "Distributing all screenshots to observations.",
+                session_id, len(all_screenshot_paths),
+            )
+            # Strategy: assign screenshots to observations by matching test_case_id
+            # patterns, or distribute evenly as last resort
+            #
+            # First, try partial matching (strip session-scoped suffix for comparison)
+            # e.g., "slide_basic-01:abc12345" in screenshot_map vs "slide_basic-01:def67890" in obs
+            fallback_linked = 0
+            for obs in observations:
+                obs_base = obs["test_case_id"].rsplit(":", 1)[0] if ":" in obs["test_case_id"] else obs["test_case_id"]
+                for ss_id, ss_paths in screenshot_map.items():
+                    ss_base = ss_id.rsplit(":", 1)[0] if ":" in ss_id else ss_id
+                    if ss_base == obs_base and ss_paths:
+                        obs["screenshots"] = ss_paths
+                        fallback_linked += len(ss_paths)
+                        break
+
+            # If partial matching also failed, assign all screenshots to all observations
+            if fallback_linked == 0:
+                logger.warning(
+                    "Session %s: partial-match fallback also failed. "
+                    "Attaching all %d screenshots to every observation.",
+                    session_id, len(all_screenshot_paths),
+                )
+                for obs in observations:
+                    obs["screenshots"] = all_screenshot_paths
+
+            total_after_fallback = sum(len(obs.get("screenshots", [])) for obs in observations)
+            logger.info(
+                "Session %s: after fallback, %d total screenshot links across %d observations",
+                session_id, total_after_fallback, len(observations),
+            )
 
         if not observations:
             # Legacy sessions may only have screenshot_evidence entries
@@ -1250,7 +1317,8 @@ class LLMScorer:
             static_dir = Path(__file__).parent.parent / "static"
             file_path = static_dir / rel_path
         if not file_path.exists():
-            logger.debug("Screenshot not found: %s", file_path)
+            logger.warning("Screenshot file not found on disk: %s (from path: %s, screenshots_dir: %s)",
+                          file_path, screenshot_path, settings.screenshots_dir)
             return None
 
         try:

@@ -505,6 +505,38 @@
         alert('再試行機能はChrome拡張に移行されました。Chrome拡張から新しい監査セッションを開始してください。');
     };
 
+    window.screenshotDiagnostic = async function() {
+        try {
+            var resp = await aixisAPI('/audits/' + encodeURIComponent(sessionId) + '/screenshot-diagnostic');
+            var d = resp;
+            var msg = '=== スクリーンショット診断 ===\n\n' +
+                '総行数: ' + d.total_rows + '\n' +
+                'テスト完了: ' + d.test_completions + ' 件\n' +
+                'スクショ証拠行: ' + d.screenshot_evidence_rows + ' 件\n' +
+                'スクショファイル: ' + d.total_screenshot_files + ' 件\n\n' +
+                '--- リンク状況 ---\n' +
+                'スクショグループ: ' + d.screenshot_map_keys + '\n' +
+                'テスト観測: ' + d.observation_ids + '\n' +
+                'マッチ済み: ' + d.matched_ids + '\n' +
+                '未マッチ(スクショ): ' + d.unmatched_screenshot_ids.length + '\n\n' +
+                '診断: ' + d.diagnosis + '\n\n';
+            if (d.unmatched_screenshot_ids.length > 0) {
+                msg += '--- 未マッチ スクショID ---\n' + d.unmatched_screenshot_ids.join('\n') + '\n\n';
+                msg += '--- テストID（サンプル） ---\n' + d.sample_observation_ids.join('\n') + '\n\n';
+            }
+            if (d.file_existence_checks && d.file_existence_checks.length > 0) {
+                msg += '--- ファイル存在チェック ---\n';
+                d.file_existence_checks.forEach(function(f) {
+                    msg += (f.exists ? '✓' : '✗') + ' ' + f.path + '\n  → ' + f.resolved + '\n';
+                });
+            }
+            alert(msg);
+            console.log('Screenshot diagnostic:', d);
+        } catch (e) {
+            alert('診断に失敗しました: ' + (e.message || '不明なエラー'));
+        }
+    };
+
     window.rescoreAudit = async function() {
         if (!confirm('自動評価をやり直しますか？（手動評価データは保持されます）')) return;
 
@@ -631,6 +663,11 @@
         }
         if (data.status === 'awaiting_manual' || data.status === 'completed') {
             secondaryBtns.push('<button onclick="rescoreAudit()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/30 font-jp">自動評価やり直し</button>');
+        }
+
+        // Screenshot diagnostic button (always available when screenshots might exist)
+        if (['completed', 'awaiting_manual', 'failed', 'aborted'].includes(data.status)) {
+            secondaryBtns.push('<button onclick="screenshotDiagnostic()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 font-jp" title="スクリーンショットのリンク状況を診断">🔍 スクショ診断</button>');
         }
 
         // Admin actions (dropdown)

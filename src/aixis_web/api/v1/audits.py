@@ -1030,6 +1030,101 @@ async def _run_rescore_bg(session_id: str, tool_id: str):
             logger.error("Failed to write error status for session %s: %s", session_id, e2)
 
 
+@router.get("/{session_id}/screenshot-diagnostic")
+async def screenshot_diagnostic(
+    session_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _user: Annotated[User, Depends(require_analyst)],
+):
+    """Diagnostic endpoint: shows screenshot linkage status for a session.
+
+    Helps identify why screenshots might not be reaching the LLM scorer.
+    """
+    # 1. Get all test results
+    result = await db.execute(text("""
+        SELECT tr.test_case_id, tr.category, tr.screenshot_path,
+               tr.metadata_json, tr.response_time_ms
+        FROM db_test_results tr
+        WHERE tr.session_id = :sid
+        ORDER BY tr.executed_at
+    """), {"sid": session_id})
+    rows = result.fetchall()
+
+    if not rows:
+        return JSONResponse({"error": "No test results found", "session_id": session_id})
+
+    # 2. Separate screenshot_evidence from test_completions
+    screenshot_evidence_rows = []
+    test_completion_rows = []
+    for row in rows:
+        test_case_id, category, screenshot_path, metadata_json, response_time_ms = row
+        entry = {
+            "test_case_id": test_case_id,
+            "category": category,
+            "screenshot_path": screenshot_path,
+            "response_time_ms": response_time_ms,
+        }
+        if category == "screenshot_evidence":
+            screenshot_evidence_rows.append(entry)
+        else:
+            test_completion_rows.append(entry)
+
+    # 3. Build screenshot_map (same logic as scorer)
+    screenshot_map = {}
+    for row in screenshot_evidence_rows:
+        tid = row["test_case_id"]
+        if tid not in screenshot_map:
+            screenshot_map[tid] = []
+        if row["screenshot_path"]:
+            screenshot_map[tid].append(row["screenshot_path"])
+
+    # 4. Check linkage
+    obs_ids = {row["test_case_id"] for row in test_completion_rows}
+    ss_ids = set(screenshot_map.keys())
+    matched = obs_ids & ss_ids
+    unmatched_ss = ss_ids - obs_ids
+    unmatched_obs = obs_ids - ss_ids
+
+    # 5. Check file existence for a sample of screenshots
+    from pathlib import Path
+    from ...config import settings
+    file_checks = []
+    all_ss_paths = [r["screenshot_path"] for r in screenshot_evidence_rows if r["screenshot_path"]]
+    for ss_path in all_ss_paths[:10]:
+        rel = ss_path.lstrip("/")
+        if rel.startswith("screenshots/"):
+            rel = rel[len("screenshots/"):]
+            fp = Path(settings.screenshots_dir) / rel
+        else:
+            fp = Path(__file__).parent.parent.parent / "static" / rel
+        file_checks.append({"path": ss_path, "resolved": str(fp), "exists": fp.exists()})
+
+    return JSONResponse({
+        "session_id": session_id,
+        "total_rows": len(rows),
+        "test_completions": len(test_completion_rows),
+        "screenshot_evidence_rows": len(screenshot_evidence_rows),
+        "total_screenshot_files": len(all_ss_paths),
+        "screenshot_map_keys": len(ss_ids),
+        "observation_ids": len(obs_ids),
+        "matched_ids": len(matched),
+        "unmatched_screenshot_ids": list(unmatched_ss)[:10],
+        "unmatched_observation_ids": list(unmatched_obs)[:10],
+        "sample_screenshot_ids": list(ss_ids)[:5],
+        "sample_observation_ids": list(obs_ids)[:5],
+        "file_existence_checks": file_checks,
+        "diagnosis": (
+            "OK — screenshots properly linked" if matched and not unmatched_ss
+            else f"MISMATCH — {len(unmatched_ss)} screenshot groups have no matching observation. "
+                 f"Check test_case_id consistency between screenshot captures and test completions."
+            if unmatched_ss
+            else "NO SCREENSHOTS — no screenshot_evidence rows found"
+            if not screenshot_evidence_rows
+            else "UNKNOWN"
+        ),
+    })
+
+
 @router.post("/{session_id}/finalize")
 async def finalize_audit(
     session_id: str,
