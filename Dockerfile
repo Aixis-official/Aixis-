@@ -26,15 +26,16 @@ COPY . .
 # Force install compatible Jinja2 first, then install the rest
 RUN pip install --no-cache-dir --force-reinstall "jinja2>=3.1,<3.2" && pip install --no-cache-dir .
 
-# Create data directories and non-root user
-RUN mkdir -p /data/backups /data/output /data/screenshots /data/uploads \
-    && useradd -r -m -u 1000 appuser \
-    && chown -R appuser:appuser /data /app
+# Create non-root user
+RUN useradd -r -m -u 1000 appuser
+
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 ENV PYTHONPATH=/app/src
 
 EXPOSE 8000
 
-# Run as non-root user for security hardening
-USER appuser
-CMD uvicorn aixis_web.app:app --host 0.0.0.0 --port ${PORT:-8000}
+# Entrypoint runs as root to fix volume permissions, then drops to appuser
+ENTRYPOINT ["/entrypoint.sh"]
