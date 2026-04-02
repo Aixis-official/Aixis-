@@ -920,8 +920,6 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
     from .db.models.tool import Tool, ToolCategory
     from .db.models.score import ToolPublishedScore
     from sqlalchemy.orm import selectinload
-    from PIL import Image, ImageDraw, ImageFont
-    import io
 
     result = await db.execute(
         select(Tool).where(Tool.slug == slug, Tool.is_public == True)  # noqa: E712
@@ -931,12 +929,19 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
     if not tool:
         return Response(status_code=404)
 
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+        import io
+    except ImportError:
+        logger.error("Pillow not installed — card image generation unavailable")
+        return Response(status_code=503)
+
     latest_score = tool.scores[0] if tool.scores else None
     category_name = tool.category.name_jp if tool.category else ""
     tool_name = tool.name_jp or tool.name or slug
 
-    # Card dimensions (2x for retina)
-    W, H = 800, 480
+    # Card dimensions
+    W, H = 1200, 630  # Standard OG image size for optimal social/search display
     BG = (255, 255, 255)
     DARK = (15, 23, 42)  # slate-900
     GRAY = (100, 116, 139)  # slate-500
@@ -947,122 +952,138 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
         "S": (212, 175, 55), "A": (56, 161, 105), "B": (43, 108, 176),
         "C": (237, 137, 54), "D": (229, 62, 62),
     }
-    AXIS_COLORS = {
-        "practicality": (56, 161, 105), "cost_performance": (56, 161, 105),
-        "localization": (43, 108, 176), "safety": (56, 161, 105),
-        "uniqueness": (237, 137, 54),
-    }
     AXIS_LABELS = {
         "practicality": "実務適性", "cost_performance": "費用対効果",
         "localization": "日本語能力", "safety": "信頼性・安全性", "uniqueness": "革新性",
     }
 
-    img = Image.new("RGB", (W, H), BG)
-    draw = ImageDraw.Draw(img)
-
-    # Load Japanese-capable font (bundled Noto Sans JP)
-    _FONT_DIR = Path(__file__).resolve().parent / "static" / "fonts"
-    _FONT_BOLD = str(_FONT_DIR / "NotoSansJP-Bold.ttf")
-    _FONT_MEDIUM = str(_FONT_DIR / "NotoSansJP-Medium.ttf")
-
     try:
-        font_lg = ImageFont.truetype(_FONT_BOLD, 28)
-        font_md = ImageFont.truetype(_FONT_MEDIUM, 16)
-        font_sm = ImageFont.truetype(_FONT_MEDIUM, 13)
-        font_grade = ImageFont.truetype(_FONT_BOLD, 36)
-        font_score = ImageFont.truetype(_FONT_BOLD, 22)
-    except (IOError, OSError):
-        font_lg = ImageFont.load_default()
-        font_md = font_lg
-        font_sm = font_lg
-        font_grade = font_lg
-        font_score = font_lg
+        img = Image.new("RGB", (W, H), BG)
+        draw = ImageDraw.Draw(img)
 
-    # --- Card border ---
-    draw.rounded_rectangle([0, 0, W - 1, H - 1], radius=12, outline=LIGHT_GRAY, width=2)
+        # Load Japanese-capable font (bundled Noto Sans JP)
+        _FONT_DIR = Path(__file__).resolve().parent / "static" / "fonts"
+        _FONT_BOLD = str(_FONT_DIR / "NotoSansJP-Bold.ttf")
+        _FONT_MEDIUM = str(_FONT_DIR / "NotoSansJP-Medium.ttf")
 
-    # --- Header: tool name + vendor ---
-    y = 32
-    draw.text((40, y), tool_name[:30], fill=DARK, font=font_lg)
-    y += 40
-    if tool.vendor:
-        draw.text((40, y), tool.vendor[:40], fill=GRAY, font=font_md)
-        y += 28
+        try:
+            font_title = ImageFont.truetype(_FONT_BOLD, 40)
+            font_lg = ImageFont.truetype(_FONT_BOLD, 28)
+            font_md = ImageFont.truetype(_FONT_MEDIUM, 20)
+            font_sm = ImageFont.truetype(_FONT_MEDIUM, 17)
+            font_xs = ImageFont.truetype(_FONT_MEDIUM, 14)
+            font_grade = ImageFont.truetype(_FONT_BOLD, 52)
+            font_score = ImageFont.truetype(_FONT_BOLD, 30)
+            font_score_lg = ImageFont.truetype(_FONT_BOLD, 48)
+        except (IOError, OSError):
+            font_title = ImageFont.load_default()
+            font_lg = font_md = font_sm = font_xs = font_title
+            font_grade = font_score = font_score_lg = font_title
 
-    # --- Category badge ---
-    if category_name:
-        y += 8
-        bbox = draw.textbbox((0, 0), category_name, font=font_sm)
-        tw = bbox[2] - bbox[0]
-        draw.rounded_rectangle([38, y - 2, 52 + tw, y + 20], radius=4, fill=(241, 245, 249))
-        draw.text((44, y), category_name, fill=GRAY, font=font_sm)
-        y += 30
+        # --- Card border & header line ---
+        draw.rounded_rectangle([0, 0, W - 1, H - 1], radius=16, outline=LIGHT_GRAY, width=2)
+        # Top accent line (brand color)
+        draw.rounded_rectangle([0, 0, W - 1, 5], radius=0, fill=BRAND)
 
-    # --- Grade badge (top-right) ---
-    if latest_score and latest_score.overall_grade:
-        grade = latest_score.overall_grade
-        gc = GRADE_COLORS.get(grade, (148, 163, 184))
-        gx, gy, gs = W - 100, 28, 56
-        draw.rounded_rectangle([gx, gy, gx + gs, gy + gs], radius=10, fill=gc)
-        # Center grade letter
-        gbbox = draw.textbbox((0, 0), grade, font=font_grade)
-        gw = gbbox[2] - gbbox[0]
-        gh = gbbox[3] - gbbox[1]
-        draw.text((gx + (gs - gw) // 2, gy + (gs - gh) // 2 - 4), grade, fill=(255, 255, 255), font=font_grade)
+        # --- Branding header ---
+        draw.text((56, 28), "Aixis", fill=BRAND, font=font_lg)
+        draw.text((56, 60), "独立AI監査プラットフォーム", fill=(148, 163, 184), font=font_xs)
 
-    # --- 5-axis score bars ---
-    y = max(y + 12, 160)
-    bar_x, bar_w, bar_h = 180, 380, 14
+        # --- Tool name + vendor ---
+        y = 108
+        draw.text((56, y), tool_name[:25], fill=DARK, font=font_title)
+        y += 52
+        if tool.vendor:
+            draw.text((56, y), tool.vendor[:40], fill=GRAY, font=font_md)
+            y += 32
 
-    if latest_score:
-        for axis_key in ["practicality", "cost_performance", "localization", "safety", "uniqueness"]:
-            val = getattr(latest_score, axis_key, None)
-            label = AXIS_LABELS.get(axis_key, axis_key)
-            color = AXIS_COLORS.get(axis_key, BRAND)
+        # --- Category badge ---
+        if category_name:
+            y += 6
+            bbox = draw.textbbox((0, 0), category_name, font=font_xs)
+            tw = bbox[2] - bbox[0]
+            draw.rounded_rectangle([54, y - 2, 70 + tw, y + 22], radius=6, fill=(241, 245, 249))
+            draw.text((62, y + 1), category_name, fill=GRAY, font=font_xs)
+            y += 38
 
-            draw.text((40, y), label, fill=GRAY, font=font_sm)
-            # Background bar
-            draw.rounded_rectangle([bar_x, y + 2, bar_x + bar_w, y + 2 + bar_h], radius=4, fill=LIGHT_GRAY)
-            # Fill bar
-            if val and val > 0:
-                fill_w = max(8, int(bar_w * val / 5.0))
-                if val >= 4.0:
-                    color = (56, 161, 105)  # green
-                elif val >= 3.0:
-                    color = (43, 108, 176)  # blue
-                elif val >= 2.0:
-                    color = (214, 158, 46)  # yellow
-                else:
-                    color = (229, 62, 62)  # red
-                draw.rounded_rectangle([bar_x, y + 2, bar_x + fill_w, y + 2 + bar_h], radius=4, fill=color)
-            # Score value
-            score_text = f"{val:.1f}" if val else "--"
-            draw.text((bar_x + bar_w + 16, y), score_text, fill=DARK, font=font_sm)
-            y += 30
+        # --- Grade badge (top-right area) ---
+        grade_area_x = W - 220
+        if latest_score and latest_score.overall_grade:
+            grade = latest_score.overall_grade
+            gc = GRADE_COLORS.get(grade, (148, 163, 184))
+            gx, gy, gs = grade_area_x + 50, 100, 80
+            draw.rounded_rectangle([gx, gy, gx + gs, gy + gs], radius=14, fill=gc)
+            # Center grade letter
+            gbbox = draw.textbbox((0, 0), grade, font=font_grade)
+            gw = gbbox[2] - gbbox[0]
+            gh = gbbox[3] - gbbox[1]
+            draw.text((gx + (gs - gw) // 2, gy + (gs - gh) // 2 - 6), grade, fill=(255, 255, 255), font=font_grade)
+            # Overall score below grade
+            if latest_score.overall_score is not None:
+                score_str = f"{latest_score.overall_score:.1f}"
+                sbbox = draw.textbbox((0, 0), score_str, font=font_score_lg)
+                sw = sbbox[2] - sbbox[0]
+                cx = gx + gs // 2
+                draw.text((cx - sw // 2, gy + gs + 18), score_str, fill=DARK, font=font_score_lg)
+                draw.text((cx - 12, gy + gs + 70), "/ 5.0", fill=GRAY, font=font_sm)
 
-    # --- Overall score ---
-    y = H - 60
-    draw.line([(40, y - 12), (W - 40, y - 12)], fill=LIGHT_GRAY, width=1)
-    draw.text((40, y), "総合スコア", fill=GRAY, font=font_sm)
-    if latest_score and latest_score.overall_score is not None:
-        score_str = f"{latest_score.overall_score:.1f} / 5.0"
-        sbbox = draw.textbbox((0, 0), score_str, font=font_score)
-        sw = sbbox[2] - sbbox[0]
-        draw.text((W - 40 - sw, y - 4), score_str, fill=DARK, font=font_score)
+        # --- 5-axis score bars ---
+        y = max(y + 16, 260)
+        bar_x, bar_w, bar_h = 220, 500, 18
+        label_x = 56
 
-    # --- Branding ---
-    draw.text((W - 180, H - 24), "platform.aixis.jp", fill=(148, 163, 184), font=font_sm)
+        if latest_score:
+            for axis_key in ["practicality", "cost_performance", "localization", "safety", "uniqueness"]:
+                val = getattr(latest_score, axis_key, None)
+                label = AXIS_LABELS.get(axis_key, axis_key)
 
-    # Encode to PNG
-    buf = io.BytesIO()
-    img.save(buf, format="PNG", optimize=True)
-    buf.seek(0)
+                draw.text((label_x, y + 1), label, fill=GRAY, font=font_sm)
+                # Background bar
+                draw.rounded_rectangle([bar_x, y + 3, bar_x + bar_w, y + 3 + bar_h], radius=5, fill=LIGHT_GRAY)
+                # Fill bar
+                if val and val > 0:
+                    fill_w = max(10, int(bar_w * val / 5.0))
+                    if val >= 4.0:
+                        color = (56, 161, 105)  # green
+                    elif val >= 3.0:
+                        color = (43, 108, 176)  # blue
+                    elif val >= 2.0:
+                        color = (214, 158, 46)  # yellow
+                    else:
+                        color = (229, 62, 62)  # red
+                    draw.rounded_rectangle([bar_x, y + 3, bar_x + fill_w, y + 3 + bar_h], radius=5, fill=color)
+                # Score value
+                score_text = f"{val:.1f}" if val else "--"
+                draw.text((bar_x + bar_w + 20, y + 1), score_text, fill=DARK, font=font_sm)
+                y += 40
 
-    return Response(
-        content=buf.getvalue(),
-        media_type="image/png",
-        headers={"Cache-Control": "public, max-age=86400"},
-    )
+        # --- Bottom divider + branding ---
+        y = H - 52
+        draw.line([(56, y - 8), (W - 56, y - 8)], fill=LIGHT_GRAY, width=1)
+        draw.text((56, y), "platform.aixis.jp", fill=(148, 163, 184), font=font_xs)
+        # Timestamp
+        if latest_score and hasattr(latest_score, "published_at") and latest_score.published_at:
+            pub_str = latest_score.published_at.strftime("%Y.%m.%d") if latest_score.published_at else ""
+            if pub_str:
+                draw.text((W - 56 - draw.textlength(f"監査日: {pub_str}", font=font_xs), y), f"監査日: {pub_str}", fill=(148, 163, 184), font=font_xs)
+
+        # Encode to PNG
+        buf = io.BytesIO()
+        img.save(buf, format="PNG", optimize=True)
+        buf.seek(0)
+
+        return Response(
+            content=buf.getvalue(),
+            media_type="image/png",
+            headers={
+                "Cache-Control": "public, max-age=86400",
+                "Content-Type": "image/png",
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
+    except Exception:
+        logger.exception("Failed to generate card image for %s", slug)
+        return Response(status_code=500)
 
 
 @page_router.get("/og/{slug}.svg")
