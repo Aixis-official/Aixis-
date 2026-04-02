@@ -982,30 +982,30 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
         img = Image.new("RGB", (W, H), BG)
         draw = ImageDraw.Draw(img)
 
-        # ── Fonts ──
+        # ── Fonts (sized for impact) ──
         _FD = Path(__file__).resolve().parent / "static" / "fonts"
         _FB = str(_FD / "NotoSansJP-Bold.ttf")
         _FM = str(_FD / "NotoSansJP-Medium.ttf")
         try:
-            fn = ImageFont.truetype(_FB, 36)
-            fv = ImageFont.truetype(_FM, 18)
-            fc = ImageFont.truetype(_FM, 14)
-            fg = ImageFont.truetype(_FB, 44)
-            fs = ImageFont.truetype(_FB, 120)
-            fu = ImageFont.truetype(_FM, 40)
-            fl = ImageFont.truetype(_FM, 18)
-            fbr = ImageFont.truetype(_FB, 13)
-            fbs = ImageFont.truetype(_FM, 12)
+            fn = ImageFont.truetype(_FB, 44)       # tool name — large
+            fv = ImageFont.truetype(_FM, 20)       # vendor
+            fc = ImageFont.truetype(_FM, 15)       # category pill
+            fg = ImageFont.truetype(_FB, 50)       # grade letter
+            fs = ImageFont.truetype(_FB, 156)      # hero score — very large
+            fu = ImageFont.truetype(_FM, 46)       # "/ 5.0"
+            fl = ImageFont.truetype(_FM, 20)       # "総合スコア" label
+            fbr = ImageFont.truetype(_FB, 14)      # footer brand
+            fbs = ImageFont.truetype(_FM, 12)      # footer sub
         except (IOError, OSError):
             _d = ImageFont.load_default()
             fn = fv = fc = fg = fs = fu = fl = fbr = fbs = _d
 
-        PL, PR = 64, 64
+        PL, PR = 60, 60
         draw.rounded_rectangle([0, 0, W - 1, H - 1], radius=12, outline=BORDER, width=2)
 
         # ── Try to load the tool's logo from URL ──
         logo_img = None
-        logo_size = 64
+        logo_size = 80
         if tool.logo_url:
             try:
                 import httpx
@@ -1018,25 +1018,20 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
                 logo_img = None
 
         # ── HEADER: Logo + Name/Vendor ... Grade badge ──
-        # Calculate text heights using bounding boxes for precise alignment
-        name_display = tool_name[:22]
+        name_display = tool_name[:20]
         name_bb = draw.textbbox((0, 0), name_display, font=fn)
         name_h = name_bb[3] - name_bb[1]
 
         has_vendor = bool(tool.vendor)
-        vendor_display = (tool.vendor or "")[:30]
+        vendor_display = (tool.vendor or "")[:28]
         vendor_bb = draw.textbbox((0, 0), vendor_display, font=fv) if has_vendor else (0, 0, 0, 0)
         vendor_h = vendor_bb[3] - vendor_bb[1] if has_vendor else 0
 
-        # Text block: name + gap + vendor, vertically centered with logo
-        name_vendor_gap = 10 if has_vendor else 0
+        name_vendor_gap = 12 if has_vendor else 0
         text_block_h = name_h + name_vendor_gap + (vendor_h if has_vendor else 0)
 
-        # Logo vertical center line
-        header_top = 52
+        header_top = 44
         logo_cy = header_top + logo_size // 2
-
-        # Center text block to logo center
         text_block_top = logo_cy - text_block_h // 2
 
         # Draw logo
@@ -1045,19 +1040,26 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
             bg_patch = img.crop((logo_x, logo_y, logo_x + logo_size, logo_y + logo_size)).convert("RGBA")
             bg_patch = Image.alpha_composite(bg_patch, logo_img)
             img.paste(bg_patch.convert("RGB"), (logo_x, logo_y))
-            draw = ImageDraw.Draw(img)  # refresh draw after paste
+            draw = ImageDraw.Draw(img)
         else:
+            # Placeholder: initial letter in a rounded square
             draw.rounded_rectangle(
                 [logo_x, logo_y, logo_x + logo_size, logo_y + logo_size],
-                radius=14, fill=VLIGHT, outline=(220, 228, 236),
+                radius=18, fill=VLIGHT, outline=(215, 224, 232),
             )
-            cx, cy = logo_x + logo_size // 2, logo_y + logo_size // 2
-            draw.ellipse([cx - 14, cy - 14, cx + 14, cy + 14], outline=(175, 188, 200), width=2)
-            draw.ellipse([cx - 4, cy - 4, cx + 4, cy + 4], fill=(175, 188, 200))
+            init_char = (tool_name[0] if tool_name else "?").upper()
+            fi = ImageFont.truetype(_FB, 36) if _FB else ImageFont.load_default()
+            ib = draw.textbbox((0, 0), init_char, font=fi)
+            iw, ih = ib[2] - ib[0], ib[3] - ib[1]
+            draw.text(
+                (logo_x + (logo_size - iw) // 2 - ib[0],
+                 logo_y + (logo_size - ih) // 2 - ib[1]),
+                init_char, fill=GRAY, font=fi,
+            )
 
-        # Draw name and vendor, properly spaced
-        nx = PL + logo_size + 22
-        name_y = text_block_top - name_bb[1]  # subtract ascent offset
+        # Draw name and vendor
+        nx = PL + logo_size + 24
+        name_y = text_block_top - name_bb[1]
         draw.text((nx, name_y), name_display, fill=DARK, font=fn)
 
         if has_vendor:
@@ -1070,49 +1072,48 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
             gc = GRADE_MID.get(grade, (148, 163, 184))
             gl = GRADE_HI.get(grade, gc)
             gd = GRADE_LO.get(grade, gc)
-            bs = 62
+            bs = 72
             bx = W - PR - bs
             by = logo_cy - bs // 2
-            draw.rounded_rectangle([bx, by, bx + bs, by + bs], radius=12, fill=gc)
+            draw.rounded_rectangle([bx, by, bx + bs, by + bs], radius=14, fill=gc)
+            for i in range(5):
+                draw.line([(bx + 6, by + 2 + i), (bx + bs - 6, by + 2 + i)], fill=gl)
             for i in range(4):
-                draw.line([(bx + 5, by + 2 + i), (bx + bs - 5, by + 2 + i)], fill=gl)
-            for i in range(3):
-                draw.line([(bx + 5, by + bs - 4 + i), (bx + bs - 5, by + bs - 4 + i)], fill=gd)
-            draw.rounded_rectangle([bx, by, bx + bs, by + bs], radius=12, outline=gd, width=2)
+                draw.line([(bx + 6, by + bs - 5 + i), (bx + bs - 6, by + bs - 5 + i)], fill=gd)
+            draw.rounded_rectangle([bx, by, bx + bs, by + bs], radius=14, outline=gd, width=2)
             glb = draw.textbbox((0, 0), grade, font=fg)
             glw, glh = glb[2] - glb[0], glb[3] - glb[1]
-            # Subtract glb origin offsets for true visual centering
             gx = bx + (bs - glw) // 2 - glb[0]
             gy = by + (bs - glh) // 2 - glb[1]
             draw.text((gx, gy), grade, fill=(255, 255, 255), font=fg)
 
-        # Category pill (below header with clear gap)
+        # Category pill
         header_bottom = header_top + logo_size
         if category_name:
-            cat_y = header_bottom + 22
+            cat_y = header_bottom + 18
             cb = draw.textbbox((0, 0), category_name, font=fc)
             ctw = cb[2] - cb[0]
-            pill_h = 28
-            draw.rounded_rectangle([PL, cat_y, PL + ctw + 24, cat_y + pill_h], radius=6, fill=VLIGHT, outline=BORDER)
-            draw.text((PL + 12, cat_y + (pill_h - (cb[3] - cb[1])) // 2 - cb[1]), category_name, fill=GRAY, font=fc)
-            div_y = cat_y + pill_h + 22
+            pill_h = 30
+            draw.rounded_rectangle([PL, cat_y, PL + ctw + 26, cat_y + pill_h], radius=7, fill=VLIGHT, outline=BORDER)
+            draw.text((PL + 13, cat_y + (pill_h - (cb[3] - cb[1])) // 2 - cb[1]), category_name, fill=GRAY, font=fc)
+            div_y = cat_y + pill_h + 18
         else:
-            div_y = header_bottom + 36
+            div_y = header_bottom + 30
 
         # Divider
         draw.line([(PL, div_y), (W - PR, div_y)], fill=BORDER, width=1)
 
         # ── CENTER HERO: Big overall score ──
-        footer_line_y = H - 52
-        hero_top = div_y + 8
-        hero_bottom = footer_line_y - 8
+        footer_line_y = H - 48
+        hero_top = div_y + 4
+        hero_bottom = footer_line_y - 4
         hero_cy = (hero_top + hero_bottom) // 2
 
         # "総合スコア" label
         label_text = "総合スコア"
         label_w = draw.textlength(label_text, font=fl)
         draw.text(
-            (W // 2 - label_w / 2, hero_cy - 90),
+            (W // 2 - label_w / 2, hero_cy - 110),
             label_text, fill=LIGHT, font=fl,
         )
 
@@ -1125,13 +1126,12 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
             ub = draw.textbbox((0, 0), "/ 5.0", font=fu)
             uw = ub[2] - ub[0]
             uh = ub[3] - ub[1]
-            total_w = sw + 14 + uw
+            total_w = sw + 16 + uw
             sx = W // 2 - total_w // 2
-            sy = hero_cy - 36
+            sy = hero_cy - 46
             draw.text((sx, sy), s_str, fill=_score_color(overall), font=fs)
-            # Align "/ 5.0" baseline with score baseline
             unit_y = sy + (sh - uh) + (sb[1] - ub[1])
-            draw.text((sx + sw + 14, unit_y), "/ 5.0", fill=LIGHT, font=fu)
+            draw.text((sx + sw + 16, unit_y), "/ 5.0", fill=LIGHT, font=fu)
         else:
             draw.text((W // 2 - 30, hero_cy - 20), "—", fill=LIGHT, font=fs)
 
@@ -1139,7 +1139,7 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
         draw.line([(PL, footer_line_y), (W - PR, footer_line_y)], fill=BORDER, width=1)
         fy = footer_line_y + 10
         draw.text((PL, fy), "Aixis", fill=BRAND, font=fbr)
-        draw.text((PL + 44, fy + 2), "独立AI監査プラットフォーム", fill=LIGHT, font=fbs)
+        draw.text((PL + 46, fy + 2), "独立AI監査プラットフォーム", fill=LIGHT, font=fbs)
         url = "platform.aixis.jp"
         urb = draw.textbbox((0, 0), url, font=fbs)
         draw.text((W - PR - (urb[2] - urb[0]), fy + 2), url, fill=LIGHT, font=fbs)

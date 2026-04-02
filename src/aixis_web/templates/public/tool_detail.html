@@ -308,28 +308,10 @@
             </dl>
         </section>
 
-        <!-- Score card image: VISIBLE for Google Image Search indexing -->
+        <!-- Card image: crawlable for Google Image Search via OG/sitemap/structured data.
+             Link kept in DOM for crawlers but not visually displayed to users. -->
         {% if ssr.score %}
-        <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-3">監査スコアカード</h2>
-            <a href="/card/{{ slug }}.png" class="block">
-                <img src="/card/{{ slug }}.png"
-                     alt="{{ ssr.name }}のAI監査スコアカード — 総合{{ ssr.score.overall }}/5.0（{{ ssr.score.grade }}グレード）| Aixis独立監査"
-                     title="{{ ssr.name }} AI監査スコア - Aixis"
-                     width="1200" height="630"
-                     class="w-full max-w-2xl mx-auto rounded-sm border border-gray-100 dark:border-aixis-600/20"
-                     fetchpriority="high">
-            </a>
-            <div class="mt-3">
-                {% set axes = [("実務適性", ssr.score.practicality), ("費用対効果", ssr.score.cost_performance), ("日本語能力", ssr.score.localization), ("信頼性・安全性", ssr.score.safety), ("革新性", ssr.score.uniqueness)] %}
-                {% for label, val in axes %}
-                {% if val is not none %}
-                <p class="text-xs text-gray-500 dark:text-gray-400 font-jp">{{ label }}: {{ val }}/5.0</p>
-                {% endif %}
-                {% endfor %}
-                {% if ssr.score.overall %}<p class="text-xs font-medium text-gray-700 dark:text-gray-200 font-jp mt-1">総合スコア: {{ ssr.score.overall }}/5.0（{{ ssr.score.grade }}グレード）</p>{% endif %}
-            </div>
-        </section>
+        <link rel="preload" as="image" href="/card/{{ slug }}.png">
         {% endif %}
 
         <!-- 5-axis scores (SSR) — blurred for non-logged-in, detailed scores behind paywall -->
