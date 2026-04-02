@@ -88,7 +88,7 @@ async def _client_response_with_org(db: AsyncSession, user: User) -> ClientRespo
 async def list_clients(
     _admin: Annotated[User, Depends(require_admin)],
     db: Annotated[AsyncSession, Depends(get_db)],
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=1000),
     per_page: int = Query(50, ge=1, le=100),
 ):
     """List all client accounts with pagination."""

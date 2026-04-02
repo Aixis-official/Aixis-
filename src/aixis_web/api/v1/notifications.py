@@ -26,7 +26,7 @@ router = APIRouter()
 async def list_notifications(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(require_auth)],
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=1000),
     page_size: int = Query(20, ge=1, le=100),
     is_read: bool | None = None,
 ):

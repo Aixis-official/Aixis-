@@ -134,7 +134,7 @@ async def delete_category(
 async def list_tools(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User | None, Depends(get_current_user)],
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=1000),
     page_size: int = Query(20, ge=1, le=100),
     category_id: str | None = Query(None, max_length=50),
     q: str | None = Query(None, min_length=1, max_length=100),

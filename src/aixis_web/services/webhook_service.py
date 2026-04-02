@@ -124,11 +124,12 @@ async def emit_event(
         try:
             plain_secret = decrypt_value(sub.secret)
         except Exception:
-            logger.warning(
+            logger.error(
                 "Webhook secret decryption failed for subscription %s — "
-                "re-encrypt secrets via admin panel", sub.id,
+                "using legacy plaintext fallback. Re-encrypt secrets via admin panel",
+                sub.id,
             )
-            plain_secret = sub.secret  # Legacy pre-encryption secret (log warning)
+            plain_secret = sub.secret  # Legacy pre-encryption secret
 
         # Fire background delivery (non-blocking, with error logging)
         task = asyncio.create_task(

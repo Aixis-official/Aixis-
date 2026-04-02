@@ -119,7 +119,7 @@ class CompareResponse(BaseModel):
 async def list_tools(
     db: Annotated[AsyncSession, Depends(get_db)],
     _key: Annotated[ApiKey, Depends(require_scope("read:tools"))],
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=1000),
     page_size: int = Query(20, ge=1, le=100),
     category: str | None = Query(None, description="Filter by category slug"),
     q: str | None = Query(None, description="Search query"),
@@ -230,7 +230,7 @@ async def get_score_history(
     tool_slug: str,
     db: Annotated[AsyncSession, Depends(get_db)],
     _key: Annotated[ApiKey, Depends(require_scope("read:scores"))],
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=1000),
     page_size: int = Query(50, ge=1, le=200),
 ):
     """Get score history timeline for a tool (paginated)."""

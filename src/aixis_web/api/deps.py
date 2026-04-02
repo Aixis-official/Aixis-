@@ -141,7 +141,7 @@ async def _validate_token(
                         session.last_active_at = now
                         await db.commit()
             except Exception as _sess_err:
-                logger.debug("Session tracking failed (non-critical): %s", _sess_err)
+                logger.warning("Session tracking failed: %s", _sess_err)
 
     except JWTError:
         return None

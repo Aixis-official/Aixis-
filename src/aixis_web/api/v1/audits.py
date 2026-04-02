@@ -96,7 +96,7 @@ async def get_audit_progress(
 async def list_audits(
     db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=1000),
     page_size: int = Query(20, ge=1, le=100),
     tool_id: str | None = None,
     audit_status: str | None = Query(None, alias="status"),
@@ -185,7 +185,7 @@ async def list_audits(
 async def list_deleted_audits(
     db: Annotated[AsyncSession, Depends(get_db)],
     _user: Annotated[User, Depends(require_analyst)],
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=1000),
     page_size: int = Query(20, ge=1, le=100),
 ):
     """List soft-deleted audit sessions (for recovery)."""

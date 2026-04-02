@@ -5,8 +5,11 @@ Railway container restarts and re-deploys. Also written to .env for local dev.
 """
 
 import json
+import logging
 import os
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
@@ -179,7 +182,7 @@ async def update_settings(
         try:
             _write_env_key("AIXIS_ANTHROPIC_API_KEY", key)
         except Exception:
-            pass  # .env write may fail on Railway (read-only)
+            logger.debug(".env write skipped (read-only filesystem)")  # Expected on Railway
         os.environ["AIXIS_ANTHROPIC_API_KEY"] = key
         settings.anthropic_api_key = key
         return {"status": "ok", "message": "APIキーを保存しました"}

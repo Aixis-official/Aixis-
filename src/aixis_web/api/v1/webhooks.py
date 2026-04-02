@@ -99,7 +99,7 @@ async def list_deliveries(
     webhook_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(require_auth)],
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=1000),
     page_size: int = Query(20, ge=1, le=100),
 ):
     """List delivery log for a webhook (paginated)."""
