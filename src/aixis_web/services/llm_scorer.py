@@ -46,20 +46,21 @@ logger = logging.getLogger(__name__)
 AXIS_RUBRICS_SLIDE_CREATION = {
     "practicality": {
         "name_jp": "実務適性",
-        "description": "日本のビジネス現場でそのまま使えるスライドを生成できるか。日本語で指示して日本語のスライドが出てこなければ、実務適性は著しく低い。",
+        "description": "日本のビジネス現場でそのまま使えるスライドを生成できるか。指示への忠実度、構成力、完成度を評価する。"
+                       "【この軸の固有観点】指示通りの出力ができるか（テーマ・枚数・形式）。日本語能力は別軸で評価するため、ここでは言語品質に深入りしないこと。",
         "criteria": [
             {"rule_id": "jp_instruction_compliance", "name_jp": "日本語指示への応答", "weight": 4.0,
              "guide": "日本語でプロンプトを入力した際に、日本語のスライドが生成されるか。"
                       "【スコア基準】5.0=日本語指示に対し完全に日本語でスライド生成 / "
-                      "3.0=日本語指示に対し一部日本語・一部英語で生成 / "
-                      "1.0=日本語で指示したのに英語のみのスライドが生成される / "
-                      "0.0=日本語指示を理解できずエラーまたは無関係な出力"},
+                      "3.0=一部日本語・一部英語で生成 / "
+                      "1.0=日本語で指示したのに英語のみ生成 / "
+                      "0.0=指示を理解できずエラーまたは無関係な出力"},
             {"rule_id": "topic_coverage", "name_jp": "テーマ網羅性", "weight": 3.0,
-             "guide": "スクリーンショットから確認できるスライド内容が、指示されたトピック・要件をすべてカバーしているか。"
+             "guide": "スライド内容が、指示されたトピック・要件をすべてカバーしているか。"
                       "【スコア基準】5.0=全要件を漏れなくカバー / 3.0=主要要件はカバーだが一部欠落 / "
                       "1.0=要件の半分以上が欠落 / 0.0=指示と無関係な内容"},
             {"rule_id": "slide_count", "name_jp": "スライド数の適切性", "weight": 2.0,
-             "guide": "スクリーンショットから確認できるスライド枚数が指定数に従っているか。"
+             "guide": "生成されたスライド枚数が指定数に従っているか。"
                       "【スコア基準】5.0=指定通り / 3.0=±2枚程度の逸脱 / 1.0=大幅に過不足"},
             {"rule_id": "format_compliance", "name_jp": "形式指定の遵守", "weight": 2.5,
              "guide": "箇条書き/表/図表の指定、レイアウト指定に従っているか。"
@@ -72,32 +73,37 @@ AXIS_RUBRICS_SLIDE_CREATION = {
     },
     "cost_performance": {
         "name_jp": "費用対効果",
-        "description": "応答速度、タスク成功率、出力品質から見た投資対効果。日本語で使えないツールは費用対効果が著しく低い。",
+        "description": "このツールに費用を投じる価値があるか。応答速度、作業効率化効果（人手で作る場合との比較）、手直し工数を総合的に評価する。"
+                       "【この軸の固有観点】ROI（投資対効果）の観点で評価すること。速度・成功率・完成度から、このツールが実際に時間とコストの節約になるかを判断する。"
+                       "実務適性（指示への忠実度）や日本語能力（言語品質）とは異なり、「お金を払って使う価値があるか」が焦点である。",
         "criteria": [
             {"rule_id": "response_speed", "name_jp": "応答速度", "weight": 2.5,
-             "guide": "タイマーで計測された応答時間（response_time_ms）に基づいて評価。未計測(0ms)の場合はこの項目をスキップ。"
+             "guide": "応答時間（response_time_ms）に基づいて評価。未計測(0ms)の場合はこの項目をスキップ。"
                       "【スコア基準】5.0=10秒以内 / 4.0=30秒以内 / 3.0=60秒以内 / 2.0=120秒以内 / 1.0=120秒超"},
             {"rule_id": "task_success_rate", "name_jp": "タスク成功率", "weight": 3.0,
              "guide": "指示されたタスクを正常に完了できた割合。日本語指示に対して英語で出力された場合は「タスク失敗」として扱う。"
-                      "【スコア基準】5.0=全タスク成功 / 3.0=半数以上成功 / 1.0=ほぼ全タスク失敗 / "
-                      "0.0=全タスク失敗またはエラー"},
-            {"rule_id": "output_thoroughness", "name_jp": "出力の徹底度", "weight": 2.5,
-             "guide": "スライドの量と質が十分か、そのまま使えるか、手直しの必要性。"
-                      "【スコア基準】5.0=そのまま使える完成度 / 3.0=軽微な修正で使える / "
-                      "1.0=大幅な修正が必要 / 0.0=作り直しが必要"},
-            {"rule_id": "jp_usability", "name_jp": "日本市場での実用性", "weight": 3.0,
-             "guide": "日本のビジネスユーザーがこのツールに課金して使う価値があるか。UIの日本語対応、日本語出力品質、日本のビジネス慣行への適合を総合評価。"
-                      "【スコア基準】5.0=日本のビジネスで問題なく使える / 3.0=一部制約があるが使える / "
-                      "1.0=日本語対応が不十分で実用的でない / 0.0=日本語非対応で使用不可"},
+                      "【スコア基準】5.0=全タスク成功 / 3.0=半数以上成功 / 1.0=ほぼ全タスク失敗"},
+            {"rule_id": "output_completeness", "name_jp": "出力の完成度（手直し不要度）", "weight": 2.5,
+             "guide": "生成されたスライドがそのまま業務で使えるか、手直し工数がどの程度必要か。ROIに直結する項目である。"
+                      "【スコア基準】5.0=そのまま提出できる完成度 / 3.0=10-20分の軽微な修正で使える / "
+                      "1.0=大幅な修正が必要で手作業と大差ない / 0.0=作り直しが必要で費用対効果なし"},
+            {"rule_id": "pricing_value", "name_jp": "価格に見合う価値", "weight": 3.0,
+             "guide": "出力品質・速度・機能を総合的に見て、有料ツールとしての費用対効果があるか。"
+                      "無料プランの場合は機能制限の影響を評価。人手でスライドを作る場合と比較して時間短縮効果があるか。"
+                      "【スコア基準】5.0=人手の数倍の効率で高品質、コスト回収が容易 / "
+                      "3.0=一定の効率化効果はあるが限定的 / "
+                      "1.0=手作業と大差なく費用を正当化しにくい / 0.0=有料の価値なし"},
         ],
     },
     "localization": {
         "name_jp": "日本語能力",
-        "description": "【最重要軸】スライドが日本語で出力されているかを最優先で評価。英語のみの出力は致命的欠陥として0〜1点。日本語出力がある場合のみ、品質を評価する。",
+        "description": "【最重要軸】スライドが日本語で出力されているかを最優先で評価。英語のみの出力は致命的欠陥として0〜1点。日本語出力がある場合のみ、品質を評価する。"
+                       "【この軸の固有観点】出力テキストの「言語」と「日本語としての品質」に特化して評価する。"
+                       "実務適性（指示への忠実度・構成力）とは異なり、敬語の一貫性・ビジネス表現・専門用語の正確性など「日本語の言語品質」が焦点である。",
         "criteria": [
             {"rule_id": "language_output", "name_jp": "出力言語", "weight": 5.0,
-             "guide": "【最重要基準】スクリーンショットに表示されたスライドの本文・見出しが日本語で書かれているかを確認。"
-                      "タイトルや本文のテキストを画像から直接読み取って判定すること。"
+             "guide": "【最重要基準】生成されたスライドの本文・見出しが日本語で書かれているかを確認。"
+                      "タイトルや本文のテキストを添付画像から直接読み取って判定すること。"
                       "【スコア基準】"
                       "5.0=スライドの見出し・本文が全て日本語で記述されている / "
                       "4.0=95%以上が日本語、ごく一部に英語の固有名詞や技術用語が混在（許容範囲）/ "
@@ -128,10 +134,13 @@ AXIS_RUBRICS_SLIDE_CREATION = {
     },
     "safety": {
         "name_jp": "信頼性・安全性",
-        "description": "生成された情報の正確性、ハルシネーションの有無、事実性。英語出力の場合も内容の正確性は評価するが、日本語ユーザーにとっての信頼性は低下する。",
+        "description": "生成された情報の正確性、ハルシネーションの有無、事実性。英語出力の場合も内容の正確性は評価するが、日本語ユーザーにとっての信頼性は低下する。"
+                       "【この軸の固有観点】出力内容の「事実的正確性」と「情報の信頼性」に特化して評価する。"
+                       "実務適性（指示への忠実度）や日本語能力（言語品質）、費用対効果（ROI）とは異なり、"
+                       "数値・固有名詞・統計の正確性、ハルシネーションの有無、出典の明示、スライド間の矛盾がないかが焦点である。",
         "criteria": [
             {"rule_id": "factual_accuracy", "name_jp": "事実の正確性", "weight": 3.5,
-             "guide": "スクリーンショットに表示された数値、固有名詞、日付等が正確か。"
+             "guide": "生成されたスライドに表示された数値、固有名詞、日付等が正確か。"
                       "【スコア基準】5.0=全データが正確 / 3.0=軽微な誤りが1-2箇所 / "
                       "1.0=重大な事実誤認あり / 0.0=虚偽情報が多数"},
             {"rule_id": "source_attribution", "name_jp": "出典・根拠の提示", "weight": 2.0,
@@ -143,13 +152,16 @@ AXIS_RUBRICS_SLIDE_CREATION = {
                       "【スコア基準】5.0=ハルシネーションなし / 3.0=軽微な不正確さ1件 / "
                       "1.0=明らかなハルシネーション複数 / 0.0=大半が捏造"},
             {"rule_id": "internal_consistency", "name_jp": "内部一貫性", "weight": 2.0,
-             "guide": "スクリーンショット間でスライドの数値や主張が矛盾していないか。"
+             "guide": "複数スライド間で数値や主張が矛盾していないか。"
                       "【スコア基準】5.0=完全に一貫 / 3.0=軽微な矛盾1箇所 / 1.0=重大な矛盾あり"},
         ],
     },
     "uniqueness": {
         "name_jp": "革新性",
-        "description": "プレゼン全体の構成力、論理的つながり、創造的な問題解決。ただし日本語で出力できないツールの革新性は限定的。",
+        "description": "プレゼン全体の構成力、論理的つながり、創造的な問題解決。ただし日本語で出力できないツールの革新性は限定的。"
+                       "【この軸の固有観点】「プレゼン全体としての構成力・創造性」に特化して評価する。"
+                       "実務適性（個々の指示への忠実度）とは異なり、スライド全体のストーリーフロー、"
+                       "各スライドの役割分担、データ視覚化の工夫、矛盾指示への柔軟な対応力が焦点である。",
         "criteria": [
             {"rule_id": "story_flow", "name_jp": "ストーリーフロー", "weight": 3.0,
              "guide": "スライド全体の導入→本論→結論の流れ、スライド間の論理的接続。"
@@ -644,6 +656,22 @@ class LLMScorer:
             if not observations:
                 logger.warning("No observations or screenshots for session %s", session_id)
                 return []
+
+        # 1a-2. Filter out observations with NO screenshots — these were skipped
+        # during the audit and have no visual evidence. Including them causes the LLM
+        # to fabricate evaluations for tests that were never actually completed.
+        obs_with_screenshots = [obs for obs in observations if obs.get("screenshots")]
+        obs_without = len(observations) - len(obs_with_screenshots)
+        if obs_without > 0:
+            logger.info(
+                "Session %s: filtered out %d observations with no screenshots "
+                "(%d remaining with screenshots)",
+                session_id, obs_without, len(obs_with_screenshots),
+            )
+        # Use filtered list for scoring, but keep original count for completion rate
+        all_observations_count = len(observations)
+        if obs_with_screenshots:
+            observations = obs_with_screenshots
 
         # 1b. Language pre-check: detect output language from a sample of screenshots
         # This runs BEFORE full scoring to establish an authoritative language verdict
@@ -1396,7 +1424,7 @@ class LLMScorer:
                 batch = loaded_images[i:i + BATCH_SIZE]
                 batch_num = i // BATCH_SIZE + 1
                 total_batches = (len(loaded_images) + BATCH_SIZE - 1) // BATCH_SIZE
-                batch_note = f"\n\n[バッチ {batch_num}/{total_batches}: スクリーンショット {i+1}〜{min(i+BATCH_SIZE, len(loaded_images))} / 全{len(loaded_images)}枚]"
+                batch_note = f"\n\n[画像グループ {batch_num}/{total_batches}: 画像 {i+1}〜{min(i+BATCH_SIZE, len(loaded_images))} / 全{len(loaded_images)}枚]"
                 batch_content = batch + [{"type": "text", "text": prompt_text + batch_note}]
                 batch_resp = await loop.run_in_executor(
                     None,
@@ -1665,6 +1693,17 @@ class LLMScorer:
    - 1.0〜1.9 = 深刻な問題（ほぼ使えない）
    - 0.0〜0.9 = 致命的欠陥（完全に不適格）
 
+## 軸間の差別化ルール（重要）
+各評価軸は固有の観点を持っている。他の軸と同じ内容を繰り返してはならない。
+- **実務適性**: 指示への忠実度・構成力・完成度（言語品質やROIには触れない）
+- **費用対効果**: ROI・速度・手直し工数・価格に見合う価値（指示忠実度や言語品質には触れない）
+- **日本語能力**: 出力言語・敬語・ビジネス表現・専門用語（構成力やROIには触れない）
+- **信頼性・安全性**: 事実の正確性・ハルシネーション・出典・内部一貫性（言語品質や構成力には触れない）
+- **革新性**: ストーリーフロー・各スライドの役割・データ視覚化・矛盾指示対応（指示忠実度や言語品質には触れない）
+
+strengths と risks の記述も、**必ずその軸固有の観点から**記述すること。
+他の軸で述べるべき内容を重複して記載することは禁止である。
+
 ## 致命的欠陥の検出ルール（最優先）
 以下に該当する場合、スコアに強制的な上限が適用されます:
 - **英語出力問題**: スライドが主に英語で書かれている場合:
@@ -1830,12 +1869,18 @@ class LLMScorer:
         for d in data.get("details", []):
             detail_score = float(d.get("score", 0.0))
             detail_score = self._normalize_to_5_scale(detail_score)
+            # Sanitize evidence: replace internal references like "検証3では" or "テスト9で"
+            evidence_text = d.get("evidence", "")
+            if evidence_text:
+                evidence_text = self._INTERNAL_PATTERN.sub("実際の出力", evidence_text)
+                # Also replace "スクリーンショット" in evidence
+                evidence_text = evidence_text.replace("スクリーンショット", "実際の出力")
             details.append({
                 "rule_id": d.get("rule_id", "unknown"),
                 "rule_name_jp": d.get("rule_name_jp", ""),
                 "score": detail_score,
                 "weight": float(d.get("weight", 1.0)),
-                "evidence": d.get("evidence", ""),
+                "evidence": evidence_text,
                 "severity": d.get("severity", "medium"),
             })
 
