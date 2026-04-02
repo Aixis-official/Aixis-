@@ -138,6 +138,7 @@ async def list_tools(
     page_size: int = Query(20, ge=1, le=100),
     category_id: str | None = Query(None, max_length=50),
     q: str | None = Query(None, min_length=1, max_length=100),
+    sort: str | None = Query(None, description="Sort order: name, newest, score"),
     all: bool = Query(False, description="Admin: include non-public tools"),
 ):
     """List tools with pagination, category filter, and search.
@@ -182,7 +183,13 @@ async def list_tools(
     total = total_result.scalar() or 0
 
     offset = (page - 1) * page_size
-    query = query.options(selectinload(Tool.scores)).order_by(Tool.name_jp).offset(offset).limit(page_size)
+    if sort == "newest":
+        order = Tool.created_at.desc()
+    elif sort == "score":
+        order = Tool.name_jp  # score sorting done client-side with loaded scores
+    else:
+        order = Tool.name_jp
+    query = query.options(selectinload(Tool.scores)).order_by(order).offset(offset).limit(page_size)
     result = await db.execute(query)
     items = result.scalars().all()
 
