@@ -68,9 +68,12 @@ async def login(
                 )
         except HTTPException:
             raise
-        except Exception:
+        except Exception as rl_err:
             import logging
-            logging.getLogger(__name__).warning("Rate limit check failed (non-critical)")
+            logging.getLogger(__name__).error(
+                "Rate limit check failed for login (IP=%s): %s — allowing request (fail-open)",
+                client_ip, rl_err,
+            )
 
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
@@ -373,9 +376,11 @@ https://platform.aixis.jp
 心当たりがない場合は、このメールを無視してください。</p>"""
 
             send_email(user.email, subject, text, _wrap_html(html_content))
-        except Exception:
+        except Exception as email_err:
             import logging
-            logging.getLogger(__name__).warning("Password reset email failed")
+            logging.getLogger(__name__).error(
+                "Password reset email FAILED for user %s: %s", user.id, email_err
+            )
 
     # Always return success to prevent email enumeration
     return {"message": "メールを送信しました。受信トレイをご確認ください。"}

@@ -86,6 +86,8 @@ const headers = () => {
     return h;
 };
 
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
 function showCreateForm() { document.getElementById('create-form').classList.remove('hidden'); }
 function hideCreateForm() { document.getElementById('create-form').classList.add('hidden'); }
 function setCron(expr) { document.getElementById('form-cron').value = expr; }
@@ -97,7 +99,10 @@ async function loadTools() {
         const sel = document.getElementById('form-tool-id');
         sel.innerHTML = '<option value="">ツールを選択</option>';
         (data.items || []).forEach(t => {
-            sel.innerHTML += `<option value="${t.id}">${t.name_jp || t.name}</option>`;
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name_jp || t.name;
+            sel.appendChild(opt);
         });
     } catch(e) { console.error('Failed to load tools', e); }
 }
@@ -113,8 +118,8 @@ async function loadSchedules() {
         }
         tbody.innerHTML = data.map(s => `
             <tr class="border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50 dark:hover:bg-gray-800/30">
-                <td class="px-6 py-3 text-gray-900 dark:text-gray-100 font-jp">${s.tool_name || s.tool_id}</td>
-                <td class="px-6 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">${s.cron_expression}</td>
+                <td class="px-6 py-3 text-gray-900 dark:text-gray-100 font-jp">${esc(s.tool_name || s.tool_id)}</td>
+                <td class="px-6 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">${esc(s.cron_expression)}</td>
                 <td class="px-6 py-3 text-gray-500 dark:text-gray-400">${s.last_run_at ? new Date(s.last_run_at).toLocaleString('ja-JP') : '-'}</td>
                 <td class="px-6 py-3 text-gray-500 dark:text-gray-400">${s.next_run_at ? new Date(s.next_run_at).toLocaleString('ja-JP') : '-'}</td>
                 <td class="px-6 py-3 text-gray-500 dark:text-gray-400">${s.run_count}</td>

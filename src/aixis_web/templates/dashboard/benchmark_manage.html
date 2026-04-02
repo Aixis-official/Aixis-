@@ -99,6 +99,8 @@ const headers = () => {
 
 let selectedSuiteSlug = null;
 
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
 function showCreateSuite() { document.getElementById('create-suite-form').classList.remove('hidden'); }
 function hideCreateSuite() { document.getElementById('create-suite-form').classList.add('hidden'); }
 function hideTestCases() { document.getElementById('test-cases-section').classList.add('hidden'); }
@@ -135,18 +137,18 @@ async function loadSuites() {
                 <div class="flex items-start justify-between">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
-                            <h3 class="text-base font-semibold text-gray-900 dark:text-white font-jp">${s.name_jp || s.name}</h3>
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white font-jp">${esc(s.name_jp || s.name)}</h3>
                             <span class="text-xs px-2 py-0.5 rounded ${s.is_published ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}">${s.is_published ? '公開中' : '下書き'}</span>
-                            <span class="text-xs text-gray-400">${s.version}</span>
+                            <span class="text-xs text-gray-400">${esc(s.version)}</span>
                         </div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 font-jp">${s.description_jp || s.description || ''}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 font-jp">${esc(s.description_jp || s.description || '')}</p>
                         <p class="text-xs text-gray-400 mt-1">${s.test_case_count} テストケース</p>
                     </div>
                     <div class="flex gap-2 ml-4 flex-shrink-0">
-                        <button onclick="showTestCases('${s.slug}','${s.name_jp||s.name}')" class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 font-jp">テストケース</button>
-                        ${!s.is_published ? `<button onclick="publishSuite('${s.slug}')" class="px-2 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded hover:bg-emerald-200 font-jp">公開</button>` : ''}
-                        <button onclick="showRun('${s.slug}','${s.name_jp||s.name}')" class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-200 font-jp">実行</button>
-                        <a href="/benchmarks/${s.slug}/leaderboard" class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded hover:bg-purple-200 font-jp">LB</a>
+                        <button onclick="showTestCases('${esc(s.slug)}','${esc(s.name_jp||s.name)}')" class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 font-jp">テストケース</button>
+                        ${!s.is_published ? `<button onclick="publishSuite('${esc(s.slug)}')" class="px-2 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded hover:bg-emerald-200 font-jp">公開</button>` : ''}
+                        <button onclick="showRun('${esc(s.slug)}','${esc(s.name_jp||s.name)}')" class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-200 font-jp">実行</button>
+                        <a href="/benchmarks/${encodeURIComponent(s.slug)}/leaderboard" class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded hover:bg-purple-200 font-jp">LB</a>
                     </div>
                 </div>
             </div>
@@ -202,7 +204,10 @@ async function loadToolsForRun() {
         const sel = document.getElementById('run-tool-id');
         sel.innerHTML = '<option value="">ツールを選択</option>';
         (data.items || []).forEach(t => {
-            sel.innerHTML += `<option value="${t.id}">${t.name_jp || t.name}</option>`;
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name_jp || t.name;
+            sel.appendChild(opt);
         });
     } catch(e) { console.error(e); }
 }

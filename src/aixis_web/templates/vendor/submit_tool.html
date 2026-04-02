@@ -77,7 +77,12 @@ async function loadCategories() {
         const res = await fetch(API + '/tools/categories', {headers: headers()});
         const data = await res.json();
         const sel = document.getElementById('tool-category');
-        data.forEach(c => { sel.innerHTML += `<option value="${c.id}">${c.name_jp}</option>`; });
+        data.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.name_jp;
+            sel.appendChild(opt);
+        });
     } catch(e) { console.error(e); }
 }
 
