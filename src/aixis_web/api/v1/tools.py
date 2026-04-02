@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ...db.base import get_db
+from ...db.models.score import ToolPublishedScore
 from ...db.models.tool import Tool, ToolCategory, ToolTargetConfig
 from ...db.models.user import User
 from ...schemas.tool import (
@@ -184,12 +185,39 @@ async def list_tools(
 
     offset = (page - 1) * page_size
     if sort == "newest":
-        order = Tool.created_at.desc()
+        query = query.options(selectinload(Tool.scores)).order_by(
+            Tool.created_at.desc()
+        ).offset(offset).limit(page_size)
     elif sort == "score":
-        order = Tool.name_jp  # score sorting done client-side with loaded scores
+        # Server-side score sorting: LEFT JOIN with latest published score
+        latest_ver = (
+            select(
+                ToolPublishedScore.tool_id,
+                func.max(ToolPublishedScore.version).label("max_ver"),
+            )
+            .group_by(ToolPublishedScore.tool_id)
+            .subquery()
+        )
+        query = (
+            query
+            .outerjoin(latest_ver, Tool.id == latest_ver.c.tool_id)
+            .outerjoin(
+                ToolPublishedScore,
+                (ToolPublishedScore.tool_id == Tool.id)
+                & (ToolPublishedScore.version == latest_ver.c.max_ver),
+            )
+            .options(selectinload(Tool.scores))
+            .order_by(
+                ToolPublishedScore.overall_score.desc().nullslast(),
+                Tool.name_jp,
+            )
+            .offset(offset)
+            .limit(page_size)
+        )
     else:
-        order = Tool.name_jp
-    query = query.options(selectinload(Tool.scores)).order_by(order).offset(offset).limit(page_size)
+        query = query.options(selectinload(Tool.scores)).order_by(
+            Tool.name_jp
+        ).offset(offset).limit(page_size)
     result = await db.execute(query)
     items = result.scalars().all()
 
