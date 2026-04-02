@@ -6,6 +6,7 @@ uploads structured observation data for LLM-based scoring.
 Auth: API key with 'agent:write' scope (X-API-Key header).
 """
 
+import asyncio
 import base64
 import hashlib
 import json
@@ -722,6 +723,13 @@ async def advance_test_progress(
 
 
 # ---------------------------------------------------------------------------
+# Concurrency limiter for LLM scoring background tasks
+# Prevents resource exhaustion when multiple audits complete simultaneously
+# ---------------------------------------------------------------------------
+_LLM_SCORING_SEMAPHORE = asyncio.Semaphore(2)  # Max 2 concurrent scoring tasks
+_LLM_SCORING_TIMEOUT = 600  # 10 minutes max per scoring task
+
+# ---------------------------------------------------------------------------
 # POST /sessions/{id}/complete — Mark session complete, trigger scoring
 # ---------------------------------------------------------------------------
 
@@ -785,7 +793,35 @@ async def complete_session(
 
 
 async def _run_llm_scoring_background(session_id: str, tool_id: str) -> None:
-    """Background task for LLM scoring. Runs after response is sent."""
+    """Background task for LLM scoring with concurrency limit and timeout.
+
+    Uses a semaphore to prevent resource exhaustion when multiple audits
+    complete simultaneously, and a timeout to prevent indefinite hangs.
+    """
+    from ...db.base import async_session
+
+    try:
+        async with asyncio.timeout(_LLM_SCORING_TIMEOUT):
+            async with _LLM_SCORING_SEMAPHORE:
+                await _run_llm_scoring_inner(session_id, tool_id)
+    except asyncio.TimeoutError:
+        logger.error("=== LLM scoring TIMEOUT for session %s (exceeded %ds) ===", session_id, _LLM_SCORING_TIMEOUT)
+        try:
+            async with async_session() as db:
+                await db.execute(text("""
+                    UPDATE audit_sessions
+                    SET status = 'failed', error_message = :error
+                    WHERE id = :sid
+                """), {"error": f"スコアリングがタイムアウトしました（{_LLM_SCORING_TIMEOUT}秒超過）", "sid": session_id})
+                await db.commit()
+        except Exception as e2:
+            logger.error("Failed to update session status after timeout for %s: %s", session_id, e2)
+    except Exception as e:
+        logger.exception("=== LLM scoring OUTER ERROR for session %s: %s ===", session_id, e)
+
+
+async def _run_llm_scoring_inner(session_id: str, tool_id: str) -> None:
+    """Inner scoring logic, called within semaphore and timeout context."""
     from ...db.base import async_session
 
     logger.info("=== LLM scoring START for session %s (tool %s) ===", session_id, tool_id)

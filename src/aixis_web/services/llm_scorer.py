@@ -227,7 +227,7 @@ class LLMScorer:
         api_key = settings.anthropic_api_key
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY が設定されていません")
-        self.client = anthropic.Anthropic(api_key=api_key)
+        self.client = anthropic.Anthropic(api_key=api_key, timeout=120.0)
         # Hybrid model strategy: Sonnet for critical axes, Haiku for others
         self.model = settings.ai_scoring_model or settings.ai_agent_model or "claude-sonnet-4-20250514"
         self.model_lite = getattr(settings, "ai_scoring_model_lite", None) or settings.ai_agent_model or "claude-haiku-4-5-20251001"

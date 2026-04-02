@@ -1,4 +1,5 @@
 """Aixis AI Audit Platform - FastAPI Application."""
+import asyncio
 import logging
 import os
 import secrets
@@ -42,6 +43,28 @@ _CSRF_EXEMPT_PREFIXES = (
     "/api/v1/extension/",  # Chrome extension uses API key auth, no CSRF needed
     # Note: logout requires CSRF token (state-changing operation)
 )
+
+
+# ---------------------------------------------------------------------------
+# Request timeout middleware — prevents any single request from hanging
+# ---------------------------------------------------------------------------
+_REQUEST_TIMEOUT = 60  # seconds (generous for LLM-related endpoints)
+
+
+class RequestTimeoutMiddleware(BaseHTTPMiddleware):
+    """Abort requests that exceed the timeout to prevent thread pool starvation."""
+
+    async def dispatch(self, request: Request, call_next):
+        try:
+            return await asyncio.wait_for(
+                call_next(request), timeout=_REQUEST_TIMEOUT
+            )
+        except asyncio.TimeoutError:
+            logger.warning("Request timeout (%ds): %s %s", _REQUEST_TIMEOUT, request.method, request.url.path)
+            return JSONResponse(
+                status_code=504,
+                content={"detail": "リクエストがタイムアウトしました。しばらくしてからもう一度お試しください。"},
+            )
 
 
 class SecurityMiddleware(BaseHTTPMiddleware):
@@ -278,6 +301,9 @@ def create_app() -> FastAPI:
 
     # GZip compression (text assets: HTML, CSS, JS, JSON, SVG)
     app.add_middleware(GZipMiddleware, minimum_size=500)
+
+    # Request timeout middleware (outermost — catches hanging requests)
+    app.add_middleware(RequestTimeoutMiddleware)
 
     # Security middleware (headers + CSRF — single BaseHTTPMiddleware)
     app.add_middleware(SecurityMiddleware)

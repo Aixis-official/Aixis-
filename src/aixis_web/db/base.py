@@ -42,6 +42,7 @@ if "sqlite" not in _db_url:
         "max_overflow": 40,
         "pool_pre_ping": True,
         "pool_recycle": 3600,
+        "pool_timeout": 30,  # Fail fast if pool is exhausted (default is 30, explicit for clarity)
     })
 
 try:
