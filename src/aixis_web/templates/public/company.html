@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% set active_page = 'company' %}
+
+{% block meta_description %}
+<meta name="description" content="株式会社Aixis（アイクシス）の会社概要。AIツールの調査・評価・監査業務および企業向けコンサルティングを提供する独立系AI監査企業です。">
+{% endblock %}
+
+{% block meta_keywords %}
+<meta name="keywords" content="株式会社Aixis,Aixis 会社概要,アイクシス 会社情報,AI監査 会社,Aixis Inc">
+{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="https://platform.aixis.jp/company">
+{% endblock %}
+
+{% block ogp %}
+<meta property="og:title" content="会社概要 - Aixis（アイクシス）">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://platform.aixis.jp/company">
+<meta property="og:description" content="株式会社Aixis（Aixis Inc.）の会社概要。AIツールの独立監査・評価事業を展開。">
+<meta property="og:image" content="https://platform.aixis.jp/static/img/Aixis-logo-final.png">
+<meta name="twitter:card" content="summary">
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Corporation",
+  "name": "株式会社Aixis",
+  "alternateName": ["Aixis Inc.", "Aixis", "アイクシス"],
+  "legalName": "株式会社Aixis",
+  "url": "https://aixis.jp",
+  "logo": {
+    "@type": "ImageObject",
+    "url": "https://platform.aixis.jp/static/img/Aixis-logo-final.png",
+    "width": 192,
+    "height": 192
+  },
+  "image": "https://platform.aixis.jp/static/img/Aixis-logo-final.png",
+  "description": "AIツールの調査・評価・監査業務および企業向けコンサルティング業務を行う独立系AI監査企業",
+  "foundingDate": "2026-04",
+  "founder": {
+    "@type": "Person",
+    "name": "林田凪冴",
+    "jobTitle": "代表取締役"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "神南１丁目１１−４ ＦＰＧリンクス神南 5階",
+    "addressLocality": "渋谷区",
+    "addressRegion": "東京都",
+    "addressCountry": "JP"
+  },
+  "telephone": "080-8496-5595",
+  "email": "info@aixis.jp",
+  "areaServed": {"@type": "Country", "name": "JP"},
+  "knowsAbout": ["AIツール評価", "AI監査", "AI導入支援", "企業向けコンサルティング"]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "ホーム", "item": "https://platform.aixis.jp/"},
+    {"@type": "ListItem", "position": 2, "name": "会社概要", "item": "https://platform.aixis.jp/company"}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<section class="bg-white dark:bg-aixis-800 border-b border-gray-200 dark:border-aixis-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-left">
+        <nav class="mb-5" aria-label="パンくずリスト">
+            <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
+                <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
+                <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
+                <li class="text-gray-600 dark:text-gray-300 font-medium">会社概要</li>
+            </ol>
+        </nav>
+        <div class="section-line"></div>
+        <span class="report-label font-sans text-gray-400 dark:text-gray-500">Company Profile</span>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 dark:text-white tracking-tight mt-2">
+            会社概要
+        </h1>
+        <hr class="divider-thin">
+    </div>
+</section>
+
+<!-- Content -->
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-gray-200 dark:border-aixis-700">
+            <tbody>
+                <tr class="border-b border-gray-200 dark:border-aixis-700 bg-gray-50 dark:bg-aixis-900">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 dark:text-white whitespace-nowrap w-[140px] sm:w-1/4 align-top">会社名</th>
+                    <td class="py-4 px-5 text-gray-700 dark:text-gray-300 leading-relaxed">
+                        株式会社Aixis<br>
+                        <span class="text-gray-400 dark:text-gray-500 text-xs">Aixis Inc.</span>
+                    </td>
+                </tr>
+                <tr class="border-b border-gray-200 dark:border-aixis-700 bg-white dark:bg-aixis-800">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 dark:text-white whitespace-nowrap w-[140px] sm:w-1/4 align-top">所在地</th>
+                    <td class="py-4 px-5 text-gray-700 dark:text-gray-300 leading-relaxed">
+                        〒150-0041<br>
+                        東京都渋谷区神南１丁目１１−４<br>
+                        ＦＰＧリンクス神南 5階
+                    </td>
+                </tr>
+                <tr class="border-b border-gray-200 dark:border-aixis-700 bg-gray-50 dark:bg-aixis-900">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 dark:text-white whitespace-nowrap w-[140px] sm:w-1/4 align-top">代表取締役</th>
+                    <td class="py-4 px-5 text-gray-700 dark:text-gray-300 leading-relaxed">林田凪冴</td>
+                </tr>
+                <tr class="border-b border-gray-200 dark:border-aixis-700 bg-white dark:bg-aixis-800">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 dark:text-white whitespace-nowrap w-[140px] sm:w-1/4 align-top">事業内容</th>
+                    <td class="py-4 px-5 text-gray-700 dark:text-gray-300 leading-relaxed">
+                        <ul class="space-y-1">
+                            <li>AIツールの調査・評価・監査業務</li>
+                            <li>企業向けコンサルティング業務</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr class="border-b border-gray-200 dark:border-aixis-700 bg-gray-50 dark:bg-aixis-900">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 dark:text-white whitespace-nowrap w-[140px] sm:w-1/4 align-top">電話番号</th>
+                    <td class="py-4 px-5 text-gray-700 dark:text-gray-300 leading-relaxed">080-8496-5595</td>
+                </tr>
+                <tr class="border-b border-gray-200 dark:border-aixis-700 bg-white dark:bg-aixis-800">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 dark:text-white whitespace-nowrap w-[140px] sm:w-1/4 align-top">ウェブサイト</th>
+                    <td class="py-4 px-5 text-gray-700 dark:text-gray-300 leading-relaxed">
+                        <a href="https://aixis.jp" class="underline hover:text-gray-900 dark:hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">https://aixis.jp</a>
+                    </td>
+                </tr>
+                <tr class="border-b border-gray-200 dark:border-aixis-700 bg-gray-50 dark:bg-aixis-900">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 dark:text-white whitespace-nowrap w-[140px] sm:w-1/4 align-top">メールアドレス</th>
+                    <td class="py-4 px-5 text-gray-700 dark:text-gray-300 leading-relaxed">
+                        <a href="mailto:info@aixis.jp" class="underline hover:text-gray-900 dark:hover:text-white transition-colors">info@aixis.jp</a>
+                    </td>
+                </tr>
+                <tr class="bg-white dark:bg-aixis-800">
+                    <th class="text-left py-4 px-5 font-semibold text-gray-900 dark:text-white whitespace-nowrap w-[140px] sm:w-1/4 align-top">設立</th>
+                    <td class="py-4 px-5 text-gray-700 dark:text-gray-300 leading-relaxed">2026年4月</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mission Statement -->
+    <div class="mt-12 pt-8 border-t border-gray-200 dark:border-aixis-700">
+        <h2 class="text-base font-bold text-gray-900 dark:text-white font-serif mb-4">事業について</h2>
+        <div class="text-sm text-gray-700 dark:text-gray-300 leading-[1.9] space-y-3">
+            <p>株式会社Aixisは、AIツールの独立監査・評価を行う専門企業です。ベンダーから一切の報酬を受け取らない完全独立の立場から、5軸評価フレームワーク（実務適性・費用対効果・日本語能力・信頼性/安全性・革新性）に基づくAIツールの定量的な監査を実施しています。</p>
+            <p>企業のAIツール選定において「感覚ではなくデータで判断する」環境を提供し、AI導入における投資判断の質の向上に貢献します。</p>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

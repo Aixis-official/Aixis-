@@ -44,8 +44,8 @@
     {% if tool_data and tool_data.vendor %}"brand": {"@type": "Brand", "name": "{{ tool_data.vendor }}"},{% endif %}
     "review": {
         "@type": "Review",
-        "author": {"@type": "Organization", "name": "Aixis"},
-        "publisher": {"@type": "Organization", "name": "Aixis", "url": "https://platform.aixis.jp"},
+        "author": {"@type": "Organization", "name": "株式会社Aixis"},
+        "publisher": {"@type": "Organization", "name": "株式会社Aixis", "url": "https://aixis.jp"},
         "datePublished": "{% if ssr and ssr.score and ssr.score.published_at %}{{ ssr.score.published_at }}{% else %}2025-01-01{% endif %}",
         "reviewBody": "独立第三者機関による5軸AI監査レポート（実務適性・費用対効果・日本語能力・信頼性/安全性・革新性）"{% if ssr and ssr.score and ssr.score.overall %},
         "reviewRating": {
@@ -67,7 +67,7 @@
     "description": "{{ tool_data.name_jp or tool_data.name if tool_data else title }}の独立AI監査スコア（5軸評価）",
     "width": "1200",
     "height": "630",
-    "author": {"@type": "Organization", "name": "Aixis"},
+    "author": {"@type": "Organization", "name": "株式会社Aixis"},
     "datePublished": "{{ ssr.score.published_at }}"
 }
 </script>

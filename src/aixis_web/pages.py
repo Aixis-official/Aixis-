@@ -309,6 +309,13 @@ async def category_page(request: Request, slug: str, user: _OptionalUser = None)
     return _render("public/category.html", ctx)
 
 
+@page_router.get("/company")
+async def company_page(request: Request, user: _OptionalUser = None):
+    """Company profile page (会社概要)."""
+    ctx = _get_template_context(request, user=user, title="会社概要 | 株式会社Aixis（アイクシス）", active_page="company")
+    return _render("public/company.html", ctx)
+
+
 @page_router.get("/terms")
 async def terms_page(request: Request, user: _OptionalUser = None):
     """Terms of service page."""
@@ -764,6 +771,7 @@ _STATIC_PAGES = [
     ("/audit-protocol", "monthly", "0.4"),
     ("/faq", "monthly", "0.5"),
     ("/contact", "monthly", "0.3"),
+    ("/company", "monthly", "0.4"),
     ("/terms", "yearly", "0.2"),
     ("/tokushoho", "yearly", "0.2"),
 ]
