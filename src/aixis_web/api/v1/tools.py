@@ -39,7 +39,7 @@ def _auto_favicon_url(url: str | None) -> str | None:
         if not domain:
             return None
         # Google's public favicon service — reliable and fast
-        return f"https://www.google.com/s2/favicons?domain={domain}&sz=64"
+        return f"https://www.google.com/s2/favicons?domain={domain}&sz=128"
     except Exception:
         return None
 

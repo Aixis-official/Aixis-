@@ -1009,12 +1009,21 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
         if tool.logo_url:
             try:
                 import httpx
-                async with httpx.AsyncClient(timeout=5.0) as client:
-                    resp = await client.get(tool.logo_url)
-                    if resp.status_code == 200:
+                # Upgrade Google favicon size to 128 for sharper rendering
+                logo_url = tool.logo_url
+                if "google.com/s2/favicons" in logo_url and "sz=" in logo_url:
+                    logo_url = logo_url.rsplit("sz=", 1)[0] + "sz=128"
+                async with httpx.AsyncClient(
+                    timeout=8.0,
+                    follow_redirects=True,
+                    headers={"User-Agent": "Aixis-CardGen/1.0"},
+                ) as client:
+                    resp = await client.get(logo_url)
+                    if resp.status_code == 200 and len(resp.content) > 100:
                         logo_img = Image.open(_io.BytesIO(resp.content)).convert("RGBA")
                         logo_img = logo_img.resize((logo_size, logo_size), Image.LANCZOS)
-            except Exception:
+            except Exception as e:
+                logger.warning("Logo fetch failed for %s: %s", slug, e)
                 logo_img = None
 
         # ── HEADER: Logo + Name/Vendor ... Grade badge ──
