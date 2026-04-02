@@ -912,10 +912,10 @@ async def indexnow_key_file(key: str):
 
 @page_router.get("/card/{slug}.png")
 async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
-    """Generate a PNG card image for Google Images indexing.
+    """Generate a PNG card image for Google Images & social sharing.
 
-    Produces a clean card-like image showing tool name, grade, score, category,
-    and 5-axis score bars — designed for image search discoverability.
+    Dark-themed card matching the platform's hero section aesthetic.
+    1200×630 (standard OG size) with tool name, grade badge, 5-axis bars.
     """
     from .db.models.tool import Tool, ToolCategory
     from .db.models.score import ToolPublishedScore
@@ -940,138 +940,199 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
     category_name = tool.category.name_jp if tool.category else ""
     tool_name = tool.name_jp or tool.name or slug
 
-    # Card dimensions
-    W, H = 1200, 630  # Standard OG image size for optimal social/search display
-    BG = (255, 255, 255)
-    DARK = (15, 23, 42)  # slate-900
-    GRAY = (100, 116, 139)  # slate-500
-    LIGHT_GRAY = (226, 232, 240)  # slate-200
-    BRAND = (99, 102, 241)  # indigo-500
+    # ── Platform color palette (from tailwind.config.js) ──
+    W, H = 1200, 630
+    AIXIS_600 = (22, 45, 77)    # #162d4d — hero gradient start
+    AIXIS_800 = (10, 22, 40)    # #0a1628 — hero gradient end
+    BRAND = (99, 102, 241)      # #6366f1 — indigo accent
+    WHITE = (255, 255, 255)
 
     GRADE_COLORS = {
         "S": (212, 175, 55), "A": (56, 161, 105), "B": (43, 108, 176),
         "C": (237, 137, 54), "D": (229, 62, 62),
+    }
+    GRADE_HIGHLIGHTS = {
+        "S": (218, 185, 70), "A": (70, 180, 120), "B": (70, 140, 200),
+        "C": (249, 155, 70), "D": (248, 100, 100),
     }
     AXIS_LABELS = {
         "practicality": "実務適性", "cost_performance": "費用対効果",
         "localization": "日本語能力", "safety": "信頼性・安全性", "uniqueness": "革新性",
     }
 
+    def _score_color(v):
+        if v >= 4.0: return (56, 161, 105)   # green
+        if v >= 3.0: return (43, 108, 176)   # blue
+        if v >= 2.0: return (214, 158, 46)   # yellow
+        return (229, 62, 62)                   # red
+
+    # White alpha-blended on dark bg (pre-computed for performance)
+    _BG = (15, 31, 54)  # approx AIXIS_700 for blending
+
+    def _wa(a):
+        return tuple(int(_BG[i] * (1 - a) + 255 * a) for i in range(3))
+
     try:
-        img = Image.new("RGB", (W, H), BG)
+        # ── Gradient background (matching hero section) ──
+        img = Image.new("RGB", (W, H), AIXIS_600)
+        draw = ImageDraw.Draw(img)
+        for row in range(H):
+            t = row / H
+            r = int(AIXIS_600[0] * (1 - t * 0.8) + AIXIS_800[0] * (t * 0.8))
+            g = int(AIXIS_600[1] * (1 - t * 0.8) + AIXIS_800[1] * (t * 0.8))
+            b = int(AIXIS_600[2] * (1 - t * 0.8) + AIXIS_800[2] * (t * 0.8))
+            draw.line([(0, row), (W, row)], fill=(r, g, b))
         draw = ImageDraw.Draw(img)
 
-        # Load Japanese-capable font (bundled Noto Sans JP)
+        # ── Fonts ──
         _FONT_DIR = Path(__file__).resolve().parent / "static" / "fonts"
-        _FONT_BOLD = str(_FONT_DIR / "NotoSansJP-Bold.ttf")
-        _FONT_MEDIUM = str(_FONT_DIR / "NotoSansJP-Medium.ttf")
+        _FB = str(_FONT_DIR / "NotoSansJP-Bold.ttf")
+        _FM = str(_FONT_DIR / "NotoSansJP-Medium.ttf")
 
         try:
-            font_title = ImageFont.truetype(_FONT_BOLD, 40)
-            font_lg = ImageFont.truetype(_FONT_BOLD, 28)
-            font_md = ImageFont.truetype(_FONT_MEDIUM, 20)
-            font_sm = ImageFont.truetype(_FONT_MEDIUM, 17)
-            font_xs = ImageFont.truetype(_FONT_MEDIUM, 14)
-            font_grade = ImageFont.truetype(_FONT_BOLD, 52)
-            font_score = ImageFont.truetype(_FONT_BOLD, 30)
-            font_score_lg = ImageFont.truetype(_FONT_BOLD, 48)
+            f_tool = ImageFont.truetype(_FB, 36)
+            f_vendor = ImageFont.truetype(_FM, 17)
+            f_cat = ImageFont.truetype(_FM, 12)
+            f_axis_lbl = ImageFont.truetype(_FM, 14)
+            f_axis_val = ImageFont.truetype(_FB, 14)
+            f_grade = ImageFont.truetype(_FB, 40)
+            f_score_big = ImageFont.truetype(_FB, 38)
+            f_score_unit = ImageFont.truetype(_FM, 15)
+            f_label = ImageFont.truetype(_FM, 11)
+            f_brand = ImageFont.truetype(_FB, 13)
+            f_brand_sub = ImageFont.truetype(_FM, 11)
+            f_section = ImageFont.truetype(_FB, 12)
+            f_footer = ImageFont.truetype(_FM, 11)
         except (IOError, OSError):
-            font_title = ImageFont.load_default()
-            font_lg = font_md = font_sm = font_xs = font_title
-            font_grade = font_score = font_score_lg = font_title
+            _def = ImageFont.load_default()
+            f_tool = f_vendor = f_cat = f_axis_lbl = f_axis_val = _def
+            f_grade = f_score_big = f_score_unit = f_label = _def
+            f_brand = f_brand_sub = f_section = f_footer = _def
 
-        # --- Card border & header line ---
-        draw.rounded_rectangle([0, 0, W - 1, H - 1], radius=16, outline=LIGHT_GRAY, width=2)
-        # Top accent line (brand color)
-        draw.rounded_rectangle([0, 0, W - 1, 5], radius=0, fill=BRAND)
+        PL, PR = 56, 56
+        RIGHT_W = 180
+        RIGHT_X = W - PR - RIGHT_W
 
-        # --- Branding header ---
-        draw.text((56, 28), "Aixis", fill=BRAND, font=font_lg)
-        draw.text((56, 60), "独立AI監査プラットフォーム", fill=(148, 163, 184), font=font_xs)
+        # ── Top accent line (brand indigo) ──
+        draw.rectangle([0, 0, W, 3], fill=BRAND)
 
-        # --- Tool name + vendor ---
-        y = 108
-        draw.text((56, y), tool_name[:25], fill=DARK, font=font_title)
-        y += 52
+        # ── Brand header ──
+        draw.text((PL, 20), "Aixis", fill=_wa(0.9), font=f_brand)
+        draw.text((PL + 48, 22), "独立AI監査プラットフォーム", fill=_wa(0.4), font=f_brand_sub)
+
+        # ── Tool name + vendor + category ──
+        draw.text((PL, 52), tool_name[:25], fill=WHITE, font=f_tool)
+        vy = 98
         if tool.vendor:
-            draw.text((56, y), tool.vendor[:40], fill=GRAY, font=font_md)
-            y += 32
-
-        # --- Category badge ---
+            draw.text((PL, vy), tool.vendor[:40], fill=_wa(0.5), font=f_vendor)
+            vy += 26
         if category_name:
-            y += 6
-            bbox = draw.textbbox((0, 0), category_name, font=font_xs)
-            tw = bbox[2] - bbox[0]
-            draw.rounded_rectangle([54, y - 2, 70 + tw, y + 22], radius=6, fill=(241, 245, 249))
-            draw.text((62, y + 1), category_name, fill=GRAY, font=font_xs)
-            y += 38
+            vy += 4
+            cb = draw.textbbox((0, 0), category_name, font=f_cat)
+            ctw = cb[2] - cb[0]
+            draw.rounded_rectangle(
+                [PL - 1, vy - 2, PL + ctw + 13, vy + 16],
+                radius=3, fill=_wa(0.08), outline=_wa(0.12),
+            )
+            draw.text((PL + 6, vy), category_name, fill=_wa(0.6), font=f_cat)
+            vy += 28
 
-        # --- Grade badge (top-right area) ---
-        grade_area_x = W - 220
-        if latest_score and latest_score.overall_grade:
-            grade = latest_score.overall_grade
-            gc = GRADE_COLORS.get(grade, (148, 163, 184))
-            gx, gy, gs = grade_area_x + 50, 100, 80
-            draw.rounded_rectangle([gx, gy, gx + gs, gy + gs], radius=14, fill=gc)
-            # Center grade letter
-            gbbox = draw.textbbox((0, 0), grade, font=font_grade)
-            gw = gbbox[2] - gbbox[0]
-            gh = gbbox[3] - gbbox[1]
-            draw.text((gx + (gs - gw) // 2, gy + (gs - gh) // 2 - 6), grade, fill=(255, 255, 255), font=font_grade)
-            # Overall score below grade
-            if latest_score.overall_score is not None:
-                score_str = f"{latest_score.overall_score:.1f}"
-                sbbox = draw.textbbox((0, 0), score_str, font=font_score_lg)
-                sw = sbbox[2] - sbbox[0]
-                cx = gx + gs // 2
-                draw.text((cx - sw // 2, gy + gs + 18), score_str, fill=DARK, font=font_score_lg)
-                draw.text((cx - 12, gy + gs + 70), "/ 5.0", fill=GRAY, font=font_sm)
+        # ── Separator ──
+        sep_y = vy + 6
+        draw.line([(PL, sep_y), (W - PR, sep_y)], fill=_wa(0.08), width=1)
 
-        # --- 5-axis score bars ---
-        y = max(y + 16, 260)
-        bar_x, bar_w, bar_h = 220, 500, 18
-        label_x = 56
+        # ── Score bars layout ──
+        bars_top = sep_y + 24
+        bars_bottom = H - 54
+        label_col_w = 110
+        bar_x = PL + label_col_w
+        bar_w = RIGHT_X - bar_x - 80
+        bar_h = 8
+        n_axes = 5
+        bar_area_h = bars_bottom - bars_top - 20  # minus section header
+        bar_spacing = bar_area_h // n_axes
 
+        # Section label
+        draw.text((PL, bars_top), "5軸評価スコア", fill=_wa(0.45), font=f_section)
+        draw.line([(PL, bars_top + 18), (bar_x + bar_w + 50, bars_top + 18)], fill=_wa(0.06), width=1)
+
+        # Draw bars
+        by = bars_top + 24
         if latest_score:
             for axis_key in ["practicality", "cost_performance", "localization", "safety", "uniqueness"]:
                 val = getattr(latest_score, axis_key, None)
                 label = AXIS_LABELS.get(axis_key, axis_key)
+                row_cy = by + bar_spacing // 2
 
-                draw.text((label_x, y + 1), label, fill=GRAY, font=font_sm)
-                # Background bar
-                draw.rounded_rectangle([bar_x, y + 3, bar_x + bar_w, y + 3 + bar_h], radius=5, fill=LIGHT_GRAY)
-                # Fill bar
+                draw.text((PL, row_cy - 8), label, fill=_wa(0.55), font=f_axis_lbl)
+                bar_y = row_cy - bar_h // 2
+                draw.rounded_rectangle(
+                    [bar_x, bar_y, bar_x + bar_w, bar_y + bar_h],
+                    radius=4, fill=_wa(0.12),
+                )
                 if val and val > 0:
-                    fill_w = max(10, int(bar_w * val / 5.0))
-                    if val >= 4.0:
-                        color = (56, 161, 105)  # green
-                    elif val >= 3.0:
-                        color = (43, 108, 176)  # blue
-                    elif val >= 2.0:
-                        color = (214, 158, 46)  # yellow
-                    else:
-                        color = (229, 62, 62)  # red
-                    draw.rounded_rectangle([bar_x, y + 3, bar_x + fill_w, y + 3 + bar_h], radius=5, fill=color)
-                # Score value
-                score_text = f"{val:.1f}" if val else "--"
-                draw.text((bar_x + bar_w + 20, y + 1), score_text, fill=DARK, font=font_sm)
-                y += 40
+                    fill_w = max(8, int(bar_w * val / 5.0))
+                    draw.rounded_rectangle(
+                        [bar_x, bar_y, bar_x + fill_w, bar_y + bar_h],
+                        radius=4, fill=_score_color(val),
+                    )
+                sv = f"{val:.1f}" if val else "--"
+                draw.text((bar_x + bar_w + 14, row_cy - 9), sv, fill=WHITE, font=f_axis_val)
+                by += bar_spacing
 
-        # --- Bottom divider + branding ---
-        y = H - 52
-        draw.line([(56, y - 8), (W - 56, y - 8)], fill=LIGHT_GRAY, width=1)
-        draw.text((56, y), "platform.aixis.jp", fill=(148, 163, 184), font=font_xs)
-        # Timestamp
+        # ── Vertical separator ──
+        draw.line([(RIGHT_X - 20, bars_top), (RIGHT_X - 20, bars_bottom)], fill=_wa(0.06), width=1)
+
+        # ── Grade badge + overall score (vertically centered) ──
+        bars_mid_y = (bars_top + bars_bottom) // 2
+        gcx = RIGHT_X + RIGHT_W // 2
+
+        if latest_score and latest_score.overall_grade:
+            grade = latest_score.overall_grade
+            gc = GRADE_COLORS.get(grade, (148, 163, 184))
+            gl = GRADE_HIGHLIGHTS.get(grade, gc)
+            gs = 64
+            gx1, gy1 = gcx - gs // 2, bars_mid_y - 96
+
+            # Badge with highlight
+            draw.rounded_rectangle([gx1, gy1, gx1 + gs, gy1 + gs], radius=11, fill=gc)
+            draw.rounded_rectangle([gx1 + 2, gy1 + 2, gx1 + gs - 2, gy1 + 5], radius=2, fill=gl)
+
+            # Grade letter
+            glb = draw.textbbox((0, 0), grade, font=f_grade)
+            glw, glh = glb[2] - glb[0], glb[3] - glb[1]
+            draw.text(
+                (gcx - glw // 2, gy1 + (gs - glh) // 2 - 3),
+                grade, fill=WHITE, font=f_grade,
+            )
+
+            # Overall score
+            if latest_score.overall_score is not None:
+                s_str = f"{latest_score.overall_score:.1f}"
+                sb = draw.textbbox((0, 0), s_str, font=f_score_big)
+                s_y = gy1 + gs + 14
+                draw.text((gcx - (sb[2] - sb[0]) // 2, s_y), s_str, fill=WHITE, font=f_score_big)
+                ub = draw.textbbox((0, 0), "/ 5.0", font=f_score_unit)
+                draw.text((gcx - (ub[2] - ub[0]) // 2, s_y + 42), "/ 5.0", fill=_wa(0.4), font=f_score_unit)
+                lb = draw.textbbox((0, 0), "総合スコア", font=f_label)
+                draw.text((gcx - (lb[2] - lb[0]) // 2, s_y + 62), "総合スコア", fill=_wa(0.35), font=f_label)
+
+        # ── Footer ──
+        footer_y = H - 36
+        draw.line([(PL, footer_y - 10), (W - PR, footer_y - 10)], fill=_wa(0.08), width=1)
+        draw.text((PL, footer_y), "platform.aixis.jp", fill=_wa(0.35), font=f_footer)
+
         if latest_score and hasattr(latest_score, "published_at") and latest_score.published_at:
-            pub_str = latest_score.published_at.strftime("%Y.%m.%d") if latest_score.published_at else ""
-            if pub_str:
-                draw.text((W - 56 - draw.textlength(f"監査日: {pub_str}", font=font_xs), y), f"監査日: {pub_str}", fill=(148, 163, 184), font=font_xs)
+            pub = latest_score.published_at.strftime("%Y.%m.%d")
+            ver = getattr(latest_score, "version", 1) or 1
+            info = f"監査日: {pub}　|　評価バージョン: v{ver}"
+            ib = draw.textbbox((0, 0), info, font=f_footer)
+            draw.text((W - PR - (ib[2] - ib[0]), footer_y), info, fill=_wa(0.35), font=f_footer)
 
-        # Encode to PNG
+        # ── Encode ──
         buf = io.BytesIO()
         img.save(buf, format="PNG", optimize=True)
         buf.seek(0)
-
         return Response(
             content=buf.getvalue(),
             media_type="image/png",
