@@ -914,8 +914,9 @@ async def indexnow_key_file(key: str):
 async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
     """Generate a PNG card image for Google Images & social sharing.
 
-    Dark-themed card matching the platform's hero section aesthetic.
-    1200×630 (standard OG size) with tool name, grade badge, 5-axis bars.
+    Light-themed card matching the platform's tool detail card UI.
+    1200×630 (standard OG size). Shows tool name, logo, grade, overall score.
+    5-axis detail scores are intentionally omitted (paid feature).
     """
     from .db.models.tool import Tool, ToolCategory
     from .db.models.score import ToolPublishedScore
@@ -931,7 +932,7 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
 
     try:
         from PIL import Image, ImageDraw, ImageFont
-        import io
+        import io as _io
     except ImportError:
         logger.error("Pillow not installed — card image generation unavailable")
         return Response(status_code=503)
@@ -940,197 +941,203 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
     category_name = tool.category.name_jp if tool.category else ""
     tool_name = tool.name_jp or tool.name or slug
 
-    # ── Platform color palette (from tailwind.config.js) ──
+    # ── Colors (matching platform card UI) ──
     W, H = 1200, 630
-    AIXIS_600 = (22, 45, 77)    # #162d4d — hero gradient start
-    AIXIS_800 = (10, 22, 40)    # #0a1628 — hero gradient end
-    BRAND = (99, 102, 241)      # #6366f1 — indigo accent
-    WHITE = (255, 255, 255)
+    BG = (255, 255, 255)
+    BORDER = (232, 236, 241)   # #e8ecf1
+    DARK = (45, 55, 72)        # #2d3748
+    GRAY = (113, 128, 150)     # #718096
+    LIGHT = (160, 174, 192)    # #a0aec0
+    VLIGHT = (237, 242, 247)   # #edf2f7
+    BRAND = (26, 54, 93)       # #1a365d
 
-    GRADE_COLORS = {
+    GRADE_MID = {
         "S": (212, 175, 55), "A": (56, 161, 105), "B": (43, 108, 176),
         "C": (237, 137, 54), "D": (229, 62, 62),
     }
-    GRADE_HIGHLIGHTS = {
-        "S": (218, 185, 70), "A": (70, 180, 120), "B": (70, 140, 200),
-        "C": (249, 155, 70), "D": (248, 100, 100),
+    GRADE_HI = {
+        "S": (230, 200, 90), "A": (85, 195, 135), "B": (80, 155, 210),
+        "C": (250, 165, 85), "D": (252, 130, 130),
     }
-    AXIS_LABELS = {
-        "practicality": "実務適性", "cost_performance": "費用対効果",
-        "localization": "日本語能力", "safety": "信頼性・安全性", "uniqueness": "革新性",
+    GRADE_LO = {
+        "S": (175, 140, 20), "A": (40, 125, 82), "B": (35, 78, 125),
+        "C": (200, 100, 25), "D": (190, 40, 40),
     }
 
     def _score_color(v):
-        if v >= 4.0: return (56, 161, 105)   # green
-        if v >= 3.0: return (43, 108, 176)   # blue
-        if v >= 2.0: return (214, 158, 46)   # yellow
-        return (229, 62, 62)                   # red
-
-    # White alpha-blended on dark bg (pre-computed for performance)
-    _BG = (15, 31, 54)  # approx AIXIS_700 for blending
-
-    def _wa(a):
-        return tuple(int(_BG[i] * (1 - a) + 255 * a) for i in range(3))
+        if v >= 4.0: return (56, 161, 105)
+        if v >= 3.0: return (43, 108, 176)
+        if v >= 2.0: return (214, 158, 46)
+        return (229, 62, 62)
 
     try:
-        # ── Gradient background (matching hero section) ──
-        img = Image.new("RGB", (W, H), AIXIS_600)
-        draw = ImageDraw.Draw(img)
-        for row in range(H):
-            t = row / H
-            r = int(AIXIS_600[0] * (1 - t * 0.8) + AIXIS_800[0] * (t * 0.8))
-            g = int(AIXIS_600[1] * (1 - t * 0.8) + AIXIS_800[1] * (t * 0.8))
-            b = int(AIXIS_600[2] * (1 - t * 0.8) + AIXIS_800[2] * (t * 0.8))
-            draw.line([(0, row), (W, row)], fill=(r, g, b))
+        img = Image.new("RGB", (W, H), BG)
         draw = ImageDraw.Draw(img)
 
         # ── Fonts ──
-        _FONT_DIR = Path(__file__).resolve().parent / "static" / "fonts"
-        _FB = str(_FONT_DIR / "NotoSansJP-Bold.ttf")
-        _FM = str(_FONT_DIR / "NotoSansJP-Medium.ttf")
-
+        _FD = Path(__file__).resolve().parent / "static" / "fonts"
+        _FB = str(_FD / "NotoSansJP-Bold.ttf")
+        _FM = str(_FD / "NotoSansJP-Medium.ttf")
         try:
-            f_tool = ImageFont.truetype(_FB, 36)
-            f_vendor = ImageFont.truetype(_FM, 17)
-            f_cat = ImageFont.truetype(_FM, 12)
-            f_axis_lbl = ImageFont.truetype(_FM, 14)
-            f_axis_val = ImageFont.truetype(_FB, 14)
-            f_grade = ImageFont.truetype(_FB, 40)
-            f_score_big = ImageFont.truetype(_FB, 38)
-            f_score_unit = ImageFont.truetype(_FM, 15)
-            f_label = ImageFont.truetype(_FM, 11)
-            f_brand = ImageFont.truetype(_FB, 13)
-            f_brand_sub = ImageFont.truetype(_FM, 11)
-            f_section = ImageFont.truetype(_FB, 12)
-            f_footer = ImageFont.truetype(_FM, 11)
+            fn = ImageFont.truetype(_FB, 36)
+            fv = ImageFont.truetype(_FM, 18)
+            fc = ImageFont.truetype(_FM, 14)
+            fg = ImageFont.truetype(_FB, 44)
+            fs = ImageFont.truetype(_FB, 120)
+            fu = ImageFont.truetype(_FM, 40)
+            fl = ImageFont.truetype(_FM, 18)
+            fbr = ImageFont.truetype(_FB, 13)
+            fbs = ImageFont.truetype(_FM, 12)
         except (IOError, OSError):
-            _def = ImageFont.load_default()
-            f_tool = f_vendor = f_cat = f_axis_lbl = f_axis_val = _def
-            f_grade = f_score_big = f_score_unit = f_label = _def
-            f_brand = f_brand_sub = f_section = f_footer = _def
+            _d = ImageFont.load_default()
+            fn = fv = fc = fg = fs = fu = fl = fbr = fbs = _d
 
-        PL, PR = 56, 56
-        RIGHT_W = 180
-        RIGHT_X = W - PR - RIGHT_W
+        PL, PR = 64, 64
+        draw.rounded_rectangle([0, 0, W - 1, H - 1], radius=12, outline=BORDER, width=2)
 
-        # ── Top accent line (brand indigo) ──
-        draw.rectangle([0, 0, W, 3], fill=BRAND)
+        # ── Try to load the tool's logo from URL ──
+        logo_img = None
+        logo_size = 64
+        if tool.logo_url:
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    resp = await client.get(tool.logo_url)
+                    if resp.status_code == 200:
+                        logo_img = Image.open(_io.BytesIO(resp.content)).convert("RGBA")
+                        logo_img = logo_img.resize((logo_size, logo_size), Image.LANCZOS)
+            except Exception:
+                logo_img = None
 
-        # ── Brand header ──
-        draw.text((PL, 20), "Aixis", fill=_wa(0.9), font=f_brand)
-        draw.text((PL + 48, 22), "独立AI監査プラットフォーム", fill=_wa(0.4), font=f_brand_sub)
+        # ── HEADER: Logo + Name/Vendor ... Grade badge ──
+        # Calculate text heights using bounding boxes for precise alignment
+        name_display = tool_name[:22]
+        name_bb = draw.textbbox((0, 0), name_display, font=fn)
+        name_h = name_bb[3] - name_bb[1]
 
-        # ── Tool name + vendor + category ──
-        draw.text((PL, 52), tool_name[:25], fill=WHITE, font=f_tool)
-        vy = 98
-        if tool.vendor:
-            draw.text((PL, vy), tool.vendor[:40], fill=_wa(0.5), font=f_vendor)
-            vy += 26
-        if category_name:
-            vy += 4
-            cb = draw.textbbox((0, 0), category_name, font=f_cat)
-            ctw = cb[2] - cb[0]
+        has_vendor = bool(tool.vendor)
+        vendor_display = (tool.vendor or "")[:30]
+        vendor_bb = draw.textbbox((0, 0), vendor_display, font=fv) if has_vendor else (0, 0, 0, 0)
+        vendor_h = vendor_bb[3] - vendor_bb[1] if has_vendor else 0
+
+        # Text block: name + gap + vendor, vertically centered with logo
+        name_vendor_gap = 10 if has_vendor else 0
+        text_block_h = name_h + name_vendor_gap + (vendor_h if has_vendor else 0)
+
+        # Logo vertical center line
+        header_top = 52
+        logo_cy = header_top + logo_size // 2
+
+        # Center text block to logo center
+        text_block_top = logo_cy - text_block_h // 2
+
+        # Draw logo
+        logo_x, logo_y = PL, header_top
+        if logo_img:
+            bg_patch = img.crop((logo_x, logo_y, logo_x + logo_size, logo_y + logo_size)).convert("RGBA")
+            bg_patch = Image.alpha_composite(bg_patch, logo_img)
+            img.paste(bg_patch.convert("RGB"), (logo_x, logo_y))
+            draw = ImageDraw.Draw(img)  # refresh draw after paste
+        else:
             draw.rounded_rectangle(
-                [PL - 1, vy - 2, PL + ctw + 13, vy + 16],
-                radius=3, fill=_wa(0.08), outline=_wa(0.12),
+                [logo_x, logo_y, logo_x + logo_size, logo_y + logo_size],
+                radius=14, fill=VLIGHT, outline=(220, 228, 236),
             )
-            draw.text((PL + 6, vy), category_name, fill=_wa(0.6), font=f_cat)
-            vy += 28
+            cx, cy = logo_x + logo_size // 2, logo_y + logo_size // 2
+            draw.ellipse([cx - 14, cy - 14, cx + 14, cy + 14], outline=(175, 188, 200), width=2)
+            draw.ellipse([cx - 4, cy - 4, cx + 4, cy + 4], fill=(175, 188, 200))
 
-        # ── Separator ──
-        sep_y = vy + 6
-        draw.line([(PL, sep_y), (W - PR, sep_y)], fill=_wa(0.08), width=1)
+        # Draw name and vendor, properly spaced
+        nx = PL + logo_size + 22
+        name_y = text_block_top - name_bb[1]  # subtract ascent offset
+        draw.text((nx, name_y), name_display, fill=DARK, font=fn)
 
-        # ── Score bars layout ──
-        bars_top = sep_y + 24
-        bars_bottom = H - 54
-        label_col_w = 110
-        bar_x = PL + label_col_w
-        bar_w = RIGHT_X - bar_x - 80
-        bar_h = 8
-        n_axes = 5
-        bar_area_h = bars_bottom - bars_top - 20  # minus section header
-        bar_spacing = bar_area_h // n_axes
+        if has_vendor:
+            vendor_y = text_block_top + name_h + name_vendor_gap - vendor_bb[1]
+            draw.text((nx, vendor_y), vendor_display, fill=GRAY, font=fv)
 
-        # Section label
-        draw.text((PL, bars_top), "5軸評価スコア", fill=_wa(0.45), font=f_section)
-        draw.line([(PL, bars_top + 18), (bar_x + bar_w + 50, bars_top + 18)], fill=_wa(0.06), width=1)
-
-        # Draw bars
-        by = bars_top + 24
-        if latest_score:
-            for axis_key in ["practicality", "cost_performance", "localization", "safety", "uniqueness"]:
-                val = getattr(latest_score, axis_key, None)
-                label = AXIS_LABELS.get(axis_key, axis_key)
-                row_cy = by + bar_spacing // 2
-
-                draw.text((PL, row_cy - 8), label, fill=_wa(0.55), font=f_axis_lbl)
-                bar_y = row_cy - bar_h // 2
-                draw.rounded_rectangle(
-                    [bar_x, bar_y, bar_x + bar_w, bar_y + bar_h],
-                    radius=4, fill=_wa(0.12),
-                )
-                if val and val > 0:
-                    fill_w = max(8, int(bar_w * val / 5.0))
-                    draw.rounded_rectangle(
-                        [bar_x, bar_y, bar_x + fill_w, bar_y + bar_h],
-                        radius=4, fill=_score_color(val),
-                    )
-                sv = f"{val:.1f}" if val else "--"
-                draw.text((bar_x + bar_w + 14, row_cy - 9), sv, fill=WHITE, font=f_axis_val)
-                by += bar_spacing
-
-        # ── Vertical separator ──
-        draw.line([(RIGHT_X - 20, bars_top), (RIGHT_X - 20, bars_bottom)], fill=_wa(0.06), width=1)
-
-        # ── Grade badge + overall score (vertically centered) ──
-        bars_mid_y = (bars_top + bars_bottom) // 2
-        gcx = RIGHT_X + RIGHT_W // 2
-
+        # Grade badge (top-right, vertically centered with logo)
         if latest_score and latest_score.overall_grade:
             grade = latest_score.overall_grade
-            gc = GRADE_COLORS.get(grade, (148, 163, 184))
-            gl = GRADE_HIGHLIGHTS.get(grade, gc)
-            gs = 64
-            gx1, gy1 = gcx - gs // 2, bars_mid_y - 96
-
-            # Badge with highlight
-            draw.rounded_rectangle([gx1, gy1, gx1 + gs, gy1 + gs], radius=11, fill=gc)
-            draw.rounded_rectangle([gx1 + 2, gy1 + 2, gx1 + gs - 2, gy1 + 5], radius=2, fill=gl)
-
-            # Grade letter
-            glb = draw.textbbox((0, 0), grade, font=f_grade)
+            gc = GRADE_MID.get(grade, (148, 163, 184))
+            gl = GRADE_HI.get(grade, gc)
+            gd = GRADE_LO.get(grade, gc)
+            bs = 62
+            bx = W - PR - bs
+            by = logo_cy - bs // 2
+            draw.rounded_rectangle([bx, by, bx + bs, by + bs], radius=12, fill=gc)
+            for i in range(4):
+                draw.line([(bx + 5, by + 2 + i), (bx + bs - 5, by + 2 + i)], fill=gl)
+            for i in range(3):
+                draw.line([(bx + 5, by + bs - 4 + i), (bx + bs - 5, by + bs - 4 + i)], fill=gd)
+            draw.rounded_rectangle([bx, by, bx + bs, by + bs], radius=12, outline=gd, width=2)
+            glb = draw.textbbox((0, 0), grade, font=fg)
             glw, glh = glb[2] - glb[0], glb[3] - glb[1]
-            draw.text(
-                (gcx - glw // 2, gy1 + (gs - glh) // 2 - 3),
-                grade, fill=WHITE, font=f_grade,
-            )
+            # Subtract glb origin offsets for true visual centering
+            gx = bx + (bs - glw) // 2 - glb[0]
+            gy = by + (bs - glh) // 2 - glb[1]
+            draw.text((gx, gy), grade, fill=(255, 255, 255), font=fg)
 
-            # Overall score
-            if latest_score.overall_score is not None:
-                s_str = f"{latest_score.overall_score:.1f}"
-                sb = draw.textbbox((0, 0), s_str, font=f_score_big)
-                s_y = gy1 + gs + 14
-                draw.text((gcx - (sb[2] - sb[0]) // 2, s_y), s_str, fill=WHITE, font=f_score_big)
-                ub = draw.textbbox((0, 0), "/ 5.0", font=f_score_unit)
-                draw.text((gcx - (ub[2] - ub[0]) // 2, s_y + 42), "/ 5.0", fill=_wa(0.4), font=f_score_unit)
-                lb = draw.textbbox((0, 0), "総合スコア", font=f_label)
-                draw.text((gcx - (lb[2] - lb[0]) // 2, s_y + 62), "総合スコア", fill=_wa(0.35), font=f_label)
+        # Category pill (below header with clear gap)
+        header_bottom = header_top + logo_size
+        if category_name:
+            cat_y = header_bottom + 22
+            cb = draw.textbbox((0, 0), category_name, font=fc)
+            ctw = cb[2] - cb[0]
+            pill_h = 28
+            draw.rounded_rectangle([PL, cat_y, PL + ctw + 24, cat_y + pill_h], radius=6, fill=VLIGHT, outline=BORDER)
+            draw.text((PL + 12, cat_y + (pill_h - (cb[3] - cb[1])) // 2 - cb[1]), category_name, fill=GRAY, font=fc)
+            div_y = cat_y + pill_h + 22
+        else:
+            div_y = header_bottom + 36
+
+        # Divider
+        draw.line([(PL, div_y), (W - PR, div_y)], fill=BORDER, width=1)
+
+        # ── CENTER HERO: Big overall score ──
+        footer_line_y = H - 52
+        hero_top = div_y + 8
+        hero_bottom = footer_line_y - 8
+        hero_cy = (hero_top + hero_bottom) // 2
+
+        # "総合スコア" label
+        label_text = "総合スコア"
+        label_w = draw.textlength(label_text, font=fl)
+        draw.text(
+            (W // 2 - label_w / 2, hero_cy - 90),
+            label_text, fill=LIGHT, font=fl,
+        )
+
+        # Score number
+        if latest_score and latest_score.overall_score is not None:
+            overall = latest_score.overall_score
+            s_str = f"{overall:.1f}"
+            sb = draw.textbbox((0, 0), s_str, font=fs)
+            sw, sh = sb[2] - sb[0], sb[3] - sb[1]
+            ub = draw.textbbox((0, 0), "/ 5.0", font=fu)
+            uw = ub[2] - ub[0]
+            uh = ub[3] - ub[1]
+            total_w = sw + 14 + uw
+            sx = W // 2 - total_w // 2
+            sy = hero_cy - 36
+            draw.text((sx, sy), s_str, fill=_score_color(overall), font=fs)
+            # Align "/ 5.0" baseline with score baseline
+            unit_y = sy + (sh - uh) + (sb[1] - ub[1])
+            draw.text((sx + sw + 14, unit_y), "/ 5.0", fill=LIGHT, font=fu)
+        else:
+            draw.text((W // 2 - 30, hero_cy - 20), "—", fill=LIGHT, font=fs)
 
         # ── Footer ──
-        footer_y = H - 36
-        draw.line([(PL, footer_y - 10), (W - PR, footer_y - 10)], fill=_wa(0.08), width=1)
-        draw.text((PL, footer_y), "platform.aixis.jp", fill=_wa(0.35), font=f_footer)
+        draw.line([(PL, footer_line_y), (W - PR, footer_line_y)], fill=BORDER, width=1)
+        fy = footer_line_y + 10
+        draw.text((PL, fy), "Aixis", fill=BRAND, font=fbr)
+        draw.text((PL + 44, fy + 2), "独立AI監査プラットフォーム", fill=LIGHT, font=fbs)
+        url = "platform.aixis.jp"
+        urb = draw.textbbox((0, 0), url, font=fbs)
+        draw.text((W - PR - (urb[2] - urb[0]), fy + 2), url, fill=LIGHT, font=fbs)
 
-        if latest_score and hasattr(latest_score, "published_at") and latest_score.published_at:
-            pub = latest_score.published_at.strftime("%Y.%m.%d")
-            ver = getattr(latest_score, "version", 1) or 1
-            info = f"監査日: {pub}　|　評価バージョン: v{ver}"
-            ib = draw.textbbox((0, 0), info, font=f_footer)
-            draw.text((W - PR - (ib[2] - ib[0]), footer_y), info, fill=_wa(0.35), font=f_footer)
-
-        # ── Encode ──
-        buf = io.BytesIO()
+        # Encode
+        buf = _io.BytesIO()
         img.save(buf, format="PNG", optimize=True)
         buf.seek(0)
         return Response(
