@@ -85,22 +85,38 @@ async def _create_session_impl(body, db, user):
     date_str = now.strftime("%Y%m%d")
     session_code = f"AX-{date_str}-{short_hash}"
 
-    # Verify tool exists and fetch its profile_id for category resolution
+    # Verify tool exists and fetch profile_id + category slug for category resolution
     result = await db.execute(
-        text("SELECT id, name, profile_id FROM tools WHERE id = :tid"),
+        text(
+            "SELECT t.id, t.name, t.profile_id, tc.slug "
+            "FROM tools t "
+            "LEFT JOIN tool_categories tc ON t.category_id = tc.id "
+            "WHERE t.id = :tid"
+        ),
         {"tid": body.tool_id},
     )
     tool_row = result.fetchone()
     if not tool_row:
         raise HTTPException(404, f"ツールが見つかりません: {body.tool_id}")
 
-    # Resolve effective profile_id: request body > tool DB record
-    effective_profile_id = body.profile_id or (tool_row[2] if tool_row[2] else "")
-    if effective_profile_id and not body.profile_id:
-        logger.info(
-            "profile_id not in request, using tool DB profile: %s",
-            effective_profile_id,
-        )
+    # Resolve effective profile_id: request body > tool.profile_id > category slug mapping
+    # Category slug → profile_id mapping (e.g., "meeting-minutes-ai" → "meeting_minutes")
+    _SLUG_TO_PROFILE = {
+        "slide-creation-ai": "slide_creation",
+        "meeting-minutes-ai": "meeting_minutes",
+    }
+    tool_db_profile = tool_row[2] if tool_row[2] else ""
+    tool_category_slug = tool_row[3] if tool_row[3] else ""
+    effective_profile_id = (
+        body.profile_id
+        or tool_db_profile
+        or _SLUG_TO_PROFILE.get(tool_category_slug, "")
+    )
+    logger.info(
+        "Profile resolution: body=%r, db=%r, slug=%r → effective=%r, tool=%s",
+        body.profile_id, tool_db_profile, tool_category_slug,
+        effective_profile_id, tool_row[1],
+    )
 
     # Auto-cancel orphaned "running" sessions for the same tool by the same user.
     # This prevents ghost sessions when dashboard creates a session and then
@@ -142,10 +158,10 @@ async def _create_session_impl(body, db, user):
                             "Resolved %d categories for profile %s: %s",
                             len(categories), effective_profile_id, categories,
                         )
-                except Exception:
-                    logger.warning(
-                        "Failed to resolve profile %s, will use explicit categories or fail",
-                        effective_profile_id, exc_info=True,
+                except Exception as profile_err:
+                    logger.exception(
+                        "Failed to resolve profile %s: %s",
+                        effective_profile_id, profile_err,
                     )
 
             if not categories and effective_profile_id:
@@ -174,9 +190,11 @@ async def _create_session_impl(body, db, user):
 
             total_planned = len(cases)
 
+        except HTTPException:
+            raise  # Re-raise HTTP errors as-is (400 profile errors, etc.)
         except Exception as e:
             logger.exception("Test case generation failed: %s", e)
-            raise HTTPException(500, "テストケース生成に失敗しました")
+            raise HTTPException(500, f"テストケース生成に失敗しました: {e}")
 
     if body.recording_mode == "protocol" and not cases:
         raise HTTPException(500, "テストケースが0件です。パターンファイルの設定を確認してください。")
