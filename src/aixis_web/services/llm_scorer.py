@@ -525,7 +525,13 @@ class LLMScorer:
 
         Critical axes (localization, practicality) use Sonnet for accurate
         visual text reading. Others use Haiku to minimize cost.
+
+        Exception: In text-based mode (meeting-minutes), Sonnet is unnecessary
+        because there are no screenshots to read — all evidence is plain text.
+        Haiku handles text analysis equally well at ~5x lower cost.
         """
+        if getattr(self, '_is_text_based', False):
+            return self.model_lite
         if axis in self.SONNET_REQUIRED_AXES:
             return self.model
         return self.model_lite
@@ -616,7 +622,7 @@ class LLMScorer:
             # Tool research is text-only — use lite model to save cost
             response = await loop.run_in_executor(None, lambda: self.client.messages.create(
                 model=self.model_lite,
-                max_tokens=1000,
+                max_tokens=500,
                 messages=[{"role": "user", "content": research_prompt}],
             ))
             self._track_usage(response, model=self.model_lite)
@@ -1558,12 +1564,22 @@ class LLMScorer:
         "uniqueness": 6,
     }
 
+    # Budget for text evidence: ~2000 chars ≈ 500 tokens per output field,
+    # ~6000 chars ≈ 1500 tokens per observation, ~15000 chars total ≈ 3750 tokens.
+    # This keeps total text evidence under 4000 tokens per axis.
+    TEXT_CHARS_PER_FIELD = 2000
+    TEXT_CHARS_PER_OBS = 6000
+    TEXT_CHARS_TOTAL = 15000
+
     def _build_text_evidence(self, axis: str, observations: list[dict]) -> str:
         """Build text evidence for text-based evaluation (meeting-minutes).
 
         Instead of screenshots, the LLM receives the tool's text outputs
         (transcription, summary, timeline, etc.) directly. This is cheaper
         and more accurate for text-heavy tools like meeting minutes AI.
+
+        Token budget: ~4000 tokens total (~15000 chars) to keep API costs low.
+        Per-field: ~500 tokens (2000 chars), per-observation: ~1500 tokens (6000 chars).
         """
         axis_categories = getattr(self, '_active_axis_categories', self.AXIS_RELEVANT_CATEGORIES)
         primary_cats = set(axis_categories.get(axis, {}).get("primary", []))
@@ -1579,7 +1595,12 @@ class LLMScorer:
             "議事録の品質評価にはこのテキストデータのみを使用してください。\n"
         )
 
+        total_chars = 0
         for i, obs in enumerate(observations):
+            if total_chars >= self.TEXT_CHARS_TOTAL:
+                sections.append(f"\n（トークン予算により以降の検証データは省略）")
+                break
+
             cat = obs.get("category", "")
             if relevant_cats and cat not in relevant_cats and cat != "ui_evaluation":
                 continue
@@ -1589,13 +1610,21 @@ class LLMScorer:
                 continue
 
             sections.append(f"\n### 検証 {i+1}: {cat}")
+            obs_chars = 0
             for to in text_outputs:
+                if obs_chars >= self.TEXT_CHARS_PER_OBS:
+                    sections.append("\n（この検証の残りの出力項目は省略）")
+                    break
+
                 label = to.get("label", "出力")
                 content = to.get("content", "")
-                # Truncate very long outputs to stay within token budget
-                if len(content) > 3000:
-                    content = content[:3000] + "\n... (以下省略、全 {} 文字)".format(len(to.get("content", "")))
+                original_len = len(content)
+                # Per-field truncation
+                if len(content) > self.TEXT_CHARS_PER_FIELD:
+                    content = content[:self.TEXT_CHARS_PER_FIELD] + f"\n... (以下省略、全 {original_len} 文字)"
                 sections.append(f"\n**【{label}】**\n{content}")
+                obs_chars += len(content)
+                total_chars += len(content)
 
         if len(sections) <= 2:
             sections.append("\n（テキスト出力データなし）")
@@ -1744,7 +1773,11 @@ class LLMScorer:
 
         if not is_text_mode:
             # SCREENSHOT-BASED MODE (or mixed mode): select and load screenshots
-            resize_width = 1024 if axis in self.SONNET_REQUIRED_AXES else 600
+            # In mixed mode (text + screenshots), all axes use the model returned
+            # by _model_for_axis which already accounts for text-based downgrade.
+            # Use 600px for Haiku, 1024px only for Sonnet with screenshot evidence.
+            use_sonnet = (axis in self.SONNET_REQUIRED_AXES and not getattr(self, '_is_text_based', False))
+            resize_width = 1024 if use_sonnet else 600
             all_paths = self._select_screenshots_for_axis(axis, observations)
             failed_paths = []
             for ss_path in all_paths:
