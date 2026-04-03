@@ -27,31 +27,57 @@ def compute_governance_score(rg: ToolRiskGovernance) -> float:
     """Compute composite governance score from sub-components.
 
     Weights:
-      - Regulatory compliance (JP): 35%
-      - Certifications: 25%
+      - Regulatory compliance (JP): 30%
+      - Certifications: 30%
       - Data handling transparency: 25%
       - Industry-specific compliance: 15%
+
+    Design principles:
+      - "unknown" (未確認) is excluded from averages, not penalised as 0.
+        It simply means "not yet assessed" — distinct from non-compliance.
+      - Certifications are valued more generously: ISO 27001 alone is a
+        significant achievement. Two high-tier certs should yield ~4.0.
+      - GDPR is optional for Japan-domestic tools — it only counts when
+        the tool explicitly claims compliance or non-compliance.
     """
     scores = []
     weights = []
 
-    # 1. Regulatory compliance (35%)
+    # Status → score mapping.
+    # "unknown" is intentionally EXCLUDED from averaging (not scored as 0).
+    status_map = {"compliant": 5.0, "partial": 3.5, "non_compliant": 1.0}
+
+    # 1. Regulatory compliance (30%)
+    # Only average frameworks with a known status.
+    # For Japan-domestic tools, GDPR "unknown" should not drag the score down.
     reg_scores = []
-    status_map = {"compliant": 5.0, "partial": 3.0, "non_compliant": 1.0, "unknown": 0.0}
     for field in ("ai_business_guideline_status", "appi_status", "gdpr_status"):
         val = getattr(rg, field, None)
         if val and val in status_map:
             reg_scores.append(status_map[val])
+        # "unknown" / None → simply excluded from averaging
     if reg_scores:
         scores.append(sum(reg_scores) / len(reg_scores))
-        weights.append(0.35)
+        weights.append(0.30)
 
-    # 2. Certifications (25%)
+    # 2. Certifications (30%)
+    # Tier-based scoring: high-value certs count more.
+    # ISO 27001 or SOC2 alone = 3.5, two major certs = 4.5, three+ = 5.0.
+    TIER_HIGH = {"ISO27001", "ISO/IEC 27001", "ISO/IEC 27001 (ISMS)",
+                 "SOC2_TYPE2", "SOC2", "ISMAP"}
+    TIER_MID = {"ISO27017", "ISO/IEC 27017", "ISO/IEC 27017 (ISMSクラウドセキュリティ)",
+                "ISO27018", "ISO/IEC 27018",
+                "SOC2_TYPE1", "PCIDSS", "HIPAA"}
     certs = rg.certifications or []
     if certs:
-        cert_score = min(len(certs) * 1.25, 5.0)
+        high_count = sum(1 for c in certs if c in TIER_HIGH)
+        mid_count = sum(1 for c in certs if c in TIER_MID)
+        other_count = len(certs) - high_count - mid_count
+        cert_score = min(high_count * 2.0 + mid_count * 1.2 + other_count * 0.8, 5.0)
+        # Floor: having any cert at all means at least 2.0
+        cert_score = max(cert_score, 2.0) if certs else 0.0
         scores.append(cert_score)
-        weights.append(0.25)
+        weights.append(0.30)
 
     # 3. Data handling transparency (25%)
     if rg.data_transparency_score is not None:
@@ -69,9 +95,11 @@ def compute_governance_score(rg: ToolRiskGovernance) -> float:
     # 4. Industry-specific compliance (15%)
     ic = rg.industry_compliance or []
     if ic:
-        ic_scores = [status_map.get(item.get("status", ""), 0.0) for item in ic]
-        scores.append(sum(ic_scores) / len(ic_scores))
-        weights.append(0.15)
+        ic_scores = [status_map.get(item.get("status", ""), 0.0) for item in ic
+                     if item.get("status", "") in status_map]
+        if ic_scores:
+            scores.append(sum(ic_scores) / len(ic_scores))
+            weights.append(0.15)
 
     if not scores:
         return 0.0
