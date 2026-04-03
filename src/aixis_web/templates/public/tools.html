@@ -160,13 +160,13 @@
          2.5 Free/Paid Info Banner (hidden for logged-in users)
          ================================================================ -->
     {% if not user %}
-    <div class="mb-6 border-t-2 border-aixis-400/60 dark:border-aixis-500/40 bg-white dark:bg-aixis-800/50 rounded-b-sm px-4 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
-        <p class="text-xs text-gray-500 dark:text-gray-400">
-            総合グレードは無料で閲覧可能です。5軸詳細スコア・分析レポートは有料プランで提供しています。
+    <div class="mb-3 sm:mb-6 border-t border-aixis-400/40 dark:border-aixis-500/30 px-3 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-2">
+        <p class="info-banner-text text-xs text-gray-400 dark:text-gray-500">
+            総合グレードは無料で閲覧可能。詳細スコア・分析レポートは有料プランで提供。
         </p>
         <a href="/contact"
            class="shrink-0 text-xs font-medium text-aixis-500 dark:text-aixis-400 hover:text-aixis-600 dark:hover:text-aixis-300 transition-colors duration-150">
-            詳細 &rarr;
+            詳細&rarr;
         </a>
     </div>
     {% endif %}

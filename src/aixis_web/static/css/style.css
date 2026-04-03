@@ -1150,7 +1150,7 @@ footer .space-y-1\.5 {
 
 @media (max-width: 639px) {
     .stat-num-mobile {
-        font-size: 1.25rem !important;  /* 20px instead of text-lg 18px */
+        font-size: 1.25rem !important;
         line-height: 1.2;
     }
     .stat-label-mobile {
@@ -1158,6 +1158,9 @@ footer .space-y-1\.5 {
         letter-spacing: 0.08em;
         margin-top: 2px;
         line-height: 1.3;
+    }
+    .info-banner-text {
+        font-size: 10px !important;
     }
 }
 
