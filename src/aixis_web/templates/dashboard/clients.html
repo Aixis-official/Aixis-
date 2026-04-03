@@ -92,6 +92,7 @@
 {% block scripts %}
 <script>
 (function() {
+    function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
     var token = localStorage.getItem('aixis_token') || '';
     var headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
     if (typeof getCSRFToken === 'function') headers['X-CSRF-Token'] = getCSRFToken();
@@ -147,9 +148,9 @@
             }
 
             html += '<tr class="border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50 dark:hover:bg-gray-800/30">';
-            html += '<td class="px-4 py-3 text-gray-900 dark:text-white font-medium">' + (c.name_jp || c.name) + '</td>';
-            html += '<td class="px-4 py-3 text-gray-500 dark:text-gray-400">' + c.email + '</td>';
-            html += '<td class="px-4 py-3 text-gray-500 dark:text-gray-400">' + (c.organization_name || '—') + '</td>';
+            html += '<td class="px-4 py-3 text-gray-900 dark:text-white font-medium">' + esc(c.name_jp || c.name) + '</td>';
+            html += '<td class="px-4 py-3 text-gray-500 dark:text-gray-400">' + esc(c.email) + '</td>';
+            html += '<td class="px-4 py-3 text-gray-500 dark:text-gray-400">' + esc(c.organization_name || '—') + '</td>';
             html += '<td class="px-4 py-3"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium ' + st[1] + '">' + st[0] + '</span></td>';
             html += '<td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">' + trialInfo(c) + '</td>';
             html += '<td class="px-4 py-3 text-right">' + actions + '</td>';

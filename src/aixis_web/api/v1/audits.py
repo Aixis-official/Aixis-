@@ -178,7 +178,10 @@ async def list_audits(
         return {"items": response_items, "total": total}
     except Exception as e:
         logger.exception("list_audits failed: %s", e)
-        return {"items": [], "total": 0}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="監査一覧の取得に失敗しました",
+        )
 
 
 @router.get("/deleted", response_model=AuditListResponse)
@@ -189,8 +192,14 @@ async def list_deleted_audits(
     page_size: int = Query(20, ge=1, le=100),
 ):
     """List soft-deleted audit sessions (for recovery)."""
-    query = select(AuditSession).where(AuditSession.deleted_at.isnot(None))
-    count_query = select(func.count()).select_from(AuditSession).where(AuditSession.deleted_at.isnot(None))
+    base_filter = AuditSession.deleted_at.isnot(None)
+    query = select(AuditSession).where(base_filter)
+    count_query = select(func.count()).select_from(AuditSession).where(base_filter)
+
+    # Row-level authorization: non-admin users see only their own deleted audits
+    if _user.role != "admin":
+        query = query.where(AuditSession.initiated_by == _user.id)
+        count_query = count_query.where(AuditSession.initiated_by == _user.id)
 
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0

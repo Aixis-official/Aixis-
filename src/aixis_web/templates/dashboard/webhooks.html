@@ -113,7 +113,7 @@
                     <div class="min-w-0 flex-1">
                         <div class="text-sm font-medium text-gray-900 dark:text-white truncate">${escapeHtml(wh.url)}</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            イベント: ${(wh.events || []).join(', ')}
+                            イベント: ${(wh.events || []).map(e => escapeHtml(e)).join(', ')}
                             <span class="mx-1">|</span>
                             作成: ${new Date(wh.created_at).toLocaleDateString('ja-JP')}
                         </div>

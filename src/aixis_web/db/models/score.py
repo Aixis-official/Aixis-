@@ -33,8 +33,9 @@ class AxisScoreRecord(Base):
         String(36),
         ForeignKey("audit_sessions.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
-    tool_id = Column(String(36), ForeignKey("tools.id"), nullable=False)
+    tool_id = Column(String(36), ForeignKey("tools.id"), nullable=False, index=True)
     axis = Column(String(30), nullable=False)
     axis_name_jp = Column(String(50), nullable=False)
     score = Column(Float, nullable=False)  # 0.0-5.0
@@ -61,7 +62,7 @@ class ToolPublishedScore(Base):
     __tablename__ = "tool_scores"
 
     id = Column(String(36), primary_key=True, default=new_uuid)
-    tool_id = Column(String(36), ForeignKey("tools.id"), nullable=False)
+    tool_id = Column(String(36), ForeignKey("tools.id"), nullable=False, index=True)
     practicality = Column(Float, default=0.0)
     cost_performance = Column(Float, default=0.0)
     localization = Column(Float, default=0.0)

@@ -166,7 +166,9 @@ async def list_tools(
         count_query = count_query.where(Tool.category_id == category_id)
 
     if q:
-        pattern = f"%{q}%"
+        # Escape SQL LIKE wildcards in user input
+        safe_q = q.replace("%", r"\%").replace("_", r"\_")
+        pattern = f"%{safe_q}%"
         query = query.where(
             Tool.name.ilike(pattern)
             | Tool.name_jp.ilike(pattern)
@@ -225,9 +227,17 @@ async def list_tools(
 
 
 @router.get("/{slug}", response_model=ToolResponse)
-async def get_tool(slug: str, db: Annotated[AsyncSession, Depends(get_db)]):
-    """Get tool detail by slug."""
-    result = await db.execute(select(Tool).where(Tool.slug == slug).options(selectinload(Tool.scores)))
+async def get_tool(
+    slug: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User | None, Depends(get_current_user)],
+):
+    """Get tool detail by slug. Non-auth users only see public+active tools."""
+    query = select(Tool).where(Tool.slug == slug).options(selectinload(Tool.scores))
+    # Non-authenticated or non-analyst users can only see public active tools
+    if not user or user.role not in ("admin", "analyst", "auditor"):
+        query = query.where(Tool.is_public.is_(True), Tool.is_active.is_(True))
+    result = await db.execute(query)
     tool = result.scalar_one_or_none()
     if not tool:
         raise HTTPException(

@@ -329,10 +329,16 @@ async def restore_from_gdrive(
     except Exception as e:
         raise HTTPException(400, f"Google Drive接続に失敗しました: {str(e)[:200]}")
 
+    # Sanitize filename to prevent GDrive query injection
+    import re as _re
+    if not _re.match(r'^[\w\-. ]+$', filename):
+        raise HTTPException(400, "ファイル名に使用できない文字が含まれています")
+    safe_filename = filename.replace("'", "\\'")
+
     # Find the file in GDrive
     try:
         results = service.files().list(
-            q=f"name='{filename}' and '{settings.gdrive_folder_id}' in parents and trashed=false",
+            q=f"name='{safe_filename}' and '{settings.gdrive_folder_id}' in parents and trashed=false",
             pageSize=1,
             fields="files(id, name, size)",
         ).execute()

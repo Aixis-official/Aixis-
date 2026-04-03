@@ -142,7 +142,8 @@ async def list_tools(
 
     # Text search
     if q:
-        pattern = f"%{q}%"
+        safe_q = q.replace("%", r"\%").replace("_", r"\_")
+        pattern = f"%{safe_q}%"
         search_filter = (
             Tool.name.ilike(pattern)
             | Tool.name_jp.ilike(pattern)

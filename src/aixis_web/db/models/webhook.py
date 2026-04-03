@@ -29,7 +29,7 @@ class WebhookDelivery(Base):
 
     id = Column(String(36), primary_key=True, default=new_uuid)
     subscription_id = Column(
-        String(36), ForeignKey("webhook_subscriptions.id"), nullable=False
+        String(36), ForeignKey("webhook_subscriptions.id"), nullable=False, index=True
     )
     event_type = Column(String(50), nullable=False)
     payload = Column(JSON, nullable=False)
