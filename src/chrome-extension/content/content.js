@@ -1830,7 +1830,7 @@
     if (screenshotThumbs) screenshotThumbs.style.display = isTextMode ? "none" : "";
     if (textOutputSection) {
       textOutputSection.style.display = isTextMode ? "block" : "none";
-      if (isTextMode) initTextOutputFields();
+      if (isTextMode) restoreOrInitTextOutputs(index);
     }
 
     const expectedEl = shadow.getElementById("testExpected");
@@ -1865,6 +1865,72 @@
     textOutputFieldCount = 0;
     // Auto-add "文字起こし" as default field
     addTextOutputField("transcription");
+  }
+
+  async function restoreOrInitTextOutputs(testIndex) {
+    try {
+      const result = await sendBg({ type: "GET_TEXT_OUTPUTS", testIndex });
+      const saved = result.textOutputs || [];
+      if (saved.length > 0) {
+        const container = shadow.getElementById("textOutputFields");
+        if (!container) return;
+        container.innerHTML = "";
+        textOutputFieldCount = 0;
+        for (const item of saved) {
+          addTextOutputFieldWithContent(item.fieldType || "custom", item.label, item.content);
+        }
+        return;
+      }
+    } catch (err) {
+      console.warn("Failed to restore text outputs:", err);
+    }
+    // No saved data — initialize with defaults
+    initTextOutputFields();
+  }
+
+  function addTextOutputFieldWithContent(fieldType, labelText, content) {
+    const container = shadow.getElementById("textOutputFields");
+    if (!container) return;
+    textOutputFieldCount++;
+    const fieldId = `text-output-${textOutputFieldCount}`;
+
+    const fieldDiv = document.createElement("div");
+    fieldDiv.className = "text-output-field";
+    fieldDiv.dataset.fieldType = fieldType;
+    fieldDiv.id = fieldId;
+    fieldDiv.innerHTML = `
+      <div class="text-output-field-header">
+        <span class="text-output-label">${labelText}</span>
+        <button class="text-output-remove" title="削除">&times;</button>
+      </div>
+      <textarea class="text-output-textarea" placeholder="${labelText}の内容をここに貼り付け..." rows="4"></textarea>
+    `;
+    container.appendChild(fieldDiv);
+    // Restore content
+    const textarea = fieldDiv.querySelector(".text-output-textarea");
+    if (textarea && content) textarea.value = content;
+
+    fieldDiv.querySelector(".text-output-remove").addEventListener("click", () => {
+      fieldDiv.remove();
+    });
+  }
+
+  async function saveCurrentTextOutputs(testIndex) {
+    const container = shadow.getElementById("textOutputFields");
+    if (!container) return;
+    const fields = container.querySelectorAll(".text-output-field");
+    const outputs = [];
+    fields.forEach(field => {
+      const label = field.querySelector(".text-output-label")?.textContent || "";
+      const content = field.querySelector(".text-output-textarea")?.value || "";
+      const fieldType = field.dataset.fieldType || "custom";
+      outputs.push({ label, content, fieldType });
+    });
+    try {
+      await sendBg({ type: "SAVE_TEXT_OUTPUTS", testIndex, textOutputs: outputs });
+    } catch (err) {
+      console.warn("Failed to save text outputs:", err);
+    }
   }
 
   function addTextOutputField(fieldType) {
@@ -1927,6 +1993,11 @@
     btn.textContent = "送信中...";
 
     try {
+      // Save text outputs for current test before advancing
+      const stBefore = await sendBg({ type: "GET_STATE" });
+      const currentIdx = stBefore.currentTestIndex ?? 0;
+      await saveCurrentTextOutputs(currentIdx);
+
       const elapsedMs = await getCurrentTimerMs();
 
       const textOutputs = collectTextOutputs();
@@ -1961,6 +2032,11 @@
     btn.disabled = true;
 
     try {
+      // Save text outputs for current test before going back
+      const stBefore = await sendBg({ type: "GET_STATE" });
+      const currentIdx = stBefore.currentTestIndex ?? 0;
+      await saveCurrentTextOutputs(currentIdx);
+
       const result = await sendBg({ type: "PREV_TEST" });
       if (result.error) {
         return;
@@ -1980,6 +2056,10 @@
     btn.disabled = true;
 
     try {
+      // Save text outputs before skipping
+      const stBefore = await sendBg({ type: "GET_STATE" });
+      await saveCurrentTextOutputs(stBefore.currentTestIndex ?? 0);
+
       const result = await sendBg({ type: "SKIP_TEST", reason: "テスターがスキップ" });
       if (result.done) {
         resetTimer();
@@ -2114,6 +2194,11 @@
 
   async function endSession() {
     if (!confirm("セッションを終了しますか？")) return;
+    // Save text outputs for current test before ending
+    try {
+      const stBefore = await sendBg({ type: "GET_STATE" });
+      await saveCurrentTextOutputs(stBefore.currentTestIndex ?? 0);
+    } catch {}
     await endSessionDirect();
   }
 

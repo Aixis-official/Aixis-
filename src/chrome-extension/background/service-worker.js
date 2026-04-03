@@ -28,6 +28,8 @@ let state = {
   testTimers: {},
   // Per-test submitted tracking: { [testIndex]: true }
   submittedTests: {},
+  // Per-test text outputs: { [testIndex]: [{label, content, fieldType}] }
+  testTextOutputs: {},
   // Saved total test case count (survives restart when testCases array is not persisted)
   totalTestCases: 0,
   // Timer state (manual start/stop)
@@ -120,6 +122,7 @@ function persistState() {
     observationCount: state.observationCount,
     captureCount: state.captureCount,
     testTimers: state.testTimers,
+    testTextOutputs: state.testTextOutputs,
     submittedTests: state.submittedTests,
     timerRunning: state.timerRunning,
     timerStartedAt: state.timerStartedAt,
@@ -196,6 +199,14 @@ async function handleMessage(message, sender) {
 
     case "GET_TEST_SCREENSHOTS":
       return getTestScreenshots(message.testIndex);
+
+    case "SAVE_TEXT_OUTPUTS":
+      state.testTextOutputs[_ssKey(message.testIndex)] = message.textOutputs || [];
+      persistState();
+      return { ok: true };
+
+    case "GET_TEXT_OUTPUTS":
+      return { textOutputs: state.testTextOutputs[_ssKey(message.testIndex ?? state.currentTestIndex)] || [] };
 
     case "DELETE_SCREENSHOT":
       return deleteScreenshot(message.index);
@@ -281,6 +292,7 @@ async function createSession({ toolId, profileId, recordingMode }) {
   state.captureCount = 0;
   state.testScreenshots = {};
   state.testTimers = {};
+  state.testTextOutputs = {};
   state.submittedTests = {};
   state.timerRunning = false;
   state.timerStartedAt = null;
@@ -316,6 +328,11 @@ async function completeSession() {
       }
 
       const currentTest = state.testCases[state.currentTestIndex];
+      const savedTextOutputs = state.testTextOutputs[_ssKey()] || [];
+      // Convert saved text outputs to API format (label + content, skip empty)
+      const textOutputsForApi = savedTextOutputs
+        .filter(t => t.content && t.content.trim())
+        .map(t => ({ label: t.label, content: t.content }));
       const obsData = {
         test_case_id: currentTest?.id || null,
         prompt_text: currentTest?.prompt || "",
@@ -323,6 +340,7 @@ async function completeSession() {
         response_time_ms: elapsed,
         page_url: null,
         screenshot_base64: null,
+        text_outputs: textOutputsForApi.length > 0 ? textOutputsForApi : [],
         metadata: {
           type: "test_completion",
           category: currentTest?.category || "protocol",
@@ -375,6 +393,7 @@ async function resetSession() {
   state.captureCount = 0;
   state.testScreenshots = {};
   state.testTimers = {};
+  state.testTextOutputs = {};
   state.submittedTests = {};
   state.timerRunning = false;
   state.timerStartedAt = null;
