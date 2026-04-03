@@ -632,8 +632,8 @@ class LLMScorer:
         signal to enforce cross-axis penalties even if individual axis
         scoring is lenient.
         """
-        # Text-based mode: detect language directly from text content (no API call needed)
-        if getattr(self, '_is_text_based', False):
+        # Text-based or mixed mode: detect language directly from text content (no API call needed)
+        if getattr(self, '_is_text_based', False) or getattr(self, '_has_mixed_evidence', False):
             all_text = ""
             for obs in observations:
                 for to in obs.get("text_outputs", []):
@@ -1006,11 +1006,24 @@ class LLMScorer:
         if obs_with_evidence:
             observations = obs_with_evidence
 
-        # Determine if this is a text-based session (meeting-minutes)
+        # Determine evaluation mode per observation (text vs screenshot).
+        # A session can have BOTH text-based observations (meeting-minutes tests 1-3)
+        # and screenshot-based observations (UI test 4). We use a hybrid approach:
+        # - _is_text_based = True when ALL evidence-bearing observations are text-only
+        # - _has_mixed_evidence = True when session has both text and screenshot observations
         has_text_outputs = any(obs.get("text_outputs") for obs in observations)
-        self._is_text_based = has_text_outputs and not any(obs.get("screenshots") for obs in observations)
+        has_screenshots = any(obs.get("screenshots") for obs in observations)
+        self._is_text_based = has_text_outputs and not has_screenshots
+        self._has_mixed_evidence = has_text_outputs and has_screenshots
         if self._is_text_based:
             logger.info("Session %s: text-based evaluation mode (meeting-minutes)", session_id)
+        elif self._has_mixed_evidence:
+            logger.info(
+                "Session %s: MIXED evaluation mode — %d text obs + %d screenshot obs",
+                session_id,
+                sum(1 for o in observations if o.get("text_outputs")),
+                sum(1 for o in observations if o.get("screenshots")),
+            )
 
         # 1b. Language pre-check: detect output language from a sample of screenshots
         # This runs BEFORE full scoring to establish an authoritative language verdict
@@ -1559,7 +1572,12 @@ class LLMScorer:
 
         sections = []
         sections.append("## ツール出力テキスト（評価対象）\n")
-        sections.append("以下は議事録AIツールが出力したテキストです。元の録音内容（テストプロンプト）と比較して評価してください。\n")
+        sections.append(
+            "以下は議事録AIツールが出力したテキストです。元の録音内容（テストプロンプト）と比較して評価してください。\n"
+            "【重要】このテキストデータこそが議事録AIツールの実際の出力結果です。"
+            "添付画像がある場合、それはUI評価用のスクリーンショットであり、議事録の出力内容とは別物です。"
+            "議事録の品質評価にはこのテキストデータのみを使用してください。\n"
+        )
 
         for i, obs in enumerate(observations):
             cat = obs.get("category", "")
@@ -1708,17 +1726,24 @@ class LLMScorer:
             ) + prompt_text
 
         # Build content: text-only for meeting-minutes, multimodal for screenshots
+        # Support MIXED mode: when session has both text observations (tests 1-3)
+        # and screenshot observations (UI test), include BOTH types of evidence
         is_text_mode = getattr(self, '_is_text_based', False)
+        is_mixed_mode = getattr(self, '_has_mixed_evidence', False)
         loaded_images = []
 
-        if is_text_mode:
-            # TEXT-BASED MODE (meeting-minutes): inject tool outputs into prompt
-            text_evidence = self._build_text_evidence(axis, observations)
-            prompt_text = text_evidence + "\n\n" + prompt_text
-            logger.info("Scoring axis %s with text-based evidence (%d chars), no screenshots",
-                       axis, len(text_evidence))
-        else:
-            # SCREENSHOT-BASED MODE: select and load screenshots
+        if is_text_mode or is_mixed_mode:
+            # Include text evidence for observations that have text_outputs
+            text_obs = [o for o in observations if o.get("text_outputs")]
+            if text_obs:
+                text_evidence = self._build_text_evidence(axis, observations)
+                prompt_text = text_evidence + "\n\n" + prompt_text
+                logger.info("Scoring axis %s with text-based evidence (%d chars)%s",
+                           axis, len(text_evidence),
+                           " + screenshots (mixed mode)" if is_mixed_mode else ", no screenshots")
+
+        if not is_text_mode:
+            # SCREENSHOT-BASED MODE (or mixed mode): select and load screenshots
             resize_width = 1024 if axis in self.SONNET_REQUIRED_AXES else 600
             all_paths = self._select_screenshots_for_axis(axis, observations)
             failed_paths = []
@@ -1747,37 +1772,51 @@ class LLMScorer:
                               len(failed_paths), len(all_paths), axis, failed_paths[:5])
 
             if not loaded_images and all_paths:
-                logger.error(
-                    "Axis %s: ALL %d screenshots failed to load! Files missing from disk. "
-                    "Returning zero score to prevent garbage LLM output.",
-                    axis, len(all_paths),
-                )
-                return {
-                    "axis": axis,
-                    "score": 0.0,
-                    "confidence": 0.0,
-                    "details": [
-                        {
-                            "rule_id": c["rule_id"],
-                            "rule_name_jp": c["name_jp"],
-                            "score": 0.0,
-                            "weight": c["weight"],
-                            "evidence": "評価に必要なデータが不足しているため評価不可",
-                            "severity": "critical",
-                        }
-                        for c in rubric.get("criteria", [])
-                    ],
-                    "strengths": [],
-                    "risks": ["この評価軸のスコアを算出できませんでした。再評価が必要です。"],
-                    "language_detected": None,
-                }
+                # In mixed mode, text evidence may still be available even if
+                # screenshots failed to load — don't abort in that case
+                if is_mixed_mode and any(o.get("text_outputs") for o in observations):
+                    logger.warning(
+                        "Axis %s: ALL %d screenshots failed to load, but text evidence exists. "
+                        "Proceeding with text-only evaluation.",
+                        axis, len(all_paths),
+                    )
+                else:
+                    logger.error(
+                        "Axis %s: ALL %d screenshots failed to load! Files missing from disk. "
+                        "Returning zero score to prevent garbage LLM output.",
+                        axis, len(all_paths),
+                    )
+                    return {
+                        "axis": axis,
+                        "score": 0.0,
+                        "confidence": 0.0,
+                        "details": [
+                            {
+                                "rule_id": c["rule_id"],
+                                "rule_name_jp": c["name_jp"],
+                                "score": 0.0,
+                                "weight": c["weight"],
+                                "evidence": "評価に必要なデータが不足しているため評価不可",
+                                "severity": "critical",
+                            }
+                            for c in rubric.get("criteria", [])
+                        ],
+                        "strengths": [],
+                        "risks": ["この評価軸のスコアを算出できませんでした。再評価が必要です。"],
+                        "language_detected": None,
+                    }
 
         # Budget check before API call
         self._check_budget(axis)
 
         # Select model based on axis criticality (hybrid Sonnet/Haiku)
         axis_model = self._model_for_axis(axis)
-        evidence_type = "text" if is_text_mode else f"{len(loaded_images)} screenshots"
+        if is_text_mode:
+            evidence_type = "text"
+        elif is_mixed_mode:
+            evidence_type = f"text + {len(loaded_images)} screenshots (mixed)"
+        else:
+            evidence_type = f"{len(loaded_images)} screenshots"
         logger.info("Scoring axis %s with %s, model=%s, budget: %d calls / %.1f JPY",
                      axis, evidence_type, axis_model.split("/")[-1], self.api_calls, self._estimated_cost_jpy())
 
