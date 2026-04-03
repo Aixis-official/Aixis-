@@ -1,0 +1,50 @@
+id: "meeting_minutes"
+name_jp: "議事録AI"
+name_en: "Meeting Minutes AI"
+category_jp: "用途特化"
+description_jp: "会議の録音データから文字起こし・要約・議事録を自動生成するAIツール。話者識別、アクションアイテム抽出、トピック分割などの機能を評価する。"
+examples:
+  - "tl;dv"
+  - "Notta"
+  - "CLOVA Note"
+  - "AI GIJIROKU"
+  - "Otter.ai"
+  - "Fireflies.ai"
+  - "スマート書記"
+  - "YOMEL"
+aliases:
+  - "議事録AI"
+  - "文字起こしAI"
+  - "会議録AI"
+  - "音声議事録"
+  - "自動議事録"
+  - "ミーティングAI"
+traits:
+  - "audio_input"
+  - "text_output"
+  - "transcription"
+  - "summarization"
+  - "speaker_identification"
+  - "action_item_extraction"
+
+primary_categories:
+  - minutes_basic
+  - minutes_accuracy
+  - minutes_japanese
+  - minutes_structure
+secondary_categories:
+  - minutes_advanced
+  - ui_evaluation
+excluded_categories: []
+
+scoring_weights:
+  japanese_ability: 1.5
+  reliability: 1.5
+  practical: 1.0
+
+evaluation_focus:
+  - "録音内容に対する文字起こし・要約の正確性"
+  - "話者識別の精度と発言の正確な帰属"
+  - "アクションアイテム・決定事項の自動抽出能力"
+  - "日本語の敬語・ビジネス表現の適切性"
+  - "複数話者・専門用語が混在する会議への対応力"

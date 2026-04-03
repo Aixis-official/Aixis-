@@ -117,6 +117,31 @@ async def _seed_default_categories():
                 "- long_input（長文入力）\n"
                 "- keigo_mixing（敬語混在）\n",
         },
+        {
+            "slug": "meeting-minutes-ai",
+            "name_jp": "議事録AI",
+            "name_en": "Meeting Minutes AI",
+            "description_jp": "会議の録音データから文字起こし・要約・議事録を自動生成するAIツール。話者識別、アクションアイテム抽出、トピック分割などの機能を持つ。",
+            "sort_order": 20,
+            "audit_method_notes": "## 監査方法: 録音内容との比較監査\n\n"
+                "プロファイル: `meeting_minutes`\n\n"
+                "### 監査プロセス\n"
+                "録音内容（書き起こしテキスト）を正解データとして保持するLLMが、\n"
+                "ツールの実際の出力画面（スクリーンショット）を確認し、\n"
+                "元の音声内容との乖離の有無やUI品質を評価する。\n\n"
+                "### 評価軸\n"
+                "- **実務適性**: 文字起こし精度・要約品質・アクションアイテム抽出・話者識別\n"
+                "- **費用対効果**: 処理速度・手直し工数・価格に見合う価値\n"
+                "- **日本語能力**: 出力言語・話し言葉→書き言葉変換・敬語・専門用語\n"
+                "- **信頼性・安全性**: 録音への忠実性・数値正確性・ハルシネーション有無\n"
+                "- **革新性**: 自動要約・議題分割・出力形式・UI・連携機能\n\n"
+                "### テストカテゴリ\n"
+                "- minutes_basic（基本議事録生成）\n"
+                "- minutes_accuracy（正確性）\n"
+                "- minutes_japanese（日本語品質）\n"
+                "- minutes_structure（構造化能力）\n"
+                "- minutes_advanced（高難度シナリオ）\n",
+        },
     ]
 
     async with async_session() as session:
@@ -147,6 +172,20 @@ async def _seed_default_categories():
                     # Link tools with matching profile or known slide creation tools
                     if tool.profile_id == "slide_creation" or (
                         tool.name and tool.name.lower() in ("gamma", "tome", "beautiful.ai", "canva", "イルシル")
+                    ):
+                        tool.category_id = cat.id
+            elif cat_data["slug"] == "meeting-minutes-ai":
+                # Find tools with profile_id="meeting_minutes" or known meeting minutes tools
+                tools_result = await session.execute(
+                    select(Tool).where(
+                        (Tool.profile_id == "meeting_minutes") | (Tool.category_id.is_(None))
+                    )
+                )
+                _MINUTES_TOOL_NAMES = ("tl;dv", "notta", "clova note", "ai gijiroku",
+                                        "otter.ai", "fireflies.ai", "スマート書記", "yomel")
+                for tool in tools_result.scalars().all():
+                    if tool.profile_id == "meeting_minutes" or (
+                        tool.name and tool.name.lower() in _MINUTES_TOOL_NAMES
                     ):
                         tool.category_id = cat.id
 

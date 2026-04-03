@@ -11,7 +11,13 @@ class TestCategory(str, Enum):
     SLIDE_JAPANESE = "slide_japanese"
     SLIDE_ACCURACY = "slide_accuracy"
     SLIDE_ADVANCED = "slide_advanced"
-    # UI evaluation category
+    # Meeting-minutes-specific categories
+    MINUTES_BASIC = "minutes_basic"
+    MINUTES_ACCURACY = "minutes_accuracy"
+    MINUTES_JAPANESE = "minutes_japanese"
+    MINUTES_STRUCTURE = "minutes_structure"
+    MINUTES_ADVANCED = "minutes_advanced"
+    # UI evaluation category (shared across categories)
     UI_EVALUATION = "ui_evaluation"
     # Legacy categories (kept for backward compatibility)
     DIALECT = "dialect"

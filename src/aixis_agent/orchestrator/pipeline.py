@@ -44,6 +44,13 @@ CATEGORY_PRIORITY = {
     TestCategory.SLIDE_STRUCTURE: 2,
     TestCategory.SLIDE_ACCURACY: 3,
     TestCategory.SLIDE_ADVANCED: 4,
+    # Meeting-minutes categories
+    TestCategory.MINUTES_BASIC: 0,
+    TestCategory.MINUTES_ACCURACY: 1,
+    TestCategory.MINUTES_JAPANESE: 2,
+    TestCategory.MINUTES_STRUCTURE: 3,
+    TestCategory.MINUTES_ADVANCED: 4,
+    # Shared UI evaluation (always last)
     TestCategory.UI_EVALUATION: 5,
     # Legacy categories
     TestCategory.CONTRADICTORY: 10,
