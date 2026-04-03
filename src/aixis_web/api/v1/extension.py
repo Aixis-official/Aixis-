@@ -85,14 +85,22 @@ async def _create_session_impl(body, db, user):
     date_str = now.strftime("%Y%m%d")
     session_code = f"AX-{date_str}-{short_hash}"
 
-    # Verify tool exists
+    # Verify tool exists and fetch its profile_id for category resolution
     result = await db.execute(
-        text("SELECT id, name FROM tools WHERE id = :tid"),
+        text("SELECT id, name, profile_id FROM tools WHERE id = :tid"),
         {"tid": body.tool_id},
     )
     tool_row = result.fetchone()
     if not tool_row:
         raise HTTPException(404, f"ツールが見つかりません: {body.tool_id}")
+
+    # Resolve effective profile_id: request body > tool DB record
+    effective_profile_id = body.profile_id or (tool_row[2] if tool_row[2] else "")
+    if effective_profile_id and not body.profile_id:
+        logger.info(
+            "profile_id not in request, using tool DB profile: %s",
+            effective_profile_id,
+        )
 
     # Auto-cancel orphaned "running" sessions for the same tool by the same user.
     # This prevents ghost sessions when dashboard creates a session and then
@@ -120,27 +128,37 @@ async def _create_session_impl(body, db, user):
 
             # Resolve categories from profile if not explicitly provided
             categories = body.categories
-            if not categories and body.profile_id:
+            if not categories and effective_profile_id:
                 try:
                     from aixis_agent.profiles.registry import (
                         get_categories_for_profile,
                         get_profile,
                     )
                     profiles_dir = config_dir / "profiles"
-                    profile = get_profile(body.profile_id, profiles_dir)
+                    profile = get_profile(effective_profile_id, profiles_dir)
                     if profile:
                         categories = get_categories_for_profile(profile)
+                        logger.info(
+                            "Resolved %d categories for profile %s: %s",
+                            len(categories), effective_profile_id, categories,
+                        )
                 except Exception:
                     logger.warning(
                         "Failed to resolve profile %s, will use explicit categories or fail",
-                        body.profile_id, exc_info=True,
+                        effective_profile_id, exc_info=True,
                     )
 
-            if not categories and body.profile_id:
+            if not categories and effective_profile_id:
                 raise HTTPException(
                     400,
-                    f"プロファイル '{body.profile_id}' のカテゴリを解決できませんでした。"
+                    f"プロファイル '{effective_profile_id}' のカテゴリを解決できませんでした。"
                     "プロファイル設定を確認してください。",
+                )
+
+            if not categories:
+                raise HTTPException(
+                    400,
+                    "テストカテゴリを特定できません。ツールにプロファイルが設定されているか確認してください。",
                 )
 
             cases = generate_all(patterns_dir, categories)
@@ -168,7 +186,7 @@ async def _create_session_impl(body, db, user):
         id=session_id,
         session_code=session_code,
         tool_id=body.tool_id,
-        profile_id=body.profile_id or "",
+        profile_id=effective_profile_id or "",
         status="running",
         initiated_by=user.id,
         created_at=now,
