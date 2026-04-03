@@ -626,14 +626,38 @@ class LLMScorer:
             return ""
 
     async def _precheck_language(self, observations: list[dict]) -> str:
-        """Quick language detection pass using a few sample screenshots.
+        """Quick language detection pass using sample screenshots or text outputs.
 
         Returns "ja", "en", or "mixed". This is used as an authoritative
         signal to enforce cross-axis penalties even if individual axis
         scoring is lenient.
         """
-        # Collect up to 2 diverse screenshots for the check (cost optimization:
-        # language detection doesn't need many images, 2 is sufficient for ja/en verdict)
+        # Text-based mode: detect language directly from text content (no API call needed)
+        if getattr(self, '_is_text_based', False):
+            all_text = ""
+            for obs in observations:
+                for to in obs.get("text_outputs", []):
+                    all_text += to.get("content", "")[:500]
+                    if len(all_text) > 1000:
+                        break
+            if not all_text:
+                return "unknown"
+            # Simple heuristic: count Japanese characters vs Latin characters
+            import unicodedata
+            ja_chars = sum(1 for c in all_text if unicodedata.category(c).startswith('Lo')
+                         or '\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff')
+            en_chars = sum(1 for c in all_text if c.isascii() and c.isalpha())
+            total = ja_chars + en_chars
+            if total == 0:
+                return "unknown"
+            ja_ratio = ja_chars / total
+            if ja_ratio > 0.6:
+                return "ja"
+            elif ja_ratio < 0.2:
+                return "en"
+            return "mixed"
+
+        # Screenshot-based mode: collect sample screenshots for API detection
         sample_paths: list[str] = []
         seen: set[str] = set()
         for obs in observations:
@@ -764,7 +788,8 @@ class LLMScorer:
         result = await db.execute(text("""
             SELECT tr.test_case_id, tr.category, tr.prompt_sent, tr.response_raw,
                    tr.response_time_ms, tr.error, tr.screenshot_path,
-                   tc.expected_behaviors, tc.failure_indicators
+                   tc.expected_behaviors, tc.failure_indicators,
+                   tr.metadata_json
             FROM db_test_results tr
             LEFT JOIN db_test_cases tc ON tr.test_case_id = tc.id AND tr.session_id = tc.session_id
             WHERE tr.session_id = :sid
@@ -795,6 +820,16 @@ class LLMScorer:
                     all_screenshot_paths.append(screenshot_path)
                 continue
 
+            # Parse metadata_json for text_outputs (meeting-minutes text-based evaluation)
+            metadata_raw = row[9]
+            metadata = {}
+            if metadata_raw:
+                try:
+                    metadata = json.loads(metadata_raw) if isinstance(metadata_raw, str) else metadata_raw
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            text_outputs = metadata.get("text_outputs", [])
+
             observations.append({
                 "test_case_id": test_case_id,
                 "category": category,
@@ -805,6 +840,7 @@ class LLMScorer:
                 "screenshot_path": screenshot_path,
                 "expected_behaviors": row[7] if isinstance(row[7], list) else (json.loads(row[7]) if row[7] else []),
                 "failure_indicators": row[8] if isinstance(row[8], list) else (json.loads(row[8]) if row[8] else []),
+                "text_outputs": text_outputs,
             })
 
         # Diagnostic logging: show screenshot_map keys vs observation test_case_ids
@@ -951,21 +987,30 @@ class LLMScorer:
                 logger.warning("No observations or screenshots for session %s", session_id)
                 return []
 
-        # 1a-2. Filter out observations with NO screenshots — these were skipped
-        # during the audit and have no visual evidence. Including them causes the LLM
-        # to fabricate evaluations for tests that were never actually completed.
-        obs_with_screenshots = [obs for obs in observations if obs.get("screenshots")]
-        obs_without = len(observations) - len(obs_with_screenshots)
+        # 1a-2. Filter out observations with NO evidence (screenshots or text_outputs).
+        # Observations without any evidence were skipped during the audit.
+        # Including them causes the LLM to fabricate evaluations.
+        obs_with_evidence = [
+            obs for obs in observations
+            if obs.get("screenshots") or obs.get("text_outputs")
+        ]
+        obs_without = len(observations) - len(obs_with_evidence)
         if obs_without > 0:
             logger.info(
-                "Session %s: filtered out %d observations with no screenshots "
-                "(%d remaining with screenshots)",
-                session_id, obs_without, len(obs_with_screenshots),
+                "Session %s: filtered out %d observations with no evidence "
+                "(%d remaining with screenshots or text_outputs)",
+                session_id, obs_without, len(obs_with_evidence),
             )
         # Use filtered list for scoring, but keep original count for completion rate
         all_observations_count = len(observations)
-        if obs_with_screenshots:
-            observations = obs_with_screenshots
+        if obs_with_evidence:
+            observations = obs_with_evidence
+
+        # Determine if this is a text-based session (meeting-minutes)
+        has_text_outputs = any(obs.get("text_outputs") for obs in observations)
+        self._is_text_based = has_text_outputs and not any(obs.get("screenshots") for obs in observations)
+        if self._is_text_based:
+            logger.info("Session %s: text-based evaluation mode (meeting-minutes)", session_id)
 
         # 1b. Language pre-check: detect output language from a sample of screenshots
         # This runs BEFORE full scoring to establish an authoritative language verdict
@@ -1500,6 +1545,45 @@ class LLMScorer:
         "uniqueness": 6,
     }
 
+    def _build_text_evidence(self, axis: str, observations: list[dict]) -> str:
+        """Build text evidence for text-based evaluation (meeting-minutes).
+
+        Instead of screenshots, the LLM receives the tool's text outputs
+        (transcription, summary, timeline, etc.) directly. This is cheaper
+        and more accurate for text-heavy tools like meeting minutes AI.
+        """
+        axis_categories = getattr(self, '_active_axis_categories', self.AXIS_RELEVANT_CATEGORIES)
+        primary_cats = set(axis_categories.get(axis, {}).get("primary", []))
+        secondary_cats = set(axis_categories.get(axis, {}).get("secondary", []))
+        relevant_cats = primary_cats | secondary_cats
+
+        sections = []
+        sections.append("## ツール出力テキスト（評価対象）\n")
+        sections.append("以下は議事録AIツールが出力したテキストです。元の録音内容（テストプロンプト）と比較して評価してください。\n")
+
+        for i, obs in enumerate(observations):
+            cat = obs.get("category", "")
+            if relevant_cats and cat not in relevant_cats and cat != "ui_evaluation":
+                continue
+
+            text_outputs = obs.get("text_outputs", [])
+            if not text_outputs:
+                continue
+
+            sections.append(f"\n### 検証 {i+1}: {cat}")
+            for to in text_outputs:
+                label = to.get("label", "出力")
+                content = to.get("content", "")
+                # Truncate very long outputs to stay within token budget
+                if len(content) > 3000:
+                    content = content[:3000] + "\n... (以下省略、全 {} 文字)".format(len(to.get("content", "")))
+                sections.append(f"\n**【{label}】**\n{content}")
+
+        if len(sections) <= 2:
+            sections.append("\n（テキスト出力データなし）")
+
+        return "\n".join(sections)
+
     def _select_screenshots_for_axis(self, axis: str, observations: list[dict]) -> list[str]:
         """Select screenshots relevant to this specific axis.
 
@@ -1623,78 +1707,79 @@ class LLMScorer:
                 f"{tool_info}\n\n"
             ) + prompt_text
 
-        # Build multimodal content: text prompt + screenshot images
-        content = []
-
-        # Select screenshots relevant to this axis (smart selection for cost optimization)
-        # For Sonnet axes (localization, practicality), use higher resolution for text reading
-        # For Haiku axes, use lower resolution to reduce image token cost significantly
-        # (768→600px saves ~40% image tokens with minimal quality loss for structure/UX evaluation)
-        resize_width = 1024 if axis in self.SONNET_REQUIRED_AXES else 600
-        all_paths = self._select_screenshots_for_axis(axis, observations)
+        # Build content: text-only for meeting-minutes, multimodal for screenshots
+        is_text_mode = getattr(self, '_is_text_based', False)
         loaded_images = []
-        failed_paths = []
-        for ss_path in all_paths:
-            image_data = self._load_screenshot(ss_path, max_width=resize_width)
-            if image_data:
-                import base64 as _b64
-                media_type = "image/png"
-                try:
-                    raw_head = _b64.b64decode(image_data[:32])
-                    if raw_head[:3] == b'\xff\xd8\xff':
-                        media_type = "image/jpeg"
-                    elif raw_head[:8] == b'\x89PNG\r\n\x1a\n':
-                        media_type = "image/png"
-                except Exception:
-                    pass
-                loaded_images.append({
-                    "type": "image",
-                    "source": {"type": "base64", "media_type": media_type, "data": image_data},
-                })
-            else:
-                failed_paths.append(ss_path)
 
-        if failed_paths:
-            logger.warning("Failed to load %d/%d screenshots for axis %s: %s",
-                          len(failed_paths), len(all_paths), axis, failed_paths[:5])
+        if is_text_mode:
+            # TEXT-BASED MODE (meeting-minutes): inject tool outputs into prompt
+            text_evidence = self._build_text_evidence(axis, observations)
+            prompt_text = text_evidence + "\n\n" + prompt_text
+            logger.info("Scoring axis %s with text-based evidence (%d chars), no screenshots",
+                       axis, len(text_evidence))
+        else:
+            # SCREENSHOT-BASED MODE: select and load screenshots
+            resize_width = 1024 if axis in self.SONNET_REQUIRED_AXES else 600
+            all_paths = self._select_screenshots_for_axis(axis, observations)
+            failed_paths = []
+            for ss_path in all_paths:
+                image_data = self._load_screenshot(ss_path, max_width=resize_width)
+                if image_data:
+                    import base64 as _b64
+                    media_type = "image/png"
+                    try:
+                        raw_head = _b64.b64decode(image_data[:32])
+                        if raw_head[:3] == b'\xff\xd8\xff':
+                            media_type = "image/jpeg"
+                        elif raw_head[:8] == b'\x89PNG\r\n\x1a\n':
+                            media_type = "image/png"
+                    except Exception:
+                        pass
+                    loaded_images.append({
+                        "type": "image",
+                        "source": {"type": "base64", "media_type": media_type, "data": image_data},
+                    })
+                else:
+                    failed_paths.append(ss_path)
 
-        # CRITICAL: If screenshot paths existed but NONE loaded, this means files
-        # are missing from disk. Scoring without images produces garbage results.
-        if not loaded_images and all_paths:
-            logger.error(
-                "Axis %s: ALL %d screenshots failed to load! Files missing from disk. "
-                "Returning zero score to prevent garbage LLM output.",
-                axis, len(all_paths),
-            )
-            # Return a zero score with clear error message rather than asking
-            # LLM to evaluate slides without any visual evidence
-            return {
-                "axis": axis,
-                "score": 0.0,
-                "confidence": 0.0,
-                "details": [
-                    {
-                        "rule_id": c["rule_id"],
-                        "rule_name_jp": c["name_jp"],
-                        "score": 0.0,
-                        "weight": c["weight"],
-                        "evidence": "評価に必要なデータが不足しているため評価不可",
-                        "severity": "critical",
-                    }
-                    for c in rubric.get("criteria", [])
-                ],
-                "strengths": [],
-                "risks": ["この評価軸のスコアを算出できませんでした。再評価が必要です。"],
-                "language_detected": None,
-            }
+            if failed_paths:
+                logger.warning("Failed to load %d/%d screenshots for axis %s: %s",
+                              len(failed_paths), len(all_paths), axis, failed_paths[:5])
+
+            if not loaded_images and all_paths:
+                logger.error(
+                    "Axis %s: ALL %d screenshots failed to load! Files missing from disk. "
+                    "Returning zero score to prevent garbage LLM output.",
+                    axis, len(all_paths),
+                )
+                return {
+                    "axis": axis,
+                    "score": 0.0,
+                    "confidence": 0.0,
+                    "details": [
+                        {
+                            "rule_id": c["rule_id"],
+                            "rule_name_jp": c["name_jp"],
+                            "score": 0.0,
+                            "weight": c["weight"],
+                            "evidence": "評価に必要なデータが不足しているため評価不可",
+                            "severity": "critical",
+                        }
+                        for c in rubric.get("criteria", [])
+                    ],
+                    "strengths": [],
+                    "risks": ["この評価軸のスコアを算出できませんでした。再評価が必要です。"],
+                    "language_detected": None,
+                }
 
         # Budget check before API call
         self._check_budget(axis)
 
         # Select model based on axis criticality (hybrid Sonnet/Haiku)
         axis_model = self._model_for_axis(axis)
-        logger.info("Scoring axis %s with %d screenshots loaded (%d failed, %d total paths), model=%s, budget: %d calls / %.1f JPY",
-                     axis, len(loaded_images), len(failed_paths), len(all_paths), axis_model.split("/")[-1], self.api_calls, self._estimated_cost_jpy())
+        evidence_type = "text" if is_text_mode else f"{len(loaded_images)} screenshots"
+        logger.info("Scoring axis %s with %s, model=%s, budget: %d calls / %.1f JPY",
+                     axis, evidence_type, axis_model.split("/")[-1], self.api_calls, self._estimated_cost_jpy())
 
         import asyncio
         import functools

@@ -88,7 +88,9 @@ const AXIS_CONFIG = [
     { key: 'uniqueness',       name: '革新性',         color: '#805ad5', autoRatio: 40, manualRatio: 60 },
 ];
 
-const CHECKLISTS = {
+const profileId = '{{ profile_id | default("slide_creation", true) }}';
+
+const CHECKLISTS_SLIDE = {
     practicality: [
         { id: 'PR-001', name_jp: 'UI操作性', weight: 1.0, scoring_guide: '0=操作不能, 2=基本操作に迷う, 3=標準的な操作性, 5=直感的で初見でも即利用可能' },
         { id: 'PR-002', name_jp: 'テンプレート品質', weight: 1.0, scoring_guide: '0=テンプレートなし, 2=基本的なテンプレート, 3=ビジネス利用可能, 5=プロ品質+日本向けデザイン' },
@@ -115,6 +117,36 @@ const CHECKLISTS = {
         { id: 'UQ-003', name_jp: '他ツール連携', weight: 1.0, scoring_guide: '0=連携不可, 2=基本的なインポート/エクスポート, 3=主要ツール連携, 5=豊富なAPI+プラグイン対応' },
     ],
 };
+
+const CHECKLISTS_MINUTES = {
+    practicality: [
+        { id: 'PR-001', name_jp: '文字起こし精度', weight: 1.5, scoring_guide: '0=文字起こし不可, 2=大量の誤字脱字, 3=概ね正確だが固有名詞に弱い, 5=高精度+専門用語も正確' },
+        { id: 'PR-002', name_jp: '要約・議事録品質', weight: 1.5, scoring_guide: '0=要約機能なし, 2=内容の欠落が多い, 3=主要な論点をカバー, 5=決定事項・AI・リスクを自動抽出' },
+        { id: 'PR-003', name_jp: '話者識別', weight: 1.0, scoring_guide: '0=話者識別なし, 2=2名程度まで, 3=3-5名を概ね識別, 5=多人数でも高精度に識別' },
+    ],
+    cost_performance: [
+        { id: 'CP-001', name_jp: '無料プラン充実度', weight: 1.0, scoring_guide: '0=無料プランなし, 2=月数回の制限, 3=月10時間程度利用可, 5=十分な録音時間が無料' },
+        { id: 'CP-002', name_jp: '有料プラン適正', weight: 1.0, scoring_guide: '0=非常に高額, 2=割高感あり, 3=市場相場並, 5=コスパ優秀+明確な料金体系' },
+        { id: 'CP-003', name_jp: '処理速度', weight: 1.0, scoring_guide: '0=数時間以上, 2=30分以上, 3=10分程度, 5=リアルタイム or 数分以内' },
+    ],
+    localization: [
+        { id: 'LC-001', name_jp: '日本語UI完成度', weight: 1.0, scoring_guide: '0=英語のみ, 2=部分的に日本語, 3=ほぼ日本語対応, 5=完全日本語ネイティブ対応' },
+        { id: 'LC-002', name_jp: '日本語音声認識精度', weight: 1.5, scoring_guide: '0=日本語非対応, 2=簡単な日本語のみ, 3=標準的な会話を認識, 5=敬語・専門用語・方言も高精度' },
+        { id: 'LC-003', name_jp: '話し言葉→書き言葉変換', weight: 1.0, scoring_guide: '0=変換なし, 2=フィラー残存, 3=基本的な変換, 5=ビジネス文書レベルに自然変換' },
+    ],
+    safety: [
+        { id: 'SF-001', name_jp: '音声データの保護', weight: 1.5, scoring_guide: '0=保護なし, 2=基本的な暗号化, 3=業界標準+データ保持期間明示, 5=E2E暗号化+データ削除機能+コンプライアンス対応' },
+        { id: 'SF-002', name_jp: '録音内容の正確性', weight: 1.0, scoring_guide: '0=ハルシネーション多発, 2=時々事実と異なる内容, 3=概ね正確, 5=録音内容に忠実+捏造なし' },
+        { id: 'SF-003', name_jp: 'エラーハンドリング', weight: 1.0, scoring_guide: '0=音声途切れで全損, 2=エラー後の復旧困難, 3=部分的な復旧可能, 5=途切れ補完+自動リトライ' },
+    ],
+    uniqueness: [
+        { id: 'UQ-001', name_jp: 'AI要約・分析機能', weight: 1.5, scoring_guide: '0=文字起こしのみ, 2=基本的な要約, 3=議題分割+AI抽出, 5=感情分析・発言量分析・自動タスク生成等' },
+        { id: 'UQ-002', name_jp: '出力形式・連携', weight: 1.0, scoring_guide: '0=テキストのみ, 2=PDF出力, 3=Slack/Teams連携, 5=CRM/PJ管理ツール連携+API提供' },
+        { id: 'UQ-003', name_jp: 'リアルタイム機能', weight: 1.0, scoring_guide: '0=録音後処理のみ, 2=簡易リアルタイム表示, 3=リアルタイム文字起こし, 5=リアルタイム翻訳+要約+共有' },
+    ],
+};
+
+const CHECKLISTS = (profileId === 'meeting_minutes') ? CHECKLISTS_MINUTES : CHECKLISTS_SLIDE;
 
 document.addEventListener('DOMContentLoaded', async () => {
     renderChecklists();

@@ -500,7 +500,11 @@ async def upload_observation(
         "screenshot": screenshot_path,
         "screenshot_data": screenshot_data_for_db,
         "page_url": body.page_url,
-        "metadata": json.dumps(body.metadata, ensure_ascii=False) if body.metadata else "{}",
+        "metadata": json.dumps(
+            {**(body.metadata or {}),
+             **({"text_outputs": [{"label": f.label, "content": f.content} for f in body.text_outputs]} if body.text_outputs else {})},
+            ensure_ascii=False,
+        ),
     })
 
     # Use sequence number as observation ID

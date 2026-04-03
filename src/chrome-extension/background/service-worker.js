@@ -511,6 +511,7 @@ async function advanceTest({ observation }) {
       response_time_ms: elapsed,
       page_url: null,
       screenshot_base64: null,
+      text_outputs: observation?.textOutputs || [],
       metadata: {
         type: "test_completion",
         category: currentTest?.category || "protocol",

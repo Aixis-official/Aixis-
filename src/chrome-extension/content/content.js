@@ -47,6 +47,23 @@
     freeform: "フリー",
     protocol: "プロトコル",
     ui_evaluation: "UI評価",
+    minutes_transcription: "書き起こし",
+    minutes_japanese: "日本語品質",
+    minutes_complex: "複合評価",
+  };
+
+  // Categories that use text-based input instead of screenshots
+  const TEXT_INPUT_CATEGORIES = new Set([
+    "minutes_transcription", "minutes_japanese", "minutes_complex",
+  ]);
+
+  const TEXT_OUTPUT_LABELS = {
+    transcription: "文字起こし",
+    summary: "要約",
+    timeline: "時系列要約",
+    action_items: "アクションアイテム",
+    decisions: "決定事項",
+    custom: "その他",
   };
 
   const CATEGORY_COLORS = {
@@ -65,6 +82,9 @@
     multi_step: "#2563eb",
     broken_grammar: "#e11d48",
     ui_evaluation: "#0ea5e9",
+    minutes_transcription: "#0891b2",
+    minutes_japanese: "#d97706",
+    minutes_complex: "#7c3aed",
     freeform: "#64748b",
     protocol: "#475569",
   };
@@ -205,8 +225,8 @@
             <button class="btn btn-timer-reset" id="resetTimerBtn" title="タイマーをリセット">↺</button>
           </div>
 
-          <!-- Screenshots -->
-          <div class="screenshot-row">
+          <!-- Screenshots (slide-creation mode) -->
+          <div class="screenshot-row" id="screenshotRow">
             <button class="btn btn-screenshot" id="fullScreenshotBtn">&#128247; 全画面</button>
             <button class="btn btn-screenshot" id="partialScreenshotBtn">&#9986; 部分</button>
             <span class="capture-count" id="captureCount">(0)</span>
@@ -214,6 +234,23 @@
 
           <!-- Screenshot thumbnails -->
           <div class="screenshot-thumbs" id="screenshotThumbs"></div>
+
+          <!-- Text output fields (meeting-minutes mode) -->
+          <div id="textOutputSection" style="display:none;">
+            <div class="text-output-fields" id="textOutputFields"></div>
+            <div class="text-output-add">
+              <select id="textOutputSelect" class="text-output-select">
+                <option value="transcription">文字起こし</option>
+                <option value="summary">要約</option>
+                <option value="timeline">時系列要約</option>
+                <option value="action_items">アクションアイテム</option>
+                <option value="decisions">決定事項</option>
+                <option value="custom">その他（自由入力）</option>
+              </select>
+              <button class="btn btn-screenshot" id="addTextFieldBtn">+ 追加</button>
+            </div>
+            <div class="text-output-hint">ツールの出力テキストをコピー&ペーストしてください</div>
+          </div>
 
           <!-- Navigation -->
           <div class="nav-row">
@@ -610,6 +647,82 @@
       }
       .screenshot-thumbs:empty {
         display: none;
+      }
+      /* Text output fields (meeting-minutes mode) */
+      #textOutputSection {
+        margin-top: 8px;
+      }
+      .text-output-fields {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .text-output-field {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 6px 8px;
+        background: #fafbfc;
+      }
+      .text-output-field-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+      }
+      .text-output-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #4a5568;
+      }
+      .text-output-remove {
+        background: none;
+        border: none;
+        color: #e53e3e;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 0 2px;
+        line-height: 1;
+      }
+      .text-output-textarea {
+        width: 100%;
+        min-height: 60px;
+        max-height: 150px;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 6px;
+        font-size: 12px;
+        font-family: inherit;
+        resize: vertical;
+        box-sizing: border-box;
+      }
+      .text-output-textarea:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      .text-output-add {
+        display: flex;
+        gap: 6px;
+        margin-top: 6px;
+        align-items: center;
+      }
+      .text-output-select {
+        flex: 1;
+        padding: 4px 6px;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        font-size: 12px;
+        background: white;
+      }
+      .text-output-hint {
+        font-size: 10px;
+        color: #a0aec0;
+        margin-top: 4px;
+        text-align: center;
+      }
+      .text-output-count {
+        font-size: 11px;
+        color: #667eea;
+        font-weight: 600;
       }
       .thumb-item {
         width: 52px;
@@ -1708,6 +1821,18 @@
 
     shadow.getElementById("testPrompt").textContent = test.prompt;
 
+    // Toggle screenshot vs text-output mode based on category
+    const isTextMode = TEXT_INPUT_CATEGORIES.has(test.category);
+    const screenshotRow = shadow.getElementById("screenshotRow");
+    const screenshotThumbs = shadow.getElementById("screenshotThumbs");
+    const textOutputSection = shadow.getElementById("textOutputSection");
+    if (screenshotRow) screenshotRow.style.display = isTextMode ? "none" : "flex";
+    if (screenshotThumbs) screenshotThumbs.style.display = isTextMode ? "none" : "";
+    if (textOutputSection) {
+      textOutputSection.style.display = isTextMode ? "block" : "none";
+      if (isTextMode) initTextOutputFields();
+    }
+
     const expectedEl = shadow.getElementById("testExpected");
     expectedEl.innerHTML = "";
     if (test.expected_behaviors && test.expected_behaviors.length) {
@@ -1725,6 +1850,61 @@
       }
       expectedEl.appendChild(ul);
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // Text output field management (meeting-minutes mode)
+  // -------------------------------------------------------------------------
+
+  let textOutputFieldCount = 0;
+
+  function initTextOutputFields() {
+    const container = shadow.getElementById("textOutputFields");
+    if (!container) return;
+    container.innerHTML = "";
+    textOutputFieldCount = 0;
+    // Auto-add "文字起こし" as default field
+    addTextOutputField("transcription");
+  }
+
+  function addTextOutputField(fieldType) {
+    const container = shadow.getElementById("textOutputFields");
+    if (!container) return;
+    textOutputFieldCount++;
+    const fieldId = `text-output-${textOutputFieldCount}`;
+    const labelText = (fieldType === "custom") ? "その他" : (TEXT_OUTPUT_LABELS[fieldType] || fieldType);
+
+    const fieldDiv = document.createElement("div");
+    fieldDiv.className = "text-output-field";
+    fieldDiv.dataset.fieldType = fieldType;
+    fieldDiv.id = fieldId;
+    fieldDiv.innerHTML = `
+      <div class="text-output-field-header">
+        <span class="text-output-label">${labelText}</span>
+        <button class="text-output-remove" title="削除">&times;</button>
+      </div>
+      <textarea class="text-output-textarea" placeholder="${labelText}の内容をここに貼り付け..." rows="4"></textarea>
+    `;
+    container.appendChild(fieldDiv);
+
+    fieldDiv.querySelector(".text-output-remove").addEventListener("click", () => {
+      fieldDiv.remove();
+    });
+  }
+
+  function collectTextOutputs() {
+    const container = shadow.getElementById("textOutputFields");
+    if (!container) return [];
+    const fields = container.querySelectorAll(".text-output-field");
+    const outputs = [];
+    fields.forEach(field => {
+      const label = field.querySelector(".text-output-label")?.textContent || "";
+      const content = field.querySelector(".text-output-textarea")?.value?.trim() || "";
+      if (content) {
+        outputs.push({ label, content });
+      }
+    });
+    return outputs;
   }
 
   function updateProgress(current, total) {
@@ -1749,11 +1929,13 @@
     try {
       const elapsedMs = await getCurrentTimerMs();
 
+      const textOutputs = collectTextOutputs();
       const result = await sendBg({
         type: "NEXT_TEST",
         observation: {
           responseText: null,
           responseTimeMs: elapsedMs,
+          textOutputs: textOutputs.length > 0 ? textOutputs : undefined,
         },
       });
 
@@ -2012,6 +2194,10 @@
     shadow.getElementById("skipTestBtn").addEventListener("click", skipTest);
     shadow.getElementById("endProtocolBtn").addEventListener("click", endSession);
     shadow.getElementById("newSessionBtn").addEventListener("click", newSession);
+    shadow.getElementById("addTextFieldBtn").addEventListener("click", () => {
+      const select = shadow.getElementById("textOutputSelect");
+      if (select) addTextOutputField(select.value);
+    });
 
     shadow.getElementById("toolSearch").addEventListener("input", () => {
       renderToolList(getFilteredTools());

@@ -559,11 +559,38 @@ async def manual_checklist_page(
     request: Request,
     session_id: str,
     user: Annotated[User | None, Depends(get_current_user)] = None,
+    db: AsyncSession = Depends(get_db),
 ):
     """Manual checklist evaluation page."""
     if redirect := _check_dashboard_access(user):
         return redirect
-    ctx = _get_template_context(request, user=user, title="手動チェックリスト評価", session_id=session_id, active_page="manual")
+    # Resolve profile from session to serve category-specific checklist
+    profile_id = ""
+    try:
+        from sqlalchemy import text as sa_text
+        row = await db.execute(
+            sa_text(
+                "SELECT s.profile_id, tc.slug "
+                "FROM audit_sessions s "
+                "LEFT JOIN tools t ON s.tool_id = t.id "
+                "LEFT JOIN tool_categories tc ON t.category_id = tc.id "
+                "WHERE s.id = :sid"
+            ),
+            {"sid": session_id},
+        )
+        r = row.fetchone()
+        if r:
+            profile_id = r[0] or ""
+            if not profile_id and r[1]:
+                _slug_map = {"meeting-minutes-ai": "meeting_minutes", "slide-creation-ai": "slide_creation"}
+                profile_id = _slug_map.get(r[1], "")
+    except Exception:
+        pass
+    ctx = _get_template_context(
+        request, user=user, title="手動チェックリスト評価",
+        session_id=session_id, active_page="manual",
+        profile_id=profile_id,
+    )
     return _render("dashboard/manual_checklist.html", ctx)
 
 

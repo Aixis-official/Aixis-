@@ -30,6 +30,12 @@ class ExtensionSessionResponse(BaseModel):
     test_cases: list[TestCaseOut] = Field(default_factory=list)
 
 
+class TextOutputField(BaseModel):
+    """A single text output field from a meeting-minutes tool (e.g., transcript, summary)."""
+    label: str                          # e.g., "文字起こし", "要約", "時系列要約"
+    content: str                        # The actual text content
+
+
 class ObservationUpload(BaseModel):
     test_case_id: str | None = None  # protocol: test case ID, freeform: None
     prompt_text: str
@@ -37,6 +43,7 @@ class ObservationUpload(BaseModel):
     response_time_ms: int = 0
     page_url: str | None = None
     screenshot_base64: str | None = None  # Base64-encoded PNG screenshot
+    text_outputs: list[TextOutputField] = Field(default_factory=list)  # Text-based outputs (議事録AI)
     metadata: dict = Field(default_factory=dict)
 
 
