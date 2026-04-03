@@ -136,11 +136,9 @@ async def _seed_default_categories():
                 "- **信頼性・安全性**: 録音への忠実性・数値正確性・ハルシネーション有無\n"
                 "- **革新性**: 自動要約・議題分割・出力形式・UI・連携機能\n\n"
                 "### テストカテゴリ\n"
-                "- minutes_basic（基本議事録生成）\n"
-                "- minutes_accuracy（正確性）\n"
+                "- minutes_transcription（書き起こし正確性）\n"
                 "- minutes_japanese（日本語品質）\n"
-                "- minutes_structure（構造化能力）\n"
-                "- minutes_advanced（高難度シナリオ）\n",
+                "- minutes_complex（複合評価）\n",
         },
     ]
 

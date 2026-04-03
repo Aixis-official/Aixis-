@@ -28,12 +28,10 @@ traits:
   - "action_item_extraction"
 
 primary_categories:
-  - minutes_basic
-  - minutes_accuracy
+  - minutes_transcription
   - minutes_japanese
-  - minutes_structure
+  - minutes_complex
 secondary_categories:
-  - minutes_advanced
   - ui_evaluation
 excluded_categories: []
 

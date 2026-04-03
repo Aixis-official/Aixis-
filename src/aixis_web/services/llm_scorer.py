@@ -1465,24 +1465,24 @@ class LLMScorer:
         },
         "meeting_minutes": {
             "practicality": {
-                "primary": ["minutes_basic", "minutes_accuracy", "minutes_structure"],
-                "secondary": ["minutes_advanced", "ui_evaluation"],
+                "primary": ["minutes_transcription", "minutes_complex"],
+                "secondary": ["minutes_japanese", "ui_evaluation"],
             },
             "cost_performance": {
-                "primary": ["minutes_basic", "ui_evaluation"],
-                "secondary": ["minutes_advanced"],
+                "primary": ["minutes_transcription", "ui_evaluation"],
+                "secondary": ["minutes_complex"],
             },
             "localization": {
-                "primary": ["minutes_japanese", "minutes_basic"],
-                "secondary": ["minutes_structure", "ui_evaluation"],
+                "primary": ["minutes_japanese", "minutes_transcription"],
+                "secondary": ["minutes_complex", "ui_evaluation"],
             },
             "safety": {
-                "primary": ["minutes_accuracy", "minutes_basic"],
-                "secondary": ["minutes_advanced", "minutes_structure"],
+                "primary": ["minutes_transcription", "minutes_complex"],
+                "secondary": ["minutes_japanese"],
             },
             "uniqueness": {
-                "primary": ["minutes_advanced", "minutes_structure", "ui_evaluation"],
-                "secondary": ["minutes_basic"],
+                "primary": ["minutes_complex", "ui_evaluation"],
+                "secondary": ["minutes_transcription"],
             },
         },
     }

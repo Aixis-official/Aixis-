@@ -12,11 +12,9 @@ class TestCategory(str, Enum):
     SLIDE_ACCURACY = "slide_accuracy"
     SLIDE_ADVANCED = "slide_advanced"
     # Meeting-minutes-specific categories
-    MINUTES_BASIC = "minutes_basic"
-    MINUTES_ACCURACY = "minutes_accuracy"
+    MINUTES_TRANSCRIPTION = "minutes_transcription"
     MINUTES_JAPANESE = "minutes_japanese"
-    MINUTES_STRUCTURE = "minutes_structure"
-    MINUTES_ADVANCED = "minutes_advanced"
+    MINUTES_COMPLEX = "minutes_complex"
     # UI evaluation category (shared across categories)
     UI_EVALUATION = "ui_evaluation"
     # Legacy categories (kept for backward compatibility)
