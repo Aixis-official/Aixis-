@@ -1117,6 +1117,7 @@ footer {
     padding: 24px;
     font-size: 0.82rem;
     margin-top: auto;
+    font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
 }
 
 footer a {
@@ -1127,6 +1128,20 @@ footer a {
 
 footer a:hover {
     color: var(--primary);
+}
+
+footer h3 {
+    font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif !important;
+    letter-spacing: 0.14em !important;
+    font-weight: 700 !important;
+}
+
+footer ul li a {
+    letter-spacing: 0.03em;
+}
+
+footer .space-y-1\.5 {
+    letter-spacing: 0.04em;
 }
 
 /* ==========================================================================
