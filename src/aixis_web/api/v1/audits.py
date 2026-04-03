@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import and_, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 from starlette.responses import Response
 
 from ...db.base import get_db
@@ -747,6 +748,7 @@ async def edit_axis_scores(
             existing.scored_at = datetime.now(timezone.utc)
             existing.scored_by = user.id
             # Update auto_score in details JSON so get_auto_scores picks it up
+            # NOTE: Must reassign or flag_modified for SQLAlchemy JSON mutation detection
             details = existing.details
             if isinstance(details, str):
                 try:
@@ -754,10 +756,13 @@ async def edit_axis_scores(
                 except Exception:
                     details = {}
             if isinstance(details, dict):
-                details["auto_score"] = score
-                existing.details = details
+                details = {**details, "auto_score": score}
             elif isinstance(details, list):
-                existing.details = {"rule_results": details, "auto_score": score}
+                details = {"rule_results": details, "auto_score": score}
+            else:
+                details = {"auto_score": score}
+            existing.details = details
+            flag_modified(existing, "details")
             # Ensure source is not "error"
             if existing.source == "error":
                 existing.source = "llm"
