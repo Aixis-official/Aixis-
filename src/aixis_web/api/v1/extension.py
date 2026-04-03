@@ -131,17 +131,19 @@ async def _create_session_impl(body, db, user):
                     if profile:
                         categories = get_categories_for_profile(profile)
                 except Exception:
-                    pass
+                    logger.warning(
+                        "Failed to resolve profile %s, will use explicit categories or fail",
+                        body.profile_id, exc_info=True,
+                    )
+
+            if not categories and body.profile_id:
+                raise HTTPException(
+                    400,
+                    f"プロファイル '{body.profile_id}' のカテゴリを解決できませんでした。"
+                    "プロファイル設定を確認してください。",
+                )
 
             cases = generate_all(patterns_dir, categories)
-
-            # Fallback: if profile categories didn't match any patterns, try without filter
-            if not cases and categories:
-                logger.warning(
-                    "No test cases matched categories %s, falling back to all patterns",
-                    categories,
-                )
-                cases = generate_all(patterns_dir, categories=None)
 
             # Sort by priority for optimal coverage
             from aixis_agent.orchestrator.pipeline import sort_by_priority

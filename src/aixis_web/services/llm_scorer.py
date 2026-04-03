@@ -739,14 +739,21 @@ class LLMScorer:
         active_rubrics = resolve_rubrics(tool_profile_id, tool_category_slug)
         self._prompt_config = resolve_prompt_config(tool_profile_id, tool_category_slug)
         # Resolve category-specific axis-to-test-category mapping
-        resolved_profile = tool_profile_id or ""
-        normalized_profile = resolved_profile.replace("-ai", "").replace("-", "_")
-        if normalized_profile not in self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE:
-            slug_normalized = (tool_category_slug or "").replace("-ai", "").replace("-", "_")
-            normalized_profile = slug_normalized if slug_normalized in self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE else "slide_creation"
-        self._active_axis_categories = self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE.get(
-            normalized_profile, self.AXIS_RELEVANT_CATEGORIES
-        )
+        # Use same normalization logic as resolve_rubrics / resolve_prompt_config
+        resolved_axis_profile = None
+        for key in (tool_profile_id, tool_category_slug):
+            if not key:
+                continue
+            if key in self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE:
+                resolved_axis_profile = key
+                break
+            normalized = key.replace("-ai", "").replace("-", "_")
+            if normalized in self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE:
+                resolved_axis_profile = normalized
+                break
+        if not resolved_axis_profile:
+            resolved_axis_profile = "slide_creation"
+        self._active_axis_categories = self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE[resolved_axis_profile]
         logger.info(
             "Scoring session %s: profile=%s, category=%s, rubric_set=%s",
             session_id, tool_profile_id, tool_category_slug,
