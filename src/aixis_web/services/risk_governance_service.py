@@ -23,6 +23,22 @@ def _grade_from_score(score: float) -> str:
     return "D"
 
 
+def _risk_level_from_score(score: float) -> str:
+    """Derive risk level from governance score.
+
+    IMPORTANT: High governance score = LOW risk.
+    The governance score measures how well the tool handles risk/compliance,
+    so a high score means the tool is well-governed → low risk.
+    """
+    if score >= 4.0:
+        return "low"
+    if score >= 3.0:
+        return "medium"
+    if score >= 2.0:
+        return "high"
+    return "critical"
+
+
 def compute_governance_score(rg: ToolRiskGovernance) -> float:
     """Compute composite governance score from sub-components.
 
@@ -139,9 +155,12 @@ async def create_risk_governance(
         **data,
     )
 
-    # Compute governance score and grade
+    # Compute governance score, grade, and risk level
     rg.governance_score = compute_governance_score(rg)
     rg.governance_grade = _grade_from_score(rg.governance_score)
+    # Always auto-derive risk_level from governance_score to keep them in sync.
+    # High governance score = low risk (inverse relationship).
+    rg.risk_level = _risk_level_from_score(rg.governance_score)
 
     db.add(rg)
     await db.commit()
@@ -166,6 +185,7 @@ async def update_risk_governance(
 
     rg.governance_score = compute_governance_score(rg)
     rg.governance_grade = _grade_from_score(rg.governance_score)
+    rg.risk_level = _risk_level_from_score(rg.governance_score)
     rg.updated_at = datetime.now(timezone.utc)
 
     await db.commit()

@@ -14,8 +14,14 @@ async def list_tools(db: AsyncSession, category_slug: str | None = None, search:
         if cat_obj:
             query = query.where(Tool.category_id == cat_obj.id)
     if search:
+        from sqlalchemy import cast, Text as SAText
         pattern = f"%{search}%"
-        query = query.where((Tool.name_jp.ilike(pattern)) | (Tool.name.ilike(pattern)) | (Tool.vendor.ilike(pattern)))
+        query = query.where(
+            (Tool.name_jp.ilike(pattern))
+            | (Tool.name.ilike(pattern))
+            | (Tool.vendor.ilike(pattern))
+            | (cast(Tool.search_aliases, SAText).ilike(pattern))
+        )
     if is_public is not None:
         query = query.where(Tool.is_public == is_public)
     total = await db.scalar(select(func.count()).select_from(query.subquery()))

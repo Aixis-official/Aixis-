@@ -22,6 +22,7 @@ class ToolCreate(BaseModel):
     screenshots: list[str] = []
     features: list[str] = []
     supported_languages: list[str] = ["ja"]
+    search_aliases: list[str] = []
     is_public: bool = False
     # SEO article content fields
     use_cases_jp: list[dict] | None = None
@@ -65,6 +66,7 @@ class ToolUpdate(BaseModel):
     screenshots: list[str] | None = None
     features: list[str] | None = None
     supported_languages: list[str] | None = None
+    search_aliases: list[str] | None = None
     is_public: bool | None = None
     is_active: bool | None = None
     # SEO article content fields
@@ -139,6 +141,7 @@ class ToolResponse(BaseModel):
     screenshots: list[str] = []
     features: list[str] = []
     supported_languages: list[str] = []
+    search_aliases: list[str] = []
     is_public: bool
     is_active: bool
     created_at: datetime

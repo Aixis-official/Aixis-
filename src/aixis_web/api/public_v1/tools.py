@@ -140,15 +140,17 @@ async def list_tools(
             query = query.where(Tool.category_id == cat.id)
             count_query = count_query.where(Tool.category_id == cat.id)
 
-    # Text search
+    # Text search (includes search_aliases for katakana/alternate name matching)
     if q:
         safe_q = q.replace("%", r"\%").replace("_", r"\_")
         pattern = f"%{safe_q}%"
+        from sqlalchemy import cast, Text as SAText
         search_filter = (
             Tool.name.ilike(pattern)
             | Tool.name_jp.ilike(pattern)
             | Tool.description.ilike(pattern)
             | Tool.description_jp.ilike(pattern)
+            | cast(Tool.search_aliases, SAText).ilike(pattern)
         )
         query = query.where(search_filter)
         count_query = count_query.where(search_filter)
