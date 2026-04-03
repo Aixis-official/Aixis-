@@ -20,7 +20,7 @@ async def list_tools(db: AsyncSession, category_slug: str | None = None, search:
             (Tool.name_jp.ilike(pattern))
             | (Tool.name.ilike(pattern))
             | (Tool.vendor.ilike(pattern))
-            | (cast(Tool.search_aliases, SAText).ilike(pattern))
+            | (cast(func.coalesce(Tool.search_aliases, ""), SAText).ilike(pattern))
         )
     if is_public is not None:
         query = query.where(Tool.is_public == is_public)

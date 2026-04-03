@@ -150,7 +150,7 @@ async def list_tools(
             | Tool.name_jp.ilike(pattern)
             | Tool.description.ilike(pattern)
             | Tool.description_jp.ilike(pattern)
-            | cast(Tool.search_aliases, SAText).ilike(pattern)
+            | cast(func.coalesce(Tool.search_aliases, ""), SAText).ilike(pattern)
         )
         query = query.where(search_filter)
         count_query = count_query.where(search_filter)

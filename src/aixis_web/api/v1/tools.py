@@ -169,16 +169,15 @@ async def list_tools(
         # Escape SQL LIKE wildcards in user input
         safe_q = q.replace("%", r"\%").replace("_", r"\_")
         pattern = f"%{safe_q}%"
-        # Search across name, name_jp, description, description_jp, and search_aliases (JSON array)
-        # search_aliases stores katakana/hiragana readings and alternate names
-        # e.g. ["ガンマ", "がんま"] for Gamma — cast to text for LIKE matching
+        # Search across name, name_jp, description, description_jp, and search_aliases
+        # search_aliases is a JSON array — coalesce NULL to '' before cast to text
         from sqlalchemy import cast, Text as SAText
         search_filter = (
             Tool.name.ilike(pattern)
             | Tool.name_jp.ilike(pattern)
             | Tool.description.ilike(pattern)
             | Tool.description_jp.ilike(pattern)
-            | cast(Tool.search_aliases, SAText).ilike(pattern)
+            | cast(func.coalesce(Tool.search_aliases, ""), SAText).ilike(pattern)
         )
         query = query.where(search_filter)
         count_query = count_query.where(search_filter)

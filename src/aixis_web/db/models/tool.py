@@ -42,7 +42,7 @@ class Tool(Base):
     url = Column(String(500))
     # Search aliases: katakana readings, abbreviations, alternate names
     # e.g. ["ガンマ", "がんま"] for Gamma, ["チャットジーピーティー", "チャットGPT"] for ChatGPT
-    search_aliases = Column(JSON, default=list)
+    search_aliases = Column(JSON, nullable=True)
     description = Column(Text)
     description_jp = Column(Text)
     category_id = Column(String(36), ForeignKey("tool_categories.id"))

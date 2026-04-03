@@ -141,7 +141,7 @@ class ToolResponse(BaseModel):
     screenshots: list[str] = []
     features: list[str] = []
     supported_languages: list[str] = []
-    search_aliases: list[str] = []
+    search_aliases: list[str] | None = []
     is_public: bool
     is_active: bool
     created_at: datetime
