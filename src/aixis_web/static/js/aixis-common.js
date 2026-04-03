@@ -93,7 +93,7 @@ function scoreLevelColor(score) {
 }
 
 function formatScore(score) {
-  return score != null ? score.toFixed(2) : '---';
+  return score != null ? Number(score).toFixed(2) : '---';
 }
 
 
@@ -229,13 +229,14 @@ if (typeof htmx !== 'undefined') {
 
 async function aixisAPI(path, options = {}) {
   const token = localStorage.getItem('aixis_token');
-  const headers = { 'Content-Type': 'application/json', ...options.headers };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  // Include CSRF token for state-changing requests
   const method = (options.method || 'GET').toUpperCase();
+  const headers = { ...options.headers };
+  // Only set Content-Type for requests with a body
   if (method !== 'GET' && method !== 'HEAD') {
+    if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
     headers['X-CSRF-Token'] = getCSRFToken();
   }
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
   let response = await fetch(`/api/v1${path}`, { ...options, headers, credentials: 'same-origin' });
 
@@ -273,11 +274,12 @@ async function aixisAPI(path, options = {}) {
 
 function createGradeBadge(grade, size = '') {
   const sizeClass = size === 'lg' ? 'grade-badge-lg' : '';
-  return `<span class="grade-badge grade-badge-stamp ${sizeClass} grade-${grade}">${grade}</span>`;
+  const safeGrade = String(grade || '').replace(/[^A-Za-z0-9\/]/g, '');
+  return `<span class="grade-badge grade-badge-stamp ${sizeClass} grade-${safeGrade}">${safeGrade}</span>`;
 }
 
 function createScoreBar(score, maxScore = 5.0) {
-  const pct = (score / maxScore * 100).toFixed(1);
+  const pct = maxScore > 0 ? Math.min(100, (score / maxScore * 100)).toFixed(1) : '0';
   const level = scoreLevel(score);
   return `<div class="score-bar"><div class="score-bar-fill ${level}" style="width:${pct}%"></div></div>`;
 }
@@ -295,7 +297,8 @@ function createStatusBadge(status) {
     cancelled: 'キャンセル',
     aborted: '中止済み'
   };
-  return `<span class="status-badge status-${status}">${labels[status] || status}</span>`;
+  const safeStatus = String(status || '').replace(/[^a-z_]/g, '');
+  return `<span class="status-badge status-${safeStatus}">${labels[status] || safeStatus}</span>`;
 }
 
 
