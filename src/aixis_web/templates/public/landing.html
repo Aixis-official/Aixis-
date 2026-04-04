@@ -685,22 +685,23 @@
         </div>
     </div>
 </section>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
 <script>
-document.addEventListener('DOMContentLoaded',function(){
-  if(typeof THREE==='undefined'){
-    /* Retry once after Three.js loads */
-    var s=document.querySelector('script[src*="three.min"]');
-    if(s)s.onload=init; return;
-  }
-  init();
-});
-function init(){
-  if(typeof THREE==='undefined')return;
+(function(){
   var container=document.getElementById('about-wave-gl');
   if(!container)return;
+  /* Load Three.js dynamically, then init */
+  var s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  s.onload=function(){
+    try{initWaveGL();}catch(e){console.warn('Wave GL init failed:',e);}
+  };
+  document.head.appendChild(s);
+})();
 
-  /* ---- Renderer ---- */
+function initWaveGL(){
+  var container=document.getElementById('about-wave-gl');
+  if(!container||!window.THREE)return;
+
   var renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   renderer.setClearColor(0x000000,0);
@@ -708,291 +709,243 @@ function init(){
   renderer.domElement.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;';
 
   var scene=new THREE.Scene();
-
-  /* ---- Camera (orthographic to match 2D layout) ---- */
-  var W=container.offsetWidth, H=container.offsetHeight;
+  var W=container.offsetWidth||1200, H=container.offsetHeight||700;
   var camera=new THREE.OrthographicCamera(-W/2,W/2,H/2,-H/2,0.1,1000);
   camera.position.z=100;
   renderer.setSize(W,H);
 
-  function onResize(){
+  window.addEventListener('resize',function(){
     W=container.offsetWidth; H=container.offsetHeight;
+    if(W<1||H<1)return;
     camera.left=-W/2; camera.right=W/2; camera.top=H/2; camera.bottom=-H/2;
     camera.updateProjectionMatrix();
     renderer.setSize(W,H);
-  }
-  window.addEventListener('resize',onResize);
+  });
 
-  /* ---- GLSL: Simplex 3D noise ---- */
-  var noiseGLSL=`
-    vec4 perm(vec4 x){return mod(((x*34.0)+1.0)*x,289.0);}
-    float snoise(vec3 v){
-      const vec2 C=vec2(1.0/6.0,1.0/3.0);
-      const vec4 D=vec4(0.0,0.5,1.0,2.0);
-      vec3 i=floor(v+dot(v,C.yyy));
-      vec3 x0=v-i+dot(i,C.xxx);
-      vec3 g=step(x0.yzx,x0.xyz);
-      vec3 l=1.0-g;
-      vec3 i1=min(g.xyz,l.zxy);
-      vec3 i2=max(g.xyz,l.zxy);
-      vec3 x1=x0-i1+C.xxx;
-      vec3 x2=x0-i2+C.yyy;
-      vec3 x3=x0-D.yyy;
-      i=mod(i,289.0);
-      vec4 p=perm(perm(perm(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
-      float n_=1.0/7.0;
-      vec3 ns=n_*D.wyz-D.xzx;
-      vec4 j=p-49.0*floor(p*ns.z*ns.z);
-      vec4 x_=floor(j*ns.z);
-      vec4 y_=floor(j-7.0*x_);
-      vec4 x=x_*ns.x+ns.yyyy;
-      vec4 y=y_*ns.x+ns.yyyy;
-      vec4 h=1.0-abs(x)-abs(y);
-      vec4 b0=vec4(x.xy,y.xy);
-      vec4 b1=vec4(x.zw,y.zw);
-      vec4 s0=floor(b0)*2.0+1.0;
-      vec4 s1=floor(b1)*2.0+1.0;
-      vec4 sh=-step(h,vec4(0.0));
-      vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;
-      vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
-      vec3 p0=vec3(a0.xy,h.x);
-      vec3 p1=vec3(a0.zw,h.y);
-      vec3 p2=vec3(a1.xy,h.z);
-      vec3 p3=vec3(a1.zw,h.w);
-      vec4 norm=1.79284291400159-0.85373472095314*vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3));
-      p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
-      vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);
-      m=m*m;
-      return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
-    }
-    float fbm(vec3 p){return snoise(p)*0.5+snoise(p*2.0)*0.25+snoise(p*4.0)*0.125;}
-  `;
+  /* ---- GLSL noise (simplex 3D) ---- */
+  var NOISE=[
+    'vec4 _pm(vec4 x){return mod(((x*34.0)+1.0)*x,289.0);}',
+    'float snoise(vec3 v){',
+    '  const vec2 C=vec2(1.0/6.0,1.0/3.0);',
+    '  vec3 i=floor(v+dot(v,C.yyy));',
+    '  vec3 x0=v-i+dot(i,C.xxx);',
+    '  vec3 g=step(x0.yzx,x0.xyz);',
+    '  vec3 l=1.0-g;',
+    '  vec3 i1=min(g.xyz,l.zxy);',
+    '  vec3 i2=max(g.xyz,l.zxy);',
+    '  vec3 x1=x0-i1+C.xxx;',
+    '  vec3 x2=x0-i2+C.yyy;',
+    '  vec3 x3=x0-0.5;',
+    '  i=mod(i,289.0);',
+    '  vec4 p=_pm(_pm(_pm(i.z+vec4(0,i1.z,i2.z,1))+i.y+vec4(0,i1.y,i2.y,1))+i.x+vec4(0,i1.x,i2.x,1));',
+    '  vec3 ns=vec4(0,0.5,1,2).wyz/7.0-vec4(0,0.5,1,2).xzx;',
+    '  vec4 j=p-49.0*floor(p*ns.z*ns.z);',
+    '  vec4 xp=floor(j*ns.z);',
+    '  vec4 yp=floor(j-7.0*xp);',
+    '  vec4 x=xp*ns.x+ns.yyyy;',
+    '  vec4 y=yp*ns.x+ns.yyyy;',
+    '  vec4 h=1.0-abs(x)-abs(y);',
+    '  vec4 b0=vec4(x.xy,y.xy);',
+    '  vec4 b1=vec4(x.zw,y.zw);',
+    '  vec4 s0=floor(b0)*2.0+1.0;',
+    '  vec4 s1=floor(b1)*2.0+1.0;',
+    '  vec4 sh=-step(h,vec4(0));',
+    '  vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;',
+    '  vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;',
+    '  vec3 p0=vec3(a0.xy,h.x);',
+    '  vec3 p1=vec3(a0.zw,h.y);',
+    '  vec3 p2=vec3(a1.xy,h.z);',
+    '  vec3 p3=vec3(a1.zw,h.w);',
+    '  vec4 nm=1.79284291400159-0.85373472095314*vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3));',
+    '  p0*=nm.x;p1*=nm.y;p2*=nm.z;p3*=nm.w;',
+    '  vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);',
+    '  m=m*m;',
+    '  return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));',
+    '}',
+    'float fbm3(vec3 p){return snoise(p)*0.5+snoise(p*2.0)*0.25+snoise(p*4.0)*0.125;}'
+  ].join('\n');
 
-  /* ---- Vertex shader ---- */
-  var vertexShader=noiseGLSL+`
-    uniform float uTime;
-    uniform float uAmp;
-    uniform float uSpeed;
-    uniform float uFreq;
-    uniform float uYCenter;
-    uniform float uLayer;
-    uniform vec2 uRes;
-    attribute float aRandom;
-    attribute float aDepth;
-    varying float vAlpha;
-    varying vec3 vColor;
-    varying float vEdge;
-
-    void main(){
-      vec3 pos=position;
-
-      /* Normalized x: 0-1 across surface */
-      float nx=(pos.x+uRes.x*0.5)/(uRes.x);
-      /* Offset to right 65% of screen */
-      float screenX=mix(uRes.x*-0.15, uRes.x*0.5, nx);
-
-      /* Edge fade */
-      float fadeL=smoothstep(0.0,0.18,nx);
-      float fadeR=smoothstep(1.0,0.88,nx);
-      float edgeFade=fadeL*fadeR;
-
-      /* Noise-based wave displacement */
-      float n=fbm(vec3(nx*uFreq+uTime*uSpeed*0.4+uLayer*3.7, aDepth*uFreq*0.5+uTime*uSpeed*0.25+uLayer*2.1, uLayer*1.5));
-      float wave=sin(nx*6.28*1.5+uTime*uSpeed*3.0+aDepth*2.0+uLayer)*0.3;
-      float wave2=sin(nx*6.28*3.0+uTime*uSpeed*5.0-aDepth*1.5+uLayer*2.0)*0.12;
-      float displacement=(n+wave+wave2)*uAmp*edgeFade;
-
-      /* Perspective depth compression */
-      float depthScale=0.3+aDepth*0.7;
-      float yPos=uYCenter*uRes.y+aDepth*uRes.y*0.28*depthScale+displacement;
-
-      pos.x=screenX;
-      pos.y=-yPos+uRes.y*0.5;
-
-      /* Color based on position + layer */
-      float colorMix=nx+sin(uTime*0.3+uLayer)*0.1;
-      vec3 colA,colB,colC;
-      if(uLayer<1.0){colA=vec3(0.06,0.16,0.38);colB=vec3(0.08,0.42,0.52);colC=vec3(0.12,0.55,0.40);}
-      else if(uLayer<2.0){colA=vec3(0.08,0.24,0.55);colB=vec3(0.04,0.52,0.55);colC=vec3(0.16,0.58,0.35);}
-      else if(uLayer<3.0){colA=vec3(0.20,0.12,0.50);colB=vec3(0.12,0.44,0.68);colC=vec3(0.08,0.55,0.48);}
-      else{colA=vec3(0.32,0.08,0.52);colB=vec3(0.20,0.24,0.64);colC=vec3(0.12,0.48,0.56);}
-      if(colorMix<0.5) vColor=mix(colA,colB,colorMix*2.0);
-      else vColor=mix(colB,colC,(colorMix-0.5)*2.0);
-
-      /* Brighten crest particles */
-      float crestBright=1.0-smoothstep(0.0,0.15,aDepth);
-      vColor+=crestBright*vec3(0.15,0.2,0.18);
-
-      /* Alpha: depth fade + edge fade + random sparkle */
-      float sparkle=0.7+0.3*sin(uTime*3.0+aRandom*40.0);
-      vAlpha=(1.0-aDepth*0.75)*edgeFade*sparkle;
-      vEdge=edgeFade;
-
-      /* Point size: closer = bigger */
-      float size=(1.0-aDepth*0.6)*(1.5+aRandom*1.5);
-      size*=edgeFade;
-      size*=uRes.y/600.0;
-      gl_PointSize=size;
-      gl_Position=projectionMatrix*modelViewMatrix*vec4(pos,1.0);
-    }
-  `;
+  /* ---- Vertex shader for wave surfaces ---- */
+  var VS=NOISE+'\n'+[
+    'uniform float uTime;',
+    'uniform float uAmp;',
+    'uniform float uSpeed;',
+    'uniform float uFreq;',
+    'uniform float uYCenter;',
+    'uniform float uLayer;',
+    'uniform vec2 uRes;',
+    'attribute float aRnd;',
+    'attribute float aRow;',
+    'varying float vAlpha;',
+    'varying vec3 vColor;',
+    '',
+    'void main(){',
+    '  float nx=(position.x+uRes.x*0.5)/uRes.x;',
+    '  float screenX=mix(uRes.x*-0.15,uRes.x*0.5,nx);',
+    '',
+    '  float fadeL=smoothstep(0.0,0.18,nx);',
+    '  float fadeR=smoothstep(1.0,0.88,nx);',
+    '  float edge=fadeL*fadeR;',
+    '',
+    '  float n=fbm3(vec3(nx*uFreq+uTime*uSpeed*0.4+uLayer*3.7,aRow*uFreq*0.5+uTime*uSpeed*0.25+uLayer*2.1,uLayer*1.5));',
+    '  float w1=sin(nx*9.42+uTime*uSpeed*3.0+aRow*2.0+uLayer)*0.3;',
+    '  float w2=sin(nx*18.84+uTime*uSpeed*5.0-aRow*1.5+uLayer*2.0)*0.12;',
+    '  float disp=(n+w1+w2)*uAmp*edge;',
+    '',
+    '  float ds=0.3+aRow*0.7;',
+    '  float yp=uYCenter*uRes.y+aRow*uRes.y*0.28*ds+disp;',
+    '',
+    '  vec3 pos=vec3(screenX,-yp+uRes.y*0.5,0.0);',
+    '',
+    '  float cm=nx+sin(uTime*0.3+uLayer)*0.1;',
+    '  vec3 cA,cB,cC;',
+    '  if(uLayer<1.0){cA=vec3(0.05,0.15,0.38);cB=vec3(0.07,0.40,0.52);cC=vec3(0.12,0.55,0.38);}',
+    '  else if(uLayer<2.0){cA=vec3(0.08,0.22,0.55);cB=vec3(0.04,0.50,0.55);cC=vec3(0.15,0.58,0.35);}',
+    '  else if(uLayer<3.0){cA=vec3(0.18,0.10,0.50);cB=vec3(0.10,0.42,0.68);cC=vec3(0.07,0.55,0.48);}',
+    '  else{cA=vec3(0.30,0.07,0.52);cB=vec3(0.18,0.22,0.64);cC=vec3(0.10,0.46,0.56);}',
+    '  vColor=cm<0.5?mix(cA,cB,cm*2.0):mix(cB,cC,(cm-0.5)*2.0);',
+    '',
+    '  float crest=1.0-smoothstep(0.0,0.12,aRow);',
+    '  vColor+=crest*vec3(0.18,0.25,0.22);',
+    '',
+    '  float sparkle=0.7+0.3*sin(uTime*3.0+aRnd*40.0);',
+    '  vAlpha=(1.0-aRow*0.75)*edge*sparkle;',
+    '',
+    '  float sz=(1.0-aRow*0.6)*(1.8+aRnd*2.0);',
+    '  sz*=edge*(uRes.y/600.0);',
+    '  gl_PointSize=max(sz,0.0);',
+    '  gl_Position=projectionMatrix*modelViewMatrix*vec4(pos,1.0);',
+    '}'
+  ].join('\n');
 
   /* ---- Fragment shader ---- */
-  var fragmentShader=`
-    varying float vAlpha;
-    varying vec3 vColor;
-    varying float vEdge;
-    void main(){
-      float d=length(gl_PointCoord-0.5)*2.0;
-      /* Soft circle with glow halo */
-      float core=1.0-smoothstep(0.0,0.6,d);
-      float glow=1.0-smoothstep(0.0,1.0,d);
-      float shape=core*0.7+glow*0.3;
-      float alpha=shape*vAlpha;
-      /* Brighten color for glow */
-      vec3 col=vColor*(1.0+glow*0.5);
-      gl_FragColor=vec4(col,alpha*0.85);
-    }
-  `;
+  var FS=[
+    'precision mediump float;',
+    'varying float vAlpha;',
+    'varying vec3 vColor;',
+    'void main(){',
+    '  float d=length(gl_PointCoord-0.5)*2.0;',
+    '  float core=1.0-smoothstep(0.0,0.5,d);',
+    '  float glow=1.0-smoothstep(0.0,1.0,d);',
+    '  float shape=core*0.6+glow*0.4;',
+    '  vec3 col=vColor*(1.0+glow*0.6);',
+    '  gl_FragColor=vec4(col,shape*vAlpha*0.9);',
+    '}'
+  ].join('\n');
 
-  /* ---- Create particle wave surfaces ---- */
-  var COLS=280, ROWS=65;
-  var surfaceDefs=[
-    {yCenter:0.25, amp:80, speed:0.35, freq:2.2, layer:0},
-    {yCenter:0.38, amp:65, speed:0.28, freq:2.8, layer:1},
-    {yCenter:0.52, amp:75, speed:0.40, freq:2.0, layer:2},
-    {yCenter:0.65, amp:55, speed:0.32, freq:2.5, layer:3},
+  /* ---- Dust vertex shader ---- */
+  var DVS=NOISE+'\n'+[
+    'uniform float uTime;',
+    'uniform vec2 uRes;',
+    'attribute float aRnd;',
+    'attribute float aRow;',
+    'varying float vAlpha;',
+    'varying vec3 vColor;',
+    'void main(){',
+    '  vec3 pos=position;',
+    '  pos.x+=sin(uTime*0.2+aRnd*20.0)*30.0;',
+    '  pos.y+=cos(uTime*0.15+aRnd*15.0)*20.0+uTime*5.0;',
+    '  float hw=uRes.x*0.5;',
+    '  float hh=uRes.y*0.5;',
+    '  pos.x=mod(pos.x+hw,uRes.x)-hw;',
+    '  pos.y=mod(pos.y+hh,uRes.y)-hh;',
+    '  float nx=(pos.x+hw)/uRes.x;',
+    '  float fadeL=smoothstep(0.28,0.42,nx);',
+    '  float fadeR=smoothstep(1.0,0.92,nx);',
+    '  float edge=fadeL*fadeR;',
+    '  float pulse=0.4+0.6*sin(uTime*1.5+aRnd*30.0);',
+    '  vAlpha=pulse*edge*(0.15+aRnd*0.3);',
+    '  vColor=vec3(0.55,0.75,0.92);',
+    '  gl_PointSize=(3.0+aRnd*4.0)*uRes.y/600.0*edge;',
+    '  gl_Position=projectionMatrix*modelViewMatrix*vec4(pos,1.0);',
+    '}'
+  ].join('\n');
+
+  /* ---- Create wave surfaces ---- */
+  var COLS=300, ROWS=70;
+  var defs=[
+    {yC:0.22,amp:85,spd:0.35,frq:2.2,lay:0},
+    {yC:0.36,amp:70,spd:0.28,frq:2.8,lay:1},
+    {yC:0.50,amp:80,spd:0.40,frq:2.0,lay:2},
+    {yC:0.64,amp:60,spd:0.32,frq:2.5,lay:3},
   ];
-  var meshes=[];
+  var meshList=[];
 
-  surfaceDefs.forEach(function(def){
-    var count=COLS*ROWS;
-    var positions=new Float32Array(count*3);
-    var randoms=new Float32Array(count);
-    var depths=new Float32Array(count);
-
+  defs.forEach(function(d){
+    var N=COLS*ROWS;
+    var pos=new Float32Array(N*3);
+    var rnd=new Float32Array(N);
+    var row=new Float32Array(N);
     for(var r=0;r<ROWS;r++){
       for(var c=0;c<COLS;c++){
         var i=r*COLS+c;
-        positions[i*3]=  (c/(COLS-1))*W-W*0.5;   /* x: -W/2 to W/2 */
-        positions[i*3+1]=0;                        /* y: set by shader */
-        positions[i*3+2]=0;
-        randoms[i]=Math.random();
-        depths[i]=r/(ROWS-1);
+        pos[i*3]=(c/(COLS-1))*W-W*0.5;
+        pos[i*3+1]=0;
+        pos[i*3+2]=0;
+        rnd[i]=Math.random();
+        row[i]=r/(ROWS-1);
       }
     }
-
     var geo=new THREE.BufferGeometry();
-    geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
-    geo.setAttribute('aRandom',new THREE.BufferAttribute(randoms,1));
-    geo.setAttribute('aDepth',new THREE.BufferAttribute(depths,1));
+    geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    geo.setAttribute('aRnd',new THREE.BufferAttribute(rnd,1));
+    geo.setAttribute('aRow',new THREE.BufferAttribute(row,1));
 
     var mat=new THREE.ShaderMaterial({
-      vertexShader:vertexShader,
-      fragmentShader:fragmentShader,
+      vertexShader:VS,
+      fragmentShader:FS,
       uniforms:{
-        uTime:{value:0},
-        uAmp:{value:def.amp},
-        uSpeed:{value:def.speed},
-        uFreq:{value:def.freq},
-        uYCenter:{value:def.yCenter},
-        uLayer:{value:def.layer},
+        uTime:{value:0},uAmp:{value:d.amp},uSpeed:{value:d.spd},
+        uFreq:{value:d.frq},uYCenter:{value:d.yC},uLayer:{value:d.lay},
         uRes:{value:new THREE.Vector2(W,H)}
       },
-      transparent:true,
-      depthWrite:false,
+      transparent:true,depthWrite:false,
       blending:THREE.AdditiveBlending
     });
-
-    var points=new THREE.Points(geo,mat);
-    scene.add(points);
-    meshes.push({points:points,def:def});
+    var pts=new THREE.Points(geo,mat);
+    scene.add(pts);
+    meshList.push(pts);
   });
 
-  /* ---- Dust particles (separate, larger, sparser) ---- */
-  var DUST=200;
-  var dustPos=new Float32Array(DUST*3);
-  var dustRand=new Float32Array(DUST);
-  var dustDepth=new Float32Array(DUST);
-  for(var i=0;i<DUST;i++){
-    dustPos[i*3]=(Math.random())*W-W*0.5;
-    dustPos[i*3+1]=(Math.random()-0.5)*H;
-    dustPos[i*3+2]=0;
-    dustRand[i]=Math.random();
-    dustDepth[i]=Math.random()*0.3;
+  /* ---- Dust ---- */
+  var DN=250;
+  var dp=new Float32Array(DN*3),dr=new Float32Array(DN),dd=new Float32Array(DN);
+  for(var i=0;i<DN;i++){
+    dp[i*3]=Math.random()*W-W*0.5;
+    dp[i*3+1]=(Math.random()-0.5)*H;
+    dp[i*3+2]=0;
+    dr[i]=Math.random();
+    dd[i]=Math.random()*0.3;
   }
-  var dustGeo=new THREE.BufferGeometry();
-  dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));
-  dustGeo.setAttribute('aRandom',new THREE.BufferAttribute(dustRand,1));
-  dustGeo.setAttribute('aDepth',new THREE.BufferAttribute(dustDepth,1));
-  var dustMat=new THREE.ShaderMaterial({
-    vertexShader:noiseGLSL+`
-      uniform float uTime;
-      uniform vec2 uRes;
-      attribute float aRandom;
-      attribute float aDepth;
-      varying float vAlpha;
-      varying vec3 vColor;
-      varying float vEdge;
-      void main(){
-        vec3 pos=position;
-        /* Drift slowly */
-        pos.x+=sin(uTime*0.2+aRandom*20.0)*30.0;
-        pos.y+=cos(uTime*0.15+aRandom*15.0)*20.0+uTime*5.0;
-        /* Wrap */
-        float halfW=uRes.x*0.5;
-        float halfH=uRes.y*0.5;
-        pos.x=mod(pos.x+halfW,uRes.x)-halfW;
-        pos.y=mod(pos.y+halfH,uRes.y)-halfH;
-        /* Only right 65% */
-        float nx=(pos.x+halfW)/uRes.x;
-        float fadeL=smoothstep(0.30,0.45,nx);
-        float fadeR=smoothstep(1.0,0.92,nx);
-        vEdge=fadeL*fadeR;
-        float pulse=0.4+0.6*sin(uTime*1.5+aRandom*30.0);
-        vAlpha=pulse*vEdge*(0.15+aRandom*0.25);
-        vColor=vec3(0.55,0.75,0.9);
-        gl_PointSize=(2.5+aRandom*3.5)*uRes.y/600.0*vEdge;
-        gl_Position=projectionMatrix*modelViewMatrix*vec4(pos,1.0);
-      }
-    `,
-    fragmentShader:fragmentShader,
-    uniforms:{
-      uTime:{value:0},
-      uRes:{value:new THREE.Vector2(W,H)}
-    },
-    transparent:true,
-    depthWrite:false,
+  var dg=new THREE.BufferGeometry();
+  dg.setAttribute('position',new THREE.BufferAttribute(dp,3));
+  dg.setAttribute('aRnd',new THREE.BufferAttribute(dr,1));
+  dg.setAttribute('aRow',new THREE.BufferAttribute(dd,1));
+  var dm=new THREE.ShaderMaterial({
+    vertexShader:DVS,fragmentShader:FS,
+    uniforms:{uTime:{value:0},uRes:{value:new THREE.Vector2(W,H)}},
+    transparent:true,depthWrite:false,
     blending:THREE.AdditiveBlending
   });
-  var dustPoints=new THREE.Points(dustGeo,dustMat);
-  scene.add(dustPoints);
+  scene.add(new THREE.Points(dg,dm));
 
-  /* ---- Animation ---- */
-  var time=0;
-  var isVis=false;
-  var obs=new IntersectionObserver(function(e){isVis=e[0].isIntersecting;},{threshold:0.05});
-  obs.observe(container);
+  /* ---- Animate ---- */
+  var time=0,isVis=false;
+  new IntersectionObserver(function(e){isVis=e[0].isIntersecting;},{threshold:0.05}).observe(container);
 
-  function animate(){
-    requestAnimationFrame(animate);
+  (function loop(){
+    requestAnimationFrame(loop);
     if(!isVis)return;
     time+=0.008;
-
-    meshes.forEach(function(m){
-      m.points.material.uniforms.uTime.value=time;
-      m.points.material.uniforms.uRes.value.set(W,H);
+    meshList.forEach(function(p){
+      p.material.uniforms.uTime.value=time;
+      p.material.uniforms.uRes.value.set(W,H);
     });
-    dustMat.uniforms.uTime.value=time;
-    dustMat.uniforms.uRes.value.set(W,H);
-
+    dm.uniforms.uTime.value=time;
+    dm.uniforms.uRes.value.set(W,H);
     renderer.render(scene,camera);
-  }
-  animate();
+  })();
 }
-/* Auto-init when Three.js loads */
-if(typeof THREE!=='undefined')init();
-else{var _s=document.querySelector('script[src*="three.min"]');if(_s)_s.addEventListener('load',init);}
 </script>
 
 <!-- Single dark overlay covering About + all white sections -->
