@@ -227,12 +227,64 @@
         color: #6b7280;
     }
 
-    /* ===== Armillary sphere rotation keyframes ===== */
+    /* ===== Armillary sphere rotation — slow, authoritative ===== */
     @keyframes aboutSpin1 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     @keyframes aboutSpin2 { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
     @keyframes aboutSpin3 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     @keyframes aboutSpin4 { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
     @keyframes aboutSpin5 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* ===== Refined particle & pulse animations ===== */
+    @keyframes aboutParticleDrift {
+        0%   { transform: translateY(0) translateX(0); opacity: 0; }
+        20%  { opacity: 0.6; }
+        80%  { opacity: 0.5; }
+        100% { transform: translateY(-30px) translateX(8px); opacity: 0; }
+    }
+    @keyframes aboutCoreBreathe {
+        0%   { opacity: 0.7; transform: scale(1); }
+        50%  { opacity: 1;   transform: scale(1.15); }
+        100% { opacity: 0.7; transform: scale(1); }
+    }
+    @keyframes aboutNodeBreathe {
+        0%   { opacity: 0.55; transform: scale(1); }
+        50%  { opacity: 0.85; transform: scale(1.2); }
+        100% { opacity: 0.55; transform: scale(1); }
+    }
+
+    /* Floating particles — minimal, purposeful */
+    .about-particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        border-radius: 50%;
+        background: rgba(180, 215, 250, 0.6);
+        box-shadow: 0 0 4px 1px rgba(150, 200, 248, 0.25);
+        animation: aboutParticleDrift 14s ease-in-out infinite;
+        z-index: 1;
+        pointer-events: none;
+    }
+    .about-particle.sm {
+        width: 1.5px;
+        height: 1.5px;
+        background: rgba(175, 212, 248, 0.4);
+        box-shadow: 0 0 3px 1px rgba(150, 200, 248, 0.15);
+        animation: aboutParticleDrift 18s ease-in-out infinite;
+    }
+
+    /* Core breathe — slow, dignified */
+    .about-core-pulse {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: aboutCoreBreathe 5s ease-in-out infinite;
+    }
+
+    /* Node breathe */
+    .about-node-pulse {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: aboutNodeBreathe 6s ease-in-out infinite;
+    }
 
     /* ===== Transparent header text colors (landing page only) =====
      * Use :not(.nav-solid) so text is white from first paint (pure CSS, no JS dependency).
@@ -685,83 +737,107 @@
                     </a>
                 </div>
             </div>
-            <!-- Right column: Armillary sphere geometric figure -->
+            <!-- Right column: Armillary sphere — sacred precision instrument -->
             <div class="hidden lg:flex lg:w-1/2 items-center justify-center about-geometric" aria-hidden="true">
-                <div class="relative" style="width: 420px; height: 420px;">
-                    <!-- Outer glow -->
-                    <div class="absolute inset-0 rounded-full" style="background: radial-gradient(circle, rgba(100,160,220,0.06) 0%, transparent 70%);"></div>
+                <div class="relative" style="width: 480px; height: 480px;">
+                    <!-- Single ambient glow — subtle, not overwrought -->
+                    <div class="absolute inset-0 rounded-full" style="background:radial-gradient(circle, rgba(100,165,230,0.07) 0%, rgba(80,145,215,0.02) 45%, transparent 70%);"></div>
 
-                    <svg viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" style="filter: drop-shadow(0 0 20px rgba(100,160,220,0.08));">
+                    <!-- Particles — just 7, intentionally placed -->
+                    <div class="about-particle" style="top:14%;left:62%;animation-delay:0s;"></div>
+                    <div class="about-particle" style="top:78%;left:20%;animation-delay:-4s;"></div>
+                    <div class="about-particle" style="top:40%;left:85%;animation-delay:-8s;"></div>
+                    <div class="about-particle sm" style="top:25%;left:30%;animation-delay:-2s;"></div>
+                    <div class="about-particle sm" style="top:65%;left:68%;animation-delay:-6s;"></div>
+                    <div class="about-particle sm" style="top:85%;left:50%;animation-delay:-10s;"></div>
+                    <div class="about-particle sm" style="top:48%;left:15%;animation-delay:-12s;"></div>
+
+                    <svg viewBox="0 0 480 480" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full relative" style="z-index:2;">
                         <defs>
-                            <linearGradient id="ring1g" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="rgba(120,180,230,0.5)"/>
-                                <stop offset="50%" stop-color="rgba(80,140,200,0.25)"/>
-                                <stop offset="100%" stop-color="rgba(120,180,230,0.5)"/>
+                            <!-- Single subtle glow filter -->
+                            <filter id="subtleGlow" x="-30%" y="-30%" width="160%" height="160%">
+                                <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+                                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                            </filter>
+
+                            <!-- Ring gradients — refined opacity curves -->
+                            <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="rgba(150,205,252,0.55)"/><stop offset="50%" stop-color="rgba(120,180,240,0.06)"/><stop offset="100%" stop-color="rgba(150,205,252,0.55)"/>
                             </linearGradient>
-                            <linearGradient id="ring2g" x1="100%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stop-color="rgba(140,190,235,0.45)"/>
-                                <stop offset="50%" stop-color="rgba(90,150,210,0.2)"/>
-                                <stop offset="100%" stop-color="rgba(140,190,235,0.45)"/>
+                            <linearGradient id="rg2" x1="100%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="rgba(140,198,248,0.48)"/><stop offset="50%" stop-color="rgba(110,175,238,0.05)"/><stop offset="100%" stop-color="rgba(140,198,248,0.48)"/>
                             </linearGradient>
-                            <linearGradient id="ring3g" x1="50%" y1="0%" x2="50%" y2="100%">
-                                <stop offset="0%" stop-color="rgba(100,165,225,0.4)"/>
-                                <stop offset="50%" stop-color="rgba(70,130,195,0.15)"/>
-                                <stop offset="100%" stop-color="rgba(100,165,225,0.4)"/>
+                            <linearGradient id="rg3" x1="50%" y1="0%" x2="50%" y2="100%">
+                                <stop offset="0%" stop-color="rgba(135,195,245,0.42)"/><stop offset="50%" stop-color="rgba(100,168,232,0.04)"/><stop offset="100%" stop-color="rgba(135,195,245,0.42)"/>
                             </linearGradient>
-                            <linearGradient id="ring4g" x1="0%" y1="50%" x2="100%" y2="50%">
-                                <stop offset="0%" stop-color="rgba(130,185,235,0.35)"/>
-                                <stop offset="50%" stop-color="rgba(85,145,205,0.12)"/>
-                                <stop offset="100%" stop-color="rgba(130,185,235,0.35)"/>
+                            <linearGradient id="rg4" x1="0%" y1="50%" x2="100%" y2="50%">
+                                <stop offset="0%" stop-color="rgba(145,200,248,0.35)"/><stop offset="50%" stop-color="rgba(105,170,235,0.03)"/><stop offset="100%" stop-color="rgba(145,200,248,0.35)"/>
                             </linearGradient>
-                            <linearGradient id="ring5g" x1="20%" y1="0%" x2="80%" y2="100%">
-                                <stop offset="0%" stop-color="rgba(150,195,240,0.3)"/>
-                                <stop offset="50%" stop-color="rgba(95,155,215,0.1)"/>
-                                <stop offset="100%" stop-color="rgba(150,195,240,0.3)"/>
+                            <linearGradient id="rg5" x1="20%" y1="0%" x2="80%" y2="100%">
+                                <stop offset="0%" stop-color="rgba(155,208,250,0.30)"/><stop offset="50%" stop-color="rgba(110,172,235,0.03)"/><stop offset="100%" stop-color="rgba(155,208,250,0.30)"/>
                             </linearGradient>
+
+                            <!-- Core glow — warm-tinted white center -->
+                            <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="rgba(225,238,252,0.95)"/>
+                                <stop offset="25%" stop-color="rgba(175,212,248,0.4)"/>
+                                <stop offset="60%" stop-color="rgba(130,185,240,0.06)"/>
+                                <stop offset="100%" stop-color="transparent"/>
+                            </radialGradient>
+                            <!-- Node glow -->
+                            <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="rgba(200,225,250,0.85)"/>
+                                <stop offset="40%" stop-color="rgba(155,205,245,0.3)"/>
+                                <stop offset="100%" stop-color="transparent"/>
+                            </radialGradient>
                         </defs>
 
-                        <!-- 5 orbital rings at different tilts (representing 5 axes) -->
-                        <g style="animation: aboutSpin1 45s linear infinite;" transform-origin="210 210">
-                            <ellipse cx="210" cy="210" rx="175" ry="60" stroke="url(#ring1g)" stroke-width="1" transform="rotate(-15 210 210)"/>
+                        <!-- Single outer boundary — understated -->
+                        <circle cx="240" cy="240" r="210" stroke="rgba(130,185,240,0.04)" stroke-width="0.5" fill="none"/>
+
+                        <!-- Two concentric reference circles — quiet precision -->
+                        <circle cx="240" cy="240" r="120" stroke="rgba(120,180,235,0.04)" stroke-width="0.3" fill="none" stroke-dasharray="2 14"/>
+                        <circle cx="240" cy="240" r="45" stroke="rgba(135,190,242,0.06)" stroke-width="0.4" fill="none"/>
+
+                        <!-- 5 orbital rings — the heart of the design -->
+                        <g style="animation:aboutSpin1 70s linear infinite;" transform-origin="240 240">
+                            <ellipse cx="240" cy="240" rx="190" ry="65" stroke="url(#rg1)" stroke-width="1.3" fill="none" transform="rotate(-12 240 240)"/>
                         </g>
-                        <g style="animation: aboutSpin2 55s linear infinite;" transform-origin="210 210">
-                            <ellipse cx="210" cy="210" rx="165" ry="70" stroke="url(#ring2g)" stroke-width="0.8" transform="rotate(30 210 210)"/>
+                        <g style="animation:aboutSpin2 85s linear infinite;" transform-origin="240 240">
+                            <ellipse cx="240" cy="240" rx="178" ry="78" stroke="url(#rg2)" stroke-width="1.1" fill="none" transform="rotate(32 240 240)"/>
                         </g>
-                        <g style="animation: aboutSpin3 50s linear infinite;" transform-origin="210 210">
-                            <ellipse cx="210" cy="210" rx="155" ry="80" stroke="url(#ring3g)" stroke-width="0.8" transform="rotate(72 210 210)"/>
+                        <g style="animation:aboutSpin3 75s linear infinite;" transform-origin="240 240">
+                            <ellipse cx="240" cy="240" rx="168" ry="88" stroke="url(#rg3)" stroke-width="1" fill="none" transform="rotate(72 240 240)"/>
                         </g>
-                        <g style="animation: aboutSpin4 60s linear infinite;" transform-origin="210 210">
-                            <ellipse cx="210" cy="210" rx="145" ry="55" stroke="url(#ring4g)" stroke-width="0.6" transform="rotate(-50 210 210)"/>
+                        <g style="animation:aboutSpin4 95s linear infinite;" transform-origin="240 240">
+                            <ellipse cx="240" cy="240" rx="158" ry="55" stroke="url(#rg4)" stroke-width="0.7" fill="none" transform="rotate(-48 240 240)"/>
                         </g>
-                        <g style="animation: aboutSpin5 65s linear infinite;" transform-origin="210 210">
-                            <ellipse cx="210" cy="210" rx="170" ry="45" stroke="url(#ring5g)" stroke-width="0.6" transform="rotate(55 210 210)"/>
+                        <g style="animation:aboutSpin5 100s linear infinite;" transform-origin="240 240">
+                            <ellipse cx="240" cy="240" rx="185" ry="45" stroke="url(#rg5)" stroke-width="0.6" fill="none" transform="rotate(56 240 240)"/>
                         </g>
 
-                        <!-- Inner concentric circles (precision/measurement aesthetic) -->
-                        <circle cx="210" cy="210" r="22" stroke="rgba(120,175,225,0.18)" stroke-width="0.5" fill="none"/>
-                        <circle cx="210" cy="210" r="40" stroke="rgba(120,175,225,0.10)" stroke-width="0.5" fill="none" stroke-dasharray="3 6"/>
-                        <circle cx="210" cy="210" r="100" stroke="rgba(120,175,225,0.07)" stroke-width="0.5" fill="none" stroke-dasharray="2 8"/>
+                        <!-- Center core — single refined glow with warm-white point -->
+                        <circle cx="240" cy="240" r="16" fill="url(#coreGlow)" class="about-core-pulse" filter="url(#subtleGlow)"/>
+                        <circle cx="240" cy="240" r="3" fill="rgba(215,232,250,0.8)" class="about-core-pulse"/>
+                        <circle cx="240" cy="240" r="1.2" fill="rgba(245,248,255,1)"/>
 
-                        <!-- Center core -->
-                        <circle cx="210" cy="210" r="3.5" fill="rgba(160,200,240,0.7)"/>
-                        <circle cx="210" cy="210" r="8" fill="none" stroke="rgba(140,190,235,0.25)" stroke-width="0.5"/>
+                        <!-- 5 axis nodes — clean, with gentle glow -->
+                        <g filter="url(#subtleGlow)">
+                            <circle cx="240" cy="148" r="7" fill="url(#nodeGlow)" class="about-node-pulse"/>
+                            <circle cx="240" cy="148" r="2" fill="rgba(210,232,252,0.85)"/>
 
-                        <!-- Axis nodes (5 points on rings) -->
-                        <circle cx="210" cy="150" r="2" fill="rgba(160,200,240,0.5)"/>
-                        <circle cx="370" cy="210" r="1.8" fill="rgba(140,190,235,0.4)"/>
-                        <circle cx="260" cy="275" r="1.8" fill="rgba(140,190,235,0.4)"/>
-                        <circle cx="150" cy="250" r="1.5" fill="rgba(130,180,230,0.35)"/>
-                        <circle cx="170" cy="170" r="1.5" fill="rgba(130,180,230,0.35)"/>
+                            <circle cx="375" cy="225" r="6" fill="url(#nodeGlow)" class="about-node-pulse" style="animation-delay:-2.5s;"/>
+                            <circle cx="375" cy="225" r="1.8" fill="rgba(200,225,250,0.8)"/>
 
-                        <!-- Fine crosshair lines through center -->
-                        <line x1="210" y1="175" x2="210" y2="245" stroke="rgba(120,175,225,0.12)" stroke-width="0.5"/>
-                        <line x1="175" y1="210" x2="245" y2="210" stroke="rgba(120,175,225,0.12)" stroke-width="0.5"/>
+                            <circle cx="325" cy="330" r="6" fill="url(#nodeGlow)" class="about-node-pulse" style="animation-delay:-5s;"/>
+                            <circle cx="325" cy="330" r="1.8" fill="rgba(200,225,250,0.8)"/>
 
-                        <!-- Tick marks on inner circle -->
-                        <line x1="210" y1="188" x2="210" y2="193" stroke="rgba(140,190,235,0.25)" stroke-width="0.5"/>
-                        <line x1="210" y1="227" x2="210" y2="232" stroke="rgba(140,190,235,0.25)" stroke-width="0.5"/>
-                        <line x1="188" y1="210" x2="193" y2="210" stroke="rgba(140,190,235,0.25)" stroke-width="0.5"/>
-                        <line x1="227" y1="210" x2="232" y2="210" stroke="rgba(140,190,235,0.25)" stroke-width="0.5"/>
+                            <circle cx="155" cy="310" r="5.5" fill="url(#nodeGlow)" class="about-node-pulse" style="animation-delay:-7.5s;"/>
+                            <circle cx="155" cy="310" r="1.6" fill="rgba(195,222,248,0.75)"/>
+
+                            <circle cx="128" cy="198" r="5.5" fill="url(#nodeGlow)" class="about-node-pulse" style="animation-delay:-10s;"/>
+                            <circle cx="128" cy="198" r="1.6" fill="rgba(195,222,248,0.75)"/>
+                        </g>
                     </svg>
                 </div>
             </div>
