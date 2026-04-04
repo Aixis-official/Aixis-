@@ -523,6 +523,15 @@ async function advanceTest({ observation }) {
   const testKey = String(state.currentTestIndex);
 
   if (!state.submittedTests[testKey]) {
+    // Resolve text outputs: prefer caller's observation data, fall back to
+    // persistently saved state (same approach as completeSession).
+    let resolvedTextOutputs = observation?.textOutputs || [];
+    if (!resolvedTextOutputs.length) {
+      const savedOutputs = state.testTextOutputs[_ssKey()] || [];
+      resolvedTextOutputs = savedOutputs
+        .filter(t => t.content && t.content.trim())
+        .map(t => ({ label: t.label, content: t.content }));
+    }
     const obsData = {
       test_case_id: currentTest?.id || null,
       prompt_text: currentTest?.prompt || "",
@@ -530,7 +539,7 @@ async function advanceTest({ observation }) {
       response_time_ms: elapsed,
       page_url: null,
       screenshot_base64: null,
-      text_outputs: observation?.textOutputs || [],
+      text_outputs: resolvedTextOutputs,
       metadata: {
         type: "test_completion",
         category: currentTest?.category || "protocol",

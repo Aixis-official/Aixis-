@@ -561,15 +561,33 @@ class LLMScorer:
         Critical axes (localization, practicality) use Sonnet for accurate
         visual text reading. Others use Haiku to minimize cost.
 
-        Exception: In text-based mode (meeting-minutes), Sonnet is unnecessary
-        because there are no screenshots to read — all evidence is plain text.
+        Exception: In text-based or mixed mode (meeting-minutes), Sonnet is
+        unnecessary for text-only axes because there are no screenshots to read.
         Haiku handles text analysis equally well at ~5x lower cost.
+        Mixed mode only needs Sonnet for axes that actually USE screenshots
+        (i.e., uniqueness for UI evaluation).
         """
         if getattr(self, '_is_text_based', False):
             return self.model_lite
+        if getattr(self, '_has_mixed_evidence', False):
+            # Mixed mode: only use Sonnet if this axis actually needs screenshots
+            # For meeting_minutes, only uniqueness has UI screenshots as primary
+            if not self._axis_needs_screenshots(axis):
+                return self.model_lite
         if axis in self.SONNET_REQUIRED_AXES:
             return self.model
         return self.model_lite
+
+    def _axis_needs_screenshots(self, axis: str) -> bool:
+        """Check whether this axis needs screenshot evidence in mixed mode.
+
+        Returns True if the axis has ui_evaluation as a primary category.
+        If not, the axis can be scored with text-only evidence (cheaper).
+        """
+        active_cat_map = getattr(self, '_active_axis_categories', self.AXIS_RELEVANT_CATEGORIES)
+        relevance = active_cat_map.get(axis, {})
+        primary_cats = set(relevance.get("primary", []))
+        return "ui_evaluation" in primary_cats
 
     def _estimated_cost_jpy(self) -> float:
         """Estimate cost in JPY based on per-model token tracking."""
@@ -1846,10 +1864,15 @@ class LLMScorer:
                            axis, len(text_evidence),
                            " + screenshots (mixed mode)" if is_mixed_mode else ", no screenshots")
 
-        if not is_text_mode:
-            # SCREENSHOT-BASED MODE (or mixed mode): select and load screenshots
-            # In mixed mode (text + screenshots), all axes use the model returned
-            # by _model_for_axis which already accounts for text-based downgrade.
+        # In mixed mode, skip screenshot loading for axes that don't need them.
+        # This avoids sending expensive image tokens to Haiku for text-only axes.
+        skip_screenshots_in_mixed = (is_mixed_mode and not self._axis_needs_screenshots(axis))
+        if skip_screenshots_in_mixed:
+            logger.info("Axis %s: mixed mode but skipping screenshots (text-only axis)", axis)
+
+        if not is_text_mode and not skip_screenshots_in_mixed:
+            # SCREENSHOT-BASED MODE (or mixed mode with screenshot axis):
+            # select and load screenshots for axes that need visual evidence.
             # Use 600px for Haiku, 1024px only for Sonnet with screenshot evidence.
             use_sonnet = (axis in self.SONNET_REQUIRED_AXES and not getattr(self, '_is_text_based', False))
             resize_width = 1024 if use_sonnet else 600
