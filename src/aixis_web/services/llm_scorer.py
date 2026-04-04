@@ -871,11 +871,26 @@ class LLMScorer:
                     pass
             text_outputs = metadata.get("text_outputs", [])
 
+            # FALLBACK: If text_outputs is empty but response_raw has content,
+            # auto-populate text_outputs for meeting-minutes categories.
+            # This handles cases where the Chrome extension stores the tool's
+            # text output in response_text instead of text_outputs.
+            response_raw = row[3] or ""
+            if not text_outputs and response_raw.strip():
+                minutes_cats = {"minutes_transcription", "minutes_japanese", "minutes_complex"}
+                if category in minutes_cats:
+                    text_outputs = [{"label": "ツール出力", "content": response_raw.strip()}]
+                    logger.info(
+                        "Session %s: auto-populated text_outputs from response_raw "
+                        "for category=%s (%d chars)",
+                        session_id, category, len(response_raw),
+                    )
+
             observations.append({
                 "test_case_id": test_case_id,
                 "category": category,
                 "prompt": row[2],
-                "response": row[3] or "",
+                "response": response_raw,
                 "response_time_ms": row[4] or 0,
                 "error": row[5],
                 "screenshot_path": screenshot_path,
@@ -1031,16 +1046,32 @@ class LLMScorer:
         # 1a-2. Filter out observations with NO evidence (screenshots or text_outputs).
         # Observations without any evidence were skipped during the audit.
         # Including them causes the LLM to fabricate evaluations.
-        obs_with_evidence = [
-            obs for obs in observations
-            if obs.get("screenshots") or obs.get("text_outputs")
-        ]
+        # NOTE: For meeting-minutes categories, also treat non-empty response as evidence.
+        def _has_evidence(obs: dict) -> bool:
+            if obs.get("screenshots"):
+                return True
+            if obs.get("text_outputs"):
+                return True
+            # Fallback: non-empty response_raw is also evidence for text-based categories
+            if obs.get("response", "").strip():
+                return True
+            return False
+
+        obs_with_evidence = [obs for obs in observations if _has_evidence(obs)]
         obs_without = len(observations) - len(obs_with_evidence)
         if obs_without > 0:
+            # Log details of filtered observations for debugging
+            filtered_details = [
+                f"{o.get('category','?')}(ss={len(o.get('screenshots',[]))}, "
+                f"text={len(o.get('text_outputs',[]))}, "
+                f"resp={len(o.get('response',''))})"
+                for o in observations if not _has_evidence(o)
+            ]
             logger.info(
                 "Session %s: filtered out %d observations with no evidence "
-                "(%d remaining with screenshots or text_outputs)",
+                "(%d remaining). Filtered: %s",
                 session_id, obs_without, len(obs_with_evidence),
+                filtered_details[:10],
             )
         # Use filtered list for scoring, but keep original count for completion rate
         all_observations_count = len(observations)
@@ -1052,7 +1083,11 @@ class LLMScorer:
         # and screenshot-based observations (UI test 4). We use a hybrid approach:
         # - _is_text_based = True when ALL evidence-bearing observations are text-only
         # - _has_mixed_evidence = True when session has both text and screenshot observations
-        has_text_outputs = any(obs.get("text_outputs") for obs in observations)
+        # NOTE: text_outputs OR non-empty response counts as text evidence
+        has_text_outputs = any(
+            obs.get("text_outputs") or obs.get("response", "").strip()
+            for obs in observations
+        )
         has_screenshots = any(obs.get("screenshots") for obs in observations)
         self._is_text_based = has_text_outputs and not has_screenshots
         self._has_mixed_evidence = has_text_outputs and has_screenshots
@@ -1641,8 +1676,13 @@ class LLMScorer:
                 continue
 
             text_outputs = obs.get("text_outputs", [])
+            # Fallback: use response_raw as text evidence if text_outputs is empty
             if not text_outputs:
-                continue
+                response_text = obs.get("response", "").strip()
+                if response_text:
+                    text_outputs = [{"label": "ツール出力", "content": response_text}]
+                else:
+                    continue
 
             sections.append(f"\n### 検証 {i+1}: {cat}")
             obs_chars = 0
@@ -1797,8 +1837,8 @@ class LLMScorer:
         loaded_images = []
 
         if is_text_mode or is_mixed_mode:
-            # Include text evidence for observations that have text_outputs
-            text_obs = [o for o in observations if o.get("text_outputs")]
+            # Include text evidence for observations that have text_outputs or response
+            text_obs = [o for o in observations if o.get("text_outputs") or o.get("response", "").strip()]
             if text_obs:
                 text_evidence = self._build_text_evidence(axis, observations)
                 prompt_text = text_evidence + "\n\n" + prompt_text
@@ -2180,7 +2220,13 @@ class LLMScorer:
             cat_context = CATEGORY_CONTEXT.get(cat, "")
             if cat_context:
                 entry += f"{cat_context}\n"
-            prompt_text_preview = obs['prompt'][:500] if obs['prompt'] else '(指示なし)'
+            # For meeting-minutes categories, the prompt IS the transcription text.
+            # Show more of it so the LLM can compare input vs output.
+            minutes_cats = {"minutes_transcription", "minutes_japanese", "minutes_complex"}
+            prompt_limit = 3000 if cat in minutes_cats else 500
+            prompt_text_preview = obs['prompt'][:prompt_limit] if obs['prompt'] else '(指示なし)'
+            if obs['prompt'] and len(obs['prompt']) > prompt_limit:
+                prompt_text_preview += f"\n... (以下省略、全 {len(obs['prompt'])} 文字)"
             screenshots = obs.get("screenshots", [])
             rt_ms = obs.get('response_time_ms', 0) or 0
             if rt_ms > 0:
