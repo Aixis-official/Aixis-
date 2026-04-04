@@ -202,6 +202,13 @@
     #scene-wrapper.--reveal .about-dot-pattern {
         opacity: 0 !important;
     }
+    /* Wave canvas fades out as overlay reveals (dark -> white) */
+    #about-wave-canvas {
+        transition: opacity 0.5s ease-in-out;
+    }
+    #scene-wrapper.--reveal #about-wave-canvas {
+        opacity: 0 !important;
+    }
     /* About text: starts white (on dark overlay), transitions to dark on reveal */
     .about-heading, .about-text, .about-label, .about-link {
         transition: color 0.5s ease-in-out;
@@ -385,7 +392,7 @@
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-12 lg:gap-20">
             <!-- Left: Text -->
             <div class="max-w-3xl lg:max-w-none lg:flex-1 lg:min-w-0">
-                <span class="report-label font-sans normal-case">Aixis Research · AI Tool Evaluation</span>
+                <span class="report-label font-serif normal-case">Aixis Research · AI Tool Evaluation</span>
                 <h1 class="mt-6 text-[2.1rem] sm:text-4xl lg:text-[3.2rem] xl:text-[3.6rem] font-bold font-serif text-white tracking-tight leading-[1.2] lg:whitespace-nowrap">
                     感覚ではなく、<br class="sm:hidden">数値で選ぶ。
                 </h1>
@@ -495,12 +502,12 @@
                                 <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" style="transform:rotate(-8deg);filter:drop-shadow(0 1px 2px rgba(0,0,0,0.15))"><path d="M12 2L14.4 8.8 21.6 9.6 16.2 14.4 17.8 21.6 12 17.8 6.2 21.6 7.8 14.4 2.4 9.6 9.6 8.8Z" fill="url(#logo-grad)" stroke="rgba(255,255,255,0.25)" stroke-width="0.5"/><defs><linearGradient id="logo-grad" x1="4" y1="4" x2="20" y2="20"><stop offset="0%" stop-color="rgba(165,140,255,0.9)"/><stop offset="100%" stop-color="rgba(96,165,250,0.8)"/></linearGradient></defs></svg>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="text-[13px] font-bold text-white tracking-tight leading-tight" style="font-family:'Noto Sans JP',sans-serif">Sample AI Tool</div>
+                                <div class="text-[13px] font-bold text-white tracking-tight leading-tight" style="font-family:'Noto Serif JP',serif">Sample AI Tool</div>
                                 <span class="inline-block px-1.5 py-0.5 rounded text-[7px] font-medium bg-white/8 border border-white/12 text-white/50 mt-1">AI文書作成</span>
                             </div>
                             <div class="flex items-center gap-3 flex-shrink-0 pl-2">
                                 <div class="text-right">
-                                    <div class="text-[9px] text-white/40 font-medium" style="font-family:'Noto Sans JP',sans-serif">総合スコア</div>
+                                    <div class="text-[9px] text-white/40 font-medium" style="font-family:'Noto Serif JP',serif">総合スコア</div>
                                     <div class="text-[16px] font-bold text-white tabular-nums hero-score-anim leading-tight">4.2<span class="text-[9px] font-normal text-white/35"> / 5.0</span></div>
                                 </div>
                                 <div class="w-9 h-9 rounded-lg flex items-center justify-center text-[13px] font-black text-white" style="background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 2px 8px rgba(34,197,94,0.3);">A</div>
@@ -538,11 +545,11 @@
                                     <circle cx="107" cy="156" fill="#6366F1" class="hero-dot hero-dot-4"/>
                                     <circle cx="83" cy="95" fill="#6366F1" class="hero-dot hero-dot-5"/>
                                     <!-- Axis labels -->
-                                    <text x="140" y="28" text-anchor="middle" fill="#64748B" font-size="9" font-family="'Noto Sans JP',sans-serif" font-weight="500">実務適性</text>
-                                    <text x="212" y="88" text-anchor="start" fill="#64748B" font-size="8.5" font-family="'Noto Sans JP',sans-serif">信頼性・安全性</text>
-                                    <text x="186" y="178" text-anchor="start" fill="#64748B" font-size="8.5" font-family="'Noto Sans JP',sans-serif">革新性</text>
-                                    <text x="94" y="178" text-anchor="end" fill="#64748B" font-size="8.5" font-family="'Noto Sans JP',sans-serif">日本語能力</text>
-                                    <text x="68" y="88" text-anchor="end" fill="#64748B" font-size="8.5" font-family="'Noto Sans JP',sans-serif">費用対効果</text>
+                                    <text x="140" y="28" text-anchor="middle" fill="#64748B" font-size="9" font-family="'Noto Serif JP',serif" font-weight="500">実務適性</text>
+                                    <text x="212" y="88" text-anchor="start" fill="#64748B" font-size="8.5" font-family="'Noto Serif JP',serif">信頼性・安全性</text>
+                                    <text x="186" y="178" text-anchor="start" fill="#64748B" font-size="8.5" font-family="'Noto Serif JP',serif">革新性</text>
+                                    <text x="94" y="178" text-anchor="end" fill="#64748B" font-size="8.5" font-family="'Noto Serif JP',serif">日本語能力</text>
+                                    <text x="68" y="88" text-anchor="end" fill="#64748B" font-size="8.5" font-family="'Noto Serif JP',serif">費用対効果</text>
                                 </svg>
                             </div>
 
@@ -552,35 +559,35 @@
                                 <div class="space-y-2.5">
                                     <div>
                                         <div class="flex items-center justify-between mb-0.5">
-                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Sans JP',sans-serif">実務適性</span>
+                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Serif JP',serif">実務適性</span>
                                             <span class="text-[9px] font-bold text-gray-700 tabular-nums hero-score-anim">4.5</span>
                                         </div>
                                         <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full hero-bar-1" style="width:90%;background:linear-gradient(90deg,#22c55e,#16a34a)"></div></div>
                                     </div>
                                     <div>
                                         <div class="flex items-center justify-between mb-0.5">
-                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Sans JP',sans-serif">費用対効果</span>
+                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Serif JP',serif">費用対効果</span>
                                             <span class="text-[9px] font-bold text-gray-700 tabular-nums hero-score-anim">4.0</span>
                                         </div>
                                         <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full hero-bar-2" style="width:80%;background:linear-gradient(90deg,#3b82f6,#2563eb)"></div></div>
                                     </div>
                                     <div>
                                         <div class="flex items-center justify-between mb-0.5">
-                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Sans JP',sans-serif">日本語能力</span>
+                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Serif JP',serif">日本語能力</span>
                                             <span class="text-[9px] font-bold text-gray-700 tabular-nums hero-score-anim">4.3</span>
                                         </div>
                                         <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full hero-bar-3" style="width:86%;background:linear-gradient(90deg,#22c55e,#16a34a)"></div></div>
                                     </div>
                                     <div>
                                         <div class="flex items-center justify-between mb-0.5">
-                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Sans JP',sans-serif">信頼性・安全性</span>
+                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Serif JP',serif">信頼性・安全性</span>
                                             <span class="text-[9px] font-bold text-gray-700 tabular-nums hero-score-anim">4.1</span>
                                         </div>
                                         <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full hero-bar-4" style="width:82%;background:linear-gradient(90deg,#3b82f6,#2563eb)"></div></div>
                                     </div>
                                     <div>
                                         <div class="flex items-center justify-between mb-0.5">
-                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Sans JP',sans-serif">革新性</span>
+                                            <span class="text-[8px] text-gray-500" style="font-family:'Noto Serif JP',serif">革新性</span>
                                             <span class="text-[9px] font-bold text-gray-700 tabular-nums hero-score-anim">4.2</span>
                                         </div>
                                         <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div class="h-full rounded-full hero-bar-5" style="width:84%;background:linear-gradient(90deg,#3b82f6,#2563eb)"></div></div>
@@ -622,22 +629,22 @@
             <div class="stat-particles">
                 <span class="stat-particles-extra"></span>
                 <div class="text-2xl sm:text-4xl lg:text-5xl font-light text-white tracking-tight font-serif">{{ stats.audited_tools }}</div>
-                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">監査済みツール</div>
+                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-serif">監査済みツール</div>
             </div>
             <div class="stat-particles">
                 <span class="stat-particles-extra"></span>
                 <div class="text-2xl sm:text-4xl lg:text-5xl font-light text-white tracking-tight font-serif">{{ stats.categories }}</div>
-                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">対応カテゴリ</div>
+                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-serif">対応カテゴリ</div>
             </div>
             <div class="stat-particles">
                 <span class="stat-particles-extra"></span>
                 <div class="text-2xl sm:text-4xl lg:text-5xl font-light text-white tracking-tight font-serif">{{ stats.last_updated }}</div>
-                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">最終更新</div>
+                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-serif">最終更新</div>
             </div>
             <div class="stat-particles">
                 <span class="stat-particles-extra"></span>
                 <div class="text-2xl sm:text-4xl lg:text-5xl font-light text-white tracking-tight font-serif">{{ stats.new_this_month }}</div>
-                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-sans">今月の新規追加</div>
+                <div class="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-2 font-serif">今月の新規追加</div>
             </div>
         </div>
     </div>
@@ -652,12 +659,12 @@
 <section id="about-section" class="relative bg-gray-50 overflow-hidden">
     <div class="about-dot-pattern absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
     <!-- Wave animation canvas (right side) -->
-    <canvas id="about-wave-canvas" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 10; opacity: 0.35;"></canvas>
+    <canvas id="about-wave-canvas" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 10; opacity: 0.6;"></canvas>
     <div class="about-content-inner max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
         <div class="flex items-center gap-8 lg:gap-16">
             <!-- Text column -->
             <div class="w-full lg:w-1/2 relative" style="z-index:12;">
-                <span class="report-label font-sans about-label" style="color: #475569; text-transform: none;">About Aixis</span>
+                <span class="report-label font-serif about-label" style="color: #475569; text-transform: none;">About Aixis</span>
                 <h2 class="about-heading mt-8 text-2xl sm:text-3xl lg:text-[2.5rem] font-bold font-serif text-white tracking-tight leading-[1.5] lg:leading-[1.55]">
                     AI実装の投資判断を科学する、<br>独立系AI調査・監査機関。
                 </h2>
@@ -695,11 +702,11 @@
   window.addEventListener('resize',resize);
 
   var lines=[
-    {color:'rgba(99,179,237,0.6)',amp:40,freq:0.008,speed:0.015,yOff:0.42,phase:0},
-    {color:'rgba(72,187,120,0.45)',amp:35,freq:0.01,speed:0.012,yOff:0.48,phase:1.5},
-    {color:'rgba(159,122,234,0.4)',amp:45,freq:0.006,speed:0.018,yOff:0.55,phase:3},
-    {color:'rgba(237,137,54,0.3)',amp:30,freq:0.012,speed:0.01,yOff:0.5,phase:4.5},
-    {color:'rgba(99,179,237,0.2)',amp:50,freq:0.005,speed:0.02,yOff:0.45,phase:6},
+    {color:'rgba(200,220,255,0.8)',amp:40,freq:0.008,speed:0.015,yOff:0.42,phase:0},
+    {color:'rgba(160,210,255,0.6)',amp:35,freq:0.01,speed:0.012,yOff:0.48,phase:1.5},
+    {color:'rgba(180,190,255,0.55)',amp:45,freq:0.006,speed:0.018,yOff:0.55,phase:3},
+    {color:'rgba(140,200,240,0.4)',amp:30,freq:0.012,speed:0.01,yOff:0.5,phase:4.5},
+    {color:'rgba(220,230,255,0.35)',amp:50,freq:0.005,speed:0.02,yOff:0.45,phase:6},
   ];
 
   var particles=[];
@@ -709,7 +716,7 @@
       r:Math.random()*1.5+0.5,
       vx:(Math.random()-0.5)*0.0003,
       vy:(Math.random()-0.5)*0.0002,
-      alpha:Math.random()*0.4+0.1,
+      alpha:Math.random()*0.5+0.2,
     });
   }
 
@@ -734,7 +741,7 @@
       var ln=lines[l];
       ctx.beginPath();
       ctx.strokeStyle=ln.color;
-      ctx.lineWidth=1.2;
+      ctx.lineWidth=1.5;
       var baseY=H*ln.yOff;
       for(var x=startX;x<=W;x+=2){
         // Fade in from left edge
@@ -764,7 +771,7 @@
       var a=pt.alpha*(0.7+0.3*Math.sin(t*0.03+p));
       ctx.beginPath();
       ctx.arc(px,py,pt.r,0,Math.PI*2);
-      ctx.fillStyle='rgba(180,210,240,'+a+')';
+      ctx.fillStyle='rgba(220,235,255,'+a+')';
       ctx.fill();
     }
   }
@@ -883,45 +890,45 @@
         <div>
             <!-- 実務適性 -->
             <div class="flex items-start gap-6 py-5 border-b border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors" data-axis="practicality">
-                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">01</span>
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-serif w-6 shrink-0 pt-0.5">01</span>
                 <div class="flex-1 min-w-0">
-                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">実務適性<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-sans">Practicality</span></h3>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">実務適性<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-serif">Practicality</span></h3>
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">業務での即戦力度合いを、タスク完遂率・操作性・ワークフロー統合性から監査</p>
                 </div>
                 <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
             </div>
             <!-- 費用対効果 -->
             <div class="flex items-start gap-6 py-5 border-b border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors" data-axis="cost">
-                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">02</span>
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-serif w-6 shrink-0 pt-0.5">02</span>
                 <div class="flex-1 min-w-0">
-                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">費用対効果<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-sans">Cost Performance</span></h3>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">費用対効果<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-serif">Cost Performance</span></h3>
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">価格に見合う価値を、応答速度・成功率・API効率・出力品質から自動分析し、料金体系・ROIは手動で補完</p>
                 </div>
                 <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
             </div>
             <!-- 日本語能力 -->
             <div class="flex items-start gap-6 py-5 border-b border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors" data-axis="japanese">
-                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">03</span>
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-serif w-6 shrink-0 pt-0.5">03</span>
                 <div class="flex-1 min-w-0">
-                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">日本語能力<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-sans">Japanese Readiness</span></h3>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">日本語能力<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-serif">Japanese Readiness</span></h3>
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">日本語UI・ドキュメント・サポート品質を体系的に監査</p>
                 </div>
                 <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
             </div>
             <!-- 信頼性・安全性 -->
             <div class="flex items-start gap-6 py-5 border-b border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors" data-axis="safety">
-                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">04</span>
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-serif w-6 shrink-0 pt-0.5">04</span>
                 <div class="flex-1 min-w-0">
-                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">信頼性・安全性<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-sans">Safety</span></h3>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">信頼性・安全性<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-serif">Safety</span></h3>
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">セキュリティ対策・稼働安定性・データ保護体制を監査</p>
                 </div>
                 <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
             </div>
             <!-- 革新性 -->
             <div class="flex items-start gap-6 py-5 border-b border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors" data-axis="uniqueness">
-                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-sans w-6 shrink-0 pt-0.5">05</span>
+                <span class="text-xs font-bold text-gray-300 dark:text-gray-600 font-serif w-6 shrink-0 pt-0.5">05</span>
                 <div class="flex-1 min-w-0">
-                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">革新性<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-sans">Uniqueness</span></h3>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">革新性<span class="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 font-serif">Uniqueness</span></h3>
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">出力多様性・創造的対応力・出力リッチさ・エラー時の柔軟性を自動分析し、独自技術・差別化は手動で補完</p>
                 </div>
                 <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
@@ -1112,7 +1119,7 @@
 <!-- ===== QUICK DIAGNOSIS SERVICE ===== -->
 <section class="bg-white dark:bg-aixis-800 border-t border-gray-100 dark:border-aixis-700">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-        <span class="report-label font-sans normal-case">Aixis Quick Diagnosis</span>
+        <span class="report-label font-serif normal-case">Aixis Quick Diagnosis</span>
         <h2 class="mt-4 text-2xl sm:text-3xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
             候補3ツール比較クイック診断
         </h2>
@@ -1122,21 +1129,21 @@
 
         <div class="mt-10 grid grid-cols-3 gap-0 border border-gray-200 dark:border-aixis-700 divide-x divide-gray-200 dark:divide-aixis-700">
             <div class="text-center py-6 px-2 sm:px-4">
-                <div class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white font-sans">&yen;50,000<span class="text-xs sm:text-sm font-normal text-gray-400 dark:text-gray-500">〜</span></div>
+                <div class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white font-serif">&yen;50,000<span class="text-xs sm:text-sm font-normal text-gray-400 dark:text-gray-500">〜</span></div>
                 <div class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">税別 / 3ツールまで</div>
             </div>
             <div class="text-center py-6 px-2 sm:px-4">
-                <div class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white font-sans">3<span class="text-xs sm:text-sm font-normal text-gray-400 dark:text-gray-500">営業日</span></div>
+                <div class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white font-serif">3<span class="text-xs sm:text-sm font-normal text-gray-400 dark:text-gray-500">営業日</span></div>
                 <div class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">最短納期</div>
             </div>
             <div class="text-center py-6 px-2 sm:px-4">
-                <div class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white font-sans">5<span class="text-xs sm:text-sm font-normal text-gray-400 dark:text-gray-500">軸</span></div>
+                <div class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white font-serif">5<span class="text-xs sm:text-sm font-normal text-gray-400 dark:text-gray-500">軸</span></div>
                 <div class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1">独立評価基準で比較</div>
             </div>
         </div>
 
         <div class="mt-8">
-            <h3 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider font-sans">Deliverables</h3>
+            <h3 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider font-serif">Deliverables</h3>
             <ul class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <li class="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
                     <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>

@@ -157,7 +157,7 @@ def _build_email_html(title: str, body: str, link: str | None = None) -> str:
         link_html = f'<p><a href="{safe_link}" style="color:#2563eb;">詳細を確認する</a></p>'
 
     return f"""
-    <div style="font-family:'Noto Sans JP',sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+    <div style="font-family:'Noto Serif JP',serif;max-width:600px;margin:0 auto;padding:20px;">
         <div style="background:#1a365d;color:white;padding:16px 24px;border-radius:8px 8px 0 0;">
             <h1 style="margin:0;font-size:18px;">Aixis</h1>
         </div>

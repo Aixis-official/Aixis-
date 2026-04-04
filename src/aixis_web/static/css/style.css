@@ -1129,7 +1129,7 @@ footer a:hover {
 }
 
 footer h3 {
-    font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif !important;
+    font-family: "Noto Serif JP", "Hiragino Mincho ProN", serif !important;
     letter-spacing: 0.14em !important;
     font-weight: 700 !important;
 }
@@ -1240,7 +1240,7 @@ html.dark .js-plotly-plot .plotly .radialaxistick text {
 
 /* --- Global heading override --- */
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Noto Serif JP', 'Noto Sans JP', serif;
+    font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', serif;
     font-weight: 700;
     letter-spacing: -0.02em;
 }

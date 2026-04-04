@@ -30,7 +30,7 @@ RANKING_TEMPLATE = r"""<!DOCTYPE html>
     --bronze: #b87333;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: "Noto Sans JP", "Hiragino Sans", sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+body { font-family: "Noto Serif JP", "Hiragino Sans", serif; background: var(--bg); color: var(--text); line-height: 1.7; }
 .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
 .cover { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 60px 40px; border-radius: 12px; margin-bottom: 40px; text-align: center; }
 .cover h1 { font-size: 2.2rem; margin-bottom: 8px; }

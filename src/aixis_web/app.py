@@ -364,10 +364,10 @@ def create_app() -> FastAPI:
 <meta name="robots" content="noindex, follow">
 <link rel="canonical" href="https://platform.aixis.jp/">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
-body{{font-family:Inter,'Noto Sans JP',sans-serif;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;background:#fafafa;color:#111827}}
+body{{font-family:Inter,'Noto Serif JP',sans-serif;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;background:#fafafa;color:#111827}}
 .error-container{{text-align:center;max-width:520px;padding:2rem}}
 .error-code{{font-size:6rem;font-weight:800;color:#e2e8f0;line-height:1;letter-spacing:-0.04em}}
 .error-title{{font-size:1.125rem;font-weight:700;color:#1e293b;margin-top:1rem}}
@@ -415,7 +415,7 @@ body{{font-family:Inter,'Noto Sans JP',sans-serif;display:flex;flex-direction:co
     <meta name="robots" content="noindex">
     <title>監査失敗 - 404 | Aixis</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Serif+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         @keyframes stamp-appear {
             0% { transform: scale(2) rotate(-15deg); opacity: 0; }
@@ -442,7 +442,7 @@ body{{font-family:Inter,'Noto Sans JP',sans-serif;display:flex;flex-direction:co
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4" style="font-family: 'Noto Sans JP', 'Inter', sans-serif;">
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4" style="font-family: 'Noto Serif JP', 'Inter', sans-serif;">
     <div class="max-w-lg w-full">
         <div class="bg-white border border-gray-200 shadow-sm relative scan-effect overflow-hidden">
             <div class="border-b border-gray-200 px-8 py-5 flex items-center justify-between">

@@ -34,8 +34,8 @@
                         }
                     },
                     fontFamily: {
-                        sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
-                        jp: ['Noto Sans JP', 'sans-serif'],
+                        sans: ['Inter', 'Noto Serif JP', 'serif'],
+                        jp: ['Noto Serif JP', 'serif'],
                         serif: ['Cormorant Garamond', 'serif']
                     }
                 }
@@ -46,7 +46,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Libraries -->
     <script defer src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-YwQSRkoBOUtKKVfHQ8C2zCPslUZHuxiPHts6X/xQCuGHipTtRXd7ImqS1VTLlpiT" crossorigin="anonymous"></script>
@@ -84,14 +84,14 @@
             letter-spacing: 0.06em;
             color: #9ca3af;
             padding: 0 0.5rem 0.25rem;
-            font-family: 'Noto Sans JP', sans-serif;
+            font-family: 'Noto Serif JP', serif;
         }
         .sidebar.collapsed .sidebar-group-title { display: none; }
     </style>
 
     {% block head %}{% endblock %}
 </head>
-<body class="min-h-screen bg-gray-50 text-gray-900 font-sans">
+<body class="min-h-screen bg-gray-50 text-gray-900 font-serif">
 
     <!-- Mobile sidebar overlay -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 hidden md:hidden" onclick="toggleMobileSidebar()"></div>
