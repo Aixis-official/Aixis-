@@ -651,23 +651,126 @@
 <!-- ===== ABOUT / PHILOSOPHY ===== -->
 <section id="about-section" class="relative bg-gray-50 overflow-hidden">
     <div class="about-dot-pattern absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
-    <div class="about-content-inner max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
-        <span class="report-label font-sans about-label" style="color: #475569; text-transform: none;">About Aixis</span>
-        <h2 class="about-heading mt-8 text-2xl sm:text-3xl lg:text-[2.5rem] font-bold font-serif text-white tracking-tight leading-[1.5] lg:leading-[1.55]">
-            AI実装の投資判断を科学する、<br>独立系AI調査・監査機関。
-        </h2>
-        <p class="about-text mt-10 text-[15px] sm:text-[16px] lg:text-[18px] text-slate-300/80 max-w-2xl leading-[2.0] lg:leading-[2.2] font-serif tracking-[0.02em]" style="font-weight: 400;">
-            AIツール市場には、ベンダーの利益に左右される評価が溢れています。<br class="hidden lg:inline"><br class="hidden lg:inline">
-            Aixisはこの構造的問題に対し、ベンダーから一切の報酬を受け取らない完全独立の立場で、5軸定量監査を実施。独自の監査プロトコルに基づく実環境テストとAI解析を組み合わせ、定量的で再現性のある監査データを提供します。
-        </p>
-        <div class="mt-14">
-            <a href="/independence" class="about-link inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors duration-200">
-                独立性宣言を読む
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
-            </a>
+    <!-- Wave animation canvas (right side) -->
+    <canvas id="about-wave-canvas" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 10; opacity: 0.35;"></canvas>
+    <div class="about-content-inner max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
+        <div class="flex items-center gap-8 lg:gap-16">
+            <!-- Text column -->
+            <div class="w-full lg:w-1/2 relative" style="z-index:12;">
+                <span class="report-label font-sans about-label" style="color: #475569; text-transform: none;">About Aixis</span>
+                <h2 class="about-heading mt-8 text-2xl sm:text-3xl lg:text-[2.5rem] font-bold font-serif text-white tracking-tight leading-[1.5] lg:leading-[1.55]">
+                    AI実装の投資判断を科学する、<br>独立系AI調査・監査機関。
+                </h2>
+                <p class="about-text mt-10 text-[15px] sm:text-[16px] lg:text-[18px] text-slate-300/80 max-w-2xl leading-[2.0] lg:leading-[2.2] font-serif tracking-[0.02em]" style="font-weight: 400;">
+                    AIツール市場には、ベンダーの利益に左右される評価が溢れています。<br class="hidden lg:inline"><br class="hidden lg:inline">
+                    Aixisはこの構造的問題に対し、ベンダーから一切の報酬を受け取らない完全独立の立場で、5軸定量監査を実施。独自の監査プロトコルに基づく実環境テストとAI解析を組み合わせ、定量的で再現性のある監査データを提供します。
+                </p>
+                <div class="mt-14">
+                    <a href="/independence" class="about-link inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors duration-200">
+                        独立性宣言を読む
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                    </a>
+                </div>
+            </div>
+            <!-- Animation fills right side via canvas -->
+            <div class="hidden lg:block lg:w-1/2" aria-hidden="true"></div>
         </div>
     </div>
 </section>
+<script>
+(function(){
+  var c=document.getElementById('about-wave-canvas');
+  if(!c)return;
+  var ctx=c.getContext('2d');
+  var dpr=window.devicePixelRatio||1;
+  var W,H;
+  function resize(){
+    var r=c.parentElement.getBoundingClientRect();
+    W=r.width; H=r.height;
+    c.width=W*dpr; c.height=H*dpr;
+    c.style.width=W+'px'; c.style.height=H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  resize();
+  window.addEventListener('resize',resize);
+
+  var lines=[
+    {color:'rgba(99,179,237,0.6)',amp:40,freq:0.008,speed:0.015,yOff:0.42,phase:0},
+    {color:'rgba(72,187,120,0.45)',amp:35,freq:0.01,speed:0.012,yOff:0.48,phase:1.5},
+    {color:'rgba(159,122,234,0.4)',amp:45,freq:0.006,speed:0.018,yOff:0.55,phase:3},
+    {color:'rgba(237,137,54,0.3)',amp:30,freq:0.012,speed:0.01,yOff:0.5,phase:4.5},
+    {color:'rgba(99,179,237,0.2)',amp:50,freq:0.005,speed:0.02,yOff:0.45,phase:6},
+  ];
+
+  var particles=[];
+  for(var i=0;i<60;i++){
+    particles.push({
+      x:Math.random()*1.2-0.1, y:Math.random(),
+      r:Math.random()*1.5+0.5,
+      vx:(Math.random()-0.5)*0.0003,
+      vy:(Math.random()-0.5)*0.0002,
+      alpha:Math.random()*0.4+0.1,
+    });
+  }
+
+  var t=0;
+  var isVisible=false;
+  var obs=new IntersectionObserver(function(entries){
+    isVisible=entries[0].isIntersecting;
+  },{threshold:0.1});
+  obs.observe(c.parentElement);
+
+  function draw(){
+    requestAnimationFrame(draw);
+    if(!isVisible)return;
+    t++;
+    ctx.clearRect(0,0,W,H);
+
+    // Only draw on right 60% of canvas
+    var startX=W*0.38;
+
+    // Draw wave lines
+    for(var l=0;l<lines.length;l++){
+      var ln=lines[l];
+      ctx.beginPath();
+      ctx.strokeStyle=ln.color;
+      ctx.lineWidth=1.2;
+      var baseY=H*ln.yOff;
+      for(var x=startX;x<=W;x+=2){
+        // Fade in from left edge
+        var fadeIn=Math.min(1,(x-startX)/(W*0.15));
+        // Fade out at right edge
+        var fadeOut=Math.min(1,(W-x)/(W*0.08));
+        var fade=fadeIn*fadeOut;
+        var y=baseY+Math.sin(x*ln.freq+t*ln.speed+ln.phase)*ln.amp*fade
+                     +Math.sin(x*ln.freq*2.3+t*ln.speed*0.7+ln.phase*1.3)*ln.amp*0.3*fade;
+        if(x===startX)ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+
+    // Draw floating particles (right side only)
+    for(var p=0;p<particles.length;p++){
+      var pt=particles[p];
+      var px=startX+(W-startX)*pt.x;
+      var py=H*pt.y;
+      pt.x+=pt.vx; pt.y+=pt.vy;
+      if(pt.x>1.1)pt.x=-0.05;
+      if(pt.x<-0.1)pt.x=1.05;
+      if(pt.y>1.05)pt.y=-0.02;
+      if(pt.y<-0.05)pt.y=1.02;
+      // Pulse alpha
+      var a=pt.alpha*(0.7+0.3*Math.sin(t*0.03+p));
+      ctx.beginPath();
+      ctx.arc(px,py,pt.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(180,210,240,'+a+')';
+      ctx.fill();
+    }
+  }
+  draw();
+})();
+</script>
 
 <!-- Single dark overlay covering About + all white sections -->
 <div id="dark-overlay"></div>

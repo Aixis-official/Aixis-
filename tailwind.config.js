@@ -29,10 +29,10 @@ module.exports = {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        jp: ['"Noto Sans JP"', 'sans-serif'],
-        mixed: ['Inter', '"Noto Sans JP"', 'sans-serif'],
-        serif: ['"Noto Serif JP"', 'serif'],
+        sans: ['"Noto Serif JP"', '"Hiragino Mincho ProN"', 'serif'],
+        jp: ['"Noto Serif JP"', '"Hiragino Mincho ProN"', 'serif'],
+        mixed: ['"Noto Serif JP"', '"Hiragino Mincho ProN"', 'serif'],
+        serif: ['"Noto Serif JP"', '"Hiragino Mincho ProN"', 'serif'],
       },
       letterSpacing: {
         'heading': '-0.02em'
