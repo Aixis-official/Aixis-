@@ -202,8 +202,9 @@
     #scene-wrapper.--reveal .about-dot-pattern {
         opacity: 0 !important;
     }
-    /* Wave canvas fades out as overlay reveals (dark -> white) */
+    /* Wave canvas: above dark overlay (z-index 10), fades on reveal */
     #about-wave-canvas {
+        z-index: 11 !important;
         transition: opacity 0.5s ease-in-out;
     }
     #scene-wrapper.--reveal #about-wave-canvas {
@@ -659,7 +660,7 @@
 <section id="about-section" class="relative bg-gray-50 overflow-hidden">
     <div class="about-dot-pattern absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
     <!-- Wave animation canvas (right side) -->
-    <canvas id="about-wave-canvas" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 10; opacity: 0.6;"></canvas>
+    <canvas id="about-wave-canvas" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 11; opacity: 0.7;"></canvas>
     <div class="about-content-inner max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
         <div class="flex items-center gap-8 lg:gap-16">
             <!-- Text column -->
