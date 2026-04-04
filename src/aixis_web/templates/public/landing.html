@@ -689,75 +689,68 @@
             </div>
             <!-- Right column: Armillary sphere — sacred precision instrument -->
             <div class="hidden lg:flex lg:w-1/2 items-center justify-center about-geometric" aria-hidden="true">
-                <div id="about-scoreboard" class="w-full max-w-[400px] font-serif" style="opacity:0;">
+                <div id="about-scoreboard" class="relative w-full font-serif" style="opacity:0;">
                     <!-- Header -->
-                    <div class="flex items-center justify-between mb-5 pb-3" style="border-bottom:1px solid rgba(140,195,245,0.08);">
+                    <div class="flex items-center justify-between mb-4 pb-3" style="border-bottom:1px solid rgba(140,195,245,0.08);">
                         <span class="text-[10px] tracking-[0.2em] uppercase" style="color:rgba(160,200,240,0.4);">Audit Results</span>
-                        <span class="text-[10px] tracking-[0.15em]" style="color:rgba(140,190,235,0.3);">Score</span>
+                        <div class="flex items-center gap-8">
+                            <span class="text-[10px] tracking-[0.15em]" style="color:rgba(140,190,235,0.3);">Score</span>
+                            <span class="text-[10px] tracking-[0.15em]" style="color:rgba(140,190,235,0.3); width:24px; text-align:center;">Grade</span>
+                        </div>
                     </div>
+                    <!-- Scan line (contained within scoreboard) -->
+                    <div class="sb-scanline absolute left-0 right-0 h-[1px] pointer-events-none" style="background:linear-gradient(90deg,transparent,rgba(140,200,255,0.5) 30%,rgba(140,200,255,0.5) 70%,transparent); opacity:0; top:0; z-index:2;"></div>
                     <!-- Rows -->
-                    <div class="sb-row flex items-center justify-between py-3" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
-                        <div class="flex items-center gap-3">
-                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:18px;">01</span>
-                            <span class="text-[13px]" style="color:rgba(200,220,245,0.7);">AI Writing Assistant</span>
+                    <div class="sb-row flex items-center justify-between py-3.5" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
+                        <div class="flex items-center gap-4">
+                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:20px;">01</span>
+                            <span class="text-[13px] tracking-wide" style="color:rgba(200,220,245,0.7);">AI Writing Assistant</span>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="sb-score text-[13px] tabular-nums" style="color:rgba(180,215,248,0.8); opacity:0;">4.2</span>
-                            <span class="sb-grade text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm" style="background:rgba(59,130,246,0.12); color:rgba(140,195,250,0.7); opacity:0;">A</span>
-                        </div>
-                    </div>
-                    <div class="sb-row flex items-center justify-between py-3" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
-                        <div class="flex items-center gap-3">
-                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:18px;">02</span>
-                            <span class="text-[13px]" style="color:rgba(200,220,245,0.7);">Enterprise Data Platform</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="sb-score text-[13px] tabular-nums" style="color:rgba(180,215,248,0.8); opacity:0;">3.8</span>
-                            <span class="sb-grade text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm" style="background:rgba(16,185,129,0.12); color:rgba(120,210,180,0.7); opacity:0;">B</span>
+                        <div class="flex items-center gap-5">
+                            <span class="sb-score text-[14px] tabular-nums font-light" style="color:rgba(200,225,250,0.85); opacity:0;">4.2</span>
+                            <span class="sb-grade text-[10px] font-bold tracking-wider w-6 text-center py-0.5 rounded-sm" style="background:rgba(59,130,246,0.15); color:rgba(140,195,250,0.8); opacity:0;">A</span>
                         </div>
                     </div>
-                    <div class="sb-row flex items-center justify-between py-3" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
-                        <div class="flex items-center gap-3">
-                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:18px;">03</span>
-                            <span class="text-[13px]" style="color:rgba(200,220,245,0.7);">Code Generation Tool</span>
+                    <div class="sb-row flex items-center justify-between py-3.5" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
+                        <div class="flex items-center gap-4">
+                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:20px;">02</span>
+                            <span class="text-[13px] tracking-wide" style="color:rgba(200,220,245,0.7);">Enterprise Data Platform</span>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="sb-score text-[13px] tabular-nums" style="color:rgba(180,215,248,0.8); opacity:0;">4.5</span>
-                            <span class="sb-grade text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm" style="background:rgba(59,130,246,0.12); color:rgba(140,195,250,0.7); opacity:0;">S</span>
-                        </div>
-                    </div>
-                    <div class="sb-row flex items-center justify-between py-3" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
-                        <div class="flex items-center gap-3">
-                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:18px;">04</span>
-                            <span class="text-[13px]" style="color:rgba(200,220,245,0.7);">Image Recognition API</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="sb-score text-[13px] tabular-nums" style="color:rgba(180,215,248,0.8); opacity:0;">3.4</span>
-                            <span class="sb-grade text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm" style="background:rgba(245,158,11,0.12); color:rgba(220,185,100,0.7); opacity:0;">C</span>
+                        <div class="flex items-center gap-5">
+                            <span class="sb-score text-[14px] tabular-nums font-light" style="color:rgba(200,225,250,0.85); opacity:0;">3.8</span>
+                            <span class="sb-grade text-[10px] font-bold tracking-wider w-6 text-center py-0.5 rounded-sm" style="background:rgba(16,185,129,0.15); color:rgba(120,210,180,0.8); opacity:0;">B</span>
                         </div>
                     </div>
-                    <div class="sb-row flex items-center justify-between py-3" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
-                        <div class="flex items-center gap-3">
-                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:18px;">05</span>
-                            <span class="text-[13px]" style="color:rgba(200,220,245,0.7);">Conversational AI Suite</span>
+                    <div class="sb-row flex items-center justify-between py-3.5" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
+                        <div class="flex items-center gap-4">
+                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:20px;">03</span>
+                            <span class="text-[13px] tracking-wide" style="color:rgba(200,220,245,0.7);">Code Generation Tool</span>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="sb-score text-[13px] tabular-nums" style="color:rgba(180,215,248,0.8); opacity:0;">4.0</span>
-                            <span class="sb-grade text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm" style="background:rgba(59,130,246,0.12); color:rgba(140,195,250,0.7); opacity:0;">A</span>
-                        </div>
-                    </div>
-                    <div class="sb-row flex items-center justify-between py-3" style="opacity:0;">
-                        <div class="flex items-center gap-3">
-                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:18px;">06</span>
-                            <span class="text-[13px]" style="color:rgba(200,220,245,0.7);">Document Analysis Engine</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="sb-score text-[13px] tabular-nums" style="color:rgba(180,215,248,0.8); opacity:0;">3.6</span>
-                            <span class="sb-grade text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm" style="background:rgba(16,185,129,0.12); color:rgba(120,210,180,0.7); opacity:0;">B</span>
+                        <div class="flex items-center gap-5">
+                            <span class="sb-score text-[14px] tabular-nums font-light" style="color:rgba(200,225,250,0.85); opacity:0;">4.5</span>
+                            <span class="sb-grade text-[10px] font-bold tracking-wider w-6 text-center py-0.5 rounded-sm" style="background:rgba(59,130,246,0.15); color:rgba(140,195,250,0.8); opacity:0;">S</span>
                         </div>
                     </div>
-                    <!-- Scan line -->
-                    <div class="sb-scanline absolute left-0 right-0 h-[1px] pointer-events-none" style="background:linear-gradient(90deg,transparent,rgba(140,200,255,0.4),transparent); opacity:0; top:0;"></div>
+                    <div class="sb-row flex items-center justify-between py-3.5" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
+                        <div class="flex items-center gap-4">
+                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:20px;">04</span>
+                            <span class="text-[13px] tracking-wide" style="color:rgba(200,220,245,0.7);">Image Recognition API</span>
+                        </div>
+                        <div class="flex items-center gap-5">
+                            <span class="sb-score text-[14px] tabular-nums font-light" style="color:rgba(200,225,250,0.85); opacity:0;">3.4</span>
+                            <span class="sb-grade text-[10px] font-bold tracking-wider w-6 text-center py-0.5 rounded-sm" style="background:rgba(245,158,11,0.15); color:rgba(220,185,100,0.8); opacity:0;">C</span>
+                        </div>
+                    </div>
+                    <div class="sb-row flex items-center justify-between py-3.5" style="opacity:0;">
+                        <div class="flex items-center gap-4">
+                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:20px;">05</span>
+                            <span class="text-[13px] tracking-wide" style="color:rgba(200,220,245,0.7);">Conversational AI Suite</span>
+                        </div>
+                        <div class="flex items-center gap-5">
+                            <span class="sb-score text-[14px] tabular-nums font-light" style="color:rgba(200,225,250,0.85); opacity:0;">4.0</span>
+                            <span class="sb-grade text-[10px] font-bold tracking-wider w-6 text-center py-0.5 rounded-sm" style="background:rgba(59,130,246,0.15); color:rgba(140,195,250,0.8); opacity:0;">A</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -870,11 +863,11 @@
                 </g>
 
                 <!-- 5 axis lines from center -->
-                <line class="axr-axis" x1="270" y1="260" x2="270" y2="115" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
-                <line class="axr-axis" x1="270" y1="260" x2="408" y2="167" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
-                <line class="axr-axis" x1="270" y1="260" x2="355" y2="330" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
-                <line class="axr-axis" x1="270" y1="260" x2="185" y2="330" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
-                <line class="axr-axis" x1="270" y1="260" x2="132" y2="167" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+                <line class="axr-axis text-gray-200 dark:text-gray-700" x1="270" y1="260" x2="270" y2="115" stroke="currentColor" stroke-width="1"/>
+                <line class="axr-axis text-gray-200 dark:text-gray-700" x1="270" y1="260" x2="408" y2="167" stroke="currentColor" stroke-width="1"/>
+                <line class="axr-axis text-gray-200 dark:text-gray-700" x1="270" y1="260" x2="355" y2="330" stroke="currentColor" stroke-width="1"/>
+                <line class="axr-axis text-gray-200 dark:text-gray-700" x1="270" y1="260" x2="185" y2="330" stroke="currentColor" stroke-width="1"/>
+                <line class="axr-axis text-gray-200 dark:text-gray-700" x1="270" y1="260" x2="132" y2="167" stroke="currentColor" stroke-width="1"/>
 
                 <!-- Score area (breathing group) -->
                 <g class="axr-pulse-group" style="transform-origin:270px 260px;">
