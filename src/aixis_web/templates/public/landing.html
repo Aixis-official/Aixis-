@@ -227,63 +227,13 @@
         color: #6b7280;
     }
 
-    /* ===== Armillary sphere rotation — slow, authoritative ===== */
-    @keyframes aboutSpin1 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes aboutSpin2 { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-    @keyframes aboutSpin3 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes aboutSpin4 { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-    @keyframes aboutSpin5 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-    /* ===== Refined particle & pulse animations ===== */
-    @keyframes aboutParticleDrift {
-        0%   { transform: translateY(0) translateX(0); opacity: 0; }
-        20%  { opacity: 0.6; }
-        80%  { opacity: 0.5; }
-        100% { transform: translateY(-30px) translateX(8px); opacity: 0; }
+    /* ===== About radar chart ===== */
+    @keyframes radarBreathe {
+        0%, 100% { transform: scale(1); }
+        50%      { transform: scale(1.02); }
     }
-    @keyframes aboutCoreBreathe {
-        0%   { opacity: 0.7; transform: scale(1); }
-        50%  { opacity: 1;   transform: scale(1.06); }
-        100% { opacity: 0.7; transform: scale(1); }
-    }
-    @keyframes aboutNodeBreathe {
-        0%   { opacity: 0.6; }
-        50%  { opacity: 1; }
-        100% { opacity: 0.6; }
-    }
-
-    /* Floating particles — minimal, purposeful */
-    .about-particle {
-        position: absolute;
-        width: 2px;
-        height: 2px;
-        border-radius: 50%;
-        background: rgba(180, 215, 250, 0.6);
-        box-shadow: 0 0 4px 1px rgba(150, 200, 248, 0.25);
-        animation: aboutParticleDrift 14s ease-in-out infinite;
-        z-index: 1;
-        pointer-events: none;
-    }
-    .about-particle.sm {
-        width: 1.5px;
-        height: 1.5px;
-        background: rgba(175, 212, 248, 0.4);
-        box-shadow: 0 0 3px 1px rgba(150, 200, 248, 0.15);
-        animation: aboutParticleDrift 18s ease-in-out infinite;
-    }
-
-    /* Core breathe — slow, dignified */
-    .about-core-pulse {
-        transform-box: fill-box;
-        transform-origin: center;
-        animation: aboutCoreBreathe 5s ease-in-out infinite;
-    }
-
-    /* Node breathe */
-    .about-node-pulse {
-        transform-box: fill-box;
-        transform-origin: center;
-        animation: aboutNodeBreathe 6s ease-in-out infinite;
+    .radar-breathing {
+        animation: radarBreathe 4s ease-in-out infinite;
     }
 
     /* ===== Transparent header text colors (landing page only) =====
@@ -739,99 +689,162 @@
             </div>
             <!-- Right column: Armillary sphere — sacred precision instrument -->
             <div class="hidden lg:flex lg:w-1/2 items-center justify-center about-geometric" aria-hidden="true">
-                <div class="relative" style="width: 480px; height: 480px;">
-                    <!-- Single ambient glow — subtle, not overwrought -->
-                    <div class="absolute inset-0 rounded-full" style="background:radial-gradient(circle, rgba(100,165,230,0.07) 0%, rgba(80,145,215,0.02) 45%, transparent 70%);"></div>
-
-                    <!-- Particles — just 7, intentionally placed -->
-                    <div class="about-particle" style="top:14%;left:62%;animation-delay:0s;"></div>
-                    <div class="about-particle" style="top:78%;left:20%;animation-delay:-4s;"></div>
-                    <div class="about-particle" style="top:40%;left:85%;animation-delay:-8s;"></div>
-                    <div class="about-particle sm" style="top:25%;left:30%;animation-delay:-2s;"></div>
-                    <div class="about-particle sm" style="top:65%;left:68%;animation-delay:-6s;"></div>
-                    <div class="about-particle sm" style="top:85%;left:50%;animation-delay:-10s;"></div>
-                    <div class="about-particle sm" style="top:48%;left:15%;animation-delay:-12s;"></div>
-
-                    <svg viewBox="0 0 480 480" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full relative" style="z-index:2;">
+                <div class="relative" style="width: 480px; height: 420px;">
+                    <svg id="about-radar" viewBox="0 0 480 420" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
                         <defs>
-                            <!-- Single subtle glow filter -->
-                            <filter id="subtleGlow" x="-30%" y="-30%" width="160%" height="160%">
-                                <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
-                                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                            </filter>
-
-                            <!-- Ring gradients — refined opacity curves -->
-                            <linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="rgba(150,205,252,0.55)"/><stop offset="50%" stop-color="rgba(120,180,240,0.06)"/><stop offset="100%" stop-color="rgba(150,205,252,0.55)"/>
+                            <linearGradient id="arFill" x1="50%" y1="0%" x2="50%" y2="100%">
+                                <stop offset="0%" stop-color="rgba(130,185,245,0.18)"/>
+                                <stop offset="100%" stop-color="rgba(100,160,230,0.04)"/>
                             </linearGradient>
-                            <linearGradient id="rg2" x1="100%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stop-color="rgba(140,198,248,0.48)"/><stop offset="50%" stop-color="rgba(110,175,238,0.05)"/><stop offset="100%" stop-color="rgba(140,198,248,0.48)"/>
+                            <linearGradient id="arStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="rgba(155,210,252,0.6)"/>
+                                <stop offset="100%" stop-color="rgba(120,180,242,0.4)"/>
                             </linearGradient>
-                            <linearGradient id="rg3" x1="50%" y1="0%" x2="50%" y2="100%">
-                                <stop offset="0%" stop-color="rgba(135,195,245,0.42)"/><stop offset="50%" stop-color="rgba(100,168,232,0.04)"/><stop offset="100%" stop-color="rgba(135,195,245,0.42)"/>
-                            </linearGradient>
-                            <linearGradient id="rg4" x1="0%" y1="50%" x2="100%" y2="50%">
-                                <stop offset="0%" stop-color="rgba(145,200,248,0.35)"/><stop offset="50%" stop-color="rgba(105,170,235,0.03)"/><stop offset="100%" stop-color="rgba(145,200,248,0.35)"/>
-                            </linearGradient>
-                            <linearGradient id="rg5" x1="20%" y1="0%" x2="80%" y2="100%">
-                                <stop offset="0%" stop-color="rgba(155,208,250,0.30)"/><stop offset="50%" stop-color="rgba(110,172,235,0.03)"/><stop offset="100%" stop-color="rgba(155,208,250,0.30)"/>
-                            </linearGradient>
-
-                            <!-- Core glow — restrained, warm-tinted -->
-                            <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
-                                <stop offset="0%" stop-color="rgba(210,230,250,0.6)"/>
-                                <stop offset="40%" stop-color="rgba(160,200,242,0.12)"/>
-                                <stop offset="100%" stop-color="transparent"/>
-                            </radialGradient>
                         </defs>
 
-                        <!-- Single outer boundary — understated -->
-                        <circle cx="240" cy="240" r="210" stroke="rgba(130,185,240,0.04)" stroke-width="0.5" fill="none"/>
-
-                        <!-- Two concentric reference circles — quiet precision -->
-                        <circle cx="240" cy="240" r="120" stroke="rgba(120,180,235,0.04)" stroke-width="0.3" fill="none" stroke-dasharray="2 14"/>
-                        <circle cx="240" cy="240" r="45" stroke="rgba(135,190,242,0.06)" stroke-width="0.4" fill="none"/>
-
-                        <!-- 5 orbital rings — the heart of the design -->
-                        <g style="animation:aboutSpin1 70s linear infinite;" transform-origin="240 240">
-                            <ellipse cx="240" cy="240" rx="190" ry="65" stroke="url(#rg1)" stroke-width="1.3" fill="none" transform="rotate(-12 240 240)"/>
-                        </g>
-                        <g style="animation:aboutSpin2 85s linear infinite;" transform-origin="240 240">
-                            <ellipse cx="240" cy="240" rx="178" ry="78" stroke="url(#rg2)" stroke-width="1.1" fill="none" transform="rotate(32 240 240)"/>
-                        </g>
-                        <g style="animation:aboutSpin3 75s linear infinite;" transform-origin="240 240">
-                            <ellipse cx="240" cy="240" rx="168" ry="88" stroke="url(#rg3)" stroke-width="1" fill="none" transform="rotate(72 240 240)"/>
-                        </g>
-                        <g style="animation:aboutSpin4 95s linear infinite;" transform-origin="240 240">
-                            <ellipse cx="240" cy="240" rx="158" ry="55" stroke="url(#rg4)" stroke-width="0.7" fill="none" transform="rotate(-48 240 240)"/>
-                        </g>
-                        <g style="animation:aboutSpin5 100s linear infinite;" transform-origin="240 240">
-                            <ellipse cx="240" cy="240" rx="185" ry="45" stroke="url(#rg5)" stroke-width="0.6" fill="none" transform="rotate(56 240 240)"/>
+                        <!-- Grid: concentric pentagons (20/40/60/80/100%) -->
+                        <g class="ar-grid" opacity="0">
+                            <polygon points="240,60 373,157 322,313 158,313 107,157" fill="none" stroke="rgba(140,195,245,0.10)" stroke-width="0.5"/>
+                            <polygon points="240,88 347,165 306,291 174,291 133,165" fill="none" stroke="rgba(140,195,245,0.06)" stroke-width="0.4" stroke-dasharray="3 8"/>
+                            <polygon points="240,116 320,173 289,268 191,268 160,173" fill="none" stroke="rgba(140,195,245,0.06)" stroke-width="0.4" stroke-dasharray="3 8"/>
+                            <polygon points="240,144 293,181 273,245 207,245 187,181" fill="none" stroke="rgba(140,195,245,0.05)" stroke-width="0.4" stroke-dasharray="3 8"/>
+                            <polygon points="240,172 267,191 256,223 224,223 213,191" fill="none" stroke="rgba(140,195,245,0.05)" stroke-width="0.4" stroke-dasharray="3 8"/>
                         </g>
 
-                        <!-- Center core — quiet authority, like a pole star -->
-                        <circle cx="240" cy="240" r="10" fill="url(#coreGlow)" class="about-core-pulse"/>
-                        <circle cx="240" cy="240" r="2" fill="rgba(220,235,252,0.75)"/>
-                        <circle cx="240" cy="240" r="0.8" fill="rgba(248,250,255,1)"/>
+                        <!-- 5 axis lines from center to outer vertices -->
+                        <line class="ar-axis" x1="240" y1="200" x2="240" y2="60" stroke="rgba(140,195,245,0.12)" stroke-width="0.5"/>
+                        <line class="ar-axis" x1="240" y1="200" x2="373" y2="157" stroke="rgba(140,195,245,0.12)" stroke-width="0.5"/>
+                        <line class="ar-axis" x1="240" y1="200" x2="322" y2="313" stroke="rgba(140,195,245,0.12)" stroke-width="0.5"/>
+                        <line class="ar-axis" x1="240" y1="200" x2="158" y2="313" stroke="rgba(140,195,245,0.12)" stroke-width="0.5"/>
+                        <line class="ar-axis" x1="240" y1="200" x2="107" y2="157" stroke="rgba(140,195,245,0.12)" stroke-width="0.5"/>
 
-                        <!-- 5 axis nodes — star-chart precision points -->
-                        <circle cx="240" cy="148" r="1.8" fill="rgba(195,222,248,0.7)" class="about-node-pulse"/>
-                        <circle cx="240" cy="148" r="0.7" fill="rgba(235,245,255,0.95)"/>
+                        <!-- Score area (animated group for breathing) -->
+                        <g class="ar-pulse-group" style="transform-origin:240px 200px;">
+                            <!-- Score fill -->
+                            <polygon class="ar-fill" points="240,81 344,166 307,293 168,300 144,169" fill="url(#arFill)" opacity="0"/>
+                            <!-- Score outline -->
+                            <path class="ar-score" d="M240,81 L344,166 L307,293 L168,300 L144,169 Z" fill="none" stroke="url(#arStroke)" stroke-width="1.2" stroke-linejoin="round"/>
+                            <!-- Score vertex dots -->
+                            <circle class="ar-dot" cx="240" cy="81" r="2.5" fill="rgba(180,215,250,0.8)" stroke="rgba(220,238,255,0.5)" stroke-width="0.5" opacity="0"/>
+                            <circle class="ar-dot" cx="344" cy="166" r="2.5" fill="rgba(180,215,250,0.8)" stroke="rgba(220,238,255,0.5)" stroke-width="0.5" opacity="0"/>
+                            <circle class="ar-dot" cx="307" cy="293" r="2.5" fill="rgba(180,215,250,0.8)" stroke="rgba(220,238,255,0.5)" stroke-width="0.5" opacity="0"/>
+                            <circle class="ar-dot" cx="168" cy="300" r="2.5" fill="rgba(180,215,250,0.8)" stroke="rgba(220,238,255,0.5)" stroke-width="0.5" opacity="0"/>
+                            <circle class="ar-dot" cx="144" cy="169" r="2.5" fill="rgba(180,215,250,0.8)" stroke="rgba(220,238,255,0.5)" stroke-width="0.5" opacity="0"/>
+                        </g>
 
-                        <circle cx="375" cy="225" r="1.6" fill="rgba(185,218,248,0.6)" class="about-node-pulse" style="animation-delay:-2.5s;"/>
-                        <circle cx="375" cy="225" r="0.6" fill="rgba(230,242,255,0.9)"/>
-
-                        <circle cx="325" cy="330" r="1.6" fill="rgba(185,218,248,0.6)" class="about-node-pulse" style="animation-delay:-5s;"/>
-                        <circle cx="325" cy="330" r="0.6" fill="rgba(230,242,255,0.9)"/>
-
-                        <circle cx="155" cy="310" r="1.4" fill="rgba(180,215,245,0.55)" class="about-node-pulse" style="animation-delay:-7.5s;"/>
-                        <circle cx="155" cy="310" r="0.5" fill="rgba(228,240,252,0.85)"/>
-
-                        <circle cx="128" cy="198" r="1.4" fill="rgba(180,215,245,0.55)" class="about-node-pulse" style="animation-delay:-10s;"/>
-                        <circle cx="128" cy="198" r="0.5" fill="rgba(228,240,252,0.85)"/>
+                        <!-- Axis labels -->
+                        <g class="ar-label" opacity="0">
+                            <text x="240" y="38" text-anchor="middle" fill="rgba(210,228,248,0.85)" font-size="13" font-weight="600" font-family="'Noto Serif JP',serif">実務適性</text>
+                            <text x="240" y="52" text-anchor="middle" fill="rgba(160,195,230,0.45)" font-size="9" font-family="'Noto Serif JP',serif" letter-spacing="0.05em">Practicality</text>
+                        </g>
+                        <g class="ar-label" opacity="0">
+                            <text x="385" y="154" text-anchor="start" fill="rgba(210,228,248,0.85)" font-size="13" font-weight="600" font-family="'Noto Serif JP',serif">費用対効果</text>
+                            <text x="385" y="168" text-anchor="start" fill="rgba(160,195,230,0.45)" font-size="9" font-family="'Noto Serif JP',serif" letter-spacing="0.05em">Cost Performance</text>
+                        </g>
+                        <g class="ar-label" opacity="0">
+                            <text x="334" y="330" text-anchor="start" fill="rgba(210,228,248,0.85)" font-size="13" font-weight="600" font-family="'Noto Serif JP',serif">日本語能力</text>
+                            <text x="334" y="344" text-anchor="start" fill="rgba(160,195,230,0.45)" font-size="9" font-family="'Noto Serif JP',serif" letter-spacing="0.05em">Japanese Readiness</text>
+                        </g>
+                        <g class="ar-label" opacity="0">
+                            <text x="146" y="330" text-anchor="end" fill="rgba(210,228,248,0.85)" font-size="13" font-weight="600" font-family="'Noto Serif JP',serif">信頼性・安全性</text>
+                            <text x="146" y="344" text-anchor="end" fill="rgba(160,195,230,0.45)" font-size="9" font-family="'Noto Serif JP',serif" letter-spacing="0.05em">Safety</text>
+                        </g>
+                        <g class="ar-label" opacity="0">
+                            <text x="95" y="154" text-anchor="end" fill="rgba(210,228,248,0.85)" font-size="13" font-weight="600" font-family="'Noto Serif JP',serif">革新性</text>
+                            <text x="95" y="168" text-anchor="end" fill="rgba(160,195,230,0.45)" font-size="9" font-family="'Noto Serif JP',serif" letter-spacing="0.05em">Uniqueness</text>
+                        </g>
                     </svg>
                 </div>
             </div>
+
+            <!-- Radar chart animation script -->
+            <script>
+            (function(){
+                var svg = document.getElementById('about-radar');
+                if (!svg) return;
+
+                var axes = svg.querySelectorAll('.ar-axis');
+                var grid = svg.querySelector('.ar-grid');
+                var score = svg.querySelector('.ar-score');
+                var fill = svg.querySelector('.ar-fill');
+                var dots = svg.querySelectorAll('.ar-dot');
+                var labels = svg.querySelectorAll('.ar-label');
+                var pulseGroup = svg.querySelector('.ar-pulse-group');
+
+                /* --- Initial states --- */
+                axes.forEach(function(line) {
+                    var len = line.getTotalLength();
+                    line.style.strokeDasharray = len;
+                    line.style.strokeDashoffset = len;
+                });
+                var scoreLen = score.getTotalLength();
+                score.style.strokeDasharray = scoreLen;
+                score.style.strokeDashoffset = scoreLen;
+
+                /* --- IntersectionObserver --- */
+                var aboutSection = document.getElementById('about-section');
+                if (!aboutSection) return;
+
+                var fired = false;
+                var obs = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(entry) {
+                        if (entry.isIntersecting && !fired) {
+                            fired = true;
+                            runAnimation();
+                            obs.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.25 });
+                obs.observe(aboutSection);
+
+                function runAnimation() {
+                    /* Phase 1: Axis lines draw from center (0 → 1.4s) */
+                    axes.forEach(function(line) {
+                        line.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(0.25,0.1,0.25,1)';
+                        line.style.strokeDashoffset = '0';
+                    });
+
+                    /* Phase 2: Grid fades in (0.6s → 1.4s) */
+                    setTimeout(function() {
+                        grid.style.transition = 'opacity 0.8s ease-in-out';
+                        grid.style.opacity = '1';
+                    }, 600);
+
+                    /* Phase 3: Labels fade in sequentially (1.0s →, 180ms apart) */
+                    labels.forEach(function(label, i) {
+                        setTimeout(function() {
+                            label.style.transition = 'opacity 0.6s ease-out';
+                            label.style.opacity = '1';
+                        }, 1000 + i * 180);
+                    });
+
+                    /* Phase 4: Score outline draws (1.4s → 2.6s) */
+                    setTimeout(function() {
+                        score.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)';
+                        score.style.strokeDashoffset = '0';
+                    }, 1400);
+
+                    /* Phase 5: Score fill fades in (2.0s → 2.8s) */
+                    setTimeout(function() {
+                        fill.style.transition = 'opacity 0.8s ease-in-out';
+                        fill.style.opacity = '1';
+                    }, 2000);
+
+                    /* Phase 6: Dots appear (2.0s →, 120ms apart) */
+                    dots.forEach(function(dot, i) {
+                        setTimeout(function() {
+                            dot.style.transition = 'opacity 0.4s ease-out';
+                            dot.style.opacity = '1';
+                        }, 2000 + i * 120);
+                    });
+
+                    /* Phase 7: Breathing pulse begins (3.2s) */
+                    setTimeout(function() {
+                        pulseGroup.classList.add('radar-breathing');
+                    }, 3200);
+                }
+            })();
+            </script>
         </div>
     </div>
 </section>
