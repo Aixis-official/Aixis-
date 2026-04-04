@@ -28,9 +28,9 @@ REPORT_TEMPLATE = r"""<!DOCTYPE html>
     --text: #2d3748;
     --text-light: #718096;
     --border: #e2e8f0;
-    --success: #38a169;
-    --warning: #d69e2e;
-    --danger: #e53e3e;
+    --success: #8BA8C4;
+    --warning: #C9A84C;
+    --danger: #8A5A5A;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: "Noto Serif JP", "Hiragino Sans", serif; background: var(--bg); color: var(--text); line-height: 1.7; }
@@ -270,7 +270,7 @@ Plotly.newPlot('bar-chart', [{
     y: barNames,
     orientation: 'h',
     marker: {
-        color: barScores.map((s, i) => axisConfidences[i] === 0 ? '#cbd5e0' : s >= 4.0 ? '#38a169' : s >= 2.5 ? '#d69e2e' : '#e53e3e'),
+        color: barScores.map((s, i) => axisConfidences[i] === 0 ? '#cbd5e0' : s >= 4.0 ? '#8BA8C4' : s >= 2.5 ? '#8A7A6B' : '#8A5A5A'),
     },
     text: barScores.map((s, i) => axisConfidences[i] === 0 ? '手動評価待ち' : s.toFixed(2)),
     textposition: 'inside',
@@ -290,7 +290,7 @@ Plotly.newPlot('category-chart', [{
     x: catNames,
     y: catRates,
     marker: {
-        color: catRates.map(r => r >= 80 ? '#38a169' : r >= 50 ? '#d69e2e' : '#e53e3e'),
+        color: catRates.map(r => r >= 80 ? '#8BA8C4' : r >= 50 ? '#8A7A6B' : '#8A5A5A'),
     },
     text: catRates.map(r => r.toFixed(0) + '%'),
     textposition: 'outside',

@@ -47,9 +47,9 @@ COMPARISON_TEMPLATE = r"""<!DOCTYPE html>
     --text: #2d3748;
     --text-light: #718096;
     --border: #e2e8f0;
-    --success: #38a169;
-    --warning: #d69e2e;
-    --danger: #e53e3e;
+    --success: #8BA8C4;
+    --warning: #C9A84C;
+    --danger: #8A5A5A;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: "Noto Serif JP", "Hiragino Sans", serif; background: var(--bg); color: var(--text); line-height: 1.7; }
@@ -73,14 +73,14 @@ th { background: var(--bg); color: var(--primary); font-weight: 600; font-size: 
 td { font-size: 0.95rem; }
 tr:hover { background: #f0f4f8; }
 
-.cell-green { background: #c6f6d5; color: #22543d; font-weight: 600; }
-.cell-yellow { background: #fefcbf; color: #744210; font-weight: 600; }
-.cell-red { background: #fed7d7; color: #742a2a; font-weight: 600; }
+.cell-green { background: #D4E0EC; color: #3D5A73; font-weight: 600; }
+.cell-yellow { background: #E8D9A0; color: #5C4A1E; font-weight: 600; }
+.cell-red { background: #DCC8C8; color: #4A2E2E; font-weight: 600; }
 
 .rank-badge { display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 50%; font-weight: 700; font-size: 0.85rem; color: white; }
-.rank-1 { background: #d69e2e; }
-.rank-2 { background: #a0aec0; }
-.rank-3 { background: #c27a3a; }
+.rank-1 { background: #C9A84C; }
+.rank-2 { background: #8BA8C4; }
+.rank-3 { background: #6B8A7A; }
 .rank-other { background: #cbd5e0; color: var(--text); }
 
 .footer { text-align: center; padding: 40px 0 20px; color: var(--text-light); font-size: 0.85rem; }
