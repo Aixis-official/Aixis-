@@ -243,13 +243,13 @@
     }
     @keyframes aboutCoreBreathe {
         0%   { opacity: 0.7; transform: scale(1); }
-        50%  { opacity: 1;   transform: scale(1.15); }
+        50%  { opacity: 1;   transform: scale(1.06); }
         100% { opacity: 0.7; transform: scale(1); }
     }
     @keyframes aboutNodeBreathe {
-        0%   { opacity: 0.55; transform: scale(1); }
-        50%  { opacity: 0.85; transform: scale(1.2); }
-        100% { opacity: 0.55; transform: scale(1); }
+        0%   { opacity: 0.6; }
+        50%  { opacity: 1; }
+        100% { opacity: 0.6; }
     }
 
     /* Floating particles — minimal, purposeful */
@@ -777,17 +777,10 @@
                                 <stop offset="0%" stop-color="rgba(155,208,250,0.30)"/><stop offset="50%" stop-color="rgba(110,172,235,0.03)"/><stop offset="100%" stop-color="rgba(155,208,250,0.30)"/>
                             </linearGradient>
 
-                            <!-- Core glow — warm-tinted white center -->
+                            <!-- Core glow — restrained, warm-tinted -->
                             <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
-                                <stop offset="0%" stop-color="rgba(225,238,252,0.95)"/>
-                                <stop offset="25%" stop-color="rgba(175,212,248,0.4)"/>
-                                <stop offset="60%" stop-color="rgba(130,185,240,0.06)"/>
-                                <stop offset="100%" stop-color="transparent"/>
-                            </radialGradient>
-                            <!-- Node glow -->
-                            <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
-                                <stop offset="0%" stop-color="rgba(200,225,250,0.85)"/>
-                                <stop offset="40%" stop-color="rgba(155,205,245,0.3)"/>
+                                <stop offset="0%" stop-color="rgba(210,230,250,0.6)"/>
+                                <stop offset="40%" stop-color="rgba(160,200,242,0.12)"/>
                                 <stop offset="100%" stop-color="transparent"/>
                             </radialGradient>
                         </defs>
@@ -816,28 +809,26 @@
                             <ellipse cx="240" cy="240" rx="185" ry="45" stroke="url(#rg5)" stroke-width="0.6" fill="none" transform="rotate(56 240 240)"/>
                         </g>
 
-                        <!-- Center core — single refined glow with warm-white point -->
-                        <circle cx="240" cy="240" r="16" fill="url(#coreGlow)" class="about-core-pulse" filter="url(#subtleGlow)"/>
-                        <circle cx="240" cy="240" r="3" fill="rgba(215,232,250,0.8)" class="about-core-pulse"/>
-                        <circle cx="240" cy="240" r="1.2" fill="rgba(245,248,255,1)"/>
+                        <!-- Center core — quiet authority, like a pole star -->
+                        <circle cx="240" cy="240" r="10" fill="url(#coreGlow)" class="about-core-pulse"/>
+                        <circle cx="240" cy="240" r="2" fill="rgba(220,235,252,0.75)"/>
+                        <circle cx="240" cy="240" r="0.8" fill="rgba(248,250,255,1)"/>
 
-                        <!-- 5 axis nodes — clean, with gentle glow -->
-                        <g filter="url(#subtleGlow)">
-                            <circle cx="240" cy="148" r="7" fill="url(#nodeGlow)" class="about-node-pulse"/>
-                            <circle cx="240" cy="148" r="2" fill="rgba(210,232,252,0.85)"/>
+                        <!-- 5 axis nodes — star-chart precision points -->
+                        <circle cx="240" cy="148" r="1.8" fill="rgba(195,222,248,0.7)" class="about-node-pulse"/>
+                        <circle cx="240" cy="148" r="0.7" fill="rgba(235,245,255,0.95)"/>
 
-                            <circle cx="375" cy="225" r="6" fill="url(#nodeGlow)" class="about-node-pulse" style="animation-delay:-2.5s;"/>
-                            <circle cx="375" cy="225" r="1.8" fill="rgba(200,225,250,0.8)"/>
+                        <circle cx="375" cy="225" r="1.6" fill="rgba(185,218,248,0.6)" class="about-node-pulse" style="animation-delay:-2.5s;"/>
+                        <circle cx="375" cy="225" r="0.6" fill="rgba(230,242,255,0.9)"/>
 
-                            <circle cx="325" cy="330" r="6" fill="url(#nodeGlow)" class="about-node-pulse" style="animation-delay:-5s;"/>
-                            <circle cx="325" cy="330" r="1.8" fill="rgba(200,225,250,0.8)"/>
+                        <circle cx="325" cy="330" r="1.6" fill="rgba(185,218,248,0.6)" class="about-node-pulse" style="animation-delay:-5s;"/>
+                        <circle cx="325" cy="330" r="0.6" fill="rgba(230,242,255,0.9)"/>
 
-                            <circle cx="155" cy="310" r="5.5" fill="url(#nodeGlow)" class="about-node-pulse" style="animation-delay:-7.5s;"/>
-                            <circle cx="155" cy="310" r="1.6" fill="rgba(195,222,248,0.75)"/>
+                        <circle cx="155" cy="310" r="1.4" fill="rgba(180,215,245,0.55)" class="about-node-pulse" style="animation-delay:-7.5s;"/>
+                        <circle cx="155" cy="310" r="0.5" fill="rgba(228,240,252,0.85)"/>
 
-                            <circle cx="128" cy="198" r="5.5" fill="url(#nodeGlow)" class="about-node-pulse" style="animation-delay:-10s;"/>
-                            <circle cx="128" cy="198" r="1.6" fill="rgba(195,222,248,0.75)"/>
-                        </g>
+                        <circle cx="128" cy="198" r="1.4" fill="rgba(180,215,245,0.55)" class="about-node-pulse" style="animation-delay:-10s;"/>
+                        <circle cx="128" cy="198" r="0.5" fill="rgba(228,240,252,0.85)"/>
                     </svg>
                 </div>
             </div>
@@ -931,24 +922,24 @@
 
                 <!-- Labels: JP name + EN subtitle -->
                 <!-- Top: 実務適性 / Practicality -->
-                <text x="270" y="82" text-anchor="middle" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="sans-serif">実務適性</text>
-                <text x="270" y="98" text-anchor="middle" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="sans-serif">Practicality</text>
+                <text x="270" y="82" text-anchor="middle" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">実務適性</text>
+                <text x="270" y="98" text-anchor="middle" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Practicality</text>
 
                 <!-- Top-right: 費用対効果 / Cost Performance -->
-                <text x="432" y="163" text-anchor="start" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="sans-serif">費用対効果</text>
-                <text x="432" y="179" text-anchor="start" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="sans-serif">Cost Performance</text>
+                <text x="432" y="163" text-anchor="start" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">費用対効果</text>
+                <text x="432" y="179" text-anchor="start" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Cost Performance</text>
 
                 <!-- Bottom-right: 日本語能力 / Japanese Readiness -->
-                <text x="372" y="355" text-anchor="start" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="sans-serif">日本語能力</text>
-                <text x="372" y="371" text-anchor="start" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="sans-serif">Japanese Readiness</text>
+                <text x="372" y="355" text-anchor="start" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">日本語能力</text>
+                <text x="372" y="371" text-anchor="start" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Japanese Readiness</text>
 
                 <!-- Bottom-left: 信頼性・安全性 / Safety -->
-                <text x="168" y="355" text-anchor="end" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="sans-serif">信頼性・安全性</text>
-                <text x="168" y="371" text-anchor="end" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="sans-serif">Safety</text>
+                <text x="168" y="355" text-anchor="end" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">信頼性・安全性</text>
+                <text x="168" y="371" text-anchor="end" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Safety</text>
 
                 <!-- Top-left: 革新性 / Uniqueness -->
-                <text x="108" y="163" text-anchor="end" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="sans-serif">革新性</text>
-                <text x="108" y="179" text-anchor="end" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="sans-serif">Uniqueness</text>
+                <text x="108" y="163" text-anchor="end" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">革新性</text>
+                <text x="108" y="179" text-anchor="end" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Uniqueness</text>
             </svg>
         </div>
 
