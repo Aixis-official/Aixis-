@@ -2,12 +2,12 @@
 
 # Grade colors
 GRADE_COLORS = {
-    "S": "#C9A84C",  # gold
-    "A": "#8BA8C4",  # cool silver
-    "B": "#6B8A7A",  # neutral
-    "C": "#8A7A6B",  # warm gray
-    "D": "#8A5A5A",  # muted red
-    "F": "#8A5A5A",  # muted red
+    "S": "#D4B85C",  # gold
+    "A": "#A3BFD6",  # cool silver
+    "B": "#85A898",  # neutral
+    "C": "#A89688",  # warm gray
+    "D": "#A87070",  # muted red
+    "F": "#A87070",  # muted red
 }
 
 # Axis label mapping

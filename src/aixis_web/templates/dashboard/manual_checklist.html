@@ -31,7 +31,7 @@
                     <span class="text-sm font-medium tabular-nums" id="progress-text">0 / 0 項目入力済み (0%)</span>
                 </div>
                 <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-                    <div class="h-3 rounded-full transition-all duration-500 ease-out" id="progress-bar" style="width:0%;background-color:#8A5A5A"></div>
+                    <div class="h-3 rounded-full transition-all duration-500 ease-out" id="progress-bar" style="width:0%;background-color:#A87070"></div>
                 </div>
             </div>
 
@@ -81,10 +81,10 @@
 const sessionId = '{{ session_id }}';
 
 const AXIS_CONFIG = [
-    { key: 'practicality',     name: '実務適性',       color: '#8BA8C4', autoRatio: 40, manualRatio: 60 },
-    { key: 'cost_performance', name: '費用対効果',     color: '#6B8A7A', autoRatio: 30, manualRatio: 70 },
-    { key: 'localization',     name: '日本語能力',     color: '#8A7A6B', autoRatio: 70, manualRatio: 30 },
-    { key: 'safety',           name: '信頼性・安全性', color: '#8A5A5A', autoRatio: 35, manualRatio: 65 },
+    { key: 'practicality',     name: '実務適性',       color: '#A3BFD6', autoRatio: 40, manualRatio: 60 },
+    { key: 'cost_performance', name: '費用対効果',     color: '#85A898', autoRatio: 30, manualRatio: 70 },
+    { key: 'localization',     name: '日本語能力',     color: '#A89688', autoRatio: 70, manualRatio: 30 },
+    { key: 'safety',           name: '信頼性・安全性', color: '#A87070', autoRatio: 35, manualRatio: 65 },
     { key: 'uniqueness',       name: '革新性',         color: '#805ad5', autoRatio: 40, manualRatio: 60 },
 ];
 
@@ -363,11 +363,11 @@ function updateProgress() {
     const bar = document.getElementById('progress-bar');
     bar.style.width = pct + '%';
     if (pct < 30) {
-        bar.style.backgroundColor = '#8A5A5A';
+        bar.style.backgroundColor = '#A87070';
     } else if (pct < 70) {
-        bar.style.backgroundColor = '#C9A84C';
+        bar.style.backgroundColor = '#D4B85C';
     } else {
-        bar.style.backgroundColor = '#8BA8C4';
+        bar.style.backgroundColor = '#A3BFD6';
     }
 
     // Update per-axis counts

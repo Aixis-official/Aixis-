@@ -37,11 +37,11 @@ html::-webkit-scrollbar { display: none; }
     --warning-light: #fefcbf;
     --danger: #e53e3e;
     --danger-light: #fed7d7;
-    --grade-s: #C9A84C;
-    --grade-a: #8BA8C4;
-    --grade-b: #6B8A7A;
-    --grade-c: #8A7A6B;
-    --grade-d: #8A5A5A;
+    --grade-s: #D4B85C;
+    --grade-a: #A3BFD6;
+    --grade-b: #85A898;
+    --grade-c: #A89688;
+    --grade-d: #A87070;
     --radius: 2px;
     --radius-sm: 1px;
     --shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -427,29 +427,29 @@ main.main-constrained {
 }
 
 .grade-S {
-    background: linear-gradient(135deg, #D4B55A 0%, #C9A84C 50%, #D4B55A 100%);
-    border-color: rgba(201,168,76,0.4);
-    box-shadow: 0 2px 8px rgba(201,168,76,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+    background: linear-gradient(135deg, #E0C56E 0%, #D4B85C 50%, #E0C56E 100%);
+    border-color: rgba(212,184,92,0.4);
+    box-shadow: 0 2px 8px rgba(212,184,92,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
 }
 .grade-A {
-    background: linear-gradient(135deg, #9BB8D0 0%, #8BA8C4 50%, #7B98B4 100%);
-    border-color: rgba(139,168,196,0.4);
-    box-shadow: 0 2px 8px rgba(139,168,196,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    background: linear-gradient(135deg, #B3CEE0 0%, #A3BFD6 50%, #93AFCA 100%);
+    border-color: rgba(163,191,214,0.4);
+    box-shadow: 0 2px 8px rgba(163,191,214,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 .grade-B {
-    background: linear-gradient(135deg, #7B9A8A 0%, #6B8A7A 50%, #5B7A6A 100%);
-    border-color: rgba(107,138,122,0.4);
-    box-shadow: 0 2px 8px rgba(107,138,122,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    background: linear-gradient(135deg, #95B8A8 0%, #85A898 50%, #759888 100%);
+    border-color: rgba(133,168,152,0.4);
+    box-shadow: 0 2px 8px rgba(133,168,152,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 .grade-C {
-    background: linear-gradient(135deg, #9A8A7B 0%, #8A7A6B 50%, #7A6A5B 100%);
-    border-color: rgba(138,122,107,0.4);
-    box-shadow: 0 2px 8px rgba(138,122,107,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    background: linear-gradient(135deg, #B8A698 0%, #A89688 50%, #988678 100%);
+    border-color: rgba(168,150,136,0.4);
+    box-shadow: 0 2px 8px rgba(168,150,136,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 .grade-D {
-    background: linear-gradient(135deg, #9A6A6A 0%, #8A5A5A 50%, #7A4A4A 100%);
-    border-color: rgba(138,90,90,0.4);
-    box-shadow: 0 2px 8px rgba(138,90,90,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    background: linear-gradient(135deg, #B88080 0%, #A87070 50%, #986060 100%);
+    border-color: rgba(168,112,112,0.4);
+    box-shadow: 0 2px 8px rgba(168,112,112,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 .grade-N\/A {
     background: linear-gradient(135deg, #b0bec5 0%, #90a4ae 50%, #78909c 100%);
@@ -478,16 +478,16 @@ main.main-constrained {
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.5),
         inset 0 -1px 0 rgba(0,0,0,0.2),
-        0 0 20px rgba(201, 168, 76, 0.3),
-        0 4px 12px rgba(201, 168, 76, 0.2);
+        0 0 20px rgba(212, 184, 92, 0.3),
+        0 4px 12px rgba(212, 184, 92, 0.2);
 }
 /* A grade silver glow */
 .grade-badge-stamp.grade-A:hover {
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.4),
         inset 0 -1px 0 rgba(0,0,0,0.2),
-        0 0 16px rgba(139, 168, 196, 0.25),
-        0 4px 10px rgba(139, 168, 196, 0.15);
+        0 0 16px rgba(163, 191, 214, 0.25),
+        0 4px 10px rgba(163, 191, 214, 0.15);
 }
 
 /* ==========================================================================

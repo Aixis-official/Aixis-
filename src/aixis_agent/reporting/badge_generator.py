@@ -8,19 +8,19 @@ from ..core.enums import OverallGrade
 
 # Grade-specific colors (right side of badge)
 _GRADE_COLORS: dict[OverallGrade, str] = {
-    OverallGrade.S: "#C9A84C",  # gold
-    OverallGrade.A: "#8BA8C4",  # cool silver
-    OverallGrade.B: "#6B8A7A",  # neutral
-    OverallGrade.C: "#8A7A6B",  # warm gray
-    OverallGrade.D: "#8A5A5A",  # muted red
+    OverallGrade.S: "#D4B85C",  # gold
+    OverallGrade.A: "#A3BFD6",  # cool silver
+    OverallGrade.B: "#85A898",  # neutral
+    OverallGrade.C: "#A89688",  # warm gray
+    OverallGrade.D: "#A87070",  # muted red
 }
 
 _GRADE_COLORS_DARK: dict[OverallGrade, str] = {
-    OverallGrade.S: "#A8893E",
-    OverallGrade.A: "#7090A8",
-    OverallGrade.B: "#567060",
-    OverallGrade.C: "#706254",
-    OverallGrade.D: "#704848",
+    OverallGrade.S: "#B8A04A",
+    OverallGrade.A: "#88A8BE",
+    OverallGrade.B: "#6D9080",
+    OverallGrade.C: "#8E7E72",
+    OverallGrade.D: "#8E5C5C",
 }
 
 # Badge layout constants
