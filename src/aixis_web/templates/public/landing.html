@@ -202,12 +202,12 @@
     #scene-wrapper.--reveal .about-dot-pattern {
         opacity: 0 !important;
     }
-    /* Wave canvas: above dark overlay (z-index 10), fades on reveal */
-    #about-wave-canvas {
-        z-index: 11 !important;
+    /* About geometric figure: above dark overlay, fades on reveal */
+    .about-geometric {
+        z-index: 11;
         transition: opacity 0.8s ease-in-out;
     }
-    #scene-wrapper.--reveal #about-wave-canvas {
+    #scene-wrapper.--reveal .about-geometric {
         opacity: 0 !important;
     }
     /* About text: starts white (on dark overlay), transitions to dark on reveal */
@@ -226,6 +226,13 @@
     #scene-wrapper.--reveal .about-link {
         color: #6b7280;
     }
+
+    /* ===== Armillary sphere rotation keyframes ===== */
+    @keyframes aboutSpin1 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes aboutSpin2 { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+    @keyframes aboutSpin3 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes aboutSpin4 { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+    @keyframes aboutSpin5 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
     /* ===== Transparent header text colors (landing page only) =====
      * Use :not(.nav-solid) so text is white from first paint (pure CSS, no JS dependency).
@@ -678,236 +685,89 @@
                     </a>
                 </div>
             </div>
-            <!-- Animation fills right side via canvas -->
-            <div class="hidden lg:block lg:w-1/2" aria-hidden="true"></div>
+            <!-- Right column: Armillary sphere geometric figure -->
+            <div class="hidden lg:flex lg:w-1/2 items-center justify-center about-geometric" aria-hidden="true">
+                <div class="relative" style="width: 420px; height: 420px;">
+                    <!-- Outer glow -->
+                    <div class="absolute inset-0 rounded-full" style="background: radial-gradient(circle, rgba(100,160,220,0.06) 0%, transparent 70%);"></div>
+
+                    <svg viewBox="0 0 420 420" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full" style="filter: drop-shadow(0 0 20px rgba(100,160,220,0.08));">
+                        <defs>
+                            <linearGradient id="ring1g" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="rgba(120,180,230,0.5)"/>
+                                <stop offset="50%" stop-color="rgba(80,140,200,0.25)"/>
+                                <stop offset="100%" stop-color="rgba(120,180,230,0.5)"/>
+                            </linearGradient>
+                            <linearGradient id="ring2g" x1="100%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="rgba(140,190,235,0.45)"/>
+                                <stop offset="50%" stop-color="rgba(90,150,210,0.2)"/>
+                                <stop offset="100%" stop-color="rgba(140,190,235,0.45)"/>
+                            </linearGradient>
+                            <linearGradient id="ring3g" x1="50%" y1="0%" x2="50%" y2="100%">
+                                <stop offset="0%" stop-color="rgba(100,165,225,0.4)"/>
+                                <stop offset="50%" stop-color="rgba(70,130,195,0.15)"/>
+                                <stop offset="100%" stop-color="rgba(100,165,225,0.4)"/>
+                            </linearGradient>
+                            <linearGradient id="ring4g" x1="0%" y1="50%" x2="100%" y2="50%">
+                                <stop offset="0%" stop-color="rgba(130,185,235,0.35)"/>
+                                <stop offset="50%" stop-color="rgba(85,145,205,0.12)"/>
+                                <stop offset="100%" stop-color="rgba(130,185,235,0.35)"/>
+                            </linearGradient>
+                            <linearGradient id="ring5g" x1="20%" y1="0%" x2="80%" y2="100%">
+                                <stop offset="0%" stop-color="rgba(150,195,240,0.3)"/>
+                                <stop offset="50%" stop-color="rgba(95,155,215,0.1)"/>
+                                <stop offset="100%" stop-color="rgba(150,195,240,0.3)"/>
+                            </linearGradient>
+                        </defs>
+
+                        <!-- 5 orbital rings at different tilts (representing 5 axes) -->
+                        <g style="animation: aboutSpin1 45s linear infinite;" transform-origin="210 210">
+                            <ellipse cx="210" cy="210" rx="175" ry="60" stroke="url(#ring1g)" stroke-width="1" transform="rotate(-15 210 210)"/>
+                        </g>
+                        <g style="animation: aboutSpin2 55s linear infinite;" transform-origin="210 210">
+                            <ellipse cx="210" cy="210" rx="165" ry="70" stroke="url(#ring2g)" stroke-width="0.8" transform="rotate(30 210 210)"/>
+                        </g>
+                        <g style="animation: aboutSpin3 50s linear infinite;" transform-origin="210 210">
+                            <ellipse cx="210" cy="210" rx="155" ry="80" stroke="url(#ring3g)" stroke-width="0.8" transform="rotate(72 210 210)"/>
+                        </g>
+                        <g style="animation: aboutSpin4 60s linear infinite;" transform-origin="210 210">
+                            <ellipse cx="210" cy="210" rx="145" ry="55" stroke="url(#ring4g)" stroke-width="0.6" transform="rotate(-50 210 210)"/>
+                        </g>
+                        <g style="animation: aboutSpin5 65s linear infinite;" transform-origin="210 210">
+                            <ellipse cx="210" cy="210" rx="170" ry="45" stroke="url(#ring5g)" stroke-width="0.6" transform="rotate(55 210 210)"/>
+                        </g>
+
+                        <!-- Inner concentric circles (precision/measurement aesthetic) -->
+                        <circle cx="210" cy="210" r="22" stroke="rgba(120,175,225,0.18)" stroke-width="0.5" fill="none"/>
+                        <circle cx="210" cy="210" r="40" stroke="rgba(120,175,225,0.10)" stroke-width="0.5" fill="none" stroke-dasharray="3 6"/>
+                        <circle cx="210" cy="210" r="100" stroke="rgba(120,175,225,0.07)" stroke-width="0.5" fill="none" stroke-dasharray="2 8"/>
+
+                        <!-- Center core -->
+                        <circle cx="210" cy="210" r="3.5" fill="rgba(160,200,240,0.7)"/>
+                        <circle cx="210" cy="210" r="8" fill="none" stroke="rgba(140,190,235,0.25)" stroke-width="0.5"/>
+
+                        <!-- Axis nodes (5 points on rings) -->
+                        <circle cx="210" cy="150" r="2" fill="rgba(160,200,240,0.5)"/>
+                        <circle cx="370" cy="210" r="1.8" fill="rgba(140,190,235,0.4)"/>
+                        <circle cx="260" cy="275" r="1.8" fill="rgba(140,190,235,0.4)"/>
+                        <circle cx="150" cy="250" r="1.5" fill="rgba(130,180,230,0.35)"/>
+                        <circle cx="170" cy="170" r="1.5" fill="rgba(130,180,230,0.35)"/>
+
+                        <!-- Fine crosshair lines through center -->
+                        <line x1="210" y1="175" x2="210" y2="245" stroke="rgba(120,175,225,0.12)" stroke-width="0.5"/>
+                        <line x1="175" y1="210" x2="245" y2="210" stroke="rgba(120,175,225,0.12)" stroke-width="0.5"/>
+
+                        <!-- Tick marks on inner circle -->
+                        <line x1="210" y1="188" x2="210" y2="193" stroke="rgba(140,190,235,0.25)" stroke-width="0.5"/>
+                        <line x1="210" y1="227" x2="210" y2="232" stroke="rgba(140,190,235,0.25)" stroke-width="0.5"/>
+                        <line x1="188" y1="210" x2="193" y2="210" stroke="rgba(140,190,235,0.25)" stroke-width="0.5"/>
+                        <line x1="227" y1="210" x2="232" y2="210" stroke="rgba(140,190,235,0.25)" stroke-width="0.5"/>
+                    </svg>
+                </div>
+            </div>
         </div>
     </div>
 </section>
-<!-- Wave animation canvas: direct child of scene-wrapper for correct z-index stacking above overlay -->
-<canvas id="about-wave-canvas" class="pointer-events-none hidden lg:block" style="position:absolute;right:0;width:60%;z-index:11;"></canvas>
-<script>
-(function(){
-  var canvas=document.getElementById('about-wave-canvas');
-  if(!canvas)return;
-  var ctx=canvas.getContext('2d');
-  var dpr=Math.min(window.devicePixelRatio||1,2);
-  var W,H;
-
-  function resize(){
-    var sec=document.getElementById('about-section');
-    if(!sec)return;
-    /* Position canvas to cover about-section area within scene-wrapper */
-    canvas.style.top=sec.offsetTop+'px';
-    canvas.style.height=sec.offsetHeight+'px';
-    W=canvas.offsetWidth; H=canvas.offsetHeight;
-    canvas.width=W*dpr; canvas.height=H*dpr;
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  resize();
-  window.addEventListener('resize',resize);
-
-  /* ---- Simplex 3D Noise ---- */
-  var F3=1/3,G3=1/6;
-  var grad3=[[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
-  var perm=new Uint8Array(512),p12=new Uint8Array(512);
-  (function(){var p=[];for(var i=0;i<256;i++)p[i]=i;for(var i=255;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=p[i];p[i]=p[j];p[j]=t;}for(var i=0;i<512;i++){perm[i]=p[i&255];p12[i]=perm[i]%12;}})();
-  function snoise(x,y,z){
-    var s=(x+y+z)*F3,i=Math.floor(x+s),j=Math.floor(y+s),k=Math.floor(z+s);
-    var t=(i+j+k)*G3,X0=i-t,Y0=j-t,Z0=k-t,x0=x-X0,y0=y-Y0,z0=z-Z0;
-    var i1,j1,k1,i2,j2,k2;
-    if(x0>=y0){if(y0>=z0){i1=1;j1=0;k1=0;i2=1;j2=1;k2=0;}else if(x0>=z0){i1=1;j1=0;k1=0;i2=1;j2=0;k2=1;}else{i1=0;j1=0;k1=1;i2=1;j2=0;k2=1;}}
-    else{if(y0<z0){i1=0;j1=0;k1=1;i2=0;j2=1;k2=1;}else if(x0<z0){i1=0;j1=1;k1=0;i2=0;j2=1;k2=1;}else{i1=0;j1=1;k1=0;i2=1;j2=1;k2=0;}}
-    var x1=x0-i1+G3,y1=y0-j1+G3,z1=z0-k1+G3;
-    var x2=x0-i2+2*G3,y2=y0-j2+2*G3,z2=z0-k2+2*G3;
-    var x3=x0-1+3*G3,y3=y0-1+3*G3,z3=z0-1+3*G3;
-    var ii=i&255,jj=j&255,kk=k&255;
-    var n0=0,n1=0,n2=0,n3=0;
-    var t0=0.6-x0*x0-y0*y0-z0*z0;
-    if(t0>0){t0*=t0;var gi=p12[ii+perm[jj+perm[kk]]];n0=t0*t0*(grad3[gi][0]*x0+grad3[gi][1]*y0+grad3[gi][2]*z0);}
-    var t1=0.6-x1*x1-y1*y1-z1*z1;
-    if(t1>0){t1*=t1;var gi=p12[ii+i1+perm[jj+j1+perm[kk+k1]]];n1=t1*t1*(grad3[gi][0]*x1+grad3[gi][1]*y1+grad3[gi][2]*z1);}
-    var t2=0.6-x2*x2-y2*y2-z2*z2;
-    if(t2>0){t2*=t2;var gi=p12[ii+i2+perm[jj+j2+perm[kk+k2]]];n2=t2*t2*(grad3[gi][0]*x2+grad3[gi][1]*y2+grad3[gi][2]*z2);}
-    var t3=0.6-x3*x3-y3*y3-z3*z3;
-    if(t3>0){t3*=t3;var gi=p12[ii+1+perm[jj+1+perm[kk+1]]];n3=t3*t3*(grad3[gi][0]*x3+grad3[gi][1]*y3+grad3[gi][2]*z3);}
-    return 32*(n0+n1+n2+n3);
-  }
-  function fbm(x,y,z){return snoise(x,y,z)*0.5+snoise(x*2,y*2,z*2)*0.25+snoise(x*4,y*4,z*4)*0.125;}
-
-  /* ---- Pre-computed glow sprite (softer, less white) ---- */
-  var glowCanvas=document.createElement('canvas');
-  glowCanvas.width=64;glowCanvas.height=64;
-  var gc=glowCanvas.getContext('2d');
-  var grad=gc.createRadialGradient(32,32,0,32,32,32);
-  grad.addColorStop(0,'rgba(200,220,255,0.9)');
-  grad.addColorStop(0.15,'rgba(160,200,240,0.5)');
-  grad.addColorStop(0.4,'rgba(120,170,220,0.15)');
-  grad.addColorStop(0.7,'rgba(80,140,200,0.04)');
-  grad.addColorStop(1,'rgba(60,120,180,0)');
-  gc.fillStyle=grad;
-  gc.fillRect(0,0,64,64);
-
-  /* ---- Color palettes (richer, more saturated) ---- */
-  var palettes=[
-    [[15,50,130],[25,120,160],[40,170,120]],
-    [[25,70,170],[15,150,170],[50,180,110]],
-    [[60,35,160],[35,130,200],[25,170,150]],
-    [[100,25,170],[60,75,200],[35,145,175]]
-  ];
-  function lerpC(a,b,t){return[a[0]+(b[0]-a[0])*t|0,a[1]+(b[1]-a[1])*t|0,a[2]+(b[2]-a[2])*t|0];}
-
-  /* ---- Wave layer definitions ---- */
-  var COLS=220,ROWS=45;
-  var layers=[
-    {yC:0.10,amp:80,spd:0.30,frq:2.2,pal:0,opacity:0.6},
-    {yC:0.28,amp:70,spd:0.24,frq:2.8,pal:1,opacity:0.7},
-    {yC:0.46,amp:85,spd:0.36,frq:2.0,pal:2,opacity:0.75},
-    {yC:0.64,amp:65,spd:0.28,frq:2.5,pal:3,opacity:0.6},
-    {yC:0.80,amp:55,spd:0.22,frq:3.0,pal:0,opacity:0.45}
-  ];
-
-  /* Pre-compute random per particle */
-  var rnd=[];
-  for(var L=0;L<layers.length;L++){
-    var arr=new Float32Array(COLS*ROWS);
-    for(var i=0;i<arr.length;i++)arr[i]=Math.random();
-    rnd.push(arr);
-  }
-
-  /* Dust particles */
-  var DUST=180;
-  var dustX=new Float32Array(DUST),dustY=new Float32Array(DUST),dustR=new Float32Array(DUST);
-  for(var i=0;i<DUST;i++){dustX[i]=Math.random();dustY[i]=Math.random();dustR[i]=Math.random();}
-
-  /* ---- Render ---- */
-  var time=0,isVis=false,raf;
-  var aboutSec=document.getElementById('about-section');
-  var observer=new IntersectionObserver(function(e){
-    isVis=e[0].isIntersecting;
-    if(isVis&&!raf)loop();
-  },{threshold:0.05});
-  observer.observe(aboutSec||canvas);
-
-  function loop(){
-    if(!isVis){raf=null;return;}
-    raf=requestAnimationFrame(loop);
-    time+=0.008;
-    /* Dark background for additive blending */
-    ctx.globalCompositeOperation='source-over';
-    ctx.fillStyle='#0a0f1a';
-    ctx.fillRect(0,0,W,H);
-    ctx.globalCompositeOperation='lighter';
-
-    /* Draw each wave layer */
-    for(var L=0;L<layers.length;L++){
-      var lay=layers[L];
-      var pal=palettes[lay.pal];
-      var rndL=rnd[L];
-
-      for(var r=0;r<ROWS;r++){
-        var rowN=r/(ROWS-1);
-        for(var c=0;c<COLS;c++){
-          var idx=r*COLS+c;
-          var nx=c/(COLS-1);
-          var rn=rndL[idx];
-
-          /* X position: spread across canvas width with edge margins */
-          var px=W*(0.05+nx*0.90);
-
-          /* Edge fades */
-          var fadeL=nx<0.15?nx/0.15:1;
-          var fadeR=nx>0.85?(1-nx)/0.15:1;
-          var edge=fadeL*fadeR;
-          if(edge<0.01)continue;
-
-          /* Noise-based wave displacement */
-          var n=fbm(nx*lay.frq+time*lay.spd*0.4+L*3.7,rowN*lay.frq*0.5+time*lay.spd*0.25+L*2.1,L*1.5);
-          var w1=Math.sin(nx*9.42+time*lay.spd*3+rowN*2+L)*0.3;
-          var w2=Math.sin(nx*18.84+time*lay.spd*5-rowN*1.5+L*2)*0.12;
-          var disp=(n+w1+w2)*lay.amp*edge;
-
-          /* Y position */
-          var ds=0.3+rowN*0.7;
-          var py=lay.yC*H+rowN*H*0.28*ds+disp;
-
-          /* Color interpolation along x */
-          var cm=nx+Math.sin(time*0.3+L)*0.1;
-          cm=Math.max(0,Math.min(1,cm));
-          var rgb;
-          if(cm<0.5)rgb=lerpC(pal[0],pal[1],cm*2);
-          else rgb=lerpC(pal[1],pal[2],(cm-0.5)*2);
-
-          /* Crest highlight (front rows brighter, subtle) */
-          var crest=rowN<0.10?(1-rowN/0.10):0;
-          var cr=Math.min(255,rgb[0]+crest*30);
-          var cg=Math.min(255,rgb[1]+crest*40);
-          var cb=Math.min(255,rgb[2]+crest*35);
-
-          /* Alpha with sparkle */
-          var sparkle=0.7+0.3*Math.sin(time*3+rn*40);
-          var alpha=(1-rowN*0.75)*edge*sparkle*lay.opacity;
-          if(alpha<0.02)continue;
-
-          /* Size */
-          var sz=(1-rowN*0.6)*(2.5+rn*3.5)*edge*(H/600);
-          if(sz<0.5)continue;
-
-          /* Draw glow halo (subtle) */
-          ctx.globalAlpha=alpha*0.35;
-          ctx.drawImage(glowCanvas,px-sz*1.1,py-sz*1.1,sz*2.2,sz*2.2);
-
-          /* Draw colored core (dominant) */
-          ctx.globalAlpha=alpha;
-          ctx.fillStyle='rgb('+cr+','+cg+','+cb+')';
-          ctx.beginPath();
-          ctx.arc(px,py,sz*0.5,0,6.283);
-          ctx.fill();
-        }
-      }
-    }
-
-    /* Dust particles */
-    ctx.globalAlpha=1;
-    for(var i=0;i<DUST;i++){
-      var rn=dustR[i];
-      var dx=dustX[i]*W+Math.sin(time*0.2+rn*20)*30;
-      var dy=dustY[i]*H+Math.cos(time*0.15+rn*15)*20;
-      dx=((dx%W)+W)%W;
-      dy=((dy%H)+H)%H;
-      var dnx=dx/W;
-      var eL=dnx<0.15?dnx/0.15:1; eL=Math.max(0,eL);
-      var eR=dnx>0.90?(1-dnx)/0.10:1; eR=Math.max(0,eR);
-      var de=eL*eR;
-      if(de<0.01)continue;
-      var pulse=0.3+0.7*Math.sin(time*1.5+rn*30);
-      ctx.globalAlpha=pulse*de*(0.08+rn*0.18);
-      ctx.fillStyle='rgb(120,175,220)';
-      var dsz=1.2+rn*2;
-      ctx.beginPath();
-      ctx.arc(dx,dy,dsz,0,6.283);
-      ctx.fill();
-    }
-
-    /* Left-edge fade to blend with text area */
-    ctx.globalCompositeOperation='source-over';
-    ctx.globalAlpha=1;
-    var fadeW=W*0.18;
-    var fadeGrad=ctx.createLinearGradient(0,0,fadeW,0);
-    fadeGrad.addColorStop(0,'#0a0f1a');
-    fadeGrad.addColorStop(1,'rgba(10,15,26,0)');
-    ctx.fillStyle=fadeGrad;
-    ctx.fillRect(0,0,fadeW,H);
-
-    ctx.globalAlpha=1;
-  }
-
-  /* Kick-start if already visible */
-  setTimeout(function(){
-    var rect=canvas.getBoundingClientRect();
-    if(rect.top<window.innerHeight&&rect.bottom>0){isVis=true;loop();}
-  },100);
-})();
-</script>
 
 <!-- Single dark overlay covering About + all white sections -->
 <div id="dark-overlay"></div>
