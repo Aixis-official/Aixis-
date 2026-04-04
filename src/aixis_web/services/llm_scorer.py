@@ -570,24 +570,30 @@ class LLMScorer:
         if getattr(self, '_is_text_based', False):
             return self.model_lite
         if getattr(self, '_has_mixed_evidence', False):
-            # Mixed mode: only use Sonnet if this axis actually needs screenshots
-            # For meeting_minutes, only uniqueness has UI screenshots as primary
-            if not self._axis_needs_screenshots(axis):
+            # Mixed mode: use Haiku for axes with no/secondary screenshots.
+            # Sonnet only needed for axes with ui_evaluation as primary.
+            ss_need = self._axis_needs_screenshots(axis)
+            if ss_need != "primary":
                 return self.model_lite
         if axis in self.SONNET_REQUIRED_AXES:
             return self.model
         return self.model_lite
 
-    def _axis_needs_screenshots(self, axis: str) -> bool:
-        """Check whether this axis needs screenshot evidence in mixed mode.
+    def _axis_needs_screenshots(self, axis: str) -> str:
+        """Check whether/how this axis needs screenshot evidence in mixed mode.
 
-        Returns True if the axis has ui_evaluation as a primary category.
-        If not, the axis can be scored with text-only evidence (cheaper).
+        Returns:
+          "primary"   – ui_evaluation is a primary category → full screenshot budget
+          "secondary" – ui_evaluation is a secondary category → reduced budget (2 images)
+          ""          – ui_evaluation is not relevant → skip screenshots entirely
         """
         active_cat_map = getattr(self, '_active_axis_categories', self.AXIS_RELEVANT_CATEGORIES)
         relevance = active_cat_map.get(axis, {})
-        primary_cats = set(relevance.get("primary", []))
-        return "ui_evaluation" in primary_cats
+        if "ui_evaluation" in set(relevance.get("primary", [])):
+            return "primary"
+        if "ui_evaluation" in set(relevance.get("secondary", [])):
+            return "secondary"
+        return ""
 
     def _estimated_cost_jpy(self) -> float:
         """Estimate cost in JPY based on per-model token tracking."""
@@ -1864,19 +1870,27 @@ class LLMScorer:
                            axis, len(text_evidence),
                            " + screenshots (mixed mode)" if is_mixed_mode else ", no screenshots")
 
-        # In mixed mode, skip screenshot loading for axes that don't need them.
-        # This avoids sending expensive image tokens to Haiku for text-only axes.
-        skip_screenshots_in_mixed = (is_mixed_mode and not self._axis_needs_screenshots(axis))
-        if skip_screenshots_in_mixed:
-            logger.info("Axis %s: mixed mode but skipping screenshots (text-only axis)", axis)
+        # In mixed mode, determine screenshot strategy per axis:
+        #  "primary"   → full screenshot budget (axis depends on UI evaluation)
+        #  "secondary" → reduced budget (2 images, just enough to note UI language/UX)
+        #  ""          → skip screenshots entirely (text-only axis, e.g. safety)
+        mixed_ss_need = self._axis_needs_screenshots(axis) if is_mixed_mode else ""
+        if is_mixed_mode and not mixed_ss_need:
+            logger.info("Axis %s: mixed mode, skipping screenshots (no ui_evaluation relevance)", axis)
 
-        if not is_text_mode and not skip_screenshots_in_mixed:
+        if not is_text_mode and (not is_mixed_mode or mixed_ss_need):
             # SCREENSHOT-BASED MODE (or mixed mode with screenshot axis):
             # select and load screenshots for axes that need visual evidence.
+            # In mixed mode with secondary need, cap at 2 images (enough to note UI language)
             # Use 600px for Haiku, 1024px only for Sonnet with screenshot evidence.
-            use_sonnet = (axis in self.SONNET_REQUIRED_AXES and not getattr(self, '_is_text_based', False))
+            use_sonnet = (axis in self.SONNET_REQUIRED_AXES and not getattr(self, '_is_text_based', False)
+                          and mixed_ss_need != "secondary")
             resize_width = 1024 if use_sonnet else 600
             all_paths = self._select_screenshots_for_axis(axis, observations)
+            # In mixed mode secondary, limit to 2 screenshots to save tokens
+            if mixed_ss_need == "secondary":
+                all_paths = all_paths[:2]
+                logger.info("Axis %s: mixed mode secondary, limited to %d screenshots", axis, len(all_paths))
             failed_paths = []
             for ss_path in all_paths:
                 image_data = self._load_screenshot(ss_path, max_width=resize_width)
@@ -2323,7 +2337,14 @@ NG（テストデータの引用）→ OK（一般化された品質記述）の
 ×「『古川マネージャー』と『河野』の対話で話者を区別できている」
 ○「複数の話者が参加する会議でも、発言者の識別が正確に機能している」
 
+×「『テスト形成』のような造語が生じている」「『テストケース』の誤認識」
+○「音声認識の誤変換により、文脈に合わない造語が一部に含まれることがある」
+
+×「テスト形成の影響は既存280件のうち18件で」
+○「一部の出力に誤変換が含まれ、手直しが必要になるケースがある」
+
 **原則**: テストで**何を入力したか**ではなく、ツールが**どういう種類のタスクをどの程度こなせるか**を書くこと。
+**絶対禁止**: 『』で囲んだテストデータの引用、「テスト形成」「テストケース」などのテスト関連用語の使用。
 
 ### 代わりに使うべき表現（製品レビュー調）
 evidence（根拠）の記述では、**ユーザーがこのツールを使った時にどう感じるか**の視点で書く。
