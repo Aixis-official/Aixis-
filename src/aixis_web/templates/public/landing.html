@@ -659,8 +659,8 @@
 <!-- ===== ABOUT / PHILOSOPHY ===== -->
 <section id="about-section" class="relative bg-gray-50 overflow-hidden">
     <div class="about-dot-pattern absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
-    <!-- Wave animation canvas (right side) -->
-    <canvas id="about-wave-canvas" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 11; opacity: 0.7;"></canvas>
+    <!-- Sophisticated wave animation canvas -->
+    <canvas id="about-wave-canvas" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 11;"></canvas>
     <div class="about-content-inner max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
         <div class="flex items-center gap-8 lg:gap-16">
             <!-- Text column -->
@@ -692,6 +692,7 @@
   var ctx=c.getContext('2d');
   var dpr=window.devicePixelRatio||1;
   var W,H;
+
   function resize(){
     var r=c.parentElement.getBoundingClientRect();
     W=r.width; H=r.height;
@@ -702,78 +703,235 @@
   resize();
   window.addEventListener('resize',resize);
 
-  var lines=[
-    {color:'rgba(200,220,255,0.8)',amp:40,freq:0.008,speed:0.015,yOff:0.42,phase:0},
-    {color:'rgba(160,210,255,0.6)',amp:35,freq:0.01,speed:0.012,yOff:0.48,phase:1.5},
-    {color:'rgba(180,190,255,0.55)',amp:45,freq:0.006,speed:0.018,yOff:0.55,phase:3},
-    {color:'rgba(140,200,240,0.4)',amp:30,freq:0.012,speed:0.01,yOff:0.5,phase:4.5},
-    {color:'rgba(220,230,255,0.35)',amp:50,freq:0.005,speed:0.02,yOff:0.45,phase:6},
+  /* ---- Simplex-like noise (fast 2D) ---- */
+  var perm=new Uint8Array(512);
+  var grad=[[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+  (function(){
+    var p=[];for(var i=0;i<256;i++)p[i]=i;
+    for(var i=255;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=p[i];p[i]=p[j];p[j]=t;}
+    for(var i=0;i<512;i++)perm[i]=p[i&255];
+  })();
+  function noise2d(x,y){
+    var ix=Math.floor(x)&255, iy=Math.floor(y)&255;
+    var fx=x-Math.floor(x), fy=y-Math.floor(y);
+    var ux=fx*fx*(3-2*fx), uy=fy*fy*(3-2*fy);
+    var g00=grad[perm[ix+perm[iy]]&7], g10=grad[perm[ix+1+perm[iy]]&7];
+    var g01=grad[perm[ix+perm[iy+1]]&7], g11=grad[perm[ix+1+perm[iy+1]]&7];
+    var n00=g00[0]*fx+g00[1]*fy, n10=g10[0]*(fx-1)+g10[1]*fy;
+    var n01=g01[0]*fx+g01[1]*(fy-1), n11=g11[0]*(fx-1)+g11[1]*(fy-1);
+    var nx0=n00*(1-ux)+n10*ux, nx1=n01*(1-ux)+n11*ux;
+    return nx0*(1-uy)+nx1*uy;
+  }
+  function fbm(x,y,oct){
+    var v=0,a=0.5,f=1;
+    for(var i=0;i<oct;i++){v+=a*noise2d(x*f,y*f);a*=0.5;f*=2;}
+    return v;
+  }
+
+  /* ---- Wave surface layers ---- */
+  var layers=[
+    {yCenter:0.35, amp:55, color:[30,80,140], alpha:0.12, freq:0.0025, speed:0.0004, noiseScale:0.003, meshAlpha:0.08},
+    {yCenter:0.42, amp:50, color:[20,140,130], alpha:0.15, freq:0.003,  speed:0.0005, noiseScale:0.004, meshAlpha:0.10},
+    {yCenter:0.50, amp:60, color:[50,120,200], alpha:0.18, freq:0.002,  speed:0.0006, noiseScale:0.003, meshAlpha:0.12},
+    {yCenter:0.58, amp:45, color:[100,60,180], alpha:0.14, freq:0.0035, speed:0.0003, noiseScale:0.005, meshAlpha:0.09},
+    {yCenter:0.65, amp:40, color:[40,160,120], alpha:0.10, freq:0.003,  speed:0.0007, noiseScale:0.004, meshAlpha:0.07},
   ];
 
+  /* ---- Particles ---- */
   var particles=[];
-  for(var i=0;i<60;i++){
+  for(var i=0;i<120;i++){
+    var depth=Math.random();
     particles.push({
-      x:Math.random()*1.2-0.1, y:Math.random(),
-      r:Math.random()*1.5+0.5,
-      vx:(Math.random()-0.5)*0.0003,
-      vy:(Math.random()-0.5)*0.0002,
-      alpha:Math.random()*0.5+0.2,
+      x:Math.random(), y:Math.random(),
+      r:depth*1.8+0.3,
+      vx:(Math.random()-0.5)*0.00015,
+      vy:-Math.random()*0.0002-0.00005,
+      depth:depth,
+      baseAlpha:depth*0.4+0.05,
+      phase:Math.random()*Math.PI*2
+    });
+  }
+
+  /* ---- Edge glow nodes ---- */
+  var nodes=[];
+  for(var i=0;i<8;i++){
+    nodes.push({
+      x:0.3+Math.random()*0.6,
+      y:0.2+Math.random()*0.6,
+      phase:Math.random()*Math.PI*2,
+      speed:0.003+Math.random()*0.004,
+      radius:60+Math.random()*80
     });
   }
 
   var t=0;
   var isVisible=false;
-  var obs=new IntersectionObserver(function(entries){
-    isVisible=entries[0].isIntersecting;
-  },{threshold:0.1});
+  var obs=new IntersectionObserver(function(e){isVisible=e[0].isIntersecting;},{threshold:0.05});
   obs.observe(c.parentElement);
+
+  function getWaveY(layer, x, time){
+    var nx=x*layer.noiseScale;
+    var n=fbm(nx+time*layer.speed*80, layer.yCenter*5+time*layer.speed*20, 3);
+    return H*layer.yCenter + Math.sin(x*layer.freq+time*0.8+layer.yCenter*10)*layer.amp
+           + n*layer.amp*1.5
+           + Math.sin(x*layer.freq*2.7+time*1.2)*layer.amp*0.2;
+  }
 
   function draw(){
     requestAnimationFrame(draw);
     if(!isVisible)return;
-    t++;
+    t+=0.016;
     ctx.clearRect(0,0,W,H);
 
-    // Only draw on right 60% of canvas
-    var startX=W*0.38;
+    var startX=W*0.32;
+    var regionW=W-startX;
 
-    // Draw wave lines
-    for(var l=0;l<lines.length;l++){
-      var ln=lines[l];
-      ctx.beginPath();
-      ctx.strokeStyle=ln.color;
-      ctx.lineWidth=1.5;
-      var baseY=H*ln.yOff;
-      for(var x=startX;x<=W;x+=2){
-        // Fade in from left edge
-        var fadeIn=Math.min(1,(x-startX)/(W*0.15));
-        // Fade out at right edge
-        var fadeOut=Math.min(1,(W-x)/(W*0.08));
+    /* ---- Draw filled wave surfaces with gradient + mesh ---- */
+    for(var li=0;li<layers.length;li++){
+      var L=layers[li];
+      var step=3;
+      var pts=[];
+      for(var x=startX;x<=W+step;x+=step){
+        var fadeIn=Math.min(1,(x-startX)/(regionW*0.18));
+        var fadeOut=Math.min(1,(W-x+step)/(regionW*0.1));
         var fade=fadeIn*fadeOut;
-        var y=baseY+Math.sin(x*ln.freq+t*ln.speed+ln.phase)*ln.amp*fade
-                     +Math.sin(x*ln.freq*2.3+t*ln.speed*0.7+ln.phase*1.3)*ln.amp*0.3*fade;
-        if(x===startX)ctx.moveTo(x,y);
-        else ctx.lineTo(x,y);
+        if(fade<0)fade=0;
+        var y=getWaveY(L,x,t);
+        y=H*L.yCenter+(y-H*L.yCenter)*fade;
+        pts.push({x:x,y:y,fade:fade});
       }
+
+      /* Filled area below wave with vertical gradient */
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.lineTo(W+step, H+10);
+      ctx.lineTo(startX, H+10);
+      ctx.closePath();
+      var grd=ctx.createLinearGradient(0, H*L.yCenter-L.amp, 0, H*L.yCenter+L.amp*3);
+      grd.addColorStop(0,'rgba('+L.color[0]+','+L.color[1]+','+L.color[2]+','+L.alpha+')');
+      grd.addColorStop(0.5,'rgba('+L.color[0]+','+L.color[1]+','+L.color[2]+','+(L.alpha*0.4)+')');
+      grd.addColorStop(1,'rgba('+L.color[0]+','+L.color[1]+','+L.color[2]+',0)');
+      ctx.fillStyle=grd;
+      ctx.fill();
+
+      /* Wave crest line with glow */
+      ctx.save();
+      ctx.shadowColor='rgba('+L.color[0]+','+L.color[1]+','+L.color[2]+',0.5)';
+      ctx.shadowBlur=12;
+      ctx.beginPath();
+      for(var i=0;i<pts.length;i++){
+        if(i===0)ctx.moveTo(pts[i].x, pts[i].y);
+        else ctx.lineTo(pts[i].x, pts[i].y);
+      }
+      ctx.strokeStyle='rgba('+(L.color[0]+80)+','+(L.color[1]+80)+','+(L.color[2]+60)+','+(L.alpha*2.5)+')';
+      ctx.lineWidth=1.2;
       ctx.stroke();
+      ctx.restore();
+
+      /* Mesh / grid lines on wave surface */
+      var meshSpacingX=40;
+      var meshRows=6;
+      var meshDepth=L.amp*1.6;
+      ctx.globalAlpha=L.meshAlpha*pts[Math.floor(pts.length/2)].fade;
+
+      /* Horizontal mesh lines */
+      for(var row=1;row<=meshRows;row++){
+        var rowRatio=row/meshRows;
+        ctx.beginPath();
+        for(var i=0;i<pts.length;i++){
+          var my=pts[i].y+meshDepth*rowRatio;
+          var mAlpha=1-rowRatio*0.8;
+          if(i===0)ctx.moveTo(pts[i].x, my);
+          else ctx.lineTo(pts[i].x, my);
+        }
+        ctx.strokeStyle='rgba('+(L.color[0]+100)+','+(L.color[1]+100)+','+(L.color[2]+80)+','+(0.3*(1-rowRatio))+')';
+        ctx.lineWidth=0.5;
+        ctx.stroke();
+      }
+
+      /* Vertical mesh lines */
+      for(var i=0;i<pts.length;i+=Math.round(meshSpacingX/step)){
+        if(pts[i].fade<0.1)continue;
+        ctx.beginPath();
+        ctx.moveTo(pts[i].x, pts[i].y);
+        ctx.lineTo(pts[i].x, pts[i].y+meshDepth);
+        ctx.strokeStyle='rgba('+(L.color[0]+100)+','+(L.color[1]+100)+','+(L.color[2]+80)+','+(0.15*pts[i].fade)+')';
+        ctx.lineWidth=0.4;
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha=1;
     }
 
-    // Draw floating particles (right side only)
-    for(var p=0;p<particles.length;p++){
-      var pt=particles[p];
-      var px=startX+(W-startX)*pt.x;
-      var py=H*pt.y;
-      pt.x+=pt.vx; pt.y+=pt.vy;
-      if(pt.x>1.1)pt.x=-0.05;
-      if(pt.x<-0.1)pt.x=1.05;
-      if(pt.y>1.05)pt.y=-0.02;
-      if(pt.y<-0.05)pt.y=1.02;
-      // Pulse alpha
-      var a=pt.alpha*(0.7+0.3*Math.sin(t*0.03+p));
+    /* ---- Ambient glow nodes ---- */
+    for(var i=0;i<nodes.length;i++){
+      var nd=nodes[i];
+      var nx=W*nd.x+Math.sin(t*nd.speed+nd.phase)*40;
+      var ny=H*nd.y+Math.cos(t*nd.speed*0.7+nd.phase)*30;
+      if(nx<startX)continue;
+      var fadeIn=Math.min(1,(nx-startX)/(regionW*0.2));
+      var r=nd.radius*(0.8+0.2*Math.sin(t*nd.speed*2+nd.phase));
+      var grd=ctx.createRadialGradient(nx,ny,0,nx,ny,r);
+      grd.addColorStop(0,'rgba(80,160,220,'+(0.06*fadeIn)+')');
+      grd.addColorStop(0.5,'rgba(60,120,200,'+(0.02*fadeIn)+')');
+      grd.addColorStop(1,'rgba(40,80,160,0)');
+      ctx.fillStyle=grd;
+      ctx.fillRect(nx-r,ny-r,r*2,r*2);
+    }
+
+    /* ---- Floating particles with glow ---- */
+    for(var i=0;i<particles.length;i++){
+      var p=particles[i];
+      var px=startX+regionW*p.x;
+      var py=H*p.y;
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.y<-0.05){p.y=1.05; p.x=Math.random();}
+      if(p.x>1.1)p.x=-0.05;
+      if(p.x<-0.1)p.x=1.05;
+
+      var fadeIn=Math.min(1,(px-startX)/(regionW*0.15));
+      if(fadeIn<=0)continue;
+      var pulse=0.6+0.4*Math.sin(t*1.5+p.phase);
+      var a=p.baseAlpha*pulse*fadeIn;
+
+      /* Outer glow */
+      if(p.r>1.0){
+        var grd=ctx.createRadialGradient(px,py,0,px,py,p.r*6);
+        grd.addColorStop(0,'rgba(140,200,255,'+(a*0.3)+')');
+        grd.addColorStop(1,'rgba(140,200,255,0)');
+        ctx.fillStyle=grd;
+        ctx.fillRect(px-p.r*6,py-p.r*6,p.r*12,p.r*12);
+      }
+
+      /* Core */
       ctx.beginPath();
-      ctx.arc(px,py,pt.r,0,Math.PI*2);
-      ctx.fillStyle='rgba(220,235,255,'+a+')';
+      ctx.arc(px,py,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(200,230,255,'+a+')';
       ctx.fill();
+    }
+
+    /* ---- Thin connecting lines between close particles ---- */
+    ctx.lineWidth=0.3;
+    for(var i=0;i<particles.length;i++){
+      if(particles[i].depth<0.5)continue;
+      var px1=startX+regionW*particles[i].x;
+      var py1=H*particles[i].y;
+      for(var j=i+1;j<particles.length;j++){
+        if(particles[j].depth<0.5)continue;
+        var px2=startX+regionW*particles[j].x;
+        var py2=H*particles[j].y;
+        var dx=px1-px2, dy=py1-py2;
+        var d=Math.sqrt(dx*dx+dy*dy);
+        if(d<100){
+          var la=(1-d/100)*0.08;
+          ctx.beginPath();
+          ctx.moveTo(px1,py1);
+          ctx.lineTo(px2,py2);
+          ctx.strokeStyle='rgba(160,200,240,'+la+')';
+          ctx.stroke();
+        }
+      }
     }
   }
   draw();
