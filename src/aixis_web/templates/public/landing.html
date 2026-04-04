@@ -202,12 +202,12 @@
     #scene-wrapper.--reveal .about-dot-pattern {
         opacity: 0 !important;
     }
-    /* Wave canvas: above dark overlay (z-index 10), fades on reveal */
-    #about-wave-canvas {
+    /* WebGL wave: above dark overlay (z-index 10), fades on reveal */
+    #about-wave-gl {
         z-index: 11 !important;
-        transition: opacity 0.5s ease-in-out;
+        transition: opacity 0.8s ease-in-out;
     }
-    #scene-wrapper.--reveal #about-wave-canvas {
+    #scene-wrapper.--reveal #about-wave-gl {
         opacity: 0 !important;
     }
     /* About text: starts white (on dark overlay), transitions to dark on reveal */
@@ -659,8 +659,8 @@
 <!-- ===== ABOUT / PHILOSOPHY ===== -->
 <section id="about-section" class="relative bg-gray-50 overflow-hidden">
     <div class="about-dot-pattern absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 32px 32px;"></div>
-    <!-- Sophisticated wave animation canvas -->
-    <canvas id="about-wave-canvas" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 11;"></canvas>
+    <!-- WebGL wave animation -->
+    <div id="about-wave-gl" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 11;"></div>
     <div class="about-content-inner max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
         <div class="flex items-center gap-8 lg:gap-16">
             <!-- Text column -->
@@ -685,257 +685,314 @@
         </div>
     </div>
 </section>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
 <script>
-(function(){
-  var c=document.getElementById('about-wave-canvas');
-  if(!c)return;
-  var ctx=c.getContext('2d');
-  var dpr=Math.min(window.devicePixelRatio||1, 2);
-  var W,H;
-
-  function resize(){
-    var r=c.parentElement.getBoundingClientRect();
-    W=r.width; H=r.height;
-    c.width=W*dpr; c.height=H*dpr;
-    c.style.width=W+'px'; c.style.height=H+'px';
-    ctx.setTransform(dpr,0,0,dpr,0,0);
+document.addEventListener('DOMContentLoaded',function(){
+  if(typeof THREE==='undefined'){
+    /* Retry once after Three.js loads */
+    var s=document.querySelector('script[src*="three.min"]');
+    if(s)s.onload=init; return;
   }
-  resize();
-  window.addEventListener('resize',resize);
+  init();
+});
+function init(){
+  if(typeof THREE==='undefined')return;
+  var container=document.getElementById('about-wave-gl');
+  if(!container)return;
 
-  /* ---- Perlin noise ---- */
-  var P=new Uint8Array(512);
-  var G=[[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
-  !function(){var p=[];for(var i=0;i<256;i++)p[i]=i;for(var i=255;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=p[i];p[i]=p[j];p[j]=tmp;}for(var i=0;i<512;i++)P[i]=p[i&255];}();
-  function n2(x,y){
-    var ix=Math.floor(x)&255,iy=Math.floor(y)&255,fx=x-Math.floor(x),fy=y-Math.floor(y);
-    var u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy);
-    var aa=G[P[ix+P[iy]]&7],ba=G[P[ix+1+P[iy]]&7],ab=G[P[ix+P[iy+1]]&7],bb=G[P[ix+1+P[iy+1]]&7];
-    return(((aa[0]*fx+aa[1]*fy)*(1-u)+(ba[0]*(fx-1)+ba[1]*fy)*u)*(1-v)+
-           ((ab[0]*fx+ab[1]*(fy-1))*(1-u)+(bb[0]*(fx-1)+bb[1]*(fy-1))*u)*v);
+  /* ---- Renderer ---- */
+  var renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setClearColor(0x000000,0);
+  container.appendChild(renderer.domElement);
+  renderer.domElement.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;';
+
+  var scene=new THREE.Scene();
+
+  /* ---- Camera (orthographic to match 2D layout) ---- */
+  var W=container.offsetWidth, H=container.offsetHeight;
+  var camera=new THREE.OrthographicCamera(-W/2,W/2,H/2,-H/2,0.1,1000);
+  camera.position.z=100;
+  renderer.setSize(W,H);
+
+  function onResize(){
+    W=container.offsetWidth; H=container.offsetHeight;
+    camera.left=-W/2; camera.right=W/2; camera.top=H/2; camera.bottom=-H/2;
+    camera.updateProjectionMatrix();
+    renderer.setSize(W,H);
   }
-  function fbm(x,y){return n2(x,y)*0.5+n2(x*2,y*2)*0.25+n2(x*4,y*4)*0.125+n2(x*8,y*8)*0.0625;}
+  window.addEventListener('resize',onResize);
 
-  /* ---- Color palette (deep blue→teal→green→purple) ---- */
-  function waveColor(nx,layer){
-    /* nx: 0-1 across wave width, layer: 0-3 */
-    var colors=[
-      [[15,40,90],[20,100,130],[30,140,100]],   /* layer 0: deep blue → teal → green */
-      [[20,60,140],[10,130,140],[40,150,90]],    /* layer 1 */
-      [[50,30,120],[30,110,170],[20,140,120]],   /* layer 2: purple → blue → teal */
-      [[80,20,130],[50,60,160],[30,120,140]],    /* layer 3: magenta → indigo → teal */
-    ];
-    var cs=colors[layer%4];
-    var t2=nx*2;
-    if(t2<1){
-      var r=cs[0][0]+(cs[1][0]-cs[0][0])*t2, g=cs[0][1]+(cs[1][1]-cs[0][1])*t2, b=cs[0][2]+(cs[1][2]-cs[0][2])*t2;
-    } else {
-      t2-=1;
-      var r=cs[1][0]+(cs[2][0]-cs[1][0])*t2, g=cs[1][1]+(cs[2][1]-cs[1][1])*t2, b=cs[1][2]+(cs[2][2]-cs[1][2])*t2;
+  /* ---- GLSL: Simplex 3D noise ---- */
+  var noiseGLSL=`
+    vec4 perm(vec4 x){return mod(((x*34.0)+1.0)*x,289.0);}
+    float snoise(vec3 v){
+      const vec2 C=vec2(1.0/6.0,1.0/3.0);
+      const vec4 D=vec4(0.0,0.5,1.0,2.0);
+      vec3 i=floor(v+dot(v,C.yyy));
+      vec3 x0=v-i+dot(i,C.xxx);
+      vec3 g=step(x0.yzx,x0.xyz);
+      vec3 l=1.0-g;
+      vec3 i1=min(g.xyz,l.zxy);
+      vec3 i2=max(g.xyz,l.zxy);
+      vec3 x1=x0-i1+C.xxx;
+      vec3 x2=x0-i2+C.yyy;
+      vec3 x3=x0-D.yyy;
+      i=mod(i,289.0);
+      vec4 p=perm(perm(perm(i.z+vec4(0.0,i1.z,i2.z,1.0))+i.y+vec4(0.0,i1.y,i2.y,1.0))+i.x+vec4(0.0,i1.x,i2.x,1.0));
+      float n_=1.0/7.0;
+      vec3 ns=n_*D.wyz-D.xzx;
+      vec4 j=p-49.0*floor(p*ns.z*ns.z);
+      vec4 x_=floor(j*ns.z);
+      vec4 y_=floor(j-7.0*x_);
+      vec4 x=x_*ns.x+ns.yyyy;
+      vec4 y=y_*ns.x+ns.yyyy;
+      vec4 h=1.0-abs(x)-abs(y);
+      vec4 b0=vec4(x.xy,y.xy);
+      vec4 b1=vec4(x.zw,y.zw);
+      vec4 s0=floor(b0)*2.0+1.0;
+      vec4 s1=floor(b1)*2.0+1.0;
+      vec4 sh=-step(h,vec4(0.0));
+      vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;
+      vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+      vec3 p0=vec3(a0.xy,h.x);
+      vec3 p1=vec3(a0.zw,h.y);
+      vec3 p2=vec3(a1.xy,h.z);
+      vec3 p3=vec3(a1.zw,h.w);
+      vec4 norm=1.79284291400159-0.85373472095314*vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3));
+      p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
+      vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);
+      m=m*m;
+      return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
     }
-    return [Math.round(r),Math.round(g),Math.round(b)];
-  }
+    float fbm(vec3 p){return snoise(p)*0.5+snoise(p*2.0)*0.25+snoise(p*4.0)*0.125;}
+  `;
 
-  /* ---- Particle-mesh wave surfaces ---- */
-  /* Each surface is a grid of points that undulate with noise */
-  var COLS=140, ROWS=35;
-  var surfaces=[
-    {yBase:0.28, ySpread:0.35, amp:70, speed:0.12, xSpeed:0.08, noiseFreq:1.8, layer:0, opacity:0.7},
-    {yBase:0.38, ySpread:0.30, amp:55, speed:0.09, xSpeed:0.06, noiseFreq:2.2, layer:1, opacity:0.55},
-    {yBase:0.50, ySpread:0.28, amp:65, speed:0.14, xSpeed:0.10, noiseFreq:1.5, layer:2, opacity:0.65},
-    {yBase:0.60, ySpread:0.25, amp:50, speed:0.11, xSpeed:0.07, noiseFreq:2.0, layer:3, opacity:0.50},
+  /* ---- Vertex shader ---- */
+  var vertexShader=noiseGLSL+`
+    uniform float uTime;
+    uniform float uAmp;
+    uniform float uSpeed;
+    uniform float uFreq;
+    uniform float uYCenter;
+    uniform float uLayer;
+    uniform vec2 uRes;
+    attribute float aRandom;
+    attribute float aDepth;
+    varying float vAlpha;
+    varying vec3 vColor;
+    varying float vEdge;
+
+    void main(){
+      vec3 pos=position;
+
+      /* Normalized x: 0-1 across surface */
+      float nx=(pos.x+uRes.x*0.5)/(uRes.x);
+      /* Offset to right 65% of screen */
+      float screenX=mix(uRes.x*-0.15, uRes.x*0.5, nx);
+
+      /* Edge fade */
+      float fadeL=smoothstep(0.0,0.18,nx);
+      float fadeR=smoothstep(1.0,0.88,nx);
+      float edgeFade=fadeL*fadeR;
+
+      /* Noise-based wave displacement */
+      float n=fbm(vec3(nx*uFreq+uTime*uSpeed*0.4+uLayer*3.7, aDepth*uFreq*0.5+uTime*uSpeed*0.25+uLayer*2.1, uLayer*1.5));
+      float wave=sin(nx*6.28*1.5+uTime*uSpeed*3.0+aDepth*2.0+uLayer)*0.3;
+      float wave2=sin(nx*6.28*3.0+uTime*uSpeed*5.0-aDepth*1.5+uLayer*2.0)*0.12;
+      float displacement=(n+wave+wave2)*uAmp*edgeFade;
+
+      /* Perspective depth compression */
+      float depthScale=0.3+aDepth*0.7;
+      float yPos=uYCenter*uRes.y+aDepth*uRes.y*0.28*depthScale+displacement;
+
+      pos.x=screenX;
+      pos.y=-yPos+uRes.y*0.5;
+
+      /* Color based on position + layer */
+      float colorMix=nx+sin(uTime*0.3+uLayer)*0.1;
+      vec3 colA,colB,colC;
+      if(uLayer<1.0){colA=vec3(0.06,0.16,0.38);colB=vec3(0.08,0.42,0.52);colC=vec3(0.12,0.55,0.40);}
+      else if(uLayer<2.0){colA=vec3(0.08,0.24,0.55);colB=vec3(0.04,0.52,0.55);colC=vec3(0.16,0.58,0.35);}
+      else if(uLayer<3.0){colA=vec3(0.20,0.12,0.50);colB=vec3(0.12,0.44,0.68);colC=vec3(0.08,0.55,0.48);}
+      else{colA=vec3(0.32,0.08,0.52);colB=vec3(0.20,0.24,0.64);colC=vec3(0.12,0.48,0.56);}
+      if(colorMix<0.5) vColor=mix(colA,colB,colorMix*2.0);
+      else vColor=mix(colB,colC,(colorMix-0.5)*2.0);
+
+      /* Brighten crest particles */
+      float crestBright=1.0-smoothstep(0.0,0.15,aDepth);
+      vColor+=crestBright*vec3(0.15,0.2,0.18);
+
+      /* Alpha: depth fade + edge fade + random sparkle */
+      float sparkle=0.7+0.3*sin(uTime*3.0+aRandom*40.0);
+      vAlpha=(1.0-aDepth*0.75)*edgeFade*sparkle;
+      vEdge=edgeFade;
+
+      /* Point size: closer = bigger */
+      float size=(1.0-aDepth*0.6)*(1.5+aRandom*1.5);
+      size*=edgeFade;
+      size*=uRes.y/600.0;
+      gl_PointSize=size;
+      gl_Position=projectionMatrix*modelViewMatrix*vec4(pos,1.0);
+    }
+  `;
+
+  /* ---- Fragment shader ---- */
+  var fragmentShader=`
+    varying float vAlpha;
+    varying vec3 vColor;
+    varying float vEdge;
+    void main(){
+      float d=length(gl_PointCoord-0.5)*2.0;
+      /* Soft circle with glow halo */
+      float core=1.0-smoothstep(0.0,0.6,d);
+      float glow=1.0-smoothstep(0.0,1.0,d);
+      float shape=core*0.7+glow*0.3;
+      float alpha=shape*vAlpha;
+      /* Brighten color for glow */
+      vec3 col=vColor*(1.0+glow*0.5);
+      gl_FragColor=vec4(col,alpha*0.85);
+    }
+  `;
+
+  /* ---- Create particle wave surfaces ---- */
+  var COLS=280, ROWS=65;
+  var surfaceDefs=[
+    {yCenter:0.25, amp:80, speed:0.35, freq:2.2, layer:0},
+    {yCenter:0.38, amp:65, speed:0.28, freq:2.8, layer:1},
+    {yCenter:0.52, amp:75, speed:0.40, freq:2.0, layer:2},
+    {yCenter:0.65, amp:55, speed:0.32, freq:2.5, layer:3},
   ];
+  var meshes=[];
 
-  /* ---- Floating dust particles ---- */
-  var dust=[];
-  for(var i=0;i<80;i++){
-    dust.push({
-      x:Math.random(), y:Math.random(),
-      r:Math.random()*1.2+0.4,
-      vx:(Math.random()-0.5)*0.0001,
-      vy:-Math.random()*0.00015-0.00003,
-      a:Math.random()*0.35+0.05,
-      ph:Math.random()*6.28
+  surfaceDefs.forEach(function(def){
+    var count=COLS*ROWS;
+    var positions=new Float32Array(count*3);
+    var randoms=new Float32Array(count);
+    var depths=new Float32Array(count);
+
+    for(var r=0;r<ROWS;r++){
+      for(var c=0;c<COLS;c++){
+        var i=r*COLS+c;
+        positions[i*3]=  (c/(COLS-1))*W-W*0.5;   /* x: -W/2 to W/2 */
+        positions[i*3+1]=0;                        /* y: set by shader */
+        positions[i*3+2]=0;
+        randoms[i]=Math.random();
+        depths[i]=r/(ROWS-1);
+      }
+    }
+
+    var geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+    geo.setAttribute('aRandom',new THREE.BufferAttribute(randoms,1));
+    geo.setAttribute('aDepth',new THREE.BufferAttribute(depths,1));
+
+    var mat=new THREE.ShaderMaterial({
+      vertexShader:vertexShader,
+      fragmentShader:fragmentShader,
+      uniforms:{
+        uTime:{value:0},
+        uAmp:{value:def.amp},
+        uSpeed:{value:def.speed},
+        uFreq:{value:def.freq},
+        uYCenter:{value:def.yCenter},
+        uLayer:{value:def.layer},
+        uRes:{value:new THREE.Vector2(W,H)}
+      },
+      transparent:true,
+      depthWrite:false,
+      blending:THREE.AdditiveBlending
     });
-  }
 
-  var t=0, isVis=false;
+    var points=new THREE.Points(geo,mat);
+    scene.add(points);
+    meshes.push({points:points,def:def});
+  });
+
+  /* ---- Dust particles (separate, larger, sparser) ---- */
+  var DUST=200;
+  var dustPos=new Float32Array(DUST*3);
+  var dustRand=new Float32Array(DUST);
+  var dustDepth=new Float32Array(DUST);
+  for(var i=0;i<DUST;i++){
+    dustPos[i*3]=(Math.random())*W-W*0.5;
+    dustPos[i*3+1]=(Math.random()-0.5)*H;
+    dustPos[i*3+2]=0;
+    dustRand[i]=Math.random();
+    dustDepth[i]=Math.random()*0.3;
+  }
+  var dustGeo=new THREE.BufferGeometry();
+  dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));
+  dustGeo.setAttribute('aRandom',new THREE.BufferAttribute(dustRand,1));
+  dustGeo.setAttribute('aDepth',new THREE.BufferAttribute(dustDepth,1));
+  var dustMat=new THREE.ShaderMaterial({
+    vertexShader:noiseGLSL+`
+      uniform float uTime;
+      uniform vec2 uRes;
+      attribute float aRandom;
+      attribute float aDepth;
+      varying float vAlpha;
+      varying vec3 vColor;
+      varying float vEdge;
+      void main(){
+        vec3 pos=position;
+        /* Drift slowly */
+        pos.x+=sin(uTime*0.2+aRandom*20.0)*30.0;
+        pos.y+=cos(uTime*0.15+aRandom*15.0)*20.0+uTime*5.0;
+        /* Wrap */
+        float halfW=uRes.x*0.5;
+        float halfH=uRes.y*0.5;
+        pos.x=mod(pos.x+halfW,uRes.x)-halfW;
+        pos.y=mod(pos.y+halfH,uRes.y)-halfH;
+        /* Only right 65% */
+        float nx=(pos.x+halfW)/uRes.x;
+        float fadeL=smoothstep(0.30,0.45,nx);
+        float fadeR=smoothstep(1.0,0.92,nx);
+        vEdge=fadeL*fadeR;
+        float pulse=0.4+0.6*sin(uTime*1.5+aRandom*30.0);
+        vAlpha=pulse*vEdge*(0.15+aRandom*0.25);
+        vColor=vec3(0.55,0.75,0.9);
+        gl_PointSize=(2.5+aRandom*3.5)*uRes.y/600.0*vEdge;
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(pos,1.0);
+      }
+    `,
+    fragmentShader:fragmentShader,
+    uniforms:{
+      uTime:{value:0},
+      uRes:{value:new THREE.Vector2(W,H)}
+    },
+    transparent:true,
+    depthWrite:false,
+    blending:THREE.AdditiveBlending
+  });
+  var dustPoints=new THREE.Points(dustGeo,dustMat);
+  scene.add(dustPoints);
+
+  /* ---- Animation ---- */
+  var time=0;
+  var isVis=false;
   var obs=new IntersectionObserver(function(e){isVis=e[0].isIntersecting;},{threshold:0.05});
-  obs.observe(c.parentElement);
+  obs.observe(container);
 
-  /* Offscreen buffer for glow composite */
-  var oc=document.createElement('canvas');
-  var ox=oc.getContext('2d');
-
-  function draw(){
-    requestAnimationFrame(draw);
+  function animate(){
+    requestAnimationFrame(animate);
     if(!isVis)return;
-    t+=0.012;
-    ctx.clearRect(0,0,W,H);
+    time+=0.008;
 
-    var x0=W*0.30;          /* animation region start */
-    var rW=W-x0;            /* animation region width */
+    meshes.forEach(function(m){
+      m.points.material.uniforms.uTime.value=time;
+      m.points.material.uniforms.uRes.value.set(W,H);
+    });
+    dustMat.uniforms.uTime.value=time;
+    dustMat.uniforms.uRes.value.set(W,H);
 
-    /* ---- Draw each particle-mesh surface ---- */
-    for(var si=0;si<surfaces.length;si++){
-      var S=surfaces[si];
-      var grid=[]; /* [col][row] = {px, py, alpha} */
-
-      for(var col=0;col<COLS;col++){
-        grid[col]=[];
-        var cx=col/(COLS-1);              /* 0-1 */
-        var px=x0+rW*cx;
-        /* edge fade */
-        var fadeL=Math.min(1,cx/0.15);
-        var fadeR=Math.min(1,(1-cx)/0.08);
-        var edgeFade=fadeL*fadeR;
-        if(edgeFade<0)edgeFade=0;
-
-        for(var row=0;row<ROWS;row++){
-          var ry=row/(ROWS-1);            /* 0-1 depth */
-          /* Perspective compression: rows closer together as ry increases */
-          var perspective=0.4+ry*0.6;
-          var baseY=H*(S.yBase+S.ySpread*ry*perspective);
-
-          /* Noise displacement */
-          var nx=cx*S.noiseFreq+t*S.xSpeed+si*3.7;
-          var ny=ry*S.noiseFreq*0.6+t*S.speed+si*2.1;
-          var displacement=fbm(nx,ny)*S.amp*edgeFade;
-          /* Add sine wave component */
-          displacement+=Math.sin(cx*8+t*S.speed*8+ry*2+si*1.5)*S.amp*0.3*edgeFade;
-
-          var py=baseY+displacement;
-          /* Depth-based alpha: front rows brighter */
-          var depthAlpha=(1-ry*0.7)*edgeFade*S.opacity;
-
-          grid[col][row]={px:px,py:py,a:depthAlpha};
-        }
-      }
-
-      /* ---- Draw mesh connections ---- */
-      /* Horizontal lines (wave contours) */
-      for(var row=0;row<ROWS;row++){
-        var rowFade=1-row/(ROWS-1)*0.85;
-        ctx.beginPath();
-        var started=false;
-        for(var col=0;col<COLS;col++){
-          var pt=grid[col][row];
-          if(pt.a<0.01)continue;
-          var rgb=waveColor(col/(COLS-1),S.layer);
-          if(!started){ctx.moveTo(pt.px,pt.py);started=true;}
-          else ctx.lineTo(pt.px,pt.py);
-        }
-        var baseA=rowFade*S.opacity*0.35;
-        var rgb=waveColor(0.5,S.layer);
-        ctx.strokeStyle='rgba('+(rgb[0]+60)+','+(rgb[1]+60)+','+(rgb[2]+40)+','+baseA+')';
-        ctx.lineWidth=row===0?1.4:0.6;
-        ctx.stroke();
-      }
-
-      /* Vertical lines (depth lines) — every Nth column */
-      var colStep=Math.max(3, Math.round(COLS/35));
-      for(var col=0;col<COLS;col+=colStep){
-        ctx.beginPath();
-        var started=false;
-        for(var row=0;row<ROWS;row++){
-          var pt=grid[col][row];
-          if(pt.a<0.01)continue;
-          if(!started){ctx.moveTo(pt.px,pt.py);started=true;}
-          else ctx.lineTo(pt.px,pt.py);
-        }
-        var cx=col/(COLS-1);
-        var rgb=waveColor(cx,S.layer);
-        var fadeL=Math.min(1,cx/0.15);
-        var fadeR=Math.min(1,(1-cx)/0.08);
-        ctx.strokeStyle='rgba('+(rgb[0]+40)+','+(rgb[1]+40)+','+(rgb[2]+30)+','+(0.15*fadeL*fadeR*S.opacity)+')';
-        ctx.lineWidth=0.4;
-        ctx.stroke();
-      }
-
-      /* ---- Crest glow (top row filled region) ---- */
-      ctx.beginPath();
-      ctx.moveTo(grid[0][0].px, grid[0][0].py);
-      for(var col=1;col<COLS;col++) ctx.lineTo(grid[col][0].px, grid[col][0].py);
-      /* Close downward */
-      for(var col=COLS-1;col>=0;col--){
-        var deepRow=Math.min(ROWS-1, 5);
-        ctx.lineTo(grid[col][deepRow].px, grid[col][deepRow].py);
-      }
-      ctx.closePath();
-      var rgb0=waveColor(0.2,S.layer), rgb1=waveColor(0.8,S.layer);
-      var grd=ctx.createLinearGradient(x0,0,W,0);
-      grd.addColorStop(0,'rgba('+rgb0[0]+','+rgb0[1]+','+rgb0[2]+',0)');
-      grd.addColorStop(0.2,'rgba('+rgb0[0]+','+rgb0[1]+','+rgb0[2]+','+(S.opacity*0.12)+')');
-      grd.addColorStop(0.8,'rgba('+rgb1[0]+','+rgb1[1]+','+rgb1[2]+','+(S.opacity*0.10)+')');
-      grd.addColorStop(1,'rgba('+rgb1[0]+','+rgb1[1]+','+rgb1[2]+',0)');
-      ctx.fillStyle=grd;
-      ctx.fill();
-
-      /* ---- Scatter particles on surface ---- */
-      for(var col=2;col<COLS-2;col+=4){
-        for(var row=0;row<Math.min(ROWS,8);row+=2){
-          var pt=grid[col][row];
-          if(pt.a<0.05)continue;
-          var sparkle=0.3+0.7*Math.abs(Math.sin(t*2+col*0.3+row*0.7+si*5));
-          var r=0.6+sparkle*0.8;
-          var sa=pt.a*sparkle*0.5;
-          if(sa<0.02)continue;
-          var rgb=waveColor(col/(COLS-1),S.layer);
-          ctx.beginPath();
-          ctx.arc(pt.px,pt.py,r,0,6.28);
-          ctx.fillStyle='rgba('+(rgb[0]+120)+','+(rgb[1]+120)+','+(rgb[2]+100)+','+sa+')';
-          ctx.fill();
-        }
-      }
-    }
-
-    /* ---- Ambient radial glows ---- */
-    var glows=[
-      {x:0.55,y:0.4,r:180,c:[20,80,140]},
-      {x:0.75,y:0.5,r:150,c:[30,120,130]},
-      {x:0.90,y:0.35,r:120,c:[60,30,120]},
-    ];
-    for(var i=0;i<glows.length;i++){
-      var gl=glows[i];
-      var gx=W*gl.x+Math.sin(t*0.3+i*2)*30;
-      var gy=H*gl.y+Math.cos(t*0.25+i*3)*20;
-      var pulse=0.7+0.3*Math.sin(t*0.5+i*1.7);
-      var gr=gl.r*pulse;
-      var grd=ctx.createRadialGradient(gx,gy,0,gx,gy,gr);
-      grd.addColorStop(0,'rgba('+gl.c[0]+','+gl.c[1]+','+gl.c[2]+','+(0.08*pulse)+')');
-      grd.addColorStop(1,'rgba('+gl.c[0]+','+gl.c[1]+','+gl.c[2]+',0)');
-      ctx.fillStyle=grd;
-      ctx.fillRect(gx-gr,gy-gr,gr*2,gr*2);
-    }
-
-    /* ---- Floating dust ---- */
-    for(var i=0;i<dust.length;i++){
-      var d=dust[i];
-      var dx=x0+rW*d.x, dy=H*d.y;
-      d.x+=d.vx; d.y+=d.vy;
-      if(d.y<-0.03){d.y=1.03;d.x=Math.random();}
-      if(d.x>1.05)d.x=-0.03;
-      if(d.x<-0.05)d.x=1.03;
-      var fadeL=Math.min(1,(d.x)/0.15);
-      if(fadeL<=0)continue;
-      var pulse=0.5+0.5*Math.sin(t*1.2+d.ph);
-      var a=d.a*pulse*fadeL;
-      /* Glow */
-      if(d.r>0.8){
-        var grd=ctx.createRadialGradient(dx,dy,0,dx,dy,d.r*5);
-        grd.addColorStop(0,'rgba(160,210,255,'+(a*0.25)+')');
-        grd.addColorStop(1,'rgba(160,210,255,0)');
-        ctx.fillStyle=grd;
-        ctx.fillRect(dx-d.r*5,dy-d.r*5,d.r*10,d.r*10);
-      }
-      ctx.beginPath();
-      ctx.arc(dx,dy,d.r,0,6.28);
-      ctx.fillStyle='rgba(200,230,255,'+a+')';
-      ctx.fill();
-    }
+    renderer.render(scene,camera);
   }
-  draw();
-})();
+  animate();
+}
+/* Auto-init when Three.js loads */
+if(typeof THREE!=='undefined')init();
+else{var _s=document.querySelector('script[src*="three.min"]');if(_s)_s.addEventListener('load',init);}
 </script>
 
 <!-- Single dark overlay covering About + all white sections -->

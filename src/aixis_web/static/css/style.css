@@ -232,6 +232,13 @@ html.dark nav.main-nav .nav-auth a {
     display: flex;
 }
 
+/* Mobile drawer: enforce mincho/serif to override Tailwind preflight sans-serif */
+#mobile-drawer,
+#mobile-drawer * {
+    font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho",
+                 "HG明朝E", "MS P明朝", serif;
+}
+
 /* ==========================================================================
    4b. Main Content
    ========================================================================== */
