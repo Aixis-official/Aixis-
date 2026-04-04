@@ -689,99 +689,86 @@
             </div>
             <!-- Right column: Armillary sphere — sacred precision instrument -->
             <div class="hidden lg:flex lg:w-1/2 items-center justify-center about-geometric" aria-hidden="true">
-                <div class="relative" style="width: 480px; height: 420px;">
-                    <svg id="about-radar" viewBox="0 0 480 420" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
-                        <defs>
-                            <linearGradient id="arFill" x1="50%" y1="0%" x2="50%" y2="100%">
-                                <stop offset="0%" stop-color="rgba(130,185,245,0.18)"/>
-                                <stop offset="100%" stop-color="rgba(100,160,230,0.04)"/>
-                            </linearGradient>
-                            <linearGradient id="arStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="rgba(155,210,252,0.6)"/>
-                                <stop offset="100%" stop-color="rgba(120,180,242,0.4)"/>
-                            </linearGradient>
-                        </defs>
-
-                        <!-- Grid: concentric pentagons (20/40/60/80/100%) -->
-                        <g class="ar-grid" opacity="0">
-                            <polygon points="240,60 373,157 322,313 158,313 107,157" fill="none" stroke="rgba(140,195,245,0.10)" stroke-width="0.5"/>
-                            <polygon points="240,88 347,165 306,291 174,291 133,165" fill="none" stroke="rgba(140,195,245,0.06)" stroke-width="0.4" stroke-dasharray="3 8"/>
-                            <polygon points="240,116 320,173 289,268 191,268 160,173" fill="none" stroke="rgba(140,195,245,0.06)" stroke-width="0.4" stroke-dasharray="3 8"/>
-                            <polygon points="240,144 293,181 273,245 207,245 187,181" fill="none" stroke="rgba(140,195,245,0.05)" stroke-width="0.4" stroke-dasharray="3 8"/>
-                            <polygon points="240,172 267,191 256,223 224,223 213,191" fill="none" stroke="rgba(140,195,245,0.05)" stroke-width="0.4" stroke-dasharray="3 8"/>
-                        </g>
-
-                        <!-- 5 axis lines from center to outer vertices -->
-                        <line class="ar-axis" x1="240" y1="200" x2="240" y2="60" stroke="rgba(140,195,245,0.12)" stroke-width="0.5"/>
-                        <line class="ar-axis" x1="240" y1="200" x2="373" y2="157" stroke="rgba(140,195,245,0.12)" stroke-width="0.5"/>
-                        <line class="ar-axis" x1="240" y1="200" x2="322" y2="313" stroke="rgba(140,195,245,0.12)" stroke-width="0.5"/>
-                        <line class="ar-axis" x1="240" y1="200" x2="158" y2="313" stroke="rgba(140,195,245,0.12)" stroke-width="0.5"/>
-                        <line class="ar-axis" x1="240" y1="200" x2="107" y2="157" stroke="rgba(140,195,245,0.12)" stroke-width="0.5"/>
-
-                        <!-- Score area (animated group for breathing) -->
-                        <g class="ar-pulse-group" style="transform-origin:240px 200px;">
-                            <!-- Score fill -->
-                            <polygon class="ar-fill" points="240,81 344,166 307,293 168,300 144,169" fill="url(#arFill)" opacity="0"/>
-                            <!-- Score outline -->
-                            <path class="ar-score" d="M240,81 L344,166 L307,293 L168,300 L144,169 Z" fill="none" stroke="url(#arStroke)" stroke-width="1.2" stroke-linejoin="round"/>
-                            <!-- Score vertex dots -->
-                            <circle class="ar-dot" cx="240" cy="81" r="2.5" fill="rgba(180,215,250,0.8)" stroke="rgba(220,238,255,0.5)" stroke-width="0.5" opacity="0"/>
-                            <circle class="ar-dot" cx="344" cy="166" r="2.5" fill="rgba(180,215,250,0.8)" stroke="rgba(220,238,255,0.5)" stroke-width="0.5" opacity="0"/>
-                            <circle class="ar-dot" cx="307" cy="293" r="2.5" fill="rgba(180,215,250,0.8)" stroke="rgba(220,238,255,0.5)" stroke-width="0.5" opacity="0"/>
-                            <circle class="ar-dot" cx="168" cy="300" r="2.5" fill="rgba(180,215,250,0.8)" stroke="rgba(220,238,255,0.5)" stroke-width="0.5" opacity="0"/>
-                            <circle class="ar-dot" cx="144" cy="169" r="2.5" fill="rgba(180,215,250,0.8)" stroke="rgba(220,238,255,0.5)" stroke-width="0.5" opacity="0"/>
-                        </g>
-
-                        <!-- Axis labels -->
-                        <g class="ar-label" opacity="0">
-                            <text x="240" y="38" text-anchor="middle" fill="rgba(210,228,248,0.85)" font-size="13" font-weight="600" font-family="'Noto Serif JP',serif">実務適性</text>
-                            <text x="240" y="52" text-anchor="middle" fill="rgba(160,195,230,0.45)" font-size="9" font-family="'Noto Serif JP',serif" letter-spacing="0.05em">Practicality</text>
-                        </g>
-                        <g class="ar-label" opacity="0">
-                            <text x="385" y="154" text-anchor="start" fill="rgba(210,228,248,0.85)" font-size="13" font-weight="600" font-family="'Noto Serif JP',serif">費用対効果</text>
-                            <text x="385" y="168" text-anchor="start" fill="rgba(160,195,230,0.45)" font-size="9" font-family="'Noto Serif JP',serif" letter-spacing="0.05em">Cost Performance</text>
-                        </g>
-                        <g class="ar-label" opacity="0">
-                            <text x="334" y="330" text-anchor="start" fill="rgba(210,228,248,0.85)" font-size="13" font-weight="600" font-family="'Noto Serif JP',serif">日本語能力</text>
-                            <text x="334" y="344" text-anchor="start" fill="rgba(160,195,230,0.45)" font-size="9" font-family="'Noto Serif JP',serif" letter-spacing="0.05em">Japanese Readiness</text>
-                        </g>
-                        <g class="ar-label" opacity="0">
-                            <text x="146" y="330" text-anchor="end" fill="rgba(210,228,248,0.85)" font-size="13" font-weight="600" font-family="'Noto Serif JP',serif">信頼性・安全性</text>
-                            <text x="146" y="344" text-anchor="end" fill="rgba(160,195,230,0.45)" font-size="9" font-family="'Noto Serif JP',serif" letter-spacing="0.05em">Safety</text>
-                        </g>
-                        <g class="ar-label" opacity="0">
-                            <text x="95" y="154" text-anchor="end" fill="rgba(210,228,248,0.85)" font-size="13" font-weight="600" font-family="'Noto Serif JP',serif">革新性</text>
-                            <text x="95" y="168" text-anchor="end" fill="rgba(160,195,230,0.45)" font-size="9" font-family="'Noto Serif JP',serif" letter-spacing="0.05em">Uniqueness</text>
-                        </g>
-                    </svg>
+                <div id="about-scoreboard" class="w-full max-w-[400px] font-serif" style="opacity:0;">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-5 pb-3" style="border-bottom:1px solid rgba(140,195,245,0.08);">
+                        <span class="text-[10px] tracking-[0.2em] uppercase" style="color:rgba(160,200,240,0.4);">Audit Results</span>
+                        <span class="text-[10px] tracking-[0.15em]" style="color:rgba(140,190,235,0.3);">Score</span>
+                    </div>
+                    <!-- Rows -->
+                    <div class="sb-row flex items-center justify-between py-3" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
+                        <div class="flex items-center gap-3">
+                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:18px;">01</span>
+                            <span class="text-[13px]" style="color:rgba(200,220,245,0.7);">AI Writing Assistant</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="sb-score text-[13px] tabular-nums" style="color:rgba(180,215,248,0.8); opacity:0;">4.2</span>
+                            <span class="sb-grade text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm" style="background:rgba(59,130,246,0.12); color:rgba(140,195,250,0.7); opacity:0;">A</span>
+                        </div>
+                    </div>
+                    <div class="sb-row flex items-center justify-between py-3" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
+                        <div class="flex items-center gap-3">
+                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:18px;">02</span>
+                            <span class="text-[13px]" style="color:rgba(200,220,245,0.7);">Enterprise Data Platform</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="sb-score text-[13px] tabular-nums" style="color:rgba(180,215,248,0.8); opacity:0;">3.8</span>
+                            <span class="sb-grade text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm" style="background:rgba(16,185,129,0.12); color:rgba(120,210,180,0.7); opacity:0;">B</span>
+                        </div>
+                    </div>
+                    <div class="sb-row flex items-center justify-between py-3" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
+                        <div class="flex items-center gap-3">
+                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:18px;">03</span>
+                            <span class="text-[13px]" style="color:rgba(200,220,245,0.7);">Code Generation Tool</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="sb-score text-[13px] tabular-nums" style="color:rgba(180,215,248,0.8); opacity:0;">4.5</span>
+                            <span class="sb-grade text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm" style="background:rgba(59,130,246,0.12); color:rgba(140,195,250,0.7); opacity:0;">S</span>
+                        </div>
+                    </div>
+                    <div class="sb-row flex items-center justify-between py-3" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
+                        <div class="flex items-center gap-3">
+                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:18px;">04</span>
+                            <span class="text-[13px]" style="color:rgba(200,220,245,0.7);">Image Recognition API</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="sb-score text-[13px] tabular-nums" style="color:rgba(180,215,248,0.8); opacity:0;">3.4</span>
+                            <span class="sb-grade text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm" style="background:rgba(245,158,11,0.12); color:rgba(220,185,100,0.7); opacity:0;">C</span>
+                        </div>
+                    </div>
+                    <div class="sb-row flex items-center justify-between py-3" style="border-bottom:1px solid rgba(140,195,245,0.04); opacity:0;">
+                        <div class="flex items-center gap-3">
+                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:18px;">05</span>
+                            <span class="text-[13px]" style="color:rgba(200,220,245,0.7);">Conversational AI Suite</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="sb-score text-[13px] tabular-nums" style="color:rgba(180,215,248,0.8); opacity:0;">4.0</span>
+                            <span class="sb-grade text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm" style="background:rgba(59,130,246,0.12); color:rgba(140,195,250,0.7); opacity:0;">A</span>
+                        </div>
+                    </div>
+                    <div class="sb-row flex items-center justify-between py-3" style="opacity:0;">
+                        <div class="flex items-center gap-3">
+                            <span class="sb-index text-[10px] tabular-nums" style="color:rgba(140,190,235,0.25); width:18px;">06</span>
+                            <span class="text-[13px]" style="color:rgba(200,220,245,0.7);">Document Analysis Engine</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="sb-score text-[13px] tabular-nums" style="color:rgba(180,215,248,0.8); opacity:0;">3.6</span>
+                            <span class="sb-grade text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-sm" style="background:rgba(16,185,129,0.12); color:rgba(120,210,180,0.7); opacity:0;">B</span>
+                        </div>
+                    </div>
+                    <!-- Scan line -->
+                    <div class="sb-scanline absolute left-0 right-0 h-[1px] pointer-events-none" style="background:linear-gradient(90deg,transparent,rgba(140,200,255,0.4),transparent); opacity:0; top:0;"></div>
                 </div>
             </div>
 
-            <!-- Radar chart animation script -->
+            <!-- Scoreboard animation script -->
             <script>
             (function(){
-                var svg = document.getElementById('about-radar');
-                if (!svg) return;
+                var board = document.getElementById('about-scoreboard');
+                if (!board) return;
 
-                var axes = svg.querySelectorAll('.ar-axis');
-                var grid = svg.querySelector('.ar-grid');
-                var score = svg.querySelector('.ar-score');
-                var fill = svg.querySelector('.ar-fill');
-                var dots = svg.querySelectorAll('.ar-dot');
-                var labels = svg.querySelectorAll('.ar-label');
-                var pulseGroup = svg.querySelector('.ar-pulse-group');
-
-                /* --- Initial states --- */
-                axes.forEach(function(line) {
-                    var len = line.getTotalLength();
-                    line.style.strokeDasharray = len;
-                    line.style.strokeDashoffset = len;
-                });
-                var scoreLen = score.getTotalLength();
-                score.style.strokeDasharray = scoreLen;
-                score.style.strokeDashoffset = scoreLen;
-
-                /* --- IntersectionObserver --- */
+                var rows = board.querySelectorAll('.sb-row');
+                var scanline = board.querySelector('.sb-scanline');
                 var aboutSection = document.getElementById('about-section');
                 if (!aboutSection) return;
 
@@ -790,58 +777,54 @@
                     entries.forEach(function(entry) {
                         if (entry.isIntersecting && !fired) {
                             fired = true;
-                            runAnimation();
+                            runScoreboard();
                             obs.unobserve(entry.target);
                         }
                     });
-                }, { threshold: 0.25 });
+                }, { threshold: 0.2 });
                 obs.observe(aboutSection);
 
-                function runAnimation() {
-                    /* Phase 1: Axis lines draw from center (0 → 1.4s) */
-                    axes.forEach(function(line) {
-                        line.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(0.25,0.1,0.25,1)';
-                        line.style.strokeDashoffset = '0';
-                    });
+                function runScoreboard() {
+                    /* Fade in container */
+                    board.style.transition = 'opacity 0.6s ease-out';
+                    board.style.opacity = '1';
 
-                    /* Phase 2: Grid fades in (0.6s → 1.4s) */
-                    setTimeout(function() {
-                        grid.style.transition = 'opacity 0.8s ease-in-out';
-                        grid.style.opacity = '1';
-                    }, 600);
+                    rows.forEach(function(row, i) {
+                        var delay = 400 + i * 500;
 
-                    /* Phase 3: Labels fade in sequentially (1.0s →, 180ms apart) */
-                    labels.forEach(function(label, i) {
+                        /* Row fades in */
                         setTimeout(function() {
-                            label.style.transition = 'opacity 0.6s ease-out';
-                            label.style.opacity = '1';
-                        }, 1000 + i * 180);
-                    });
+                            row.style.transition = 'opacity 0.4s ease-out';
+                            row.style.opacity = '1';
 
-                    /* Phase 4: Score outline draws (1.4s → 2.6s) */
-                    setTimeout(function() {
-                        score.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)';
-                        score.style.strokeDashoffset = '0';
-                    }, 1400);
+                            /* Move scanline to this row */
+                            if (scanline) {
+                                var rowRect = row.getBoundingClientRect();
+                                var boardRect = board.getBoundingClientRect();
+                                var top = rowRect.top - boardRect.top + rowRect.height / 2;
+                                scanline.style.transition = 'top 0.3s ease-out, opacity 0.2s ease-out';
+                                scanline.style.top = top + 'px';
+                                scanline.style.opacity = '1';
+                            }
+                        }, delay);
 
-                    /* Phase 5: Score fill fades in (2.0s → 2.8s) */
-                    setTimeout(function() {
-                        fill.style.transition = 'opacity 0.8s ease-in-out';
-                        fill.style.opacity = '1';
-                    }, 2000);
-
-                    /* Phase 6: Dots appear (2.0s →, 120ms apart) */
-                    dots.forEach(function(dot, i) {
+                        /* Score appears */
                         setTimeout(function() {
-                            dot.style.transition = 'opacity 0.4s ease-out';
-                            dot.style.opacity = '1';
-                        }, 2000 + i * 120);
+                            var score = row.querySelector('.sb-score');
+                            if (score) { score.style.transition = 'opacity 0.3s ease-out'; score.style.opacity = '1'; }
+                        }, delay + 250);
+
+                        /* Grade badge appears */
+                        setTimeout(function() {
+                            var grade = row.querySelector('.sb-grade');
+                            if (grade) { grade.style.transition = 'opacity 0.3s ease-out'; grade.style.opacity = '1'; }
+                        }, delay + 400);
                     });
 
-                    /* Phase 7: Breathing pulse begins (3.2s) */
+                    /* Hide scanline after last row */
                     setTimeout(function() {
-                        pulseGroup.classList.add('radar-breathing');
-                    }, 3200);
+                        if (scanline) { scanline.style.opacity = '0'; }
+                    }, 400 + rows.length * 500 + 200);
                 }
             })();
             </script>
@@ -865,95 +848,149 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        <!-- Left: SVG Radar / Pentagon Diagram -->
+        <!-- Left: Animated Radar / Pentagon Diagram -->
         <div class="flex items-center justify-center">
-            <svg viewBox="0 0 540 520" class="w-full max-w-[480px] h-auto" xmlns="http://www.w3.org/2000/svg">
+            <svg id="axis-radar" viewBox="0 0 540 520" class="w-full max-w-[480px] h-auto" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <linearGradient id="aixisGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.35"/>
-                        <stop offset="100%" stop-color="#6366f1" stop-opacity="0.15"/>
+                    <linearGradient id="axrFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.30"/>
+                        <stop offset="100%" stop-color="#6366f1" stop-opacity="0.10"/>
                     </linearGradient>
-                    <linearGradient id="aixisStrokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <linearGradient id="axrStroke" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="#3b82f6"/>
                         <stop offset="100%" stop-color="#6366f1"/>
                     </linearGradient>
-                    <radialGradient id="dotGlow" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.6"/>
-                        <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
-                    </radialGradient>
-                    <filter id="glowFilter">
-                        <feGaussianBlur stdDeviation="3" result="blur"/>
-                        <feMerge>
-                            <feMergeNode in="blur"/>
-                            <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
-                    </filter>
                 </defs>
 
-                <!-- Center point: 270, 260 -->
-                <!-- Outer pentagon vertices (radius ~145):
-                     Top:        270, 115
-                     Top-right:  408, 167
-                     Bot-right:  355, 330
-                     Bot-left:   185, 330
-                     Top-left:   132, 167
-                -->
+                <!-- Grid pentagons (100/66/33%) -->
+                <g class="axr-grid" opacity="0">
+                    <polygon points="270,115 408,167 355,330 185,330 132,167" fill="none" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+                    <polygon points="270,163 362,202 330,310 210,310 178,202" fill="none" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1" stroke-dasharray="4,4"/>
+                    <polygon points="270,212 316,236 305,290 235,290 224,236" fill="none" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1" stroke-dasharray="4,4"/>
+                </g>
 
-                <!-- Concentric grid pentagons -->
-                <polygon points="270,115 408,167 355,330 185,330 132,167" fill="none" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
-                <polygon points="270,163 362,202 330,310 210,310 178,202" fill="none" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1" stroke-dasharray="4,4"/>
-                <polygon points="270,212 316,236 305,290 235,290 224,236" fill="none" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1" stroke-dasharray="4,4"/>
+                <!-- 5 axis lines from center -->
+                <line class="axr-axis" x1="270" y1="260" x2="270" y2="115" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+                <line class="axr-axis" x1="270" y1="260" x2="408" y2="167" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+                <line class="axr-axis" x1="270" y1="260" x2="355" y2="330" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+                <line class="axr-axis" x1="270" y1="260" x2="185" y2="330" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+                <line class="axr-axis" x1="270" y1="260" x2="132" y2="167" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
 
-                <!-- Axis lines from center to outer vertices -->
-                <line x1="270" y1="260" x2="270" y2="115" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
-                <line x1="270" y1="260" x2="408" y2="167" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
-                <line x1="270" y1="260" x2="355" y2="330" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
-                <line x1="270" y1="260" x2="185" y2="330" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
-                <line x1="270" y1="260" x2="132" y2="167" stroke="currentColor" class="text-gray-200 dark:text-gray-700" stroke-width="1"/>
+                <!-- Score area (breathing group) -->
+                <g class="axr-pulse-group" style="transform-origin:270px 260px;">
+                    <polygon class="axr-fill" points="270,130 392,175 345,318 195,318 148,175" fill="url(#axrFill)" opacity="0"/>
+                    <path class="axr-score" d="M270,130 L392,175 L345,318 L195,318 L148,175 Z" fill="none" stroke="url(#axrStroke)" stroke-width="2" stroke-linejoin="round"/>
+                    <!-- Vertex dots -->
+                    <circle class="axr-dot" cx="270" cy="130" r="5" fill="#3b82f6" stroke="white" stroke-width="2" opacity="0"/>
+                    <circle class="axr-dot" cx="392" cy="175" r="5" fill="#3b82f6" stroke="white" stroke-width="2" opacity="0"/>
+                    <circle class="axr-dot" cx="345" cy="318" r="5" fill="#3b82f6" stroke="white" stroke-width="2" opacity="0"/>
+                    <circle class="axr-dot" cx="195" cy="318" r="5" fill="#3b82f6" stroke="white" stroke-width="2" opacity="0"/>
+                    <circle class="axr-dot" cx="148" cy="175" r="5" fill="#3b82f6" stroke="white" stroke-width="2" opacity="0"/>
+                </g>
 
-                <!-- Filled data polygon with gradient -->
-                <polygon points="270,130 392,175 345,318 195,318 148,175"
-                         fill="url(#aixisGradient)"
-                         stroke="url(#aixisStrokeGrad)"
-                         stroke-width="2.5"
-                         class="axis-polygon-fill"
-                         filter="url(#glowFilter)"/>
-
-                <!-- Glow halos behind data points -->
-                <circle cx="270" cy="130" r="14" fill="url(#dotGlow)"/>
-                <circle cx="392" cy="175" r="14" fill="url(#dotGlow)"/>
-                <circle cx="345" cy="318" r="14" fill="url(#dotGlow)"/>
-                <circle cx="195" cy="318" r="14" fill="url(#dotGlow)"/>
-                <circle cx="148" cy="175" r="14" fill="url(#dotGlow)"/>
-
-                <!-- Data point dots -->
-                <circle cx="270" cy="130" r="5" class="fill-blue-500 dark:fill-blue-400 axis-dot" stroke="white" stroke-width="2"/>
-                <circle cx="392" cy="175" r="5" class="fill-blue-500 dark:fill-blue-400 axis-dot" stroke="white" stroke-width="2"/>
-                <circle cx="345" cy="318" r="5" class="fill-blue-500 dark:fill-blue-400 axis-dot" stroke="white" stroke-width="2"/>
-                <circle cx="195" cy="318" r="5" class="fill-blue-500 dark:fill-blue-400 axis-dot" stroke="white" stroke-width="2"/>
-                <circle cx="148" cy="175" r="5" class="fill-blue-500 dark:fill-blue-400 axis-dot" stroke="white" stroke-width="2"/>
-
-                <!-- Labels: JP name + EN subtitle -->
-                <!-- Top: 実務適性 / Practicality -->
-                <text x="270" y="82" text-anchor="middle" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">実務適性</text>
-                <text x="270" y="98" text-anchor="middle" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Practicality</text>
-
-                <!-- Top-right: 費用対効果 / Cost Performance -->
-                <text x="432" y="163" text-anchor="start" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">費用対効果</text>
-                <text x="432" y="179" text-anchor="start" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Cost Performance</text>
-
-                <!-- Bottom-right: 日本語能力 / Japanese Readiness -->
-                <text x="372" y="355" text-anchor="start" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">日本語能力</text>
-                <text x="372" y="371" text-anchor="start" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Japanese Readiness</text>
-
-                <!-- Bottom-left: 信頼性・安全性 / Safety -->
-                <text x="168" y="355" text-anchor="end" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">信頼性・安全性</text>
-                <text x="168" y="371" text-anchor="end" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Safety</text>
-
-                <!-- Top-left: 革新性 / Uniqueness -->
-                <text x="108" y="163" text-anchor="end" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">革新性</text>
-                <text x="108" y="179" text-anchor="end" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Uniqueness</text>
+                <!-- Labels -->
+                <g class="axr-label" opacity="0">
+                    <text x="270" y="82" text-anchor="middle" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">実務適性</text>
+                    <text x="270" y="98" text-anchor="middle" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Practicality</text>
+                </g>
+                <g class="axr-label" opacity="0">
+                    <text x="432" y="163" text-anchor="start" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">費用対効果</text>
+                    <text x="432" y="179" text-anchor="start" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Cost Performance</text>
+                </g>
+                <g class="axr-label" opacity="0">
+                    <text x="372" y="355" text-anchor="start" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">日本語能力</text>
+                    <text x="372" y="371" text-anchor="start" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Japanese Readiness</text>
+                </g>
+                <g class="axr-label" opacity="0">
+                    <text x="168" y="355" text-anchor="end" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">信頼性・安全性</text>
+                    <text x="168" y="371" text-anchor="end" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Safety</text>
+                </g>
+                <g class="axr-label" opacity="0">
+                    <text x="108" y="163" text-anchor="end" class="fill-gray-800 dark:fill-gray-200" font-size="14" font-weight="700" font-family="'Noto Serif JP',serif">革新性</text>
+                    <text x="108" y="179" text-anchor="end" class="fill-gray-400 dark:fill-gray-500" font-size="11" font-family="'Noto Serif JP',serif">Uniqueness</text>
+                </g>
             </svg>
+            <script>
+            (function(){
+                var svg = document.getElementById('axis-radar');
+                if (!svg) return;
+
+                var axes = svg.querySelectorAll('.axr-axis');
+                var grid = svg.querySelector('.axr-grid');
+                var score = svg.querySelector('.axr-score');
+                var fill = svg.querySelector('.axr-fill');
+                var dots = svg.querySelectorAll('.axr-dot');
+                var labels = svg.querySelectorAll('.axr-label');
+                var pulseGroup = svg.querySelector('.axr-pulse-group');
+
+                /* Initial states */
+                axes.forEach(function(line) {
+                    var len = line.getTotalLength();
+                    line.style.strokeDasharray = len;
+                    line.style.strokeDashoffset = len;
+                });
+                var scoreLen = score.getTotalLength();
+                score.style.strokeDasharray = scoreLen;
+                score.style.strokeDashoffset = scoreLen;
+
+                /* IntersectionObserver on 5-axis section */
+                var section = document.getElementById('white-content-start');
+                if (!section) return;
+
+                var fired = false;
+                var obs = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(entry) {
+                        if (entry.isIntersecting && !fired) {
+                            fired = true;
+                            run();
+                            obs.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.2 });
+                obs.observe(section);
+
+                function run() {
+                    /* Axis lines draw */
+                    axes.forEach(function(line) {
+                        line.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(0.25,0.1,0.25,1)';
+                        line.style.strokeDashoffset = '0';
+                    });
+                    /* Grid fades in */
+                    setTimeout(function() {
+                        grid.style.transition = 'opacity 0.8s ease-in-out';
+                        grid.style.opacity = '1';
+                    }, 600);
+                    /* Labels fade in */
+                    labels.forEach(function(label, i) {
+                        setTimeout(function() {
+                            label.style.transition = 'opacity 0.6s ease-out';
+                            label.style.opacity = '1';
+                        }, 1000 + i * 180);
+                    });
+                    /* Score outline draws */
+                    setTimeout(function() {
+                        score.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)';
+                        score.style.strokeDashoffset = '0';
+                    }, 1400);
+                    /* Fill fades in */
+                    setTimeout(function() {
+                        fill.style.transition = 'opacity 0.8s ease-in-out';
+                        fill.style.opacity = '1';
+                    }, 2000);
+                    /* Dots appear */
+                    dots.forEach(function(dot, i) {
+                        setTimeout(function() {
+                            dot.style.transition = 'opacity 0.4s ease-out';
+                            dot.style.opacity = '1';
+                        }, 2000 + i * 120);
+                    });
+                    /* Breathing pulse */
+                    setTimeout(function() {
+                        pulseGroup.classList.add('radar-breathing');
+                    }, 3200);
+                }
+            })();
+            </script>
         </div>
 
         <!-- Right: Axis Descriptions Grid -->
