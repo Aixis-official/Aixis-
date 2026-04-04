@@ -13,6 +13,10 @@
    1. CSS Custom Properties -- Light Theme
    ========================================================================== */
 
+/* Hide scrollbar globally */
+html { scrollbar-width: none; -ms-overflow-style: none; }
+html::-webkit-scrollbar { display: none; }
+
 :root {
     --primary: #1a365d;
     --primary-light: #2b6cb0;
