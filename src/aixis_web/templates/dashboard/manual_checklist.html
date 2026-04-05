@@ -81,7 +81,7 @@
 const sessionId = '{{ session_id }}';
 
 const AXIS_CONFIG = [
-    { key: 'practicality',     name: '実務適性',       color: '#B5CCDE', autoRatio: 40, manualRatio: 60 },
+    { key: 'practicality',     name: '実務適性',       color: '#8BB2CA', autoRatio: 40, manualRatio: 60 },
     { key: 'cost_performance', name: '費用対効果',     color: '#9DB9AD', autoRatio: 30, manualRatio: 70 },
     { key: 'localization',     name: '日本語能力',     color: '#B9ABA0', autoRatio: 70, manualRatio: 30 },
     { key: 'safety',           name: '信頼性・安全性', color: '#B98D8D', autoRatio: 35, manualRatio: 65 },
@@ -367,7 +367,7 @@ function updateProgress() {
     } else if (pct < 70) {
         bar.style.backgroundColor = '#DDC67D';
     } else {
-        bar.style.backgroundColor = '#B5CCDE';
+        bar.style.backgroundColor = '#8BB2CA';
     }
 
     // Update per-axis counts

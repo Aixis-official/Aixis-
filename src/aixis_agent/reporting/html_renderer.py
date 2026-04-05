@@ -28,7 +28,7 @@ REPORT_TEMPLATE = r"""<!DOCTYPE html>
     --text: #2d3748;
     --text-light: #718096;
     --border: #e2e8f0;
-    --success: #B5CCDE;
+    --success: #8BB2CA;
     --warning: #DDC67D;
     --danger: #B98D8D;
 }
@@ -270,7 +270,7 @@ Plotly.newPlot('bar-chart', [{
     y: barNames,
     orientation: 'h',
     marker: {
-        color: barScores.map((s, i) => axisConfidences[i] === 0 ? '#cbd5e0' : s >= 4.0 ? '#B5CCDE' : s >= 2.5 ? '#B9ABA0' : '#B98D8D'),
+        color: barScores.map((s, i) => axisConfidences[i] === 0 ? '#cbd5e0' : s >= 4.0 ? '#8BB2CA' : s >= 2.5 ? '#B9ABA0' : '#B98D8D'),
     },
     text: barScores.map((s, i) => axisConfidences[i] === 0 ? '手動評価待ち' : s.toFixed(2)),
     textposition: 'inside',
@@ -290,7 +290,7 @@ Plotly.newPlot('category-chart', [{
     x: catNames,
     y: catRates,
     marker: {
-        color: catRates.map(r => r >= 80 ? '#B5CCDE' : r >= 50 ? '#B9ABA0' : '#B98D8D'),
+        color: catRates.map(r => r >= 80 ? '#8BB2CA' : r >= 50 ? '#B9ABA0' : '#B98D8D'),
     },
     text: catRates.map(r => r.toFixed(0) + '%'),
     textposition: 'outside',

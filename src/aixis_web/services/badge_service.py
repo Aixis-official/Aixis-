@@ -3,7 +3,7 @@
 # Grade colors
 GRADE_COLORS = {
     "S": "#DDC67D",  # gold
-    "A": "#B5CCDE",  # cool silver
+    "A": "#8BB2CA",  # cool silver
     "B": "#9DB9AD",  # neutral
     "C": "#B9ABA0",  # warm gray
     "D": "#B98D8D",  # muted red

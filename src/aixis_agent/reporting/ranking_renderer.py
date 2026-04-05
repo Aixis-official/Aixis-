@@ -22,11 +22,11 @@ RANKING_TEMPLATE = r"""<!DOCTYPE html>
     --text: #2d3748;
     --text-light: #718096;
     --border: #e2e8f0;
-    --success: #B5CCDE;
+    --success: #8BB2CA;
     --warning: #DDC67D;
     --danger: #B98D8D;
     --gold: #DDC67D;
-    --silver: #B5CCDE;
+    --silver: #8BB2CA;
     --bronze: #9DB9AD;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -73,7 +73,7 @@ tr:hover { background: #f0f4f8; }
     font-size: 0.9rem;
 }
 .rank-1 { background: linear-gradient(135deg, #E6D18B, #DDC67D); color: #5C4A1E; box-shadow: 0 2px 6px rgba(221,198,125,0.4); }
-.rank-2 { background: linear-gradient(135deg, #C2D8E6, #B5CCDE); color: #2d3748; box-shadow: 0 2px 6px rgba(181,204,222,0.4); }
+.rank-2 { background: linear-gradient(135deg, #9CC3D7, #8BB2CA); color: #2d3748; box-shadow: 0 2px 6px rgba(139,178,202,0.4); }
 .rank-3 { background: linear-gradient(135deg, #AAC6B9, #9DB9AD); color: #fff; box-shadow: 0 2px 6px rgba(157,185,173,0.4); }
 .rank-other { background: var(--bg); color: var(--text-light); }
 
@@ -194,7 +194,7 @@ const ranks = [{% for r in rankings|reverse %}{{ r.rank }},{% endfor %}];
 
 const barColors = ranks.map(rank => {
     if (rank === 1) return '#DDC67D';
-    if (rank === 2) return '#B5CCDE';
+    if (rank === 2) return '#8BB2CA';
     if (rank === 3) return '#9DB9AD';
     return '#B9ABA0';
 });
@@ -221,7 +221,7 @@ Plotly.newPlot('ranking-chart', [{
     height: Math.max(300, toolNames.length * 40 + 100),
     shapes: [
         { type: 'rect', xref: 'x', x0: 4.5, x1: 5.0, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(221,198,125,0.08)', line: { width: 0 }, layer: 'below' },
-        { type: 'rect', xref: 'x', x0: 3.5, x1: 4.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(181,204,222,0.06)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', xref: 'x', x0: 3.5, x1: 4.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(139,178,202,0.06)', line: { width: 0 }, layer: 'below' },
         { type: 'rect', xref: 'x', x0: 2.5, x1: 3.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(157,185,173,0.05)', line: { width: 0 }, layer: 'below' },
         { type: 'rect', xref: 'x', x0: 1.5, x1: 2.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(185,171,160,0.06)', line: { width: 0 }, layer: 'below' },
         { type: 'rect', xref: 'x', x0: 0, x1: 1.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(185,141,141,0.05)', line: { width: 0 }, layer: 'below' },

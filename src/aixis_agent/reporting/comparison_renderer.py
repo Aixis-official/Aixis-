@@ -47,7 +47,7 @@ COMPARISON_TEMPLATE = r"""<!DOCTYPE html>
     --text: #2d3748;
     --text-light: #718096;
     --border: #e2e8f0;
-    --success: #B5CCDE;
+    --success: #8BB2CA;
     --warning: #DDC67D;
     --danger: #B98D8D;
 }
@@ -79,7 +79,7 @@ tr:hover { background: #f0f4f8; }
 
 .rank-badge { display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 50%; font-weight: 700; font-size: 0.85rem; color: white; }
 .rank-1 { background: #DDC67D; }
-.rank-2 { background: #B5CCDE; }
+.rank-2 { background: #8BB2CA; }
 .rank-3 { background: #9DB9AD; }
 .rank-other { background: #cbd5e0; color: var(--text); }
 

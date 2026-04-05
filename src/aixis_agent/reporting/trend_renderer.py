@@ -22,7 +22,7 @@ TREND_TEMPLATE = r"""<!DOCTYPE html>
     --text: #2d3748;
     --text-light: #718096;
     --border: #e2e8f0;
-    --success: #B5CCDE;
+    --success: #8BB2CA;
     --warning: #DDC67D;
     --danger: #B98D8D;
 }
@@ -196,7 +196,7 @@ const layout = {
     height: 480,
     shapes: [
         { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 4.5, y1: 5.0, fillcolor: 'rgba(221,198,125,0.08)', line: { width: 0 }, layer: 'below' },
-        { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 3.5, y1: 4.5, fillcolor: 'rgba(181,204,222,0.06)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 3.5, y1: 4.5, fillcolor: 'rgba(139,178,202,0.06)', line: { width: 0 }, layer: 'below' },
         { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 2.5, y1: 3.5, fillcolor: 'rgba(157,185,173,0.05)', line: { width: 0 }, layer: 'below' },
         { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 1.5, y1: 2.5, fillcolor: 'rgba(185,171,160,0.06)', line: { width: 0 }, layer: 'below' },
         { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 0, y1: 1.5, fillcolor: 'rgba(185,141,141,0.05)', line: { width: 0 }, layer: 'below' },

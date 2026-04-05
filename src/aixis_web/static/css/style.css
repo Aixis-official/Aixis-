@@ -38,7 +38,7 @@ html::-webkit-scrollbar { display: none; }
     --danger: #e53e3e;
     --danger-light: #fed7d7;
     --grade-s: #DDC67D;
-    --grade-a: #B5CCDE;
+    --grade-a: #8BB2CA;
     --grade-b: #9DB9AD;
     --grade-c: #B9ABA0;
     --grade-d: #B98D8D;
@@ -432,9 +432,9 @@ main.main-constrained {
     box-shadow: 0 2px 8px rgba(221,198,125,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
 }
 .grade-A {
-    background: linear-gradient(135deg, #C2D8E6 0%, #B5CCDE 50%, #A9BFD5 100%);
-    border-color: rgba(181,204,222,0.4);
-    box-shadow: 0 2px 8px rgba(181,204,222,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    background: linear-gradient(135deg, #9CC3D7 0%, #8BB2CA 50%, #7BA2BD 100%);
+    border-color: rgba(139,178,202,0.4);
+    box-shadow: 0 2px 8px rgba(139,178,202,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 .grade-B {
     background: linear-gradient(135deg, #AAC6B9 0%, #9DB9AD 50%, #91ADA0 100%);
