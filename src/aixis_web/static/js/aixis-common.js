@@ -128,7 +128,7 @@ function getPlotlyLayout(overrides = {}) {
     paper_bgcolor: bgColor,
     plot_bgcolor: bgColor,
     font: {
-      family: 'Inter, Noto Serif JP, serif',
+      family: 'Noto Serif JP, serif',
       color: textColor,
       size: 13
     },

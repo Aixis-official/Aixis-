@@ -1246,14 +1246,14 @@ async def og_image(slug: str, db: AsyncSession = Depends(get_db)):
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect x="40" y="40" width="1120" height="550" rx="16" fill="none" stroke="#334155" stroke-width="1"/>
-  <text x="100" y="120" font-family="sans-serif" font-size="22" fill="#94a3b8" font-weight="600">Aixis AI Audit Platform</text>
-  <text x="100" y="280" font-family="sans-serif" font-size="72" fill="#f8fafc" font-weight="800">{tool_name}</text>
-  <text x="100" y="340" font-family="sans-serif" font-size="28" fill="#94a3b8">{vendor}</text>
-  <text x="100" y="520" font-family="sans-serif" font-size="20" fill="#64748b">独立監査スコア（5軸評価）</text>
+  <text x="100" y="120" font-family="Noto Serif JP, serif" font-size="22" fill="#94a3b8" font-weight="600">Aixis AI Audit Platform</text>
+  <text x="100" y="280" font-family="Noto Serif JP, serif" font-size="72" fill="#f8fafc" font-weight="800">{tool_name}</text>
+  <text x="100" y="340" font-family="Noto Serif JP, serif" font-size="28" fill="#94a3b8">{vendor}</text>
+  <text x="100" y="520" font-family="Noto Serif JP, serif" font-size="20" fill="#64748b">独立監査スコア（5軸評価）</text>
   <circle cx="1000" cy="300" r="100" fill="none" stroke="#6366f1" stroke-width="6"/>
-  <text x="1000" y="290" font-family="sans-serif" font-size="64" fill="#f8fafc" font-weight="800" text-anchor="middle">{overall_score}</text>
-  <text x="1000" y="330" font-family="sans-serif" font-size="18" fill="#94a3b8" text-anchor="middle">/ 5.0</text>
-  <text x="1000" y="520" font-family="sans-serif" font-size="18" fill="#475569" text-anchor="middle">platform.aixis.jp</text>
+  <text x="1000" y="290" font-family="Noto Serif JP, serif" font-size="64" fill="#f8fafc" font-weight="800" text-anchor="middle">{overall_score}</text>
+  <text x="1000" y="330" font-family="Noto Serif JP, serif" font-size="18" fill="#94a3b8" text-anchor="middle">/ 5.0</text>
+  <text x="1000" y="520" font-family="Noto Serif JP, serif" font-size="18" fill="#475569" text-anchor="middle">platform.aixis.jp</text>
 </svg>"""
     return Response(content=svg, media_type="image/svg+xml", headers={
         "Cache-Control": "public, max-age=86400",

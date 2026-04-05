@@ -1258,7 +1258,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* --- Typography: explicit font separation --- */
 .font-num {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Noto Serif JP', serif;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.03em;
 }
@@ -1281,7 +1281,7 @@ h1, h2, h3, h4, h5, h6 {
     font-family: 'Noto Serif JP', serif;
 }
 .font-label {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Noto Serif JP', serif;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -1358,7 +1358,7 @@ html.dark .btn-primary-hover:hover {
 /* --- Report label (research institution style) --- */
 .report-label {
     display: block;
-    font-family: 'Inter', monospace;
+    font-family: 'Noto Serif JP', serif;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.1em;
@@ -1392,7 +1392,7 @@ html.dark .divider-thin-sm {
 .data-annotation {
     font-size: 11px;
     color: #9ca3af;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Noto Serif JP', serif;
     line-height: 1.4;
 }
 html.dark .data-annotation {
@@ -1403,7 +1403,7 @@ html.dark .data-annotation {
 .updated-date {
     font-size: 11px;
     color: #9ca3af;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Noto Serif JP', serif;
 }
 html.dark .updated-date {
     color: #6b7280;
@@ -1411,7 +1411,7 @@ html.dark .updated-date {
 
 /* --- Stat number (48px) + unit (20px) --- */
 .stat-number {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Noto Serif JP', serif;
     font-size: 48px;
     font-weight: 900;
     letter-spacing: -0.03em;

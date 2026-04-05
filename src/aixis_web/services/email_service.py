@@ -116,7 +116,7 @@ _HTML_WRAPPER = """\
 <!DOCTYPE html>
 <html lang="ja">
 <head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#f7f7f8;font-family:'Helvetica Neue',Arial,'Noto Serif JP',sans-serif;">
+<body style="margin:0;padding:0;background:#f7f7f8;font-family:'Helvetica Neue',Arial,'Noto Serif JP',serif;">
 <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f7f7f8;padding:32px 0;">
 <tr><td align="center">
 <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e5e7eb;">
