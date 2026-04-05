@@ -22,12 +22,12 @@ RANKING_TEMPLATE = r"""<!DOCTYPE html>
     --text: #2d3748;
     --text-light: #718096;
     --border: #e2e8f0;
-    --success: #A3BFD6;
-    --warning: #D4B85C;
-    --danger: #A87070;
-    --gold: #D4B85C;
-    --silver: #A3BFD6;
-    --bronze: #85A898;
+    --success: #B5CCDE;
+    --warning: #DDC67D;
+    --danger: #B98D8D;
+    --gold: #DDC67D;
+    --silver: #B5CCDE;
+    --bronze: #9DB9AD;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: "Noto Serif JP", "Hiragino Sans", serif; background: var(--bg); color: var(--text); line-height: 1.7; }
@@ -56,7 +56,7 @@ tr:hover { background: #f0f4f8; }
     font-weight: 700;
     letter-spacing: 0.5px;
 }
-.grade-S { background: linear-gradient(135deg, #F0E0B0, #D4B85C); color: #5C4A1E; border: 1px solid #D4B85C; }
+.grade-S { background: linear-gradient(135deg, #F3E6C0, #DDC67D); color: #5C4A1E; border: 1px solid #DDC67D; }
 .grade-A { background: #DCE8F0; color: #4A6A80; }
 .grade-B { background: #D0E0D8; color: #3A5548; }
 .grade-C { background: #E0D8D0; color: #5A4A3E; }
@@ -72,9 +72,9 @@ tr:hover { background: #f0f4f8; }
     font-weight: 900;
     font-size: 0.9rem;
 }
-.rank-1 { background: linear-gradient(135deg, #E0C56E, #D4B85C); color: #5C4A1E; box-shadow: 0 2px 6px rgba(212,184,92,0.4); }
-.rank-2 { background: linear-gradient(135deg, #B3CEE0, #A3BFD6); color: #2d3748; box-shadow: 0 2px 6px rgba(163,191,214,0.4); }
-.rank-3 { background: linear-gradient(135deg, #95B8A8, #85A898); color: #fff; box-shadow: 0 2px 6px rgba(133,168,152,0.4); }
+.rank-1 { background: linear-gradient(135deg, #E6D18B, #DDC67D); color: #5C4A1E; box-shadow: 0 2px 6px rgba(221,198,125,0.4); }
+.rank-2 { background: linear-gradient(135deg, #C2D8E6, #B5CCDE); color: #2d3748; box-shadow: 0 2px 6px rgba(181,204,222,0.4); }
+.rank-3 { background: linear-gradient(135deg, #AAC6B9, #9DB9AD); color: #fff; box-shadow: 0 2px 6px rgba(157,185,173,0.4); }
 .rank-other { background: var(--bg); color: var(--text-light); }
 
 .podium { display: flex; justify-content: center; align-items: flex-end; gap: 16px; margin: 30px 0 20px; }
@@ -193,10 +193,10 @@ const scores = [{% for r in rankings|reverse %}{{ r.overall_score }},{% endfor %
 const ranks = [{% for r in rankings|reverse %}{{ r.rank }},{% endfor %}];
 
 const barColors = ranks.map(rank => {
-    if (rank === 1) return '#D4B85C';
-    if (rank === 2) return '#A3BFD6';
-    if (rank === 3) return '#85A898';
-    return '#A89688';
+    if (rank === 1) return '#DDC67D';
+    if (rank === 2) return '#B5CCDE';
+    if (rank === 3) return '#9DB9AD';
+    return '#B9ABA0';
 });
 
 Plotly.newPlot('ranking-chart', [{
@@ -220,18 +220,18 @@ Plotly.newPlot('ranking-chart', [{
     margin: { t: 20, b: 50, l: 160, r: 60 },
     height: Math.max(300, toolNames.length * 40 + 100),
     shapes: [
-        { type: 'rect', xref: 'x', x0: 4.5, x1: 5.0, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(212,184,92,0.08)', line: { width: 0 }, layer: 'below' },
-        { type: 'rect', xref: 'x', x0: 3.5, x1: 4.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(163,191,214,0.06)', line: { width: 0 }, layer: 'below' },
-        { type: 'rect', xref: 'x', x0: 2.5, x1: 3.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(133,168,152,0.05)', line: { width: 0 }, layer: 'below' },
-        { type: 'rect', xref: 'x', x0: 1.5, x1: 2.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(168,150,136,0.06)', line: { width: 0 }, layer: 'below' },
-        { type: 'rect', xref: 'x', x0: 0, x1: 1.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(168,112,112,0.05)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', xref: 'x', x0: 4.5, x1: 5.0, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(221,198,125,0.08)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', xref: 'x', x0: 3.5, x1: 4.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(181,204,222,0.06)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', xref: 'x', x0: 2.5, x1: 3.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(157,185,173,0.05)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', xref: 'x', x0: 1.5, x1: 2.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(185,171,160,0.06)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', xref: 'x', x0: 0, x1: 1.5, yref: 'paper', y0: 0, y1: 1, fillcolor: 'rgba(185,141,141,0.05)', line: { width: 0 }, layer: 'below' },
     ],
     annotations: [
         { xref: 'x', yref: 'paper', x: 4.75, y: 1.05, text: 'S', showarrow: false, font: { size: 11, color: '#B8A04A' } },
         { xref: 'x', yref: 'paper', x: 3.8, y: 1.05, text: 'A', showarrow: false, font: { size: 11, color: '#88A8BE' } },
-        { xref: 'x', yref: 'paper', x: 3.0, y: 1.05, text: 'B', showarrow: false, font: { size: 11, color: '#85A898' } },
-        { xref: 'x', yref: 'paper', x: 2.0, y: 1.05, text: 'C', showarrow: false, font: { size: 11, color: '#A89688' } },
-        { xref: 'x', yref: 'paper', x: 0.75, y: 1.05, text: 'D', showarrow: false, font: { size: 11, color: '#A87070' } },
+        { xref: 'x', yref: 'paper', x: 3.0, y: 1.05, text: 'B', showarrow: false, font: { size: 11, color: '#9DB9AD' } },
+        { xref: 'x', yref: 'paper', x: 2.0, y: 1.05, text: 'C', showarrow: false, font: { size: 11, color: '#B9ABA0' } },
+        { xref: 'x', yref: 'paper', x: 0.75, y: 1.05, text: 'D', showarrow: false, font: { size: 11, color: '#B98D8D' } },
     ],
 }, { responsive: true });
 </script>

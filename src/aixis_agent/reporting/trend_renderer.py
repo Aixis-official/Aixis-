@@ -22,9 +22,9 @@ TREND_TEMPLATE = r"""<!DOCTYPE html>
     --text: #2d3748;
     --text-light: #718096;
     --border: #e2e8f0;
-    --success: #A3BFD6;
-    --warning: #D4B85C;
-    --danger: #A87070;
+    --success: #B5CCDE;
+    --warning: #DDC67D;
+    --danger: #B98D8D;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: "Noto Serif JP", "Hiragino Sans", serif; background: var(--bg); color: var(--text); line-height: 1.7; }
@@ -195,18 +195,18 @@ const layout = {
     margin: { t: 30, b: 80, l: 60, r: 30 },
     height: 480,
     shapes: [
-        { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 4.5, y1: 5.0, fillcolor: 'rgba(212,184,92,0.08)', line: { width: 0 }, layer: 'below' },
-        { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 3.5, y1: 4.5, fillcolor: 'rgba(163,191,214,0.06)', line: { width: 0 }, layer: 'below' },
-        { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 2.5, y1: 3.5, fillcolor: 'rgba(133,168,152,0.05)', line: { width: 0 }, layer: 'below' },
-        { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 1.5, y1: 2.5, fillcolor: 'rgba(168,150,136,0.06)', line: { width: 0 }, layer: 'below' },
-        { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 0, y1: 1.5, fillcolor: 'rgba(168,112,112,0.05)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 4.5, y1: 5.0, fillcolor: 'rgba(221,198,125,0.08)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 3.5, y1: 4.5, fillcolor: 'rgba(181,204,222,0.06)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 2.5, y1: 3.5, fillcolor: 'rgba(157,185,173,0.05)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 1.5, y1: 2.5, fillcolor: 'rgba(185,171,160,0.06)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 0, y1: 1.5, fillcolor: 'rgba(185,141,141,0.05)', line: { width: 0 }, layer: 'below' },
     ],
     annotations: [
         { xref: 'paper', yref: 'y', x: 1.01, y: 4.75, text: 'S', showarrow: false, font: { size: 11, color: '#B8A04A' }, xanchor: 'left' },
         { xref: 'paper', yref: 'y', x: 1.01, y: 3.8, text: 'A', showarrow: false, font: { size: 11, color: '#88A8BE' }, xanchor: 'left' },
-        { xref: 'paper', yref: 'y', x: 1.01, y: 3.0, text: 'B', showarrow: false, font: { size: 11, color: '#85A898' }, xanchor: 'left' },
-        { xref: 'paper', yref: 'y', x: 1.01, y: 2.0, text: 'C', showarrow: false, font: { size: 11, color: '#A89688' }, xanchor: 'left' },
-        { xref: 'paper', yref: 'y', x: 1.01, y: 0.75, text: 'D', showarrow: false, font: { size: 11, color: '#A87070' }, xanchor: 'left' },
+        { xref: 'paper', yref: 'y', x: 1.01, y: 3.0, text: 'B', showarrow: false, font: { size: 11, color: '#9DB9AD' }, xanchor: 'left' },
+        { xref: 'paper', yref: 'y', x: 1.01, y: 2.0, text: 'C', showarrow: false, font: { size: 11, color: '#B9ABA0' }, xanchor: 'left' },
+        { xref: 'paper', yref: 'y', x: 1.01, y: 0.75, text: 'D', showarrow: false, font: { size: 11, color: '#B98D8D' }, xanchor: 'left' },
     ],
 };
 

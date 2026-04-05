@@ -47,9 +47,9 @@ COMPARISON_TEMPLATE = r"""<!DOCTYPE html>
     --text: #2d3748;
     --text-light: #718096;
     --border: #e2e8f0;
-    --success: #A3BFD6;
-    --warning: #D4B85C;
-    --danger: #A87070;
+    --success: #B5CCDE;
+    --warning: #DDC67D;
+    --danger: #B98D8D;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: "Noto Serif JP", "Hiragino Sans", serif; background: var(--bg); color: var(--text); line-height: 1.7; }
@@ -74,13 +74,13 @@ td { font-size: 0.95rem; }
 tr:hover { background: #f0f4f8; }
 
 .cell-green { background: #DCE8F0; color: #4A6A80; font-weight: 600; }
-.cell-yellow { background: #F0E0B0; color: #5C4A1E; font-weight: 600; }
+.cell-yellow { background: #F3E6C0; color: #5C4A1E; font-weight: 600; }
 .cell-red { background: #E0D0D0; color: #5A3030; font-weight: 600; }
 
 .rank-badge { display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 50%; font-weight: 700; font-size: 0.85rem; color: white; }
-.rank-1 { background: #D4B85C; }
-.rank-2 { background: #A3BFD6; }
-.rank-3 { background: #85A898; }
+.rank-1 { background: #DDC67D; }
+.rank-2 { background: #B5CCDE; }
+.rank-3 { background: #9DB9AD; }
 .rank-other { background: #cbd5e0; color: var(--text); }
 
 .footer { text-align: center; padding: 40px 0 20px; color: var(--text-light); font-size: 0.85rem; }

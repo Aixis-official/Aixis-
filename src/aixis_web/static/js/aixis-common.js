@@ -42,11 +42,11 @@ window.AIXIS = {
 
   // Grade thresholds (must match enums.py OverallGrade.from_score)
   GRADES: [
-    { min: 4.5, grade: 'S', label: 'S', color: '#D4B85C' },
-    { min: 3.8, grade: 'A', label: 'A', color: '#A3BFD6' },
-    { min: 3.0, grade: 'B', label: 'B', color: '#85A898' },
-    { min: 2.0, grade: 'C', label: 'C', color: '#A89688' },
-    { min: 0,   grade: 'D', label: 'D', color: '#A87070' }
+    { min: 4.5, grade: 'S', label: 'S', color: '#DDC67D' },
+    { min: 3.8, grade: 'A', label: 'A', color: '#B5CCDE' },
+    { min: 3.0, grade: 'B', label: 'B', color: '#9DB9AD' },
+    { min: 2.0, grade: 'C', label: 'C', color: '#B9ABA0' },
+    { min: 0,   grade: 'D', label: 'D', color: '#B98D8D' }
   ],
 
   // Special grade for insufficient test completion
@@ -86,10 +86,10 @@ function scoreLevel(score) {
 }
 
 function scoreLevelColor(score) {
-  if (score >= 4.0) return '#A3BFD6';
-  if (score >= 3.0) return '#85A898';
-  if (score >= 2.0) return '#A89688';
-  return '#A87070';
+  if (score >= 4.0) return '#B5CCDE';
+  if (score >= 3.0) return '#9DB9AD';
+  if (score >= 2.0) return '#B9ABA0';
+  return '#B98D8D';
 }
 
 function formatScore(score) {
