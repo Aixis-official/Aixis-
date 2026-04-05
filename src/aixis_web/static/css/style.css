@@ -512,6 +512,11 @@ main.main-constrained {
 .score-bar-fill.good      { background: var(--primary-light); }
 .score-bar-fill.average   { background: var(--warning); }
 .score-bar-fill.poor      { background: var(--danger); }
+.score-bar-fill.grade-s   { background: var(--grade-s); }
+.score-bar-fill.grade-a   { background: var(--grade-a); }
+.score-bar-fill.grade-b   { background: var(--grade-b); }
+.score-bar-fill.grade-c   { background: var(--grade-c); }
+.score-bar-fill.grade-d   { background: var(--grade-d); }
 
 /* ==========================================================================
    4g. Status Badges

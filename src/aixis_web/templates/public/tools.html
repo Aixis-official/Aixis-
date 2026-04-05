@@ -106,6 +106,11 @@
     .card-back .back-score-fill.good { background: #9DB9AD; }
     .card-back .back-score-fill.average { background: #B9ABA0; }
     .card-back .back-score-fill.poor { background: #B98D8D; }
+    .card-back .back-score-fill.grade-s { background: #DDC67D; }
+    .card-back .back-score-fill.grade-a { background: #8BB2CA; }
+    .card-back .back-score-fill.grade-b { background: #9DB9AD; }
+    .card-back .back-score-fill.grade-c { background: #B9ABA0; }
+    .card-back .back-score-fill.grade-d { background: #B98D8D; }
 }
 </style>
 {% endblock %}
@@ -233,7 +238,7 @@
 
 {% block scripts %}
 <script>window.__AIXIS_PAGE = { isLoggedIn: {{ 'true' if user else 'false' }} };</script>
-<script defer src="/static/js/tools-page.min.js?v=20260406c"></script>
+<script defer src="/static/js/tools-page.min.js?v=20260406d"></script>
 <!-- tools-page JS (29KB) extracted to external file for cacheability -->
 <style>
     /* Hide scrollbar for category pills horizontal scroll */

@@ -79,14 +79,16 @@ function gradeColor(score) {
 // ===== SCORE UTILITIES =====
 
 function scoreLevel(score) {
-  if (score >= 4.0) return 'excellent';
-  if (score >= 3.0) return 'good';
-  if (score >= 2.0) return 'average';
-  return 'poor';
+  if (score >= 4.5) return 'grade-s';
+  if (score >= 3.8) return 'grade-a';
+  if (score >= 3.0) return 'grade-b';
+  if (score >= 2.0) return 'grade-c';
+  return 'grade-d';
 }
 
 function scoreLevelColor(score) {
-  if (score >= 4.0) return '#8BB2CA';
+  if (score >= 4.5) return '#DDC67D';
+  if (score >= 3.8) return '#8BB2CA';
   if (score >= 3.0) return '#9DB9AD';
   if (score >= 2.0) return '#B9ABA0';
   return '#B98D8D';
