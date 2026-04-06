@@ -114,9 +114,9 @@ def generate_auth_url(client_id: str, client_secret: str, redirect_uri: str = ""
     from urllib.parse import urlencode
     # Encode client_id & client_secret in the state parameter so the
     # callback can exchange the code without session storage.
-    import base64 as _b64
+    from ..crypto import encrypt_value
     state_payload = json.dumps({"cid": client_id, "cs": client_secret})
-    state = _b64.urlsafe_b64encode(state_payload.encode()).decode()
+    state = encrypt_value(state_payload)
     params = {
         "client_id": client_id,
         "redirect_uri": redirect_uri,

@@ -132,6 +132,7 @@ async def emit_event(
             plain_secret = sub.secret  # Legacy pre-encryption secret
 
         # Fire background delivery (non-blocking, with error logging)
+        # Pass only serializable data — deliver_webhook creates its own DB session
         task = asyncio.create_task(
             deliver_webhook(
                 delivery_id=delivery.id,
@@ -139,7 +140,6 @@ async def emit_event(
                 secret=plain_secret,
                 event_type=event_type,
                 payload=payload,
-                db=db,
             )
         )
         task.add_done_callback(
@@ -157,12 +157,15 @@ async def deliver_webhook(
     secret: str,
     event_type: str,
     payload: dict,
-    db: AsyncSession,
 ) -> None:
     """Deliver a webhook payload with HMAC signature.
 
     On failure, schedules exponential retries up to 4 attempts.
+    Uses its own database session to avoid sharing the caller's session
+    across async task boundaries.
     """
+    from ..db.base import async_session as async_session_factory
+
     payload_bytes = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
     signature = generate_hmac_signature(secret, payload_bytes)
 
@@ -171,41 +174,43 @@ async def deliver_webhook(
             _do_post, url, payload_bytes, signature, event_type
         )
 
-        # Update delivery record
-        result = await db.execute(
-            select(WebhookDelivery).where(WebhookDelivery.id == delivery_id)
-        )
-        delivery = result.scalar_one_or_none()
-        if delivery:
-            delivery.response_status = response_status
-            delivery.response_body = (response_body or "")[:1000]
-            delivery.attempt_count += 1
-
-            if 200 <= response_status < 300:
-                delivery.delivered_at = datetime.now(timezone.utc)
-                delivery.next_retry_at = None
-                logger.info("Webhook delivered: %s -> %s (status=%d)", event_type, url, response_status)
-            else:
-                _schedule_retry(delivery)
-                logger.warning(
-                    "Webhook delivery failed: %s -> %s (status=%d), retry scheduled",
-                    event_type, url, response_status,
-                )
-
-            await db.commit()
-
-    except Exception as exc:
-        logger.error("Webhook delivery error: %s -> %s: %s", event_type, url, exc)
-        try:
+        # Update delivery record using a dedicated session
+        async with async_session_factory() as db:
             result = await db.execute(
                 select(WebhookDelivery).where(WebhookDelivery.id == delivery_id)
             )
             delivery = result.scalar_one_or_none()
             if delivery:
+                delivery.response_status = response_status
+                delivery.response_body = (response_body or "")[:1000]
                 delivery.attempt_count += 1
-                delivery.response_body = str(exc)[:1000]
-                _schedule_retry(delivery)
+
+                if 200 <= response_status < 300:
+                    delivery.delivered_at = datetime.now(timezone.utc)
+                    delivery.next_retry_at = None
+                    logger.info("Webhook delivered: %s -> %s (status=%d)", event_type, url, response_status)
+                else:
+                    _schedule_retry(delivery)
+                    logger.warning(
+                        "Webhook delivery failed: %s -> %s (status=%d), retry scheduled",
+                        event_type, url, response_status,
+                    )
+
                 await db.commit()
+
+    except Exception as exc:
+        logger.error("Webhook delivery error: %s -> %s: %s", event_type, url, exc)
+        try:
+            async with async_session_factory() as db:
+                result = await db.execute(
+                    select(WebhookDelivery).where(WebhookDelivery.id == delivery_id)
+                )
+                delivery = result.scalar_one_or_none()
+                if delivery:
+                    delivery.attempt_count += 1
+                    delivery.response_body = str(exc)[:1000]
+                    _schedule_retry(delivery)
+                    await db.commit()
         except Exception:
             logger.exception("Failed to update delivery record after error")
 
@@ -313,7 +318,6 @@ async def send_test_event(
             secret=plain_secret,
             event_type="test",
             payload=test_payload,
-            db=db,
         )
     )
 

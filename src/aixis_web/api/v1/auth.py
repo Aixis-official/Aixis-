@@ -322,6 +322,13 @@ async def forgot_password(
         except Exception:
             pass
 
+    # Rate limit by email address (3 per hour) to prevent abuse targeting a single account
+    email_key = f"pw_reset_email:{body.email.lower()}"
+    email_allowed, _ = await check_rate_limit(db, email_key, 3, 3600)
+    if not email_allowed:
+        await db.commit()
+        return {"message": "メールを送信しました。受信トレイをご確認ください。"}
+
     # Look up user (but always return same response to prevent enumeration)
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()

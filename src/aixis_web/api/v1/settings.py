@@ -471,14 +471,15 @@ async def gdrive_get_auth_url(
 @router.get("/gdrive/callback")
 async def gdrive_oauth_callback(
     request: Request,
+    user: Annotated[User, Depends(require_admin)],
     code: str = "",
     state: str = "",
     error: str = "",
 ):
     """OAuth2 callback — Google redirects here after user consent."""
-    import base64
     import os
     from urllib.parse import urlencode
+    from ...crypto import decrypt_value
     from ...services.gdrive_export_service import exchange_code_for_tokens
 
     if error:
@@ -487,9 +488,9 @@ async def gdrive_oauth_callback(
     if not code or not state:
         return RedirectResponse("/dashboard/settings?gdrive_error=missing_code")
 
-    # Decode client credentials from state parameter
+    # Decrypt client credentials from state parameter
     try:
-        state_json = base64.urlsafe_b64decode(state.encode()).decode()
+        state_json = decrypt_value(state)
         state_data = json.loads(state_json)
         client_id = state_data["cid"]
         client_secret = state_data["cs"]

@@ -556,6 +556,9 @@ async def delete_audit(
             detail="監査セッションが見つかりません",
         )
 
+    if _user.role != "admin" and str(session.initiated_by) != str(_user.id):
+        raise HTTPException(status_code=403, detail="他のユーザーの監査セッションは削除できません")
+
     # For running/waiting sessions, auto-abort before soft-deleting
     if session.status in ("running", "waiting_login", "scoring", "aborting"):
         session.status = "aborted"
@@ -605,6 +608,8 @@ async def bulk_delete_audits(
         )
         session = result.scalar_one_or_none()
         if not session:
+            continue
+        if _user.role != "admin" and str(session.initiated_by) != str(_user.id):
             continue
         # Auto-abort running sessions
         if session.status in ("running", "waiting_login", "scoring", "aborting"):

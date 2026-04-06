@@ -124,7 +124,9 @@ async def get_score_history(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Get score history for a tool."""
-    tool_result = await db.execute(select(Tool).where(Tool.slug == tool_slug))
+    tool_result = await db.execute(
+        select(Tool).where(Tool.slug == tool_slug, Tool.is_public == True)
+    )
     tool = tool_result.scalar_one_or_none()
     if not tool:
         raise HTTPException(

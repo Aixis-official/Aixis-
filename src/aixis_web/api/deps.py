@@ -25,11 +25,12 @@ COOKIE_NAME = "aixis_token"
 
 
 def get_client_ip(request: Request) -> str:
-    """Extract real client IP, respecting X-Forwarded-For behind reverse proxies."""
+    """Extract real client IP from the rightmost X-Forwarded-For entry (closest proxy)."""
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
-        # First IP in the chain is the original client
-        return forwarded.split(",")[0].strip()
+        # Use the rightmost IP — added by the nearest trusted reverse proxy
+        parts = [p.strip() for p in forwarded.split(",")]
+        return parts[-1] if parts else (request.client.host if request.client else "unknown")
     return request.client.host if request.client else "unknown"
 
 
