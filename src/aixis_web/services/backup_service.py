@@ -150,10 +150,14 @@ def _backup_sqlite(timestamp: str, reason: str) -> dict:
 
     try:
         source = sqlite3.connect(str(db_path))
-        dest = sqlite3.connect(str(backup_path))
-        source.backup(dest)
-        dest.close()
-        source.close()
+        try:
+            dest = sqlite3.connect(str(backup_path))
+            try:
+                source.backup(dest)
+            finally:
+                dest.close()
+        finally:
+            source.close()
 
         size_bytes = backup_path.stat().st_size
         size_mb = round(size_bytes / (1024 * 1024), 2)
@@ -284,7 +288,9 @@ def _verify_sqlite_backup(backup_path: Path) -> bool:
 
 def verify_backup(filename: str) -> dict:
     """Verify an existing backup's checksum and integrity."""
-    filepath = BACKUP_DIR / filename
+    filepath = (BACKUP_DIR / filename).resolve()
+    if not str(filepath).startswith(str(BACKUP_DIR.resolve()) + "/"):
+        return {"error": "Invalid filename", "filename": filename}
     if not filepath.exists():
         return {"error": "Backup file not found", "filename": filename}
 
@@ -679,12 +685,14 @@ def _verify_pg_after_restore(parsed) -> bool:
             dbname=parsed.path.lstrip("/"),
             connect_timeout=10,
         )
-        cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'")
-        table_count = cur.fetchone()[0]
-        conn.close()
-        logger.info("RESTORE VERIFY: %d tables found in public schema", table_count)
-        return table_count > 0
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'")
+            table_count = cur.fetchone()[0]
+            logger.info("RESTORE VERIFY: %d tables found in public schema", table_count)
+            return table_count > 0
+        finally:
+            conn.close()
     except ImportError:
         logger.warning("RESTORE VERIFY: psycopg2 not available — skipping verification")
         return False

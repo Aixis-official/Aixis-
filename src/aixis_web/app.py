@@ -241,11 +241,17 @@ async def lifespan(app: FastAPI):
                     settings.anthropic_api_key = row.value
                     logger.info("Restored API key from database")
                 elif row.key == "AIXIS_AI_BUDGET_MAX_COST_JPY" and row.value:
-                    settings.ai_budget_max_cost_jpy = int(row.value)
-                    logger.info("Restored cost limit: %s JPY", row.value)
+                    try:
+                        settings.ai_budget_max_cost_jpy = int(row.value)
+                        logger.info("Restored cost limit: %s JPY", row.value)
+                    except (ValueError, TypeError):
+                        logger.warning("Invalid ai_budget_max_cost_jpy value: %r", row.value)
                 elif row.key == "AIXIS_AI_BUDGET_MAX_CALLS" and row.value:
-                    settings.ai_budget_max_calls = int(row.value)
-                    logger.info("Restored call limit: %s", row.value)
+                    try:
+                        settings.ai_budget_max_calls = int(row.value)
+                        logger.info("Restored call limit: %s", row.value)
+                    except (ValueError, TypeError):
+                        logger.warning("Invalid ai_budget_max_calls value: %r", row.value)
                 elif row.key == "AIXIS_GDRIVE_CREDENTIALS_JSON" and row.value:
                     settings.gdrive_credentials_json = row.value
                     logger.info("Restored GDrive credentials from database")
@@ -253,8 +259,11 @@ async def lifespan(app: FastAPI):
                     settings.gdrive_folder_id = row.value
                     logger.info("Restored GDrive folder ID: %s", row.value[:10] + "...")
                 elif row.key == "AIXIS_GDRIVE_EXPORT_INTERVAL_HOURS" and row.value:
-                    settings.gdrive_export_interval_hours = int(row.value)
-                    logger.info("Restored GDrive interval: %sh", row.value)
+                    try:
+                        settings.gdrive_export_interval_hours = int(row.value)
+                        logger.info("Restored GDrive interval: %sh", row.value)
+                    except (ValueError, TypeError):
+                        logger.warning("Invalid gdrive_export_interval_hours value: %r", row.value)
                 elif row.key == "AIXIS_GDRIVE_ENABLED" and row.value:
                     settings.gdrive_enabled = row.value.lower() in ("true", "1", "yes")
                     logger.info("Restored GDrive enabled: %s", settings.gdrive_enabled)

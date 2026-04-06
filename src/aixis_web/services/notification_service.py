@@ -233,6 +233,14 @@ def _post_webhook(url: str, payload_bytes: bytes) -> None:
 
     validate_webhook_url(url)
 
+    class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+        """Block automatic redirect following to prevent SSRF bypass via redirect."""
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            raise urllib.error.HTTPError(
+                newurl, code, f"Redirect blocked (SSRF protection): {code} → {newurl}",
+                headers, fp,
+            )
+
     req = urllib.request.Request(
         url,
         data=payload_bytes,
@@ -242,5 +250,6 @@ def _post_webhook(url: str, payload_bytes: bytes) -> None:
         },
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=15) as resp:
+    opener = urllib.request.build_opener(_NoRedirectHandler)
+    with opener.open(req, timeout=15) as resp:
         resp.read()

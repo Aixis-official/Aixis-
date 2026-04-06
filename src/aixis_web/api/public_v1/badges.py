@@ -327,7 +327,7 @@ def _render_embed_html(
 <style>
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
   body {{
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Serif JP", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Serif JP", serif;
     background: #ffffff;
     color: #1f2937;
     display: flex;

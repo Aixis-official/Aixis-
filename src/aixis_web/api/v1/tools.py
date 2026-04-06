@@ -455,7 +455,7 @@ executive_summary_jpは企業の意思決定者向けに、このツールの本
 
     try:
         import asyncio
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         try:
             response = await loop.run_in_executor(None, lambda: client.messages.create(
                 model="claude-sonnet-4-20250514",

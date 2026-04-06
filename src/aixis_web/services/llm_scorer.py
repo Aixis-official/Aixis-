@@ -677,7 +677,7 @@ class LLMScorer:
 
         try:
             import asyncio
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             # Tool research is text-only — use lite model to save cost
             response = await loop.run_in_executor(None, lambda: self.client.messages.create(
                 model=self.model_lite,
@@ -774,7 +774,7 @@ class LLMScorer:
         try:
             import asyncio
             import functools
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             self._check_budget("language_precheck")
             # Language detection is a simple classification task — Haiku is sufficient
             # and much cheaper than Sonnet for this purpose
@@ -1967,7 +1967,7 @@ class LLMScorer:
 
         import asyncio
         import functools
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         # If <= 18 images, send all in one API call
         # If > 18, batch into multiple calls and combine results
@@ -2140,15 +2140,28 @@ class LLMScorer:
         if rel_path.startswith("screenshots/"):
             # New path: /screenshots/session_id/0001.png -> resolve from screenshots_dir
             rel_path = rel_path[len("screenshots/"):]
-            file_path = Path(settings.screenshots_dir) / rel_path
+            base_dir = Path(settings.screenshots_dir).resolve()
+            file_path = (base_dir / rel_path).resolve()
+            if not str(file_path).startswith(str(base_dir) + "/") and file_path != base_dir:
+                logger.warning("Path traversal blocked: %s", screenshot_path)
+                self._image_cache[cache_key] = None
+                return None
         elif rel_path.startswith("static/"):
             # Legacy path: /static/screenshots/extension/session_id/0001.png
             rel_path = rel_path[len("static/"):]
-            static_dir = Path(__file__).parent.parent / "static"
-            file_path = static_dir / rel_path
+            base_dir = (Path(__file__).parent.parent / "static").resolve()
+            file_path = (base_dir / rel_path).resolve()
+            if not str(file_path).startswith(str(base_dir) + "/") and file_path != base_dir:
+                logger.warning("Path traversal blocked: %s", screenshot_path)
+                self._image_cache[cache_key] = None
+                return None
         else:
-            static_dir = Path(__file__).parent.parent / "static"
-            file_path = static_dir / rel_path
+            base_dir = (Path(__file__).parent.parent / "static").resolve()
+            file_path = (base_dir / rel_path).resolve()
+            if not str(file_path).startswith(str(base_dir) + "/") and file_path != base_dir:
+                logger.warning("Path traversal blocked: %s", screenshot_path)
+                self._image_cache[cache_key] = None
+                return None
 
         # PRIMARY: Try disk first
         if file_path.exists():

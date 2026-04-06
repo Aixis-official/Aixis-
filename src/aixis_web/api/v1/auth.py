@@ -71,8 +71,12 @@ async def login(
         except Exception as rl_err:
             import logging
             logging.getLogger(__name__).error(
-                "Rate limit check failed for login (IP=%s): %s — allowing request (fail-open)",
+                "Rate limit check failed for login (IP=%s): %s — denying request (fail-closed)",
                 client_ip, rl_err,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="サービスが一時的に利用できません。しばらくしてから再度お試しください。",
             )
 
     result = await db.execute(select(User).where(User.email == body.email))
