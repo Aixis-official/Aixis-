@@ -371,7 +371,7 @@
 
         grid.innerHTML = tools.map(function(t) {
             var iconHtml = t.logo_url
-                ? '<img src="' + esc(t.logo_url) + '" class="w-9 h-9 rounded-lg shrink-0 object-cover" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
+                ? '<img src="' + esc(t.logo_url) + '" class="w-9 h-9 rounded-lg shrink-0 object-cover" alt="' + esc(t.name || '') + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
                   '<div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-100 to-indigo-50 dark:from-indigo-900/50 dark:to-indigo-800/30 items-center justify-center text-sm font-bold text-indigo-400 shrink-0 hidden">' + esc((t.name || '?')[0].toUpperCase()) + '</div>'
                 : '<div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-100 to-indigo-50 dark:from-indigo-900/50 dark:to-indigo-800/30 flex items-center justify-center text-sm font-bold text-indigo-400 shrink-0">' + esc((t.name || '?')[0].toUpperCase()) + '</div>';
 

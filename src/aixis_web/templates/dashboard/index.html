@@ -222,7 +222,7 @@ function renderPublishedTools(tools) {
 
     container.innerHTML = tools.map(t => {
         const iconHtml = t.logo_url
-            ? `<img src="${escapeHtml(t.logo_url)}" class="w-8 h-8 rounded-lg shrink-0 object-cover" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 items-center justify-center text-xs font-bold text-indigo-400 shrink-0 hidden">${escapeHtml((t.name || '?')[0])}</div>`
+            ? `<img src="${escapeHtml(t.logo_url)}" class="w-8 h-8 rounded-lg shrink-0 object-cover" alt="${escapeHtml(t.name || '')}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 items-center justify-center text-xs font-bold text-indigo-400 shrink-0 hidden">${escapeHtml((t.name || '?')[0])}</div>`
             : `<div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0">${escapeHtml((t.name || '?')[0])}</div>`;
 
         let scoreInfo = '';

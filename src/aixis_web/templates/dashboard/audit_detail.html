@@ -321,12 +321,12 @@
     .dark .phase-label { color: #6b7280; }
     .phase-connector { flex: 1; height: 2px; background: #e5e7eb; min-width: 20px; margin-top: -16px; transition: background 0.3s; }
     .dark .phase-connector { background: #374151; }
-    .phase-step.completed .phase-dot { background: #10b981; }
-    .phase-step.completed .phase-label { color: #10b981; }
+    .phase-step.completed .phase-dot { background: #9DB9AD; }
+    .phase-step.completed .phase-label { color: #9DB9AD; }
     .phase-step.active .phase-dot { background: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.2); animation: pulse-dot 2s infinite; }
     .dark .phase-step.active .phase-dot { box-shadow: 0 0 0 4px rgba(99,102,241,0.3); }
     .phase-step.active .phase-label { color: #6366f1; font-weight: 600; }
-    .phase-connector.completed { background: #10b981; }
+    .phase-connector.completed { background: #9DB9AD; }
     @keyframes pulse-dot { 0%, 100% { box-shadow: 0 0 0 4px rgba(99,102,241,0.2); } 50% { box-shadow: 0 0 0 8px rgba(99,102,241,0.1); } }
 </style>
 <script>
@@ -952,7 +952,7 @@
 
         var DIMENSIONS = [
             { key: 'consistency',       label: '再現性',   labelEn: 'Consistency',       color: '#3b82f6', icon: '🔄' },
-            { key: 'comprehensiveness', label: '網羅性',   labelEn: 'Comprehensiveness', color: '#10b981', icon: '📐' },
+            { key: 'comprehensiveness', label: '網羅性',   labelEn: 'Comprehensiveness', color: '#9DB9AD', icon: '📐' },
             { key: 'correctness',       label: '正確性',   labelEn: 'Correctness',       color: '#f59e0b', icon: '🎯' },
             { key: 'intelligibility',   label: '解釈性',   labelEn: 'Intelligibility',   color: '#8b5cf6', icon: '📖' },
         ];
@@ -1224,7 +1224,7 @@
         var CONFIDENCE_DIMS = [
             { key: 'consistency',       label: '再現性', color: '#3b82f6' },
             { key: 'correctness',       label: '正確性', color: '#f59e0b' },
-            { key: 'comprehensiveness', label: '網羅性', color: '#10b981' },
+            { key: 'comprehensiveness', label: '網羅性', color: '#9DB9AD' },
             { key: 'intelligibility',   label: '解釈性', color: '#8b5cf6' },
         ];
 

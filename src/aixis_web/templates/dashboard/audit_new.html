@@ -221,7 +221,7 @@
                 : '<div class="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 shrink-0"></div>';
 
             var iconHtml = t.logo_url
-                ? '<img src="' + escapeHtml(t.logo_url) + '" class="w-6 h-6 rounded shrink-0" alt="" onerror="this.style.display=\'none\'">'
+                ? '<img src="' + escapeHtml(t.logo_url) + '" class="w-6 h-6 rounded shrink-0" alt="' + escapeHtml(t.name || '') + '" onerror="this.style.display=\'none\'">'
                 : '';
 
             return '<div class="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-100 ' + selectedClass + '" data-tool-id="' + escapeAttr(t.id) + '" data-tool-slug="' + escapeAttr(t.slug) + '" onclick="selectTool(this)">' +
