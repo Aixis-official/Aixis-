@@ -310,10 +310,10 @@ async def category_page(request: Request, slug: str, user: _OptionalUser = None)
 
 
 @page_router.get("/company")
-async def company_page(request: Request, user: _OptionalUser = None):
-    """Company profile page (会社概要)."""
-    ctx = _get_template_context(request, user=user, title="会社概要 | 株式会社Aixis（アイクシス）", active_page="company")
-    return _render("public/company.html", ctx)
+async def company_page():
+    """Redirect to corporate site company page."""
+    from starlette.responses import RedirectResponse
+    return RedirectResponse("https://aixis.jp/company", status_code=301)
 
 
 @page_router.get("/terms")
