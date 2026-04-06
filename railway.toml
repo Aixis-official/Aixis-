@@ -8,6 +8,7 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 healthcheckPath = "/api/v1/health"
 healthcheckTimeout = 120
+healthcheckInitialDelaySeconds = 5
 
 # Persistent volume for screenshots, uploads, and backups.
 # Without this, /data is ephemeral and files are lost on every deploy.
