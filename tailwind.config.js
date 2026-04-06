@@ -21,11 +21,11 @@ module.exports = {
           900: '#060d19'
         },
         grade: {
-          s: '#D4B85C',
-          a: '#A3BFD6',
-          b: '#85A898',
-          c: '#A89688',
-          d: '#A87070'
+          s: '#DDC67D',
+          a: '#8BB2CA',
+          b: '#9DB9AD',
+          c: '#B9ABA0',
+          d: '#B98D8D'
         }
       },
       fontFamily: {

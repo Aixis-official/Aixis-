@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 </div>
                                 ${hasResponse ? '<div class="bg-emerald-50 dark:bg-emerald-900/20 rounded p-2"><div class="font-medium text-emerald-600 dark:text-emerald-400 mb-1">応答:</div><div class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-jp max-h-48 overflow-y-auto">' + escapeHtml((r.response_raw || '').substring(0, 1000)) + '</div></div>' : ''}
                                 ${hasError ? '<div class="bg-red-50 dark:bg-red-900/20 rounded p-2"><div class="font-medium text-red-600 dark:text-red-400 mb-1">エラー:</div><div class="text-red-700 dark:text-red-300 font-jp">' + escapeHtml(r.error) + '</div></div>' : ''}
-                                ${r.screenshot_path ? '<div><img src="' + r.screenshot_path + '" class="rounded border max-w-full max-h-64" loading="lazy" onerror="this.style.display=\'none\'"></div>' : ''}
+                                ${r.screenshot_path ? '<div><img src="' + r.screenshot_path + '" alt="監査スクリーンショット" class="rounded border max-w-full max-h-64" loading="lazy" onerror="this.style.display=\'none\'"></div>' : ''}
                             </div>
                         </details>
                     </div>
