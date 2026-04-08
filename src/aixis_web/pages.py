@@ -318,16 +318,16 @@ async def company_page():
 
 @page_router.get("/terms")
 async def terms_page(request: Request, user: _OptionalUser = None):
-    """Terms of service page."""
-    ctx = _get_template_context(request, user=user, title="利用規約 | サービス利用条件", active_page="terms")
-    return _render("public/terms.html", ctx)
+    """Redirect to aixis.jp/terms (legal pages consolidated there)."""
+    from starlette.responses import RedirectResponse
+    return RedirectResponse("https://aixis.jp/terms", status_code=301)
 
 
 @page_router.get("/tokushoho")
 async def tokushoho_page(request: Request, user: _OptionalUser = None):
-    """特定商取引法に基づく表記 page."""
-    ctx = _get_template_context(request, user=user, title="特定商取引法に基づく表記", active_page="tokushoho")
-    return _render("public/tokushoho.html", ctx)
+    """Redirect to aixis.jp/tokushoho (legal pages consolidated there)."""
+    from starlette.responses import RedirectResponse
+    return RedirectResponse("https://aixis.jp/tokushoho", status_code=301)
 
 
 @page_router.get("/pricing")
@@ -799,8 +799,7 @@ _STATIC_PAGES = [
     ("/faq", "monthly", "0.5"),
     ("/contact", "monthly", "0.3"),
     ("/company", "monthly", "0.4"),
-    ("/terms", "yearly", "0.2"),
-    ("/tokushoho", "yearly", "0.2"),
+    # terms and tokushoho now redirect to aixis.jp (excluded from sitemap)
 ]
 
 

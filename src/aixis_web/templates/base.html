@@ -48,47 +48,49 @@
     {% endblock %}
     {% block structured_data %}{% endblock %}
 
-    <!-- Google Analytics 4 (excluded for admin, bots, automated browsers, and ?notrack=1 opt-out) -->
+    <!-- Google Analytics 4 (loaded only after cookie consent; excluded for admin, bots, automated browsers, and ?notrack=1 opt-out) -->
     <script>
         (function() {
-            var skip = false;
-            try {
-                // 1. Exclude automated browsers (Puppeteer, Playwright, Selenium, headless Chrome, preview tools)
-                if (navigator.webdriver) skip = true;
-                var ua = navigator.userAgent || '';
-                if (/HeadlessChrome|PhantomJS|Puppeteer|Playwright|Selenium|bot|crawl|spider|preview/i.test(ua)) skip = true;
-                // 2. ?notrack=1 sets a persistent opt-out flag (stored in both localStorage and cookie for cross-browser reliability)
-                if (new URLSearchParams(window.location.search).get('notrack') === '1') {
-                    try { localStorage.setItem('aixis_notrack', '1'); } catch(e) {}
-                    document.cookie = 'aixis_notrack=1; path=/; max-age=31536000; SameSite=Lax';
-                    skip = true;
-                }
-                // 3. Check localStorage (primary)
-                try { if (localStorage.getItem('aixis_notrack') === '1') skip = true; } catch(e) {}
-                // 4. Check cookie (fallback for Safari private browsing / mobile)
-                if (!skip && document.cookie.indexOf('aixis_notrack=1') !== -1) skip = true;
-                // 5. Admin JWT check
+            window.__aixisGA = function() {
+                var skip = false;
                 try {
-                    var t = localStorage.getItem('aixis_token');
-                    if (t) {
-                        var payload = JSON.parse(atob(t.split('.')[1]));
-                        if (payload.role === 'admin') skip = true;
+                    if (navigator.webdriver) skip = true;
+                    var ua = navigator.userAgent || '';
+                    if (/HeadlessChrome|PhantomJS|Puppeteer|Playwright|Selenium|bot|crawl|spider|preview/i.test(ua)) skip = true;
+                    if (new URLSearchParams(window.location.search).get('notrack') === '1') {
+                        try { localStorage.setItem('aixis_notrack', '1'); } catch(e) {}
+                        document.cookie = 'aixis_notrack=1; path=/; max-age=31536000; SameSite=Lax';
+                        skip = true;
                     }
+                    try { if (localStorage.getItem('aixis_notrack') === '1') skip = true; } catch(e) {}
+                    if (!skip && document.cookie.indexOf('aixis_notrack=1') !== -1) skip = true;
+                    try {
+                        var t = localStorage.getItem('aixis_token');
+                        if (t) {
+                            var payload = JSON.parse(atob(t.split('.')[1]));
+                            if (payload.role === 'admin') skip = true;
+                        }
+                    } catch(e) {}
+                    var h = window.location.hostname;
+                    if (h === 'localhost' || h === '127.0.0.1' || h.endsWith('.up.railway.app')) skip = true;
                 } catch(e) {}
-                // 6. Exclude localhost / Railway preview URLs
-                var h = window.location.hostname;
-                if (h === 'localhost' || h === '127.0.0.1' || h.endsWith('.up.railway.app')) skip = true;
+                if (!skip) {
+                    var s = document.createElement('script');
+                    s.async = true;
+                    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CV6MJV3NBF';
+                    document.head.appendChild(s);
+                    window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    gtag('js', new Date());
+                    gtag('config', 'G-CV6MJV3NBF');
+                }
+            };
+            // Auto-load if consent already given
+            try {
+                if (document.cookie.indexOf('aixis_cookie_consent=accepted') !== -1) {
+                    window.__aixisGA();
+                }
             } catch(e) {}
-            if (!skip) {
-                var s = document.createElement('script');
-                s.async = true;
-                s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CV6MJV3NBF';
-                document.head.appendChild(s);
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', 'G-CV6MJV3NBF');
-            }
         })();
     </script>
     <script src="/static/js/ga4-events.min.js?v=20260406e" defer></script>
@@ -442,9 +444,9 @@
                             法務
                         </h3>
                         <ul class="mt-3 space-y-2">
-                            <li><a href="/terms" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">利用規約</a></li>
-                            <li><a href="https://aixis.jp/privacy-policy/" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">プライバシーポリシー</a></li>
-                            <li><a href="/tokushoho" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">特定商取引法に基づく表記</a></li>
+                            <li><a href="https://aixis.jp/terms" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">利用規約</a></li>
+                            <li><a href="https://aixis.jp/privacy-policy" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">プライバシーポリシー</a></li>
+                            <li><a href="https://aixis.jp/tokushoho" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">特定商取引法に基づく表記</a></li>
                         </ul>
                     </div>
                 </div>
@@ -544,6 +546,35 @@
                 });
             }
         })();
+    </script>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:rgba(15,17,26,0.97); backdrop-filter:blur(8px); color:#d1d5db; padding:16px 24px; box-shadow:0 -2px 12px rgba(0,0,0,0.25); font-size:0.8125rem; line-height:1.6;">
+        <div style="max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+            <p style="margin:0; flex:1; min-width:240px;" class="font-jp">当サイトでは、サービス向上のためにCookieを使用しています。詳細は<a href="https://aixis.jp/privacy-policy" target="_blank" rel="noopener" style="color:#90cdf4; text-decoration:underline;">プライバシーポリシー</a>をご覧ください。</p>
+            <div style="display:flex; gap:10px; flex-shrink:0;">
+                <button id="cookie-reject" style="padding:7px 18px; border:1px solid #4a5568; background:transparent; color:#d1d5db; border-radius:6px; cursor:pointer; font-size:0.8125rem; transition:background 0.2s;" class="font-jp">拒否</button>
+                <button id="cookie-accept" style="padding:7px 18px; border:none; background:#4299e1; color:#fff; border-radius:6px; cursor:pointer; font-size:0.8125rem; font-weight:600; transition:background 0.2s;" class="font-jp">同意する</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    (function() {
+        var banner = document.getElementById('cookie-consent');
+        if (!banner) return;
+        var consent = (document.cookie.match(/(?:^|;\s*)aixis_cookie_consent=([^;]*)/) || [])[1];
+        if (consent) return;
+        banner.style.display = 'block';
+        document.getElementById('cookie-accept').addEventListener('click', function() {
+            document.cookie = 'aixis_cookie_consent=accepted; path=/; max-age=31536000; SameSite=Lax';
+            banner.style.display = 'none';
+            if (window.__aixisGA) window.__aixisGA();
+        });
+        document.getElementById('cookie-reject').addEventListener('click', function() {
+            document.cookie = 'aixis_cookie_consent=rejected; path=/; max-age=31536000; SameSite=Lax';
+            banner.style.display = 'none';
+        });
+    })();
     </script>
 
     {% block scripts %}{% endblock %}
