@@ -208,7 +208,7 @@ details[open] summary { margin-bottom: 8px; }
 <!-- Footer -->
 <div class="footer">
     <p>本レポートはAixis破壊的テスト自動化エージェントにより生成されました。</p>
-    <p><a href="https://aixis.jp">Aixis</a> - AI実装の投資判断を科学する、独立系AI調査・検証機関</p>
+    <p><a href="https://aixis.jp">Aixis</a> - AI導入に、中立な審判を。</p>
     <p>© {{ report.generated_at.strftime('%Y') }} Aixis. All rights reserved.</p>
 </div>
 
