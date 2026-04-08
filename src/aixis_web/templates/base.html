@@ -48,49 +48,42 @@
     {% endblock %}
     {% block structured_data %}{% endblock %}
 
-    <!-- Google Analytics 4 (loaded only after cookie consent; excluded for admin, bots, automated browsers, and ?notrack=1 opt-out) -->
+    <!-- Google Analytics 4 (default load; opt-out via cookie banner or ?notrack=1) -->
     <script>
         (function() {
-            window.__aixisGA = function() {
-                var skip = false;
-                try {
-                    if (navigator.webdriver) skip = true;
-                    var ua = navigator.userAgent || '';
-                    if (/HeadlessChrome|PhantomJS|Puppeteer|Playwright|Selenium|bot|crawl|spider|preview/i.test(ua)) skip = true;
-                    if (new URLSearchParams(window.location.search).get('notrack') === '1') {
-                        try { localStorage.setItem('aixis_notrack', '1'); } catch(e) {}
-                        document.cookie = 'aixis_notrack=1; path=/; max-age=31536000; SameSite=Lax';
-                        skip = true;
-                    }
-                    try { if (localStorage.getItem('aixis_notrack') === '1') skip = true; } catch(e) {}
-                    if (!skip && document.cookie.indexOf('aixis_notrack=1') !== -1) skip = true;
-                    try {
-                        var t = localStorage.getItem('aixis_token');
-                        if (t) {
-                            var payload = JSON.parse(atob(t.split('.')[1]));
-                            if (payload.role === 'admin') skip = true;
-                        }
-                    } catch(e) {}
-                    var h = window.location.hostname;
-                    if (h === 'localhost' || h === '127.0.0.1' || h.endsWith('.up.railway.app')) skip = true;
-                } catch(e) {}
-                if (!skip) {
-                    var s = document.createElement('script');
-                    s.async = true;
-                    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CV6MJV3NBF';
-                    document.head.appendChild(s);
-                    window.dataLayer = window.dataLayer || [];
-                    function gtag(){dataLayer.push(arguments);}
-                    gtag('js', new Date());
-                    gtag('config', 'G-CV6MJV3NBF');
-                }
-            };
-            // Auto-load if consent already given
+            var skip = false;
             try {
-                if (document.cookie.indexOf('aixis_cookie_consent=accepted') !== -1) {
-                    window.__aixisGA();
+                if (navigator.webdriver) skip = true;
+                var ua = navigator.userAgent || '';
+                if (/HeadlessChrome|PhantomJS|Puppeteer|Playwright|Selenium|bot|crawl|spider|preview/i.test(ua)) skip = true;
+                if (new URLSearchParams(window.location.search).get('notrack') === '1') {
+                    try { localStorage.setItem('aixis_notrack', '1'); } catch(e) {}
+                    document.cookie = 'aixis_notrack=1; path=/; max-age=31536000; SameSite=Lax';
+                    skip = true;
                 }
+                try { if (localStorage.getItem('aixis_notrack') === '1') skip = true; } catch(e) {}
+                if (!skip && document.cookie.indexOf('aixis_notrack=1') !== -1) skip = true;
+                if (document.cookie.indexOf('aixis_cookie_consent=rejected') !== -1) skip = true;
+                try {
+                    var t = localStorage.getItem('aixis_token');
+                    if (t) {
+                        var payload = JSON.parse(atob(t.split('.')[1]));
+                        if (payload.role === 'admin') skip = true;
+                    }
+                } catch(e) {}
+                var h = window.location.hostname;
+                if (h === 'localhost' || h === '127.0.0.1' || h.endsWith('.up.railway.app')) skip = true;
             } catch(e) {}
+            if (!skip) {
+                var s = document.createElement('script');
+                s.async = true;
+                s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CV6MJV3NBF';
+                document.head.appendChild(s);
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-CV6MJV3NBF');
+            }
         })();
     </script>
     <script src="/static/js/ga4-events.min.js?v=20260406e" defer></script>
@@ -548,14 +541,12 @@
         })();
     </script>
 
-    <!-- Cookie Consent Banner -->
-    <div id="cookie-consent" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:rgba(15,17,26,0.97); backdrop-filter:blur(8px); color:#d1d5db; padding:16px 24px; box-shadow:0 -2px 12px rgba(0,0,0,0.25); font-size:0.8125rem; line-height:1.6;">
-        <div style="max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
-            <p style="margin:0; flex:1; min-width:240px;" class="font-jp">当サイトでは、サービス向上のためにCookieを使用しています。詳細は<a href="https://aixis.jp/privacy-policy" target="_blank" rel="noopener" style="color:#90cdf4; text-decoration:underline;">プライバシーポリシー</a>をご覧ください。</p>
-            <div style="display:flex; gap:10px; flex-shrink:0;">
-                <button id="cookie-reject" style="padding:7px 18px; border:1px solid #4a5568; background:transparent; color:#d1d5db; border-radius:6px; cursor:pointer; font-size:0.8125rem; transition:background 0.2s;" class="font-jp">拒否</button>
-                <button id="cookie-accept" style="padding:7px 18px; border:none; background:#4299e1; color:#fff; border-radius:6px; cursor:pointer; font-size:0.8125rem; font-weight:600; transition:background 0.2s;" class="font-jp">同意する</button>
-            </div>
+    <!-- Cookie Notice Banner -->
+    <div id="cookie-consent" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:9999; width:calc(100% - 40px); max-width:520px; background:rgba(10,12,20,0.88); backdrop-filter:blur(16px) saturate(1.4); -webkit-backdrop-filter:blur(16px) saturate(1.4); color:rgba(220,224,232,0.92); padding:20px 24px; border-radius:14px; border:1px solid rgba(255,255,255,0.06); box-shadow:0 8px 32px rgba(0,0,0,0.28), 0 0 0 0.5px rgba(255,255,255,0.04) inset; font-size:0.8125rem; line-height:1.65; letter-spacing:0.02em; transition:opacity 0.35s ease, transform 0.35s ease;">
+        <p style="margin:0 0 14px 0; font-size:0.8125rem; color:rgba(200,206,218,0.85);" class="font-jp">当サイトではアクセス解析のためCookieを使用しています。<a href="https://aixis.jp/privacy-policy" target="_blank" rel="noopener" style="color:rgba(160,190,220,0.9); text-decoration:none; border-bottom:1px solid rgba(160,190,220,0.25); transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(160,190,220,0.6)'" onmouseout="this.style.borderColor='rgba(160,190,220,0.25)'">詳細</a></p>
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button id="cookie-reject" style="padding:7px 16px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:rgba(200,206,218,0.7); border-radius:8px; cursor:pointer; font-size:0.75rem; letter-spacing:0.04em; transition:all 0.2s;" class="font-jp" onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.borderColor='rgba(255,255,255,0.18)'" onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.borderColor='rgba(255,255,255,0.1)'">オプトアウト</button>
+            <button id="cookie-accept" style="padding:7px 20px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.1); color:rgba(230,234,240,0.95); border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:500; letter-spacing:0.04em; transition:all 0.2s;" class="font-jp" onmouseover="this.style.background='rgba(255,255,255,0.16)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">閉じる</button>
         </div>
     </div>
     <script>
@@ -564,15 +555,18 @@
         if (!banner) return;
         var consent = (document.cookie.match(/(?:^|;\s*)aixis_cookie_consent=([^;]*)/) || [])[1];
         if (consent) return;
-        banner.style.display = 'block';
+        setTimeout(function() { banner.style.display = 'block'; }, 1200);
         document.getElementById('cookie-accept').addEventListener('click', function() {
             document.cookie = 'aixis_cookie_consent=accepted; path=/; max-age=31536000; SameSite=Lax';
-            banner.style.display = 'none';
-            if (window.__aixisGA) window.__aixisGA();
+            banner.style.opacity = '0';
+            banner.style.transform = 'translateX(-50%) translateY(12px)';
+            setTimeout(function() { banner.style.display = 'none'; }, 350);
         });
         document.getElementById('cookie-reject').addEventListener('click', function() {
             document.cookie = 'aixis_cookie_consent=rejected; path=/; max-age=31536000; SameSite=Lax';
-            banner.style.display = 'none';
+            banner.style.opacity = '0';
+            banner.style.transform = 'translateX(-50%) translateY(12px)';
+            setTimeout(function() { banner.style.display = 'none'; }, 350);
         });
     })();
     </script>
