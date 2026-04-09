@@ -359,6 +359,15 @@ async def upload_observation(
 
     if body.screenshot_base64:
         try:
+            # Reject oversized base64 payloads (max ~10MB decoded)
+            _MAX_SCREENSHOT_B64_LEN = 14_000_000  # ~10MB when decoded
+            if ss_b64_len > _MAX_SCREENSHOT_B64_LEN:
+                logger.warning(
+                    "Screenshot rejected: base64 too large (%d chars, max %d) for session %s",
+                    ss_b64_len, _MAX_SCREENSHOT_B64_LEN, session_id,
+                )
+                raise ValueError("Screenshot too large")
+
             # Strip accidental data URL prefix if present
             raw_b64 = body.screenshot_base64
             if raw_b64.startswith("data:"):

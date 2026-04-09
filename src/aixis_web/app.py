@@ -99,7 +99,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         # --- Security headers ---
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["X-XSS-Protection"] = "0"
         response.headers["Permissions-Policy"] = (
             "accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), "
             "camera=(), cross-origin-isolated=(), display-capture=(), "
@@ -128,6 +128,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 "frame-ancestors 'none'",
                 "base-uri 'self'",
                 "form-action 'self'",
+                "object-src 'none'",
             ]
         else:
             csp_directives = [
@@ -140,6 +141,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 "frame-ancestors 'none'",
                 "base-uri 'self'",
                 "form-action 'self'",
+                "object-src 'none'",
             ]
         response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
 
