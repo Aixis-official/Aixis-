@@ -8,13 +8,13 @@
     <!-- Header with back button -->
     <div class="flex items-center gap-4 mb-6">
         <a href="/dashboard"
-           class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-[#1e2235] border border-gray-200 dark:border-gray-700/50 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
+           class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-150">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
             ダッシュボード
         </a>
         <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">手動チェックリスト評価</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 font-mono">セッション: {{ session_id }}</p>
+            <h1 class="text-2xl font-bold text-gray-900 font-jp">手動チェックリスト評価</h1>
+            <p class="text-sm text-gray-500 font-mono">セッション: {{ session_id }}</p>
         </div>
     </div>
 
@@ -25,20 +25,20 @@
         <div class="lg:col-span-3 space-y-6">
 
             <!-- Progress Bar -->
-            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-5">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                 <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 font-jp">評価進捗</h2>
+                    <h2 class="text-sm font-semibold text-gray-700 font-jp">評価進捗</h2>
                     <span class="text-sm font-medium tabular-nums" id="progress-text">0 / 0 項目入力済み (0%)</span>
                 </div>
-                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div class="h-3 rounded-full transition-all duration-500 ease-out" id="progress-bar" style="width:0%;background-color:#B98D8D"></div>
                 </div>
             </div>
 
             <!-- Axis Accordion Sections -->
             <div id="checklist-container" class="space-y-4">
-                <div class="flex flex-col items-center py-12 text-gray-400 dark:text-gray-500">
-                    <svg class="animate-spin h-6 w-6 mb-3 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24">
+                <div class="flex flex-col items-center py-12 text-gray-400">
+                    <svg class="animate-spin h-6 w-6 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
@@ -50,8 +50,8 @@
         <!-- Sidebar (1/4) - Radar Chart -->
         <div class="lg:col-span-1">
             <div class="lg:sticky lg:top-24">
-                <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-4">
-                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 font-jp text-center">スコアプレビュー</h3>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3 font-jp text-center">スコアプレビュー</h3>
                     <div id="radar-chart" style="width:100%;height:260px;"></div>
                     <div class="mt-2 space-y-1" id="axis-score-summary"></div>
                 </div>
@@ -60,14 +60,14 @@
     </div>
 
     <!-- Submit Button (sticky on mobile) -->
-    <div class="fixed bottom-0 left-0 right-0 lg:static lg:mt-8 bg-white/90 dark:bg-[#1e2235]/90 backdrop-blur-sm lg:backdrop-blur-none border-t border-gray-200 dark:border-gray-700/50 lg:border-0 p-4 lg:p-0 z-40">
+    <div class="fixed bottom-0 left-0 right-0 lg:static lg:mt-8 bg-white/90 backdrop-blur-sm lg:backdrop-blur-none border-t border-gray-200 lg:border-0 p-4 lg:p-0 z-40">
         <div class="max-w-7xl mx-auto lg:px-0">
-            <div class="bg-white dark:bg-[#1e2235] lg:rounded-xl lg:shadow-sm lg:dark:shadow-none lg:border lg:border-gray-100 lg:dark:border-gray-700/50 lg:p-6 text-center">
-                <button class="w-full lg:w-auto px-8 py-3 text-sm font-semibold text-white bg-aixis-500 dark:bg-indigo-600 rounded-lg hover:bg-aixis-600 dark:hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-sm font-jp"
+            <div class="bg-white lg:rounded-xl lg:shadow-sm lg:border lg:border-gray-100 lg:p-6 text-center">
+                <button class="w-full lg:w-auto px-8 py-3 text-sm font-semibold text-white bg-aixis-500 rounded-lg hover:bg-aixis-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-sm font-jp"
                         id="submit-scores" disabled>
                     手動スコアを送信して確定
                 </button>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 font-jp">送信後、自動スコアと統合されて最終スコアが算出されます。</p>
+                <p class="text-xs text-gray-400 mt-2 font-jp">送信後、自動スコアと統合されて最終スコアが算出されます。</p>
             </div>
         </div>
     </div>
@@ -202,25 +202,25 @@ function renderChecklists() {
         const items = CHECKLISTS[axis.key] || [];
         const isOpen = idx === 0;
         return `
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 overflow-hidden transition-colors duration-200" data-axis-section="${axis.key}">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-colors duration-200" data-axis-section="${axis.key}">
             <!-- Accordion Header -->
             <button type="button"
-                    class="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors duration-150 group"
+                    class="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50/50 transition-colors duration-150 group"
                     onclick="toggleAccordion('${axis.key}')">
                 <div class="flex items-center gap-3">
                     <span class="w-3 h-3 rounded-full shrink-0" style="background-color:${axis.color}"></span>
-                    <span class="text-base font-semibold text-gray-900 dark:text-white font-jp">${axis.name}</span>
-                    <span class="px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                    <span class="text-base font-semibold text-gray-900 font-jp">${axis.name}</span>
+                    <span class="px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 text-gray-500">
                         自動${axis.autoRatio}% / 手動${axis.manualRatio}%
                     </span>
-                    <span class="text-xs text-gray-400 dark:text-gray-500 tabular-nums" id="axis-count-${axis.key}">0 / ${items.length}</span>
+                    <span class="text-xs text-gray-400 tabular-nums" id="axis-count-${axis.key}">0 / ${items.length}</span>
                 </div>
-                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}" id="chevron-${axis.key}" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <svg class="w-5 h-5 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}" id="chevron-${axis.key}" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
                 </svg>
             </button>
             <!-- Accordion Body -->
-            <div class="border-t border-gray-100 dark:border-gray-700/50 ${isOpen ? '' : 'hidden'}" id="body-${axis.key}">
+            <div class="border-t border-gray-100 ${isOpen ? '' : 'hidden'}" id="body-${axis.key}">
                 <div class="p-4 space-y-3">
                     ${items.map(item => renderChecklistItem(axis, item)).join('')}
                 </div>
@@ -233,36 +233,34 @@ function renderChecklists() {
 
 function renderChecklistItem(axis, item) {
     return `
-    <div class="rounded-lg border border-gray-100 dark:border-gray-700/40 p-4 hover:border-gray-200 dark:hover:border-gray-600/50 transition-colors duration-150" id="item-${item.id}">
+    <div class="rounded-lg border border-gray-100 p-4 hover:border-gray-200 transition-colors duration-150" id="item-${item.id}">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <!-- Left: Item info -->
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-1">
-                    <span class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 shrink-0" id="dot-${item.id}"></span>
-                    <span class="text-xs font-mono text-gray-400 dark:text-gray-500">${item.id}</span>
-                    <span class="text-sm font-semibold text-gray-900 dark:text-white font-jp">${item.name_jp}</span>
+                    <span class="w-2 h-2 rounded-full bg-gray-300 shrink-0" id="dot-${item.id}"></span>
+                    <span class="text-xs font-mono text-gray-400">${item.id}</span>
+                    <span class="text-sm font-semibold text-gray-900 font-jp">${item.name_jp}</span>
                 </div>
-                <p class="text-xs text-gray-400 dark:text-gray-500 ml-4 leading-relaxed font-jp">${item.scoring_guide || ''}</p>
+                <p class="text-xs text-gray-400 ml-4 leading-relaxed font-jp">${item.scoring_guide || ''}</p>
             </div>
             <!-- Right: Score input -->
             <div class="flex items-center gap-2 shrink-0 mt-2 sm:mt-0 sm:ml-4">
                 <input type="range" min="0" max="5" step="0.5" value="0"
-                       class="w-20 sm:w-28 h-2 rounded-full appearance-none cursor-pointer accent-indigo-500
-                              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-500 [&::-webkit-slider-thumb]:shadow-sm
-                              bg-gray-200 dark:bg-gray-700"
+                       class="w-20 sm:w-28 h-2 rounded-full appearance-none cursor-pointer accent-indigo-500 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-500 [&::-webkit-slider-thumb]:shadow-sm bg-gray-200"
                        data-axis="${axis.key}" data-item="${item.id}"
                        oninput="onRangeInput(this)">
                 <input type="number" min="0" max="5" step="0.1" value="0.0"
-                       class="w-14 sm:w-16 text-center text-sm font-bold tabular-nums rounded-md border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-colors duration-150"
+                       class="w-14 sm:w-16 text-center text-sm font-bold tabular-nums rounded-md border border-gray-200 bg-gray-50 text-gray-400 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-colors duration-150"
                        data-axis="${axis.key}" data-item="${item.id}" data-name="${item.name_jp}" data-weight="${item.weight}"
                        onchange="onNumberChange(this)">
-                <span class="text-xs text-gray-400 dark:text-gray-500">/ 5</span>
+                <span class="text-xs text-gray-400">/ 5</span>
             </div>
         </div>
         <!-- Evidence textarea -->
         <div class="mt-3 ml-4">
             <textarea rows="2"
-                      class="w-full text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 resize-y transition-colors duration-150 font-jp"
+                      class="w-full text-sm rounded-md border border-gray-200 bg-gray-50 text-gray-700 placeholder-gray-400 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 resize-y transition-colors duration-150 font-jp"
                       data-axis="${axis.key}" data-item="${item.id}"
                       placeholder="エビデンス・根拠を入力..."></textarea>
         </div>
@@ -303,34 +301,34 @@ function onNumberChange(numEl) {
 }
 
 function applyScoreStyle(numEl, val) {
-    numEl.classList.remove('text-gray-400', 'dark:text-gray-500', 'text-red-500', 'dark:text-red-400', 'text-amber-500', 'dark:text-amber-400', 'text-emerald-600', 'dark:text-emerald-400', 'text-blue-600', 'dark:text-blue-400');
+    numEl.classList.remove('text-gray-400', '', 'text-red-500', '', 'text-amber-500', '', 'text-emerald-600', '', 'text-blue-600', '');
     if (val === 0) {
-        numEl.classList.add('text-gray-400', 'dark:text-gray-500');
+        numEl.classList.add('text-gray-400', '');
     } else if (val < 2) {
-        numEl.classList.add('text-red-500', 'dark:text-red-400');
+        numEl.classList.add('text-red-500', '');
     } else if (val < 3.5) {
-        numEl.classList.add('text-amber-500', 'dark:text-amber-400');
+        numEl.classList.add('text-amber-500', '');
     } else if (val < 4.5) {
-        numEl.classList.add('text-blue-600', 'dark:text-blue-400');
+        numEl.classList.add('text-blue-600', '');
     } else {
-        numEl.classList.add('text-emerald-600', 'dark:text-emerald-400');
+        numEl.classList.add('text-emerald-600', '');
     }
 }
 
 function updateItemDot(itemId, val) {
     const dot = document.getElementById('dot-' + itemId);
     if (!dot) return;
-    dot.classList.remove('bg-gray-300', 'dark:bg-gray-600', 'bg-amber-400', 'dark:bg-amber-500', 'bg-emerald-500', 'dark:bg-emerald-400');
+    dot.classList.remove('bg-gray-300', '', 'bg-amber-400', '', 'bg-emerald-500', '');
     if (val === 0) {
-        dot.classList.add('bg-gray-300', 'dark:bg-gray-600');
+        dot.classList.add('bg-gray-300', '');
     } else {
         // Check if evidence is provided
         const textarea = document.querySelector(`textarea[data-item="${itemId}"]`);
         const hasEvidence = textarea && textarea.value.trim().length > 0;
         if (hasEvidence) {
-            dot.classList.add('bg-emerald-500', 'dark:bg-emerald-400');
+            dot.classList.add('bg-emerald-500', '');
         } else {
-            dot.classList.add('bg-amber-400', 'dark:bg-amber-500');
+            dot.classList.add('bg-amber-400', '');
         }
     }
 }
@@ -350,13 +348,13 @@ function updateProgress() {
     // Update text
     const textEl = document.getElementById('progress-text');
     textEl.textContent = `${filled} / ${total} 項目入力済み (${pct}%)`;
-    textEl.classList.remove('text-red-500', 'text-amber-500', 'text-emerald-600', 'dark:text-red-400', 'dark:text-amber-400', 'dark:text-emerald-400');
+    textEl.classList.remove('text-red-500', 'text-amber-500', 'text-emerald-600', '', '', '');
     if (pct < 30) {
-        textEl.classList.add('text-red-500', 'dark:text-red-400');
+        textEl.classList.add('text-red-500', '');
     } else if (pct < 70) {
-        textEl.classList.add('text-amber-500', 'dark:text-amber-400');
+        textEl.classList.add('text-amber-500', '');
     } else {
-        textEl.classList.add('text-emerald-600', 'dark:text-emerald-400');
+        textEl.classList.add('text-emerald-600', '');
     }
 
     // Update bar
@@ -436,11 +434,11 @@ function renderRadarChart() {
     const summary = document.getElementById('axis-score-summary');
     summary.innerHTML = AXIS_CONFIG.map(a => {
         const v = avgs[a.key];
-        const colorClass = v === 0 ? 'text-gray-400 dark:text-gray-500' : v >= 3.5 ? 'text-emerald-600 dark:text-emerald-400' : v >= 2 ? 'text-amber-500 dark:text-amber-400' : 'text-red-500 dark:text-red-400';
+        const colorClass = v === 0 ? 'text-gray-400' : v >= 3.5 ? 'text-emerald-600' : v >= 2 ? 'text-amber-500' : 'text-red-500';
         return `<div class="flex items-center justify-between text-xs px-1">
             <span class="flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full" style="background:${a.color}"></span>
-                <span class="text-gray-600 dark:text-gray-400 font-jp">${a.name}</span>
+                <span class="text-gray-600 font-jp">${a.name}</span>
             </span>
             <span class="font-bold tabular-nums ${colorClass}">${v > 0 ? v.toFixed(1) : '--'}</span>
         </div>`;

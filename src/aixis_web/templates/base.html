@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <link rel="dns-prefetch" href="https://unpkg.com">
     <link rel="dns-prefetch" href="https://www.googletagmanager.com">
     {% block preload %}{% endblock %}
     <style>
@@ -18,10 +17,12 @@
     {% block google_verification %}{% endblock %}
     {% block meta_description %}{% endblock %}
     {% block meta_keywords %}{% endblock %}
-    {% block page_title_tag %}<title>{{ title | default("Aixis") }} - Aixis AI監査プラットフォーム</title>{% endblock %}
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/Aixis-logo-final.png">
+    {% block page_title_tag %}<title>{{ title | default("株式会社Aixis") }} - Aixis AI監査プラットフォーム</title>{% endblock %}
+    <!-- Favicon (unified with aixis.jp) -->
+    <link rel="icon" href="/static/img/favicon.ico" sizes="16x16" type="image/x-icon">
+    <link rel="icon" href="/static/img/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="icon" type="image/png" sizes="192x192" href="/static/img/Aixis-logo-final.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/Aixis-logo-final.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#1a365d">
     <meta name="msapplication-TileColor" content="#1a365d">
@@ -151,61 +152,42 @@
                 <!-- Center: Navigation links (desktop) -->
                 <div class="hidden md:flex items-center gap-1">
                     <a href="/tools"
-                       class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200
-                              {% if active_page == 'tools' %}
-                              text-gray-900 dark:text-white
-                              {% else %}
-                              text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white
-                              {% endif %}">
+                       class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200 {% if active_page == 'tools' %} text-gray-900 {% else %} text-gray-500 hover:text-gray-900 {% endif %}">
                         監査データベース
-                        {% if active_page == 'tools' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900 dark:bg-white"></span>{% endif %}
+                        {% if active_page == 'tools' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900"></span>{% endif %}
                     </a>
                     <a href="/compare"
-                       class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200
-                              {% if active_page == 'compare' %}
-                              text-gray-900 dark:text-white
-                              {% else %}
-                              text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white
-                              {% endif %}">
+                       class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200 {% if active_page == 'compare' %} text-gray-900 {% else %} text-gray-500 hover:text-gray-900 {% endif %}">
                         ツール比較
-                        {% if active_page == 'compare' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900 dark:bg-white"></span>{% endif %}
+                        {% if active_page == 'compare' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900"></span>{% endif %}
                     </a>
                     <!-- Aixisについて dropdown -->
                     <div class="nav-dropdown" id="nav-service-dropdown">
                         <button type="button"
                                 aria-expanded="false"
-                                class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200 inline-flex items-center gap-1
-                                       {% if active_page in ['audit-process', 'about', 'transparency', 'audit-protocol'] %}
-                                       text-gray-900 dark:text-white
-                                       {% else %}
-                                       text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white
-                                       {% endif %}">
+                                class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200 inline-flex items-center gap-1 {% if active_page in ['audit-process', 'about', 'transparency', 'audit-protocol'] %} text-gray-900 {% else %} text-gray-500 hover:text-gray-900 {% endif %}">
                             Aixisについて
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                             </svg>
-                            {% if active_page in ['audit-process', 'about', 'transparency', 'audit-protocol'] %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900 dark:bg-white"></span>{% endif %}
+                            {% if active_page in ['audit-process', 'about', 'transparency', 'audit-protocol'] %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900"></span>{% endif %}
                         </button>
                         <div class="nav-dropdown-menu pt-2">
-                            <div class="bg-white dark:bg-aixis-700 rounded-lg shadow-lg ring-1 ring-black/5 dark:ring-white/10 py-1.5">
+                            <div class="bg-white rounded-lg shadow-lg ring-1 ring-black/5 py-1.5">
                                 <a href="/audit-process"
-                                   class="block px-4 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-150
-                                          {% if active_page == 'audit-process' %}text-aixis-500 dark:text-white bg-gray-50 dark:bg-aixis-600{% else %}text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-aixis-600{% endif %}">
+                                   class="block px-4 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-150 {% if active_page == 'audit-process' %}text-aixis-500 bg-gray-50 {% else %}text-gray-700 hover:bg-gray-50 {% endif %}">
                                     監査プロセス
                                 </a>
                                 <a href="/independence"
-                                   class="block px-4 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-150
-                                          {% if active_page == 'about' %}text-aixis-500 dark:text-white bg-gray-50 dark:bg-aixis-600{% else %}text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-aixis-600{% endif %}">
+                                   class="block px-4 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-150 {% if active_page == 'about' %}text-aixis-500 bg-gray-50 {% else %}text-gray-700 hover:bg-gray-50 {% endif %}">
                                     独立性宣言
                                 </a>
                                 <a href="/transparency"
-                                   class="block px-4 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-150
-                                          {% if active_page == 'transparency' %}text-aixis-500 dark:text-white bg-gray-50 dark:bg-aixis-600{% else %}text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-aixis-600{% endif %}">
+                                   class="block px-4 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-150 {% if active_page == 'transparency' %}text-aixis-500 bg-gray-50 {% else %}text-gray-700 hover:bg-gray-50 {% endif %}">
                                     透明性ポリシー
                                 </a>
                                 <a href="/audit-protocol"
-                                   class="block px-4 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-150
-                                          {% if active_page == 'audit-protocol' %}text-aixis-500 dark:text-white bg-gray-50 dark:bg-aixis-600{% else %}text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-aixis-600{% endif %}">
+                                   class="block px-4 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-150 {% if active_page == 'audit-protocol' %}text-aixis-500 bg-gray-50 {% else %}text-gray-700 hover:bg-gray-50 {% endif %}">
                                     監査プロトコル
                                 </a>
                             </div>
@@ -213,14 +195,9 @@
                     </div>
 
                     <a href="/pricing"
-                       class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200
-                              {% if active_page == 'pricing' %}
-                              text-gray-900 dark:text-white
-                              {% else %}
-                              text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white
-                              {% endif %}">
+                       class="nav-link relative px-3.5 py-2 text-sm font-medium tracking-[0.02em] transition-colors duration-200 {% if active_page == 'pricing' %} text-gray-900 {% else %} text-gray-500 hover:text-gray-900 {% endif %}">
                         料金
-                        {% if active_page == 'pricing' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900 dark:bg-white"></span>{% endif %}
+                        {% if active_page == 'pricing' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900"></span>{% endif %}
                     </a>
                 </div>
 
@@ -230,7 +207,7 @@
                     <div class="hidden md:flex items-center gap-2">
                         {% if user %}
                         <a href="{% if user.role in ('admin', 'analyst', 'auditor') %}/dashboard{% else %}/mypage{% endif %}"
-                           class="px-4 py-1.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-blue-500 dark:hover:bg-blue-400 dark:text-white rounded-lg shadow-sm transition-all duration-150">
+                           class="px-4 py-1.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-lg shadow-sm transition-all duration-150">
                             {% if user.role in ('admin', 'analyst', 'auditor') %}管理画面{% else %}マイページ{% endif %}
                         </a>
                         <button type="button" onclick="aixisLogout()"
@@ -252,7 +229,7 @@
                     <!-- Mobile hamburger -->
                     <button id="mobile-menu-btn"
                             type="button"
-                            class="md:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-aixis-700 transition-colors duration-150"
+                            class="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors duration-150"
                             aria-label="メニュー"
                             aria-expanded="false"
                             aria-controls="mobile-drawer">
@@ -267,88 +244,80 @@
 
     <!-- Mobile drawer overlay + panel (slide-from-right) -->
     <div id="mobile-drawer-backdrop" class="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 md:hidden"></div>
-    <div id="mobile-drawer" role="dialog" aria-modal="true" aria-label="メインナビゲーション" aria-hidden="true" class="fixed top-0 right-0 z-[70] h-full w-[280px] max-w-[85vw] bg-white dark:bg-aixis-800 shadow-2xl translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] md:hidden overflow-y-auto font-serif">
+    <div id="mobile-drawer" role="dialog" aria-modal="true" aria-label="メインナビゲーション" aria-hidden="true" class="fixed top-0 right-0 z-[70] h-full w-[280px] max-w-[85vw] bg-white shadow-2xl translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] md:hidden overflow-y-auto font-serif">
         <!-- Drawer header -->
         <div class="flex items-center justify-between px-5 pt-5 pb-3">
             <a href="/" class="flex items-center">
                 <img src="/static/img/Aixis-logo-final.png" alt="Aixis（アイクシス） — 独立系AI監査プラットフォーム" class="h-8 w-auto rounded-sm" loading="lazy" width="32" height="32">
             </a>
-            <button id="mobile-drawer-close" type="button" aria-label="メニューを閉じる" class="p-2 -mr-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-aixis-700 transition-colors">
+            <button id="mobile-drawer-close" type="button" aria-label="メニューを閉じる" class="p-2 -mr-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
         <!-- Drawer navigation -->
         <nav class="px-3 pt-2 pb-6">
-            <p class="px-3 pt-3 pb-1.5 text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]">サービス</p>
+            <p class="px-3 pt-3 pb-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-[0.12em]">サービス</p>
             <a href="/tools"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150
-                      {% if active_page == 'tools' %}text-aixis-500 dark:text-white bg-aixis-50 dark:bg-aixis-700{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-aixis-700/50{% endif %}">
-                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150 {% if active_page == 'tools' %}text-aixis-500 bg-aixis-50 {% else %}text-gray-700 hover:bg-gray-50 {% endif %}">
+                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>
                 監査データベース
             </a>
             <a href="/compare"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150
-                      {% if active_page == 'compare' %}text-aixis-500 dark:text-white bg-aixis-50 dark:bg-aixis-700{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-aixis-700/50{% endif %}">
-                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150 {% if active_page == 'compare' %}text-aixis-500 bg-aixis-50 {% else %}text-gray-700 hover:bg-gray-50 {% endif %}">
+                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
                 ツール比較
             </a>
-            <div class="mx-3 my-3 border-t border-gray-200 dark:border-aixis-700"></div>
+            <div class="mx-3 my-3 border-t border-gray-200"></div>
 
             <a href="/pricing"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150
-                      {% if active_page == 'pricing' %}text-aixis-500 dark:text-white bg-aixis-50 dark:bg-aixis-700{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-aixis-700/50{% endif %}">
-                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150 {% if active_page == 'pricing' %}text-aixis-500 bg-aixis-50 {% else %}text-gray-700 hover:bg-gray-50 {% endif %}">
+                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
                 料金
             </a>
             <a href="/contact"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150
-                      {% if active_page == 'contact' %}text-aixis-500 dark:text-white bg-aixis-50 dark:bg-aixis-700{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-aixis-700/50{% endif %}">
-                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150 {% if active_page == 'contact' %}text-aixis-500 bg-aixis-50 {% else %}text-gray-700 hover:bg-gray-50 {% endif %}">
+                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
                 お問い合わせ
             </a>
 
-            <div class="mx-3 my-3 border-t border-gray-200 dark:border-aixis-700"></div>
+            <div class="mx-3 my-3 border-t border-gray-200"></div>
 
             <a href="/audit-process"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150
-                      {% if active_page == 'audit-process' %}text-aixis-500 dark:text-white bg-aixis-50 dark:bg-aixis-700{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-aixis-700/50{% endif %}">
-                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150 {% if active_page == 'audit-process' %}text-aixis-500 bg-aixis-50 {% else %}text-gray-700 hover:bg-gray-50 {% endif %}">
+                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
                 監査プロセス
             </a>
             <a href="/independence"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150
-                      {% if active_page == 'about' %}text-aixis-500 dark:text-white bg-aixis-50 dark:bg-aixis-700{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-aixis-700/50{% endif %}">
-                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z"/></svg>
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150 {% if active_page == 'about' %}text-aixis-500 bg-aixis-50 {% else %}text-gray-700 hover:bg-gray-50 {% endif %}">
+                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z"/></svg>
                 独立性宣言
             </a>
             <a href="/transparency"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150
-                      {% if active_page == 'transparency' %}text-aixis-500 dark:text-white bg-aixis-50 dark:bg-aixis-700{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-aixis-700/50{% endif %}">
-                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.577 3.01 9.964 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.577-3.01-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150 {% if active_page == 'transparency' %}text-aixis-500 bg-aixis-50 {% else %}text-gray-700 hover:bg-gray-50 {% endif %}">
+                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.577 3.01 9.964 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.577-3.01-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 透明性ポリシー
             </a>
             <a href="/audit-protocol"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150
-                      {% if active_page == 'audit-protocol' %}text-aixis-500 dark:text-white bg-aixis-50 dark:bg-aixis-700{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-aixis-700/50{% endif %}">
-                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors duration-150 {% if active_page == 'audit-protocol' %}text-aixis-500 bg-aixis-50 {% else %}text-gray-700 hover:bg-gray-50 {% endif %}">
+                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
                 監査プロトコル
             </a>
 
             <!-- Auth section -->
-            <div class="mx-3 mt-4 pt-4 border-t border-gray-200 dark:border-aixis-700">
+            <div class="mx-3 mt-4 pt-4 border-t border-gray-200">
                 {% if user %}
                 <a href="{% if user.role in ('admin', 'analyst', 'auditor') %}/dashboard{% else %}/mypage{% endif %}"
-                   class="block w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-aixis-500 dark:bg-blue-500 text-center transition-colors duration-150">
+                   class="block w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-aixis-500 text-center transition-colors duration-150">
                     {% if user.role in ('admin', 'analyst', 'auditor') %}管理画面{% else %}マイページ{% endif %}
                 </a>
                 <button type="button" onclick="aixisLogout(); closeMobileDrawer();"
-                        class="block w-full mt-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-aixis-700/50 text-center transition-colors duration-150">
+                        class="block w-full mt-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 text-center transition-colors duration-150">
                     ログアウト
                 </button>
                 {% else %}
                 <a href="/login"
-                   class="block w-full px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 text-center transition-colors duration-150">
+                   class="block w-full px-4 py-2.5 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 text-center transition-colors duration-150">
                     ログイン
                 </a>
                 <a href="/contact"
@@ -366,7 +335,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-50 dark:bg-aixis-900 border-t border-gray-200 dark:border-aixis-700 mt-auto">
+    <footer class="bg-gray-50 border-t border-gray-200 mt-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
 
             <div class="lg:grid lg:grid-cols-12 lg:gap-8">
@@ -375,18 +344,18 @@
                     <a href="/" class="inline-block">
                         <img src="/static/img/Aixis-logo-final.png" alt="Aixis（アイクシス） — 独立系AI監査プラットフォーム" class="h-8 w-auto rounded-sm" loading="lazy" width="32" height="32">
                     </a>
-                    <p class="mt-3 text-[13px] text-gray-600 dark:text-gray-400 leading-relaxed font-serif">
+                    <p class="mt-3 text-[13px] text-gray-600 leading-relaxed font-serif">
                         AI導入に、中立な審判を。
                     </p>
                     <!-- Company info -->
-                    <div class="mt-4 space-y-1.5 text-[12.5px] text-gray-400 dark:text-gray-500 leading-relaxed font-jp">
+                    <div class="mt-4 space-y-1.5 text-[12.5px] text-gray-400 leading-relaxed font-jp">
                         <p class="font-medium">株式会社Aixis（アイクシス）</p>
                         <p>東京都渋谷区神南１丁目１１−４ ＦＰＧリンクス神南 5階</p>
                         <p>
-                            <a href="mailto:info@aixis.jp" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">info@aixis.jp</a>
+                            <a href="mailto:info@aixis.jp" class="hover:text-aixis-500 transition-colors">info@aixis.jp</a>
                         </p>
                     </div>
-                    <a href="https://aixis.jp" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 mt-3 text-[12px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">
+                    <a href="https://aixis.jp" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 mt-3 text-[12px] text-gray-400 hover:text-aixis-500 transition-colors duration-150 font-jp">
                         コーポレートサイト
                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
                     </a>
@@ -396,63 +365,64 @@
                 <div class="grid grid-cols-2 sm:grid-cols-4 lg:col-span-8 gap-6 sm:gap-8">
                     <!-- サービス -->
                     <div>
-                        <h3 class="text-[11px] font-bold text-gray-900 dark:text-gray-100 uppercase font-jp">
+                        <h3 class="text-[11px] font-bold text-gray-900 uppercase font-jp">
                             サービス
                         </h3>
                         <ul class="mt-3 space-y-2">
-                            <li><a href="/tools" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">監査データベース</a></li>
-                            <li><a href="/compare" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">ツール比較</a></li>
-                            <li><a href="/pricing" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">料金プラン</a></li>
-                            <li><a href="/vendor/guide" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">ツールを掲載する</a></li>
+                            <li><a href="/tools" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">監査データベース</a></li>
+                            <li><a href="/compare" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">ツール比較</a></li>
+                            <li><a href="/pricing" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">料金プラン</a></li>
+                            <li><a href="/vendor/guide" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">ツールを掲載する</a></li>
                         </ul>
                     </div>
 
                     <!-- 監査体制 -->
                     <div>
-                        <h3 class="text-[11px] font-bold text-gray-900 dark:text-gray-100 uppercase font-jp">
+                        <h3 class="text-[11px] font-bold text-gray-900 uppercase font-jp">
                             監査体制
                         </h3>
                         <ul class="mt-3 space-y-2">
-                            <li><a href="/audit-process" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">監査プロセス</a></li>
-                            <li><a href="/audit-protocol" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">監査プロトコル</a></li>
-                            <li><a href="/independence" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">独立性宣言</a></li>
-                            <li><a href="/transparency" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">透明性ポリシー</a></li>
+                            <li><a href="/audit-process" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">監査プロセス</a></li>
+                            <li><a href="/audit-protocol" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">監査プロトコル</a></li>
+                            <li><a href="/independence" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">独立性宣言</a></li>
+                            <li><a href="/transparency" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">透明性ポリシー</a></li>
                         </ul>
                     </div>
 
                     <!-- 企業情報 -->
                     <div>
-                        <h3 class="text-[11px] font-bold text-gray-900 dark:text-gray-100 uppercase font-jp">
+                        <h3 class="text-[11px] font-bold text-gray-900 uppercase font-jp">
                             企業情報
                         </h3>
                         <ul class="mt-3 space-y-2">
-                            <li><a href="https://aixis.jp/company" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">運営会社</a></li>
-                            <li><a href="/faq" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">よくある質問</a></li>
-                            <li><a href="/contact" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">お問い合わせ</a></li>
-                            <li><a href="/login" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">ログイン</a></li>
+                            <li><a href="https://aixis.jp/company" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">運営会社</a></li>
+                            <li><a href="/faq" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">よくある質問</a></li>
+                            <li><a href="/contact" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">お問い合わせ</a></li>
+                            <li><a href="/login" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">ログイン</a></li>
                         </ul>
                     </div>
 
                     <!-- 法務 -->
                     <div>
-                        <h3 class="text-[11px] font-bold text-gray-900 dark:text-gray-100 uppercase font-jp">
+                        <h3 class="text-[11px] font-bold text-gray-900 uppercase font-jp">
                             法務
                         </h3>
                         <ul class="mt-3 space-y-2">
-                            <li><a href="https://aixis.jp/terms" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">利用規約</a></li>
-                            <li><a href="https://aixis.jp/privacy-policy" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">プライバシーポリシー</a></li>
-                            <li><a href="https://aixis.jp/tokushoho" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 dark:text-gray-400 hover:text-aixis-500 dark:hover:text-white transition-colors duration-150 font-jp">特定商取引法に基づく表記</a></li>
+                            <li><a href="https://aixis.jp/terms" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">利用規約</a></li>
+                            <li><a href="https://aixis.jp/privacy-policy" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">プライバシーポリシー</a></li>
+                            <li><a href="https://aixis.jp/tokushoho" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">特定商取引法に基づく表記</a></li>
+                            <li><a href="https://aixis.jp/accessibility" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">アクセシビリティ方針</a></li>
                         </ul>
                     </div>
                 </div>
             </div>
 
             <!-- Bottom bar -->
-            <div class="mt-10 pt-6 border-t border-gray-200 dark:border-aixis-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <p class="text-[11px] text-gray-400 dark:text-gray-500 font-jp">
+            <div class="mt-10 pt-6 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <p class="text-[11px] text-gray-400 font-jp">
                     &copy; {{ now().year if now is defined else 2026 }} Aixis Inc.
                 </p>
-                <p class="text-[11px] text-gray-300 dark:text-gray-600 font-jp">
+                <p class="text-[11px] text-gray-300 font-jp">
                     独立性・中立性を堅持し、ベンダーからの報酬を一切受領しません
                 </p>
             </div>

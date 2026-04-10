@@ -6,10 +6,10 @@
 <div class="max-w-6xl mx-auto">
 
     <!-- Breadcrumb -->
-    <nav class="mb-6 text-sm text-gray-500 dark:text-gray-400 font-jp">
-        <a href="/dashboard" class="hover:text-gray-700 dark:hover:text-gray-200 transition-colors">ダッシュボード</a>
+    <nav class="mb-6 text-sm text-gray-500 font-jp">
+        <a href="/dashboard" class="hover:text-gray-700 transition-colors">ダッシュボード</a>
         <span class="mx-2">/</span>
-        <span class="text-gray-900 dark:text-white">監査セッション詳細</span>
+        <span class="text-gray-900">監査セッション詳細</span>
     </nav>
 
     <!-- Loading state -->
@@ -20,9 +20,9 @@
 
     <!-- Error state -->
     <div id="error-state" class="hidden">
-        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
-            <p class="text-red-700 dark:text-red-300 font-jp" id="error-message">エラーが発生しました</p>
-            <a href="/dashboard" class="mt-3 inline-block text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-jp">ダッシュボードに戻る</a>
+        <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+            <p class="text-red-700 font-jp" id="error-message">エラーが発生しました</p>
+            <a href="/dashboard" class="mt-3 inline-block text-sm text-indigo-600 hover:underline font-jp">ダッシュボードに戻る</a>
         </div>
     </div>
 
@@ -30,14 +30,14 @@
     <div id="main-content" class="hidden space-y-6">
 
         <!-- Header card -->
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6 transition-colors duration-200">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-colors duration-200">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <div class="flex items-center gap-3 mb-1">
-                        <h1 class="text-xl font-bold text-gray-900 dark:text-white font-jp" id="session-tool-name">---</h1>
+                        <h1 class="text-xl font-bold text-gray-900 font-jp" id="session-tool-name">---</h1>
                         <span id="session-status-badge"></span>
                     </div>
-                    <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 font-jp">
+                    <div class="flex items-center gap-4 text-sm text-gray-500 font-jp">
                         <span id="session-code" class="font-mono text-xs"></span>
                         <span id="session-dates"></span>
                     </div>
@@ -48,19 +48,19 @@
 
         <!-- Error / Failed section -->
         <div id="failed-section" class="hidden">
-            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-6">
+            <div class="bg-red-50 border border-red-200 rounded-xl p-6">
                 <div class="flex items-start gap-4">
                     <div class="flex-shrink-0 mt-0.5">
-                        <svg class="w-6 h-6 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                         </svg>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <h3 class="text-sm font-semibold text-red-800 dark:text-red-300 font-jp mb-1">監査が失敗しました</h3>
-                        <p class="text-sm text-red-700 dark:text-red-400 font-jp break-words" id="failed-error-message"></p>
+                        <h3 class="text-sm font-semibold text-red-800 font-jp mb-1">監査が失敗しました</h3>
+                        <p class="text-sm text-red-700 font-jp break-words" id="failed-error-message"></p>
                     </div>
                     <button onclick="retryAudit()" id="retry-button"
-                            class="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 rounded-lg transition-colors duration-150 shadow-sm font-jp">
+                            class="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-150 shadow-sm font-jp">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 19.644l3.181-3.182" />
                         </svg>
@@ -72,17 +72,17 @@
 
         <!-- Waiting for login / Chrome extension recording -->
         <div id="waiting-login-section" class="hidden">
-            <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-xl p-6">
+            <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-6">
                 <div class="flex items-start gap-4">
                     <div class="flex-shrink-0 mt-0.5">
-                        <svg class="w-8 h-8 text-indigo-500 dark:text-indigo-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <svg class="w-8 h-8 text-indigo-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
                         </svg>
                     </div>
                     <div class="flex-1">
-                        <h3 class="text-base font-semibold text-indigo-800 dark:text-indigo-300 font-jp mb-2">Chrome拡張で記録中</h3>
-                        <p class="text-sm text-indigo-700 dark:text-indigo-400 font-jp mb-1">テスターがChrome拡張を使用してAIツールのテストを記録しています。</p>
-                        <p class="text-sm text-indigo-700 dark:text-indigo-400 font-jp">記録が完了すると、LLMスコアリングが自動的に開始されます。</p>
+                        <h3 class="text-base font-semibold text-indigo-800 font-jp mb-2">Chrome拡張で記録中</h3>
+                        <p class="text-sm text-indigo-700 font-jp mb-1">テスターがChrome拡張を使用してAIツールのテストを記録しています。</p>
+                        <p class="text-sm text-indigo-700 font-jp">記録が完了すると、LLMスコアリングが自動的に開始されます。</p>
                     </div>
                 </div>
             </div>
@@ -90,27 +90,27 @@
 
         <!-- Scoring in progress -->
         <div id="scoring-section" class="hidden">
-            <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/50 rounded-xl p-6">
+            <div class="bg-purple-50 border border-purple-200 rounded-xl p-6">
                 <div class="flex items-start gap-4">
                     <div class="flex-shrink-0 mt-0.5">
-                        <svg class="w-8 h-8 text-purple-500 dark:text-purple-400 animate-spin" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <svg class="w-8 h-8 text-purple-500 animate-spin" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
                         </svg>
                     </div>
                     <div class="flex-1">
-                        <h3 class="text-base font-semibold text-purple-800 dark:text-purple-300 font-jp mb-2">LLMスコアリング中...</h3>
-                        <p class="text-sm text-purple-700 dark:text-purple-400 font-jp" id="scoring-status-detail">5軸の評価をLLMで分析しています。通常1〜3分で完了します。</p>
-                        <p class="text-xs text-purple-500 dark:text-purple-500 font-mono mt-2" id="scoring-elapsed"></p>
+                        <h3 class="text-base font-semibold text-purple-800 font-jp mb-2">LLMスコアリング中...</h3>
+                        <p class="text-sm text-purple-700 font-jp" id="scoring-status-detail">5軸の評価をLLMで分析しています。通常1〜3分で完了します。</p>
+                        <p class="text-xs text-purple-500 font-mono mt-2" id="scoring-elapsed"></p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Progress (shown during running) -->
-        <div id="progress-section" class="hidden bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-indigo-200 dark:border-indigo-700/50 p-6">
+        <div id="progress-section" class="hidden bg-white rounded-xl shadow-sm border border-indigo-200 p-6">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 font-jp">実行進捗</h2>
-                <span class="text-xs text-gray-400 dark:text-gray-500 font-mono tabular-nums" id="progress-elapsed"></span>
+                <h2 class="text-sm font-semibold text-gray-700 font-jp">実行進捗</h2>
+                <span class="text-xs text-gray-400 font-mono tabular-nums" id="progress-elapsed"></span>
             </div>
 
             <!-- Phase indicators -->
@@ -149,21 +149,21 @@
                 </svg>
                 <div class="flex-1">
                     <div class="flex items-center justify-between mb-1">
-                        <span class="text-sm text-gray-600 dark:text-gray-400 font-jp" id="progress-text">実行中...</span>
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300 tabular-nums" id="progress-pct">0%</span>
+                        <span class="text-sm text-gray-600 font-jp" id="progress-text">実行中...</span>
+                        <span class="text-sm font-medium text-gray-700 tabular-nums" id="progress-pct">0%</span>
                     </div>
-                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
                         <div class="bg-indigo-500 h-2.5 rounded-full transition-all duration-500" id="progress-bar" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 font-jp" id="progress-detail"></p>
+            <p class="text-xs text-gray-400 mt-2 font-jp" id="progress-detail"></p>
         </div>
 
         <!-- Volume Metrics (AI audit stats) -->
         <div id="volume-section" class="hidden">
-            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 font-jp flex items-center gap-2">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 font-jp flex items-center gap-2">
                     <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                     </svg>
@@ -175,48 +175,48 @@
 
         <!-- Reliability Meta-Scores (BenchRisk-inspired) -->
         <div id="reliability-section" class="hidden">
-            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div class="flex items-center justify-between mb-5">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp flex items-center gap-2">
+                    <h2 class="text-lg font-semibold text-gray-900 font-jp flex items-center gap-2">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                         </svg>
-                        監査信頼度 <span class="text-xs font-normal text-gray-400 dark:text-gray-500 ml-1">Audit Reliability</span>
+                        監査信頼度 <span class="text-xs font-normal text-gray-400 ml-1">Audit Reliability</span>
                     </h2>
                     <div class="flex items-center gap-2">
                         <span class="text-2xl font-bold tabular-nums" id="reliability-overall">--</span>
-                        <span class="text-xs text-gray-400 dark:text-gray-500">/ 100</span>
+                        <span class="text-xs text-gray-400">/ 100</span>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="reliability-gauges"></div>
                 <!-- Expandable details -->
-                <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/50">
-                    <button onclick="toggleReliabilityDetails()" class="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors font-jp flex items-center gap-1">
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <button onclick="toggleReliabilityDetails()" class="text-xs text-gray-400 hover:text-gray-600 transition-colors font-jp flex items-center gap-1">
                         <svg class="w-3.5 h-3.5 transition-transform" id="reliability-chevron" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
                         </svg>
                         詳細を表示
                     </button>
-                    <div id="reliability-details" class="hidden mt-3 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-[#161929] rounded-lg p-4 font-mono overflow-x-auto whitespace-pre-wrap"></div>
+                    <div id="reliability-details" class="hidden mt-3 text-xs text-gray-500 bg-gray-50 rounded-lg p-4 font-mono overflow-x-auto whitespace-pre-wrap"></div>
                 </div>
             </div>
         </div>
 
         <!-- Score Diff (Re-audit comparison) -->
         <div id="score-diff-section" class="hidden">
-            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-indigo-100 dark:border-indigo-700/30 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp flex items-center gap-2">
+                    <h2 class="text-lg font-semibold text-gray-900 font-jp flex items-center gap-2">
                         <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/>
                         </svg>
-                        スコア変動レポート <span class="text-xs font-normal text-gray-400 dark:text-gray-500 ml-1">Re-audit Diff</span>
+                        スコア変動レポート <span class="text-xs font-normal text-gray-400 ml-1">Re-audit Diff</span>
                     </h2>
-                    <span class="text-xs text-gray-400 dark:text-gray-500 font-jp" id="diff-previous-info"></span>
+                    <span class="text-xs text-gray-400 font-jp" id="diff-previous-info"></span>
                 </div>
                 <div id="score-diff-cards" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
-                <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
-                    <span class="text-xs text-gray-500 dark:text-gray-400 font-jp">総合スコア変動</span>
+                <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <span class="text-xs text-gray-500 font-jp">総合スコア変動</span>
                     <span class="text-sm font-bold tabular-nums" id="diff-overall-delta"></span>
                 </div>
             </div>
@@ -228,48 +228,48 @@
             <div id="score-status-banner"></div>
 
             <!-- Final Score Card -->
-            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">最終スコア</h2>
-                    <button id="edit-scores-btn" onclick="toggleScoreEditor()" class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors font-jp">
+                    <h2 class="text-lg font-semibold text-gray-900 font-jp">最終スコア</h2>
+                    <button id="edit-scores-btn" onclick="toggleScoreEditor()" class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50 transition-colors font-jp">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z"/></svg>
                         スコア編集
                     </button>
                 </div>
 
                 <!-- Inline auto score editor (hidden by default) -->
-                <div id="score-editor" class="hidden mb-6 p-4 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-700/50 rounded-lg">
+                <div id="score-editor" class="hidden mb-6 p-4 bg-blue-50/50 border border-blue-200 rounded-lg">
                     <div class="flex items-center justify-between mb-3">
                         <div>
-                            <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-300 font-jp">自動スコア編集</h3>
-                            <p class="text-[11px] text-blue-600/70 dark:text-blue-400/70 font-jp mt-0.5">LLM自動評価のスコアを手動で修正します。最終スコアはAXIS_MIX比率で自動算出されます。</p>
+                            <h3 class="text-sm font-semibold text-blue-800 font-jp">自動スコア編集</h3>
+                            <p class="text-[11px] text-blue-600/70 font-jp mt-0.5">LLM自動評価のスコアを手動で修正します。最終スコアはAXIS_MIX比率で自動算出されます。</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="toggleScoreEditor()" class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors font-jp">キャンセル</button>
+                            <button onclick="toggleScoreEditor()" class="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-jp">キャンセル</button>
                             <button onclick="saveEditedScores()" id="save-scores-btn" class="px-4 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm font-jp">保存して再計算</button>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-3" id="score-editor-inputs"></div>
-                    <div class="flex items-center gap-6 mt-3 pt-3 border-t border-blue-200 dark:border-blue-700/50 text-sm font-jp">
+                    <div class="flex items-center gap-6 mt-3 pt-3 border-t border-blue-200 text-sm font-jp">
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400">自動スコア平均: </span>
-                            <span id="editor-overall-score" class="font-bold text-blue-700 dark:text-blue-300 tabular-nums">--</span>
+                            <span class="text-gray-500">自動スコア平均: </span>
+                            <span id="editor-overall-score" class="font-bold text-blue-700 tabular-nums">--</span>
                         </div>
-                        <div class="text-[11px] text-gray-400 dark:text-gray-500">
+                        <div class="text-[11px] text-gray-400">
                             保存後、手動スコアと統合して最終スコアが再計算されます
                         </div>
                     </div>
                 </div>
 
                 <!-- Overall grade + radar chart -->
-                <div class="flex items-center gap-6 mb-8 pb-6 border-b border-gray-100 dark:border-gray-700/50">
+                <div class="flex items-center gap-6 mb-8 pb-6 border-b border-gray-100">
                     <div class="text-center">
                         <div class="text-4xl font-bold" id="overall-grade">--</div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-jp">総合グレード</div>
+                        <div class="text-xs text-gray-500 mt-1 font-jp">総合グレード</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-3xl font-bold text-gray-900 dark:text-white tabular-nums" id="overall-score">--</div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-jp">/ 5.0</div>
+                        <div class="text-3xl font-bold text-gray-900 tabular-nums" id="overall-score">--</div>
+                        <div class="text-xs text-gray-500 mt-1 font-jp">/ 5.0</div>
                     </div>
                     <div class="flex-1" id="radar-chart" style="height: 250px;"></div>
                 </div>
@@ -279,28 +279,28 @@
             </div>
 
             <!-- Detailed axis cards (expandable) -->
-            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp mb-4">軸別詳細</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 font-jp mb-4">軸別詳細</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-5 gap-4" id="axis-cards"></div>
             </div>
         </div>
 
         <!-- Test Results -->
         <div id="results-section" class="hidden">
-            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50">
-                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">テスト結果</h2>
-                    <span class="text-sm text-gray-500 dark:text-gray-400 font-jp" id="results-count"></span>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900 font-jp">テスト結果</h2>
+                    <span class="text-sm text-gray-500 font-jp" id="results-count"></span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="border-b border-gray-100 dark:border-gray-700/50">
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">カテゴリ</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">プロンプト</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">応答</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">応答時間</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">状態</th>
+                            <tr class="border-b border-gray-100">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">カテゴリ</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">プロンプト</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">応答</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">応答時間</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">状態</th>
                             </tr>
                         </thead>
                         <tbody id="results-body"></tbody>
@@ -546,7 +546,7 @@
             // Show progress indicator in the action buttons area
             var actions = document.getElementById('action-buttons');
             var progressId = 'rescore-progress';
-            var progressHtml = '<div id="' + progressId + '" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 font-jp">' +
+            var progressHtml = '<div id="' + progressId + '" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 font-jp">' +
                 '<svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">' +
                     '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>' +
                     '<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>' +
@@ -639,45 +639,45 @@
 
         // Status indicators
         if (data.status === 'running' || data.status === 'pending') {
-            btns += '<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 font-jp"><svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>実行中</span>';
-            btns += '<button onclick="abortAudit()" id="abort-button" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-900/30 font-jp">中止</button>';
+            btns += '<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 font-jp"><svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>実行中</span>';
+            btns += '<button onclick="abortAudit()" id="abort-button" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 border border-red-300 rounded hover:bg-red-50 font-jp">中止</button>';
         }
         if (data.status === 'aborting') {
-            btns += '<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-500 dark:text-red-400 font-jp"><svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>中止中</span>';
+            btns += '<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-500 font-jp"><svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>中止中</span>';
         }
         if (data.status === 'waiting_login') {
-            btns += '<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 font-jp"><svg class="animate-pulse w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3"/></svg>記録中</span>';
-            btns += '<button onclick="abortAudit()" id="abort-button" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-900/30 font-jp">中止</button>';
+            btns += '<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 font-jp"><svg class="animate-pulse w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3"/></svg>記録中</span>';
+            btns += '<button onclick="abortAudit()" id="abort-button" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 border border-red-300 rounded hover:bg-red-50 font-jp">中止</button>';
         }
         if (data.status === 'scoring') {
-            btns += '<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple-600 dark:text-purple-400 font-jp"><svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>スコアリング中</span>';
+            btns += '<span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple-600 font-jp"><svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>スコアリング中</span>';
         }
 
         // Secondary actions (smaller) — grouped with separator
         var secondaryBtns = [];
         if (data.status === 'completed') {
-            secondaryBtns.push('<a href="/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded hover:bg-amber-50 dark:hover:bg-amber-900/30 font-jp">手動やり直し</a>');
+            secondaryBtns.push('<a href="/dashboard/audits/' + encodeURIComponent(sessionId) + '/manual" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-600 border border-amber-300 rounded hover:bg-amber-50 font-jp">手動やり直し</a>');
         }
         if (data.status === 'failed' || data.status === 'aborted') {
             secondaryBtns.push('<button onclick="rescoreAudit()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded font-jp">自動評価やり直し</button>');
         }
         if (data.status === 'awaiting_manual' || data.status === 'completed') {
-            secondaryBtns.push('<button onclick="rescoreAudit()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/30 font-jp">自動評価やり直し</button>');
+            secondaryBtns.push('<button onclick="rescoreAudit()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 border border-indigo-300 rounded hover:bg-indigo-50 font-jp">自動評価やり直し</button>');
         }
 
         // Screenshot diagnostic button (always available when screenshots might exist)
         if (['completed', 'awaiting_manual', 'failed', 'aborted'].includes(data.status)) {
-            secondaryBtns.push('<button onclick="screenshotDiagnostic()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 font-jp" title="スクリーンショットのリンク状況を診断">🔍 スクショ診断</button>');
+            secondaryBtns.push('<button onclick="screenshotDiagnostic()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 border border-gray-300 rounded hover:bg-gray-50 font-jp" title="スクリーンショットのリンク状況を診断">🔍 スクショ診断</button>');
         }
 
         // Admin actions (dropdown)
         if (!['running', 'waiting_login', 'scoring'].includes(data.status)) {
             secondaryBtns.push(
                 '<div class="relative" id="status-edit-wrapper">' +
-                    '<button onclick="toggleStatusMenu()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 font-jp">' +
+                    '<button onclick="toggleStatusMenu()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-500 border border-gray-300 rounded hover:bg-gray-50 font-jp">' +
                         '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
                     '</button>' +
-                    '<div id="status-menu" class="hidden absolute right-0 mt-1 w-48 bg-white dark:bg-[#1e2235] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">' +
+                    '<div id="status-menu" class="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">' +
                         '<div class="py-1">' +
                             statusMenuItem('completed', '完了', data.status) +
                             statusMenuItem('awaiting_manual', '手動評価待ち', data.status) +
@@ -689,14 +689,14 @@
                 '</div>'
             );
             secondaryBtns.push(
-                '<button onclick="deleteAuditSession()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-500 dark:text-red-400 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-900/30 font-jp">' +
+                '<button onclick="deleteAuditSession()" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-500 border border-red-300 rounded hover:bg-red-50 font-jp">' +
                     '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>' +
                 '</button>'
             );
         }
 
         if (secondaryBtns.length > 0) {
-            btns += '<span class="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5"></span>' + secondaryBtns.join('');
+            btns += '<span class="w-px h-5 bg-gray-200 mx-0.5"></span>' + secondaryBtns.join('');
         }
 
         actions.innerHTML = btns;
@@ -746,7 +746,7 @@
                         '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>' +
                         '<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>' +
                     '</svg>' +
-                    '<p class="text-sm text-gray-500 dark:text-gray-400 font-jp">LLMが各軸を評価中です...</p>' +
+                    '<p class="text-sm text-gray-500 font-jp">LLMが各軸を評価中です...</p>' +
                 '</div>';
             } else {
                 // Some axes scored — render partial results
@@ -934,12 +934,12 @@
         }
 
         cards.innerHTML = items.map(function(item) {
-            return '<div class="p-4 rounded-lg border border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-[#161929]">' +
+            return '<div class="p-4 rounded-lg border border-gray-100 bg-gray-50/50">' +
                 '<div class="flex items-center gap-2 mb-1">' +
                     '<span class="text-base">' + item.icon + '</span>' +
-                    '<span class="text-xs font-medium text-gray-500 dark:text-gray-400 font-jp">' + item.label + '</span>' +
+                    '<span class="text-xs font-medium text-gray-500 font-jp">' + item.label + '</span>' +
                 '</div>' +
-                '<div class="text-lg font-bold text-gray-900 dark:text-white tabular-nums">' + item.value + '</div>' +
+                '<div class="text-lg font-bold text-gray-900 tabular-nums">' + item.value + '</div>' +
             '</div>';
         }).join('');
     }
@@ -961,16 +961,16 @@
         container.innerHTML = DIMENSIONS.map(function(dim) {
             var val = (typeof rel[dim.key] === 'number' && isFinite(rel[dim.key])) ? rel[dim.key] : 0;
             var rating = val >= 80 ? '高信頼' : val >= 50 ? '標準' : '要改善';
-            var ratingColor = val >= 80 ? 'text-emerald-600 dark:text-emerald-400' : val >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400';
-            return '<div class="p-4 rounded-lg border border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-[#161929]">' +
+            var ratingColor = val >= 80 ? 'text-emerald-600' : val >= 50 ? 'text-amber-600' : 'text-red-500';
+            return '<div class="p-4 rounded-lg border border-gray-100 bg-gray-50/50">' +
                 '<div class="flex items-center justify-between mb-2">' +
                     '<div>' +
-                        '<span class="text-sm font-semibold text-gray-900 dark:text-white font-jp">' + dim.label + '</span>' +
-                        '<span class="text-[10px] text-gray-400 dark:text-gray-500 ml-1">' + dim.labelEn + '</span>' +
+                        '<span class="text-sm font-semibold text-gray-900 font-jp">' + dim.label + '</span>' +
+                        '<span class="text-[10px] text-gray-400 ml-1">' + dim.labelEn + '</span>' +
                     '</div>' +
-                    '<span class="text-lg font-bold tabular-nums text-gray-900 dark:text-white">' + val.toFixed(1) + '</span>' +
+                    '<span class="text-lg font-bold tabular-nums text-gray-900">' + val.toFixed(1) + '</span>' +
                 '</div>' +
-                '<div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-1.5">' +
+                '<div class="w-full bg-gray-200 rounded-full h-2 mb-1.5">' +
                     '<div class="h-2 rounded-full transition-all duration-700" style="width:' + Math.min(100, val) + '%;background-color:' + dim.color + '"></div>' +
                 '</div>' +
                 '<div class="text-[10px] font-medium ' + ratingColor + ' font-jp">' + rating + '</div>' +
@@ -1004,26 +1004,26 @@
         var container = document.getElementById('score-diff-cards');
         container.innerHTML = (diff.axes || []).map(function(a) {
             var arrow = a.direction === 'up' ? '↑' : (a.direction === 'down' ? '↓' : '→');
-            var color = a.direction === 'up' ? 'text-emerald-600 dark:text-emerald-400' :
-                        (a.direction === 'down' ? 'text-red-500 dark:text-red-400' : 'text-gray-400 dark:text-gray-500');
-            var bgColor = a.direction === 'up' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700/40' :
-                          (a.direction === 'down' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700/40' :
-                           'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700/50');
+            var color = a.direction === 'up' ? 'text-emerald-600' :
+                        (a.direction === 'down' ? 'text-red-500' : 'text-gray-400');
+            var bgColor = a.direction === 'up' ? 'bg-emerald-50 border-emerald-200' :
+                          (a.direction === 'down' ? 'bg-red-50 border-red-200' :
+                           'bg-gray-50 border-gray-200');
             var deltaStr = a.delta > 0 ? '+' + a.delta.toFixed(1) : a.delta.toFixed(1);
             return '<div class="p-3 rounded-lg border ' + bgColor + '">' +
-                '<div class="text-xs font-medium text-gray-500 dark:text-gray-400 font-jp mb-1">' + a.axis_name_jp + '</div>' +
+                '<div class="text-xs font-medium text-gray-500 font-jp mb-1">' + a.axis_name_jp + '</div>' +
                 '<div class="flex items-baseline gap-1.5">' +
-                    '<span class="text-lg font-bold tabular-nums text-gray-900 dark:text-white">' + a.current.toFixed(1) + '</span>' +
+                    '<span class="text-lg font-bold tabular-nums text-gray-900">' + a.current.toFixed(1) + '</span>' +
                     '<span class="text-sm font-semibold tabular-nums ' + color + '">' + arrow + ' ' + deltaStr + '</span>' +
                 '</div>' +
-                '<div class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums mt-0.5">前回: ' + a.previous.toFixed(1) + '</div>' +
+                '<div class="text-[10px] text-gray-400 tabular-nums mt-0.5">前回: ' + a.previous.toFixed(1) + '</div>' +
             '</div>';
         }).join('');
 
         // Overall delta
         var overall = document.getElementById('diff-overall-delta');
         var d = diff.overall_delta || 0;
-        var dColor = d > 0 ? 'text-emerald-600 dark:text-emerald-400' : (d < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500');
+        var dColor = d > 0 ? 'text-emerald-600' : (d < 0 ? 'text-red-500' : 'text-gray-500');
         var dStr = d > 0 ? '+' + d.toFixed(2) : d.toFixed(2);
         overall.className = 'text-sm font-bold tabular-nums ' + dColor;
         overall.textContent = dStr + ' (' + (diff.overall_previous || 0).toFixed(1) + ' → ' + (diff.overall_current || 0).toFixed(1) + ')';
@@ -1063,33 +1063,33 @@
         if (bannerEl) {
             var bannerHtml = '';
             if (hasPublished && hasManualScores) {
-                bannerHtml = '<div class="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/50 rounded-xl">' +
-                    '<div class="shrink-0 w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-800/50 flex items-center justify-center">' +
-                        '<svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+                bannerHtml = '<div class="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">' +
+                    '<div class="shrink-0 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">' +
+                        '<svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
                     '</div>' +
                     '<div class="flex-1">' +
-                        '<div class="text-sm font-semibold text-emerald-800 dark:text-emerald-300 font-jp">最終スコア確定済み</div>' +
-                        '<div class="text-xs text-emerald-600 dark:text-emerald-400 font-jp mt-0.5">自動評価（LLM）と手動評価（チェックリスト）が AXIS_MIX 比率で統合されています。</div>' +
+                        '<div class="text-sm font-semibold text-emerald-800 font-jp">最終スコア確定済み</div>' +
+                        '<div class="text-xs text-emerald-600 font-jp mt-0.5">自動評価（LLM）と手動評価（チェックリスト）が AXIS_MIX 比率で統合されています。</div>' +
                     '</div>' +
                 '</div>';
             } else if (hasPublished && !hasManualScores) {
-                bannerHtml = '<div class="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-xl">' +
-                    '<div class="shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800/50 flex items-center justify-center">' +
-                        '<svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3"/></svg>' +
+                bannerHtml = '<div class="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">' +
+                    '<div class="shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">' +
+                        '<svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3"/></svg>' +
                     '</div>' +
                     '<div class="flex-1">' +
-                        '<div class="text-sm font-semibold text-blue-800 dark:text-blue-300 font-jp">自動評価のみ（手動評価未実施）</div>' +
-                        '<div class="text-xs text-blue-600 dark:text-blue-400 font-jp mt-0.5">手動チェックリストを実施すると、AXIS_MIX 比率で統合された最終スコアが算出されます。</div>' +
+                        '<div class="text-sm font-semibold text-blue-800 font-jp">自動評価のみ（手動評価未実施）</div>' +
+                        '<div class="text-xs text-blue-600 font-jp mt-0.5">手動チェックリストを実施すると、AXIS_MIX 比率で統合された最終スコアが算出されます。</div>' +
                     '</div>' +
                 '</div>';
             } else if (sessionStatus === 'awaiting_manual') {
-                bannerHtml = '<div class="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl">' +
-                    '<div class="shrink-0 w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-800/50 flex items-center justify-center">' +
-                        '<svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+                bannerHtml = '<div class="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">' +
+                    '<div class="shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">' +
+                        '<svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
                     '</div>' +
                     '<div class="flex-1">' +
-                        '<div class="text-sm font-semibold text-amber-800 dark:text-amber-300 font-jp">手動評価待ち</div>' +
-                        '<div class="text-xs text-amber-600 dark:text-amber-400 font-jp mt-0.5">自動評価は完了しています。手動チェックリストを入力して最終スコアを確定してください。</div>' +
+                        '<div class="text-sm font-semibold text-amber-800 font-jp">手動評価待ち</div>' +
+                        '<div class="text-xs text-amber-600 font-jp mt-0.5">自動評価は完了しています。手動チェックリストを入力して最終スコアを確定してください。</div>' +
                     '</div>' +
                 '</div>';
             }
@@ -1113,7 +1113,7 @@
             theta: labels,
             fill: 'toself',
             name: hasManualScores ? '最終スコア' : '自動スコア',
-            fillcolor: isDarkMode() ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.1)',
+            fillcolor: 'rgba(99, 102, 241, 0.1)',
             line: { color: '#6366f1', width: 2 },
             marker: { color: '#6366f1', size: 5 }
         };
@@ -1124,7 +1124,7 @@
         }), { displayModeBar: false, responsive: true });
 
         document.getElementById('radar-chart')._renderChart = function() {
-            trace.fillcolor = isDarkMode() ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.1)';
+            trace.fillcolor = 'rgba(99, 102, 241, 0.1)';
             Plotly.react('radar-chart', [trace], getRadarLayout({
                 margin: { t: 30, r: 60, b: 30, l: 60 },
                 showlegend: false,
@@ -1141,29 +1141,29 @@
             var AXIS_ORDER = ['practicality', 'cost_performance', 'localization', 'safety', 'uniqueness'];
 
             function scoreColor(v) {
-                if (v == null) return 'text-gray-300 dark:text-gray-600';
-                if (v >= 4.0) return 'text-emerald-600 dark:text-emerald-400';
-                if (v >= 3.0) return 'text-blue-600 dark:text-blue-400';
-                if (v >= 2.0) return 'text-amber-600 dark:text-amber-400';
-                return 'text-red-500 dark:text-red-400';
+                if (v == null) return 'text-gray-300';
+                if (v >= 4.0) return 'text-emerald-600';
+                if (v >= 3.0) return 'text-blue-600';
+                if (v >= 2.0) return 'text-amber-600';
+                return 'text-red-500';
             }
 
             function miniBar(val, maxVal, color) {
-                if (val == null) return '<div class="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full"></div>';
+                if (val == null) return '<div class="w-full h-1.5 bg-gray-100 rounded-full"></div>';
                 var pct = Math.min(100, (val / maxVal) * 100);
-                return '<div class="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full">' +
+                return '<div class="w-full h-1.5 bg-gray-100 rounded-full">' +
                     '<div class="h-1.5 rounded-full transition-all" style="width:' + pct.toFixed(1) + '%;background:' + color + '"></div>' +
                 '</div>';
             }
 
             var tHtml = '<div class="overflow-x-auto">' +
                 '<table class="w-full text-sm">' +
-                '<thead><tr class="border-b border-gray-200 dark:border-gray-700">' +
-                    '<th class="text-left py-2 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 font-jp">軸</th>' +
-                    '<th class="text-center py-2 px-2 text-xs font-medium text-blue-500 dark:text-blue-400 font-jp" style="width:25%"><span class="inline-flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3"/></svg>自動 (LLM)</span></th>' +
-                    '<th class="text-center py-2 px-2 text-xs font-medium text-amber-500 dark:text-amber-400 font-jp" style="width:25%"><span class="inline-flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/></svg>手動</span></th>' +
-                    '<th class="text-center py-2 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 font-jp" style="width:15%">比率</th>' +
-                    '<th class="text-center py-2 px-2 text-xs font-medium text-indigo-500 dark:text-indigo-400 font-jp" style="width:20%"><span class="inline-flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>最終</span></th>' +
+                '<thead><tr class="border-b border-gray-200">' +
+                    '<th class="text-left py-2 px-2 text-xs font-medium text-gray-500 font-jp">軸</th>' +
+                    '<th class="text-center py-2 px-2 text-xs font-medium text-blue-500 font-jp" style="width:25%"><span class="inline-flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3"/></svg>自動 (LLM)</span></th>' +
+                    '<th class="text-center py-2 px-2 text-xs font-medium text-amber-500 font-jp" style="width:25%"><span class="inline-flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/></svg>手動</span></th>' +
+                    '<th class="text-center py-2 px-2 text-xs font-medium text-gray-500 font-jp" style="width:15%">比率</th>' +
+                    '<th class="text-center py-2 px-2 text-xs font-medium text-indigo-500 font-jp" style="width:20%"><span class="inline-flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>最終</span></th>' +
                 '</tr></thead><tbody>';
 
             AXIS_ORDER.forEach(function(axis) {
@@ -1173,8 +1173,8 @@
                 var manualVal = (typeof b.manual_score === 'number' && isFinite(b.manual_score)) ? b.manual_score : null;
                 var finalVal = (typeof b.final_score === 'number' && isFinite(b.final_score)) ? b.final_score : null;
 
-                tHtml += '<tr class="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/30">' +
-                    '<td class="py-3 px-2"><span class="text-xs font-medium text-gray-700 dark:text-gray-300 font-jp">' + AXIS_NAMES[axis] + '</span></td>' +
+                tHtml += '<tr class="border-b border-gray-100 hover:bg-gray-50">' +
+                    '<td class="py-3 px-2"><span class="text-xs font-medium text-gray-700 font-jp">' + AXIS_NAMES[axis] + '</span></td>' +
                     // Auto score
                     '<td class="py-3 px-2 text-center">' +
                         '<div class="' + scoreColor(autoVal) + ' font-bold tabular-nums text-sm">' + (autoVal != null ? autoVal.toFixed(1) : '--') + '</div>' +
@@ -1185,18 +1185,18 @@
                         (b.has_manual && manualVal != null
                             ? '<div class="' + scoreColor(manualVal) + ' font-bold tabular-nums text-sm">' + manualVal.toFixed(1) + '</div>' +
                               '<div class="mt-1 px-2">' + miniBar(manualVal, 5, '#f59e0b') + '</div>'
-                            : '<div class="text-gray-300 dark:text-gray-600 text-sm font-jp">未入力</div>'
+                            : '<div class="text-gray-300 text-sm font-jp">未入力</div>'
                         ) +
                     '</td>' +
                     // Ratio
                     '<td class="py-3 px-2 text-center">' +
                         '<div class="flex items-center justify-center gap-0.5">' +
                             '<div class="flex rounded-full overflow-hidden h-2 w-16">' +
-                                '<div class="bg-blue-400 dark:bg-blue-500" style="width:' + b.auto_ratio + '%"></div>' +
-                                '<div class="bg-amber-400 dark:bg-amber-500" style="width:' + b.manual_ratio + '%"></div>' +
+                                '<div class="bg-blue-400" style="width:' + b.auto_ratio + '%"></div>' +
+                                '<div class="bg-amber-400" style="width:' + b.manual_ratio + '%"></div>' +
                             '</div>' +
                         '</div>' +
-                        '<div class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5 tabular-nums">' + b.auto_ratio + ':' + b.manual_ratio + '</div>' +
+                        '<div class="text-[9px] text-gray-400 mt-0.5 tabular-nums">' + b.auto_ratio + ':' + b.manual_ratio + '</div>' +
                     '</td>' +
                     // Final score
                     '<td class="py-3 px-2 text-center">' +
@@ -1212,11 +1212,11 @@
 
         // === Source label helper ===
         function sourceLabel(source, confidence) {
-            if (source === 'error') return '<span class="text-red-500 dark:text-red-400 text-[9px]">エラー</span>';
-            if (source === 'auto') return '<span class="text-emerald-600 dark:text-emerald-400 text-[9px]">自動</span>';
-            if (source === 'llm') return '<span class="text-blue-600 dark:text-blue-400 text-[9px]">LLM自動</span>';
-            if (source === 'hybrid') return '<span class="text-indigo-600 dark:text-indigo-400 text-[9px]">統合済み</span>';
-            if (source === 'manual_edit') return '<span class="text-amber-600 dark:text-amber-400 text-[9px]">手動編集</span>';
+            if (source === 'error') return '<span class="text-red-500 text-[9px]">エラー</span>';
+            if (source === 'auto') return '<span class="text-emerald-600 text-[9px]">自動</span>';
+            if (source === 'llm') return '<span class="text-blue-600 text-[9px]">LLM自動</span>';
+            if (source === 'hybrid') return '<span class="text-indigo-600 text-[9px]">統合済み</span>';
+            if (source === 'manual_edit') return '<span class="text-amber-600 text-[9px]">手動編集</span>';
             return '<span class="text-gray-500 text-[9px]">手動</span>';
         }
 
@@ -1240,11 +1240,11 @@
                 var pct = hasVal ? Math.min(100, Math.max(0, Math.round(val * 100))) : 0;
                 var displayVal = hasVal ? pct + '%' : '---';
                 html += '<div class="flex items-center gap-1">' +
-                    '<span class="text-[9px] text-gray-400 dark:text-gray-500 font-jp w-8 shrink-0">' + dim.label + '</span>' +
-                    '<div class="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full">' +
+                    '<span class="text-[9px] text-gray-400 font-jp w-8 shrink-0">' + dim.label + '</span>' +
+                    '<div class="flex-1 h-1 bg-gray-200 rounded-full">' +
                         (hasVal ? '<div class="h-1 rounded-full" style="width:' + pct + '%;background-color:' + dim.color + '"></div>' : '') +
                     '</div>' +
-                    '<span class="text-[9px] text-gray-400 dark:text-gray-500 tabular-nums w-7 text-right">' + displayVal + '</span>' +
+                    '<span class="text-[9px] text-gray-400 tabular-nums w-7 text-right">' + displayVal + '</span>' +
                 '</div>';
             });
             html += '</div>';
@@ -1260,19 +1260,19 @@
                 details = details.rule_results;
             }
             if (!details || !Array.isArray(details) || details.length === 0) {
-                return '<div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700/50 text-[10px] text-gray-400 dark:text-gray-500 font-jp italic">詳細スコアは次回の自動評価やり直しで生成されます</div>';
+                return '<div class="mt-2 pt-2 border-t border-gray-100 text-[10px] text-gray-400 font-jp italic">詳細スコアは次回の自動評価やり直しで生成されます</div>';
             }
-            var html = '<div class="mt-2 space-y-1.5 border-t border-gray-100 dark:border-gray-700/50 pt-2">';
+            var html = '<div class="mt-2 space-y-1.5 border-t border-gray-100 pt-2">';
             details.forEach(function(d) {
                 var dScore = (typeof d.score === 'number' && isFinite(d.score)) ? d.score : 0;
                 var dDisplay = dScore.toFixed(1);
-                var dColor = dScore >= 3.5 ? 'text-emerald-600 dark:text-emerald-400' : (dScore >= 2.0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-red-500 dark:text-red-400');
+                var dColor = dScore >= 3.5 ? 'text-emerald-600' : (dScore >= 2.0 ? 'text-indigo-600' : 'text-red-500');
                 html += '<div class="text-[10px]">' +
                     '<div class="flex items-center justify-between">' +
-                        '<span class="text-gray-500 dark:text-gray-400 font-jp">' + escapeHtml(d.rule_name_jp || d.rule_id || '') + '</span>' +
+                        '<span class="text-gray-500 font-jp">' + escapeHtml(d.rule_name_jp || d.rule_id || '') + '</span>' +
                         '<span class="font-medium tabular-nums ' + dColor + '">' + dDisplay + ' / 5.0</span>' +
                     '</div>' +
-                    (d.evidence ? '<div class="text-[9px] text-gray-400 dark:text-gray-500 font-jp mt-0.5">' + escapeHtml(d.evidence) + '</div>' : '') +
+                    (d.evidence ? '<div class="text-[9px] text-gray-400 font-jp mt-0.5">' + escapeHtml(d.evidence) + '</div>' : '') +
                 '</div>';
             });
             html += '</div>';
@@ -1287,16 +1287,16 @@
             var barPct = (safeScore / 5.0 * 100).toFixed(1);
             var level = scoreLevel(safeScore);
             var needsManual = s.confidence === 0 && s.score === 0 && s.source === 'error';
-            return '<div class="p-4 rounded-lg border border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-[#161929]">' +
+            return '<div class="p-4 rounded-lg border border-gray-100 bg-gray-50/50">' +
                 '<div class="flex items-center justify-between mb-2">' +
-                    '<span class="text-xs font-medium text-gray-500 dark:text-gray-400 font-jp">' + escapeHtml(s.axis_name_jp) + '</span>' +
+                    '<span class="text-xs font-medium text-gray-500 font-jp">' + escapeHtml(s.axis_name_jp) + '</span>' +
                     sourceLabel(s.source, s.confidence) +
                 '</div>' +
-                '<div class="text-2xl font-bold tabular-nums ' + (needsManual ? 'text-gray-300 dark:text-gray-600' : 'text-gray-900 dark:text-white') + '">' +
+                '<div class="text-2xl font-bold tabular-nums ' + (needsManual ? 'text-gray-300 : 'text-gray-900 + '">' +
                     (needsManual ? '--' : sc) +
                 '</div>' +
                 (needsManual
-                    ? '<div class="text-[10px] text-amber-500 dark:text-amber-400 mt-1 font-jp">手動評価待ち</div>'
+                    ? '<div class="text-[10px] text-amber-500 mt-1 font-jp">手動評価待ち</div>'
                     : '<div class="mt-2"><div class="score-bar"><div class="score-bar-fill ' + level + '" style="width:' + barPct + '%"></div></div></div>'
                 ) +
                 confidenceBar(s.confidence, s.details) +
@@ -1305,7 +1305,7 @@
                     if (typeof strs === 'string') { try { strs = JSON.parse(strs); } catch(e) { strs = strs ? [strs] : []; } }
                     if (!Array.isArray(strs)) strs = [];
                     return strs.length > 0
-                        ? '<div class="mt-2 space-y-0.5">' + strs.map(function(st) { return '<div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-jp flex items-start gap-1"><span class="shrink-0 mt-px">+</span><span>' + escapeHtml(st) + '</span></div>'; }).join('') + '</div>'
+                        ? '<div class="mt-2 space-y-0.5">' + strs.map(function(st) { return '<div class="text-[10px] text-emerald-600 font-jp flex items-start gap-1"><span class="shrink-0 mt-px">+</span><span>' + escapeHtml(st) + '</span></div>'; }).join('') + '</div>'
                         : '';
                 })() +
                 (function() {
@@ -1313,7 +1313,7 @@
                     if (typeof rsks === 'string') { try { rsks = JSON.parse(rsks); } catch(e) { rsks = rsks ? [rsks] : []; } }
                     if (!Array.isArray(rsks)) rsks = [];
                     return rsks.length > 0
-                        ? '<div class="mt-1 space-y-0.5">' + rsks.map(function(rk) { return '<div class="text-[10px] text-red-500 dark:text-red-400 font-jp flex items-start gap-1"><span class="shrink-0 mt-px">!</span><span>' + escapeHtml(rk) + '</span></div>'; }).join('') + '</div>'
+                        ? '<div class="mt-1 space-y-0.5">' + rsks.map(function(rk) { return '<div class="text-[10px] text-red-500 font-jp flex items-start gap-1"><span class="shrink-0 mt-px">!</span><span>' + escapeHtml(rk) + '</span></div>'; }).join('') + '</div>'
                         : '';
                 })() +
                 detailsHtml(s.details) +
@@ -1417,7 +1417,7 @@
             if (screenshotCount > 0) {
                 screenshotLinks = relatedScreenshots.map(function(s) {
                     if (s.screenshot_path) {
-                        return '<a href="' + escapeHtml(s.screenshot_path) + '" target="_blank" class="inline-flex items-center gap-0.5 text-indigo-600 dark:text-indigo-400 hover:underline text-[10px]">' +
+                        return '<a href="' + escapeHtml(s.screenshot_path) + '" target="_blank" class="inline-flex items-center gap-0.5 text-indigo-600 hover:underline text-[10px]">' +
                             '\ud83d\udcf7</a>';
                     }
                     return '';
@@ -1427,17 +1427,17 @@
             var statusLabel = hasError ? 'エラー' : (screenshotCount > 0 ? screenshotCount + '枚記録' : 'スクショなし');
             var statusClass = hasError ? 'text-red-500' : (screenshotCount > 0 ? 'text-emerald-500' : 'text-amber-500');
 
-            return '<tr class="border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">' +
-                '<td class="px-4 py-3 text-xs font-medium text-gray-600 dark:text-gray-400">' +
-                    '<span class="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 text-[10px] font-medium">' +
+            return '<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">' +
+                '<td class="px-4 py-3 text-xs font-medium text-gray-600">' +
+                    '<span class="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-medium">' +
                         (CATEGORY_NAMES[r.category] || r.category) +
                     '</span>' +
                 '</td>' +
-                '<td class="px-4 py-3 text-xs text-gray-700 dark:text-gray-300 max-w-xs truncate" title="' + escapeHtml(r.prompt_sent || '') + '">' + escapeHtml(r.prompt_sent || '') + '</td>' +
-                '<td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">' +
+                '<td class="px-4 py-3 text-xs text-gray-700 max-w-xs truncate" title="' + escapeHtml(r.prompt_sent || '') + '">' + escapeHtml(r.prompt_sent || '') + '</td>' +
+                '<td class="px-4 py-3 text-xs text-gray-500">' +
                     (screenshotCount > 0 ? screenshotLinks : '<span class="text-gray-400">---</span>') +
                 '</td>' +
-                '<td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 tabular-nums">' + timeStr + '</td>' +
+                '<td class="px-4 py-3 text-xs text-gray-500 tabular-nums">' + timeStr + '</td>' +
                 '<td class="px-4 py-3 text-xs font-medium ' + statusClass + '">' + statusLabel + '</td>' +
             '</tr>';
         }).join('');
@@ -1445,8 +1445,8 @@
         // Show total screenshot count
         var totalScreenshots = screenshots.length;
         if (totalScreenshots > 0) {
-            body.innerHTML += '<tr class="border-b border-gray-50 dark:border-gray-700/30 bg-gray-50/30 dark:bg-gray-800/20">' +
-                '<td colspan="5" class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">' +
+            body.innerHTML += '<tr class="border-b border-gray-50 bg-gray-50/30">' +
+                '<td colspan="5" class="px-4 py-2 text-xs text-gray-500">' +
                     '<span class="inline-flex items-center gap-1">' +
                         '\ud83d\udcf7 スクリーンショット合計: ' + totalScreenshots + ' 枚' +
                     '</span>' +
@@ -1457,11 +1457,11 @@
 
     function statusMenuItem(status, label, currentStatus) {
         if (status === currentStatus) {
-            return '<div class="px-4 py-2 text-xs text-gray-400 dark:text-gray-500 font-jp flex items-center gap-2">' +
+            return '<div class="px-4 py-2 text-xs text-gray-400 font-jp flex items-center gap-2">' +
                 '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' +
                 label + ' (現在)</div>';
         }
-        return '<button onclick="changeStatus(\'' + status + '\')" class="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors font-jp">' + label + '</button>';
+        return '<button onclick="changeStatus(\'' + status + '\')" class="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors font-jp">' + label + '</button>';
     }
 
     window.toggleStatusMenu = function() {
@@ -1527,14 +1527,14 @@
                 var autoScore = (_currentBreakdown[axis] && _currentBreakdown[axis].auto_score != null)
                     ? _currentBreakdown[axis].auto_score : 0;
                 html += '<div class="flex flex-col gap-1">' +
-                    '<label class="text-xs font-medium text-gray-600 dark:text-gray-400 font-jp">' + label +
-                        '<span class="text-[9px] text-blue-500 dark:text-blue-400 ml-1">自動' + (mix.auto || '?') + '%</span>' +
+                    '<label class="text-xs font-medium text-gray-600 font-jp">' + label +
+                        '<span class="text-[9px] text-blue-500 ml-1">自動' + (mix.auto || '?') + '%</span>' +
                     '</label>' +
                     '<input type="number" id="score-input-' + axis + '" ' +
                         'value="' + autoScore.toFixed(1) + '" ' +
                         'min="0" max="5" step="0.1" ' +
                         'oninput="updateEditorOverall()" ' +
-                        'class="w-full px-3 py-2 text-sm font-mono tabular-nums bg-white dark:bg-[#161929] border border-blue-300 dark:border-blue-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-white">' +
+                        'class="w-full px-3 py-2 text-sm font-mono tabular-nums bg-white border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">' +
                 '</div>';
             });
             container.innerHTML = html;

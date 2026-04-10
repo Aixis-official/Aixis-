@@ -5,14 +5,14 @@
 {% block content %}
 <div class="max-w-6xl mx-auto">
     <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">スコア比較・推移分析</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">同一ツールの複数監査セッション間でスコア推移を確認</p>
+        <h1 class="text-2xl font-bold text-gray-900 font-jp">スコア比較・推移分析</h1>
+        <p class="mt-1 text-sm text-gray-500 font-jp">同一ツールの複数監査セッション間でスコア推移を確認</p>
     </div>
 
     <!-- Tool Selector -->
-    <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 mb-6">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 font-jp">ツールを選択</label>
-        <select id="tool-selector" class="w-full max-w-md px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500" onchange="loadComparison()">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2 font-jp">ツールを選択</label>
+        <select id="tool-selector" class="w-full max-w-md px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-indigo-500" onchange="loadComparison()">
             <option value="">-- ツールを選択 --</option>
         </select>
     </div>
@@ -20,35 +20,35 @@
     <!-- Comparison Chart -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6" id="comparison-content" style="display:none;">
         <!-- Radar overlay chart -->
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 font-jp">レーダーチャート比較</h2>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 font-jp">レーダーチャート比較</h2>
             <div id="radar-chart" style="height:400px;"></div>
         </div>
 
         <!-- Score trend chart -->
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 font-jp">スコア推移</h2>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 font-jp">スコア推移</h2>
             <div id="trend-chart" style="height:400px;"></div>
         </div>
     </div>
 
     <!-- Session comparison table -->
-    <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50" id="comparison-table-wrapper" style="display:none;">
-        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">セッション別スコア</h2>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100" id="comparison-table-wrapper" style="display:none;">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-900 font-jp">セッション別スコア</h2>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="border-b border-gray-100 dark:border-gray-700/50">
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">セッション</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">日時</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">実務適性</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">費用対効果</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">日本語能力</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">信頼性</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">革新性</th>
-                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">総合</th>
+                    <tr class="border-b border-gray-100">
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">セッション</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">日時</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">実務適性</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">費用対効果</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">日本語能力</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">信頼性</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">革新性</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">総合</th>
                     </tr>
                 </thead>
                 <tbody id="comparison-table-body"></tbody>
@@ -164,9 +164,9 @@ function renderComparisonTable(sessions) {
         const overall = s.scores.length > 0
             ? (s.scores.reduce((sum, sc) => sum + sc.score, 0) / s.scores.length)
             : 0;
-        return '<tr class="border-b border-gray-50 dark:border-gray-700/30">' +
-            '<td class="px-4 py-3 text-xs font-mono"><a href="/dashboard/audits/' + encodeURIComponent(s.audit.id) + '" class="text-indigo-600 dark:text-indigo-400 hover:underline">' + (s.audit.session_code || s.audit.id.substring(0, 12)) + '</a></td>' +
-            '<td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">' + formatDateTime(s.audit.started_at) + '</td>' +
+        return '<tr class="border-b border-gray-50">' +
+            '<td class="px-4 py-3 text-xs font-mono"><a href="/dashboard/audits/' + encodeURIComponent(s.audit.id) + '" class="text-indigo-600 hover:underline">' + (s.audit.session_code || s.audit.id.substring(0, 12)) + '</a></td>' +
+            '<td class="px-4 py-3 text-xs text-gray-600">' + formatDateTime(s.audit.started_at) + '</td>' +
             AIXIS.AXIS_KEYS.map(k => '<td class="px-4 py-3 text-center text-xs tabular-nums font-medium" style="color:' + scoreLevelColor(scoreMap[k] || 0) + '">' + (scoreMap[k] != null ? scoreMap[k].toFixed(1) : '---') + '</td>').join('') +
             '<td class="px-4 py-3 text-center text-xs font-bold tabular-nums" style="color:' + scoreLevelColor(overall) + '">' + overall.toFixed(1) + '</td>' +
             '</tr>';

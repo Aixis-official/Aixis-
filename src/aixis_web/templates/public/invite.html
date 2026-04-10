@@ -24,14 +24,14 @@
 <div class="invite-bg min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
     <div class="w-full max-w-sm">
 
-        <div class="invite-card bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-700 p-8 sm:p-10">
+        <div class="invite-card bg-white border border-gray-200 p-8 sm:p-10">
 
             <!-- Logo -->
             <div class="text-center mb-10">
                 <a href="/" class="inline-block">
                     <img src="/static/img/Aixis-logo-final.png" alt="Aixis（アイクシス） — 独立系AI監査プラットフォーム" class="h-10 mx-auto" width="40" height="40">
                 </a>
-                <p class="mt-3 text-xs text-gray-400 dark:text-gray-500 tracking-wider uppercase font-serif">
+                <p class="mt-3 text-xs text-gray-400 tracking-wider uppercase font-serif">
                     AI Audit Platform
                 </p>
             </div>
@@ -39,10 +39,10 @@
             {% if invite_valid %}
             <!-- Valid invite -->
             <div class="mb-8">
-                <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                    <span class="font-semibold text-gray-900 dark:text-white">{{ invite_user_name }}</span> 様、ようこそ。
+                <p class="text-sm text-gray-600 leading-relaxed">
+                    <span class="font-semibold text-gray-900">{{ invite_user_name }}</span> 様、ようこそ。
                 </p>
-                <p class="mt-2 text-xs text-gray-400 dark:text-gray-500 leading-relaxed">
+                <p class="mt-2 text-xs text-gray-400 leading-relaxed">
                     パスワードを設定してアカウントを有効化してください。
                 </p>
             </div>
@@ -54,7 +54,7 @@
             <!-- Password form -->
             <form id="invite-form" class="space-y-5">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">
                         パスワード
                     </label>
                     <input type="password"
@@ -63,11 +63,7 @@
                            minlength="8"
                            autocomplete="new-password"
                            placeholder="8文字以上"
-                           class="w-full px-4 py-2.5 border border-gray-200 dark:border-aixis-600
-                                  bg-white dark:bg-aixis-700 text-gray-900 dark:text-gray-100
-                                  placeholder-gray-300 dark:placeholder-gray-500
-                                  focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-aixis-400
-                                  transition-colors duration-200 text-sm">
+                           class="w-full px-4 py-2.5 border border-gray-200 bg-white text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-400 transition-colors duration-200 text-sm">
                     <div class="mt-1.5 flex gap-1">
                         <div id="str-1" class="password-strength flex-1 bg-gray-100"></div>
                         <div id="str-2" class="password-strength flex-1 bg-gray-100"></div>
@@ -77,7 +73,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">
                         パスワード（確認）
                     </label>
                     <input type="password"
@@ -86,21 +82,13 @@
                            minlength="8"
                            autocomplete="new-password"
                            placeholder="もう一度入力"
-                           class="w-full px-4 py-2.5 border border-gray-200 dark:border-aixis-600
-                                  bg-white dark:bg-aixis-700 text-gray-900 dark:text-gray-100
-                                  placeholder-gray-300 dark:placeholder-gray-500
-                                  focus:outline-none focus:ring-1 focus:ring-gray-400 dark:focus:ring-aixis-400
-                                  transition-colors duration-200 text-sm">
+                           class="w-full px-4 py-2.5 border border-gray-200 bg-white text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-400 transition-colors duration-200 text-sm">
                     <p id="match-hint" class="mt-1 text-[11px] text-red-400 hidden">パスワードが一致しません</p>
                 </div>
 
                 <button type="submit"
                         id="submit-btn"
-                        class="w-full flex items-center justify-center gap-2 px-4 py-3
-                               bg-[#0f172a] hover:bg-[#1e293b] dark:bg-white dark:hover:bg-gray-100
-                               text-white dark:text-[#0f172a] font-semibold text-sm
-                               transition-colors duration-200
-                               disabled:opacity-60 disabled:cursor-not-allowed">
+                        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#0f172a] hover:bg-[#1e293b] text-white font-semibold text-sm transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed">
                     <span id="submit-text">パスワードを設定する</span>
                     <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                     <svg id="submit-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -113,11 +101,11 @@
             {% else %}
             <!-- Invalid/expired invite -->
             <div class="text-center py-4">
-                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-aixis-700 mb-4">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
                     <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
                 </div>
-                <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">招待リンクが無効です</h2>
-                <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed mb-6">
+                <h2 class="text-sm font-semibold text-gray-900 mb-2">招待リンクが無効です</h2>
+                <p class="text-xs text-gray-400 leading-relaxed mb-6">
                     このリンクは期限切れまたは既に使用済みです。<br>
                     管理者にお問い合わせのうえ、新しい招待リンクの再送をご依頼ください。
                 </p>

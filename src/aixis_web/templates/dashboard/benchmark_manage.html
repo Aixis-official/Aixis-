@@ -8,8 +8,8 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">ベンチマーク管理</h1>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">ベンチマークスイートの作成・管理とリーダーボード</p>
+            <h1 class="text-2xl font-bold text-gray-900 font-jp">ベンチマーク管理</h1>
+            <p class="mt-1 text-sm text-gray-500 font-jp">ベンチマークスイートの作成・管理とリーダーボード</p>
         </div>
         <button onclick="showCreateSuite()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors font-jp">
             新規スイート
@@ -17,33 +17,33 @@
     </div>
 
     <!-- Create Suite Form -->
-    <div id="create-suite-form" class="hidden mb-8 bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 font-jp">新規ベンチマークスイート</h2>
+    <div id="create-suite-form" class="hidden mb-8 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4 font-jp">新規ベンチマークスイート</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Slug</label>
-                <input type="text" id="suite-slug" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="safety-benchmark-v1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                <input type="text" id="suite-slug" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="safety-benchmark-v1">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Version</label>
-                <input type="text" id="suite-version" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" value="v1.0">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Version</label>
+                <input type="text" id="suite-version" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" value="v1.0">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 font-jp">名前 (英語)</label>
-                <input type="text" id="suite-name" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="Safety Benchmark">
+                <label class="block text-sm font-medium text-gray-700 mb-1 font-jp">名前 (英語)</label>
+                <input type="text" id="suite-name" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="Safety Benchmark">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 font-jp">名前 (日本語)</label>
-                <input type="text" id="suite-name-jp" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm" placeholder="安全性ベンチマーク">
+                <label class="block text-sm font-medium text-gray-700 mb-1 font-jp">名前 (日本語)</label>
+                <input type="text" id="suite-name-jp" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" placeholder="安全性ベンチマーク">
             </div>
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 font-jp">説明 (日本語)</label>
-                <textarea id="suite-desc-jp" rows="2" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm"></textarea>
+                <label class="block text-sm font-medium text-gray-700 mb-1 font-jp">説明 (日本語)</label>
+                <textarea id="suite-desc-jp" rows="2" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm"></textarea>
             </div>
         </div>
         <div class="mt-4 flex gap-3">
             <button onclick="createSuite()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg font-jp">作成</button>
-            <button onclick="hideCreateSuite()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg font-jp">キャンセル</button>
+            <button onclick="hideCreateSuite()" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg font-jp">キャンセル</button>
         </div>
     </div>
 
@@ -54,33 +54,33 @@
 
     <!-- Add Test Cases Section (shown when suite selected) -->
     <div id="test-cases-section" class="hidden mt-8">
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 font-jp">テストケース追加: <span id="tc-suite-name"></span></h2>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 font-jp">テストケース追加: <span id="tc-suite-name"></span></h2>
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 font-jp">テストケース JSON</label>
-                <textarea id="tc-json" rows="8" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-mono" placeholder='[{"category":"safety","prompt":"Test prompt","expected_behaviors":["Expected"],"weight":1.0}]'></textarea>
+                <label class="block text-sm font-medium text-gray-700 mb-1 font-jp">テストケース JSON</label>
+                <textarea id="tc-json" rows="8" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-mono" placeholder='[{"category":"safety","prompt":"Test prompt","expected_behaviors":["Expected"],"weight":1.0}]'></textarea>
                 <p class="text-xs text-gray-400 mt-1 font-jp">JSON配列形式でテストケースを入力してください</p>
             </div>
             <div class="mt-4 flex gap-3">
                 <button onclick="addTestCases()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg font-jp">追加</button>
-                <button onclick="hideTestCases()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg font-jp">閉じる</button>
+                <button onclick="hideTestCases()" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg font-jp">閉じる</button>
             </div>
         </div>
     </div>
 
     <!-- Trigger Run Section -->
     <div id="run-section" class="hidden mt-8">
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 font-jp">ベンチマーク実行: <span id="run-suite-name"></span></h2>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 font-jp">ベンチマーク実行: <span id="run-suite-name"></span></h2>
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 font-jp">ツール</label>
-                <select id="run-tool-id" class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm">
+                <label class="block text-sm font-medium text-gray-700 mb-1 font-jp">ツール</label>
+                <select id="run-tool-id" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm">
                     <option value="">読み込み中...</option>
                 </select>
             </div>
             <div class="mt-4 flex gap-3">
                 <button onclick="triggerRun()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg font-jp">実行開始</button>
-                <button onclick="hideRun()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg font-jp">閉じる</button>
+                <button onclick="hideRun()" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg font-jp">閉じる</button>
             </div>
         </div>
     </div>
@@ -133,22 +133,22 @@ async function loadSuites() {
         }
 
         el.innerHTML = data.map(s => `
-            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div class="flex items-start justify-between">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
-                            <h3 class="text-base font-semibold text-gray-900 dark:text-white font-jp">${esc(s.name_jp || s.name)}</h3>
-                            <span class="text-xs px-2 py-0.5 rounded ${s.is_published ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}">${s.is_published ? '公開中' : '下書き'}</span>
+                            <h3 class="text-base font-semibold text-gray-900 font-jp">${esc(s.name_jp || s.name)}</h3>
+                            <span class="text-xs px-2 py-0.5 rounded ${s.is_published ? 'bg-emerald-100 text-emerald-700 : 'bg-gray-100 text-gray-500">${s.is_published ? '公開中' : '下書き'}</span>
                             <span class="text-xs text-gray-400">${esc(s.version)}</span>
                         </div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 font-jp">${esc(s.description_jp || s.description || '')}</p>
+                        <p class="text-sm text-gray-500 font-jp">${esc(s.description_jp || s.description || '')}</p>
                         <p class="text-xs text-gray-400 mt-1">${s.test_case_count} テストケース</p>
                     </div>
                     <div class="flex gap-2 ml-4 flex-shrink-0">
-                        <button onclick="showTestCases('${esc(s.slug)}','${esc(s.name_jp||s.name)}')" class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 font-jp">テストケース</button>
-                        ${!s.is_published ? `<button onclick="publishSuite('${esc(s.slug)}')" class="px-2 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded hover:bg-emerald-200 font-jp">公開</button>` : ''}
-                        <button onclick="showRun('${esc(s.slug)}','${esc(s.name_jp||s.name)}')" class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-200 font-jp">実行</button>
-                        <a href="/benchmarks/${encodeURIComponent(s.slug)}/leaderboard" class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded hover:bg-purple-200 font-jp">LB</a>
+                        <button onclick="showTestCases('${esc(s.slug)}','${esc(s.name_jp||s.name)}')" class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 font-jp">テストケース</button>
+                        ${!s.is_published ? `<button onclick="publishSuite('${esc(s.slug)}')" class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200 font-jp">公開</button>` : ''}
+                        <button onclick="showRun('${esc(s.slug)}','${esc(s.name_jp||s.name)}')" class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 font-jp">実行</button>
+                        <a href="/benchmarks/${encodeURIComponent(s.slug)}/leaderboard" class="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 font-jp">LB</a>
                     </div>
                 </div>
             </div>

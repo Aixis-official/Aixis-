@@ -1,7 +1,7 @@
 /* ==========================================================================
    Aixis AI Audit SaaS Platform -- Main Stylesheet
    Works alongside Tailwind CSS CDN. This file handles:
-   - CSS custom properties for dual theming (light/dark)
+   - CSS custom properties (light theme only)
    - Component-specific styles not easily done with Tailwind
    - Plotly chart theming
    - Animation keyframes
@@ -52,13 +52,7 @@ html::-webkit-scrollbar { display: none; }
 }
 
 /* ==========================================================================
-   2. CSS Custom Properties -- Dark Theme (retained for admin future use)
-   ========================================================================== */
-
-/* html.dark variables kept but inactive -- light theme is default */
-
-/* ==========================================================================
-   3. Global Styles
+   2. Global Styles
    ========================================================================== */
 
 *,
@@ -149,12 +143,6 @@ nav.main-nav {
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--nav-border);
 }
-
-html.dark nav.main-nav {
-    background: var(--nav-bg);
-    border-bottom: 1px solid var(--nav-border);
-}
-
 nav.main-nav .logo {
     font-size: 1.4rem;
     font-weight: 800;
@@ -165,11 +153,6 @@ nav.main-nav .logo {
     align-items: center;
     gap: 8px;
 }
-
-html.dark nav.main-nav .logo {
-    color: var(--text);
-}
-
 nav.main-nav .logo span {
     font-size: 0.7rem;
     opacity: 0.7;
@@ -191,33 +174,15 @@ nav.main-nav .nav-links a {
     font-weight: 500;
     transition: background 0.15s ease, color 0.15s ease;
 }
-
-html.dark nav.main-nav .nav-links a {
-    color: var(--text-light);
-}
-
 nav.main-nav .nav-links a:hover,
 nav.main-nav .nav-links a.active {
     background: rgba(255,255,255,0.15);
     color: white;
 }
-
-html.dark nav.main-nav .nav-links a:hover,
-html.dark nav.main-nav .nav-links a.active {
-    background: rgba(255,255,255,0.08);
-    color: var(--text);
-}
-
 nav.main-nav .nav-auth a {
     background: rgba(255,255,255,0.15);
     border: 1px solid rgba(255,255,255,0.3);
 }
-
-html.dark nav.main-nav .nav-auth a {
-    background: rgba(255,255,255,0.06);
-    border-color: var(--border);
-}
-
 /* Mobile nav slide-down */
 .mobile-nav-menu {
     display: none;
@@ -536,90 +501,39 @@ main.main-constrained {
     background: var(--bg-alt);
     color: var(--text-light);
 }
-
-html.dark .status-pending {
-    background: #2d3748;
-    color: #a0aec0;
-}
-
 .status-running {
     background: #bee3f8;
     color: #2a4365;
 }
-
-html.dark .status-running {
-    background: rgba(96,165,250,0.15);
-    color: #93bbfc;
-}
-
 .status-waiting_login {
     background: #fef3c7;
     color: #92400e;
 }
-
-html.dark .status-waiting_login {
-    background: rgba(251,191,36,0.15);
-    color: #fbbf24;
-}
-
 .status-awaiting_manual {
     background: var(--warning-light);
     color: #744210;
 }
-
-html.dark .status-awaiting_manual {
-    color: var(--warning);
-}
-
 .status-completed {
     background: var(--success-light);
     color: #22543d;
 }
-
-html.dark .status-completed {
-    color: var(--success);
-}
-
 .status-failed {
     background: var(--danger-light);
     color: #742a2a;
 }
-
-html.dark .status-failed {
-    color: var(--danger);
-}
-
 .status-aborted {
     background: #fed7d7;
     color: #9b2c2c;
 }
-
-html.dark .status-aborted {
-    background: rgba(245,101,101,0.15);
-    color: #fc8181;
-}
-
 .status-aborting {
     background: #fed7d7;
     color: #9b2c2c;
     animation: pulse 2s infinite;
 }
-
-html.dark .status-aborting {
-    background: rgba(245,101,101,0.15);
-    color: #fc8181;
-}
-
 .status-cancelled {
     background: var(--bg-alt);
     color: #718096;
 }
-
-html.dark .status-cancelled {
-    background: rgba(113,128,150,0.15);
-    color: #a0aec0;
-}
-
 /* ==========================================================================
    4h. Tags
    ========================================================================== */
@@ -636,12 +550,6 @@ html.dark .status-cancelled {
 .tag-warning { background: var(--warning-light); color: #744210; }
 .tag-danger  { background: var(--danger-light);  color: #742a2a; }
 .tag-info    { background: #bee3f8; color: #2a4365; }
-
-html.dark .tag-success { color: var(--success); }
-html.dark .tag-warning { color: var(--warning); }
-html.dark .tag-danger  { color: var(--danger); }
-html.dark .tag-info    { background: rgba(96,165,250,0.15); color: #93bbfc; }
-
 /* ==========================================================================
    4i. Search & Filters
    ========================================================================== */
@@ -681,17 +589,6 @@ html.dark .tag-info    { background: rgba(96,165,250,0.15); color: #93bbfc; }
     border-color: var(--primary-light);
     box-shadow: 0 0 0 3px rgba(43,108,176,0.1);
 }
-
-html.dark .search-input {
-    background: var(--bg-alt);
-    border-color: var(--border);
-}
-
-html.dark .search-input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(96,165,250,0.12);
-}
-
 .filter-select {
     padding: 10px 16px;
     border: 1px solid var(--border);
@@ -709,17 +606,6 @@ html.dark .search-input:focus {
     border-color: var(--primary-light);
     box-shadow: 0 0 0 3px rgba(43,108,176,0.1);
 }
-
-html.dark .filter-select {
-    background: var(--bg-alt);
-    border-color: var(--border);
-}
-
-html.dark .filter-select:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(96,165,250,0.12);
-}
-
 /* ==========================================================================
    4j. Buttons
    ========================================================================== */
@@ -752,16 +638,6 @@ html.dark .filter-select:focus {
 .btn-primary:hover {
     background: var(--primary-light);
 }
-
-html.dark .btn-primary {
-    background: var(--primary);
-    color: #0f1117;
-}
-
-html.dark .btn-primary:hover {
-    background: var(--primary-light);
-}
-
 .btn-accent {
     background: var(--accent);
     color: white;
@@ -818,19 +694,9 @@ html.dark .btn-primary:hover {
 .data-table tbody tr:hover {
     background: rgba(0,0,0,0.02);
 }
-
-html.dark .data-table tbody tr:hover {
-    background: rgba(255,255,255,0.03);
-}
-
 .data-table .rank-1 { background: rgba(212,175,55,0.08); }
 .data-table .rank-2 { background: rgba(192,192,192,0.08); }
 .data-table .rank-3 { background: rgba(205,127,50,0.08); }
-
-html.dark .data-table .rank-1 { background: rgba(212,175,55,0.12); }
-html.dark .data-table .rank-2 { background: rgba(192,192,192,0.10); }
-html.dark .data-table .rank-3 { background: rgba(205,127,50,0.10); }
-
 /* ==========================================================================
    4l. Hero Section
    ========================================================================== */
@@ -843,11 +709,6 @@ html.dark .data-table .rank-3 { background: rgba(205,127,50,0.10); }
     margin-bottom: 32px;
     text-align: center;
 }
-
-html.dark .hero {
-    background: linear-gradient(135deg, #1a1d2e, #2d3748);
-}
-
 .hero h1 {
     font-size: 2rem;
     margin-bottom: 12px;
@@ -875,16 +736,6 @@ html.dark .hero {
 .js-plotly-plot .plotly .main-svg {
     background: transparent !important;
 }
-
-html.dark .js-plotly-plot .plotly text {
-    fill: var(--text) !important;
-}
-
-html.dark .js-plotly-plot .plotly .gridlayer line,
-html.dark .js-plotly-plot .plotly .zerolinelayer line {
-    stroke: var(--border) !important;
-}
-
 /* ==========================================================================
    4n. Stats Row
    ========================================================================== */
@@ -957,13 +808,6 @@ html.dark .js-plotly-plot .plotly .zerolinelayer line {
     border-color: var(--primary-light);
     box-shadow: 0 0 0 3px rgba(43,108,176,0.08);
 }
-
-html.dark .form-group input:focus,
-html.dark .form-group textarea:focus,
-html.dark .form-group select:focus {
-    box-shadow: 0 0 0 3px rgba(96,165,250,0.12);
-}
-
 /* ==========================================================================
    4p. Checklist Items (Manual Evaluation)
    ========================================================================== */
@@ -1049,11 +893,6 @@ html.dark .form-group select:focus {
     padding: 24px;
     text-align: center;
 }
-
-html.dark .paywall-overlay {
-    background: rgba(15,17,23,0.7);
-}
-
 .paywall-overlay .paywall-title {
     font-size: 1.2rem;
     font-weight: 700;
@@ -1179,24 +1018,6 @@ footer .space-y-1\.5 {
 }
 
 /* ==========================================================================
-   5. Plotly Chart Theming (additional)
-   -- See also section 4m above
-   ========================================================================== */
-
-html.dark .js-plotly-plot .plotly .bg {
-    fill: transparent !important;
-}
-
-html.dark .js-plotly-plot .plotly .layer-above .shapelayer path {
-    stroke: var(--border) !important;
-}
-
-html.dark .js-plotly-plot .plotly .angularaxistick text,
-html.dark .js-plotly-plot .plotly .radialaxistick text {
-    fill: var(--text-light) !important;
-}
-
-/* ==========================================================================
    6. Animations
    ========================================================================== */
 
@@ -1300,10 +1121,6 @@ h1, h2, h3, h4, h5, h6 {
 .hover-lift:hover {
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
-html.dark .hover-lift:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.30);
-}
-
 /* --- Card hover: border to primary --- */
 .card-hover-primary {
     transition: border-color 200ms ease, box-shadow 200ms ease;
@@ -1312,11 +1129,6 @@ html.dark .hover-lift:hover {
     border-color: #9ca3af;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
-html.dark .card-hover-primary:hover {
-    border-color: #6b7280;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.30);
-}
-
 /* --- Button hovers: explicit bg colors (NO filter:brightness) --- */
 .btn-primary-hover {
     background-color: #1a365d;
@@ -1326,13 +1138,6 @@ html.dark .card-hover-primary:hover {
     background-color: #234b7a;
     box-shadow: 0 4px 12px rgba(26, 54, 93, 0.3);
 }
-html.dark .btn-primary-hover {
-    background-color: #3b82f6;
-}
-html.dark .btn-primary-hover:hover {
-    background-color: #5b9cf7;
-}
-
 .btn-blue-hover {
     transition: background-color 150ms ease-out, transform 150ms ease-out, box-shadow 150ms ease-out;
 }
@@ -1371,28 +1176,16 @@ html.dark .btn-primary-hover:hover {
     text-transform: uppercase;
     margin-bottom: 8px;
 }
-html.dark .report-label {
-    color: #6b7280;
-}
-
 /* --- Thin gray divider (research authority) --- */
 .divider-thin {
     border: none;
     border-top: 1px solid #E5E7EB;
     margin: 24px 0;
-}
-html.dark .divider-thin {
-    border-top-color: #374151;
-}
-.divider-thin-sm {
+}.divider-thin-sm {
     border: none;
     border-top: 1px solid #E5E7EB;
     margin: 12px 0;
 }
-html.dark .divider-thin-sm {
-    border-top-color: #374151;
-}
-
 /* --- Data source annotation --- */
 .data-annotation {
     font-size: 11px;
@@ -1400,20 +1193,12 @@ html.dark .divider-thin-sm {
     font-family: 'Noto Serif JP', serif;
     line-height: 1.4;
 }
-html.dark .data-annotation {
-    color: #6b7280;
-}
-
 /* --- Last updated date --- */
 .updated-date {
     font-size: 11px;
     color: #9ca3af;
     font-family: 'Noto Serif JP', serif;
 }
-html.dark .updated-date {
-    color: #6b7280;
-}
-
 /* --- Stat number (48px) + unit (20px) --- */
 .stat-number {
     font-family: 'Noto Serif JP', serif;
@@ -1423,11 +1208,7 @@ html.dark .updated-date {
     line-height: 1;
     color: #1a365d;
     font-variant-numeric: tabular-nums;
-}
-html.dark .stat-number {
-    color: #a5b4fc;
-}
-.stat-unit {
+}.stat-unit {
     font-size: 20px;
     font-weight: 700;
     color: #6b7280;
@@ -1500,26 +1281,14 @@ html.dark .stat-number {
     background: #d1d5db;
     margin-bottom: 20px;
 }
-html.dark .section-line::before {
-    background: #374151;
-}
-
 /* --- Per-page background variants --- */
-.page-bg-pure-white { background-color: #FFFFFF; }
-html.dark .page-bg-pure-white { background-color: var(--bg); }
-.page-bg-warm { background-color: #FAFAFA; }
-html.dark .page-bg-warm { background-color: var(--bg); }
-
+.page-bg-pure-white { background-color: #FFFFFF; }.page-bg-warm { background-color: #FAFAFA; }
 /* --- Sophisticated section divider (thin full-width line) --- */
 .section-divide {
     border: none;
     border-top: 1px solid #e5e7eb;
     margin: 0;
 }
-html.dark .section-divide {
-    border-top-color: #1f2937;
-}
-
 /* ==========================================================================
    7. Responsive Overrides
    ========================================================================== */
@@ -1664,39 +1433,11 @@ html.dark .section-divide {
     transition: opacity 0.15s ease-in;
 }
 
-/* ==========================================================================
-   9. Utility / Misc
-   ========================================================================== */
-
-/* Scrollbar styling for dark mode */
-html.dark ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-html.dark ::-webkit-scrollbar-track {
-    background: var(--bg);
-}
-
-html.dark ::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 4px;
-}
-
-html.dark ::-webkit-scrollbar-thumb:hover {
-    background: var(--text-lighter);
-}
-
 /* Selection color */
 ::selection {
     background: rgba(43,108,176,0.15);
     color: inherit;
 }
-
-html.dark ::selection {
-    background: rgba(96,165,250,0.2);
-}
-
 /* Print: remove dark backgrounds */
 @media print {
     body {
@@ -1734,15 +1475,39 @@ summary:focus-visible {
     outline: 2px solid var(--primary-lighter);
     outline-offset: 2px;
 }
-
-html.dark a:focus-visible,
-html.dark button:focus-visible,
-html.dark input:focus-visible,
-html.dark textarea:focus-visible,
-html.dark select:focus-visible,
-html.dark [role="button"]:focus-visible,
-html.dark summary:focus-visible {
-    outline-color: #60a5fa;
+/* Minimum touch target sizes (44x44px) for mobile (WCAG 2.5.5) */
+@media (max-width: 768px) {
+    .btn,
+    button[type="submit"],
+    button[type="button"],
+    .pagination a,
+    .pagination span,
+    .tool-card,
+    .nav-link,
+    .mobile-nav-link {
+        min-height: 44px;
+    }
+    .pagination a,
+    .pagination span {
+        min-width: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .breadcrumb a,
+    .footer-link,
+    .footer a {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+    }
+    /* Avoid shrinking small icon buttons below 44px */
+    .icon-btn,
+    .close-btn,
+    [aria-label][role="button"] {
+        min-width: 44px;
+        min-height: 44px;
+    }
 }
 
 /* Reduced motion */
@@ -1757,5 +1522,82 @@ html.dark summary:focus-visible {
     }
     html {
         scroll-behavior: auto;
+    }
+    /* Disable view transitions for users who prefer reduced motion */
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   View Transitions API — smooth cross-page navigation fades
+   Supported: Chromium 111+. Falls back gracefully on Firefox/Safari.
+   ───────────────────────────────────────────────────────────── */
+@view-transition {
+    navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 220ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(root) {
+    animation-name: aixis-fade-out;
+}
+
+::view-transition-new(root) {
+    animation-name: aixis-fade-in;
+}
+
+@keyframes aixis-fade-out {
+    to { opacity: 0; }
+}
+
+@keyframes aixis-fade-in {
+    from { opacity: 0; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Windows High Contrast Mode (forced-colors) support
+   Ensures interactive elements remain visible when the user's
+   OS forces a high-contrast palette.
+   ───────────────────────────────────────────────────────────── */
+@media (forced-colors: active) {
+    /* Use system colors so user's high-contrast theme wins */
+    a,
+    button,
+    .btn,
+    input,
+    select,
+    textarea {
+        border: 1px solid CanvasText;
+        forced-color-adjust: none;
+    }
+    /* Pentagon SVG strokes need explicit visibility */
+    svg [stroke] {
+        stroke: CanvasText !important;
+    }
+    svg [fill]:not([fill="none"]) {
+        fill: CanvasText !important;
+    }
+    /* Score grade badges — keep readable */
+    .grade-badge {
+        border: 2px solid CanvasText;
+        background: Canvas;
+        color: CanvasText;
+        text-shadow: none;
+    }
+    /* Focus outline must be visible against any background */
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+        outline: 3px solid Highlight;
+        outline-offset: 2px;
     }
 }

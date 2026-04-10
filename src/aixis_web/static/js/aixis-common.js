@@ -99,31 +99,10 @@ function formatScore(score) {
 }
 
 
-// ===== THEME UTILITIES =====
-
-function isDarkMode() {
-  return document.documentElement.classList.contains('dark');
-}
-
-function toggleTheme() {
-  const html = document.documentElement;
-  const isDark = html.classList.toggle('dark');
-  localStorage.setItem('aixis-theme', isDark ? 'dark' : 'light');
-  // Dispatch custom event for Plotly chart re-rendering
-  window.dispatchEvent(new CustomEvent('aixis-theme-change', { detail: { dark: isDark } }));
-}
-
-// Expose toggleTheme on AIXIS namespace
-AIXIS.toggleTheme = toggleTheme;
-AIXIS.isDarkMode = isDarkMode;
-
-
-// ===== PLOTLY THEME =====
+// ===== PLOTLY THEME (light only) =====
 
 function getPlotlyLayout(overrides = {}) {
-  const dark = isDarkMode();
-  const textColor = dark ? '#e2e8f0' : '#2d3748';
-  const gridColor = dark ? '#2d3748' : '#e2e8f0';
+  const textColor = '#2d3748';
   const bgColor = 'rgba(0,0,0,0)';
 
   const base = {
@@ -146,9 +125,8 @@ function getPlotlyLayout(overrides = {}) {
 }
 
 function getRadarLayout(overrides = {}) {
-  const dark = isDarkMode();
-  const textColor = dark ? '#e2e8f0' : '#2d3748';
-  const gridColor = dark ? '#374151' : '#e2e8f0';
+  const textColor = '#2d3748';
+  const gridColor = '#e2e8f0';
 
   const base = getPlotlyLayout({
     polar: {
@@ -172,15 +150,6 @@ function getRadarLayout(overrides = {}) {
 
   return { ...base, ...overrides };
 }
-
-// Re-render all Plotly charts when theme changes
-window.addEventListener('aixis-theme-change', () => {
-  document.querySelectorAll('.js-plotly-plot').forEach(el => {
-    if (el._renderChart) {
-      el._renderChart();
-    }
-  });
-});
 
 
 // ===== DATE UTILITIES =====

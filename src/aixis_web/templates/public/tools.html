@@ -122,10 +122,10 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
     <nav class="mb-5" aria-label="パンくずリスト">
-        <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
-            <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
-            <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
-            <li class="text-gray-600 dark:text-gray-300 font-medium">監査データベース</li>
+        <ol class="flex items-center gap-1 text-xs text-gray-400 font-jp">
+            <li><a href="/" class="hover:text-aixis-500 transition-colors">ホーム</a></li>
+            <li><span class="mx-1 text-gray-300">/</span></li>
+            <li class="text-gray-600 font-medium">監査データベース</li>
         </ol>
     </nav>
 
@@ -134,10 +134,10 @@
          ================================================================ -->
     <div class="mb-6">
         <div class="section-line"></div>
-        <h1 class="text-2xl sm:text-3xl font-bold font-serif text-gray-900 dark:text-white tracking-tight">
+        <h1 class="text-2xl sm:text-3xl font-bold font-serif text-gray-900 tracking-tight">
             監査データベース
         </h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p class="mt-1 text-sm text-gray-500">
             Aixisが独自基準で監査したAIツールの評価結果
         </p>
     </div>
@@ -147,20 +147,20 @@
          ================================================================ -->
     <div id="stats-row" class="hidden grid grid-cols-4 gap-2 sm:gap-6 mb-4 sm:mb-6">
         <div class="text-center py-1 sm:py-4">
-            <div id="stat-tools" class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 dark:text-white tabular-nums tracking-tight font-serif">--</div>
-            <div class="stat-label-mobile text-xs sm:text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500 mt-1 font-serif">評価済みツール</div>
+            <div id="stat-tools" class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 tabular-nums tracking-tight font-serif">--</div>
+            <div class="stat-label-mobile text-xs sm:text-xs uppercase tracking-wide text-gray-400 mt-1 font-serif">評価済みツール</div>
         </div>
         <div class="text-center py-1 sm:py-4">
-            <div id="stat-categories" class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 dark:text-white tabular-nums tracking-tight font-serif">--</div>
-            <div class="stat-label-mobile text-xs sm:text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500 mt-1 font-serif">カテゴリ</div>
+            <div id="stat-categories" class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 tabular-nums tracking-tight font-serif">--</div>
+            <div class="stat-label-mobile text-xs sm:text-xs uppercase tracking-wide text-gray-400 mt-1 font-serif">カテゴリ</div>
         </div>
         <div class="text-center py-1 sm:py-4">
-            <div id="stat-avg-score" class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 dark:text-white tabular-nums tracking-tight font-serif">--</div>
-            <div class="stat-label-mobile text-xs sm:text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500 mt-1 font-serif">平均スコア</div>
+            <div id="stat-avg-score" class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 tabular-nums tracking-tight font-serif">--</div>
+            <div class="stat-label-mobile text-xs sm:text-xs uppercase tracking-wide text-gray-400 mt-1 font-serif">平均スコア</div>
         </div>
         <div class="text-center py-1 sm:py-4">
-            <div id="stat-audits" class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 dark:text-white tabular-nums tracking-tight font-serif">--</div>
-            <div class="stat-label-mobile text-xs sm:text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500 mt-1 font-serif">総監査回数</div>
+            <div id="stat-audits" class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 tabular-nums tracking-tight font-serif">--</div>
+            <div class="stat-label-mobile text-xs sm:text-xs uppercase tracking-wide text-gray-400 mt-1 font-serif">総監査回数</div>
         </div>
     </div>
 
@@ -168,12 +168,12 @@
          2.5 Free/Paid Info Banner (hidden for logged-in users)
          ================================================================ -->
     {% if not user %}
-    <div class="mb-3 sm:mb-6 border-t border-aixis-400/40 dark:border-aixis-500/30 px-3 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-2">
-        <p class="info-banner-text text-xs text-gray-400 dark:text-gray-500">
+    <div class="mb-3 sm:mb-6 border-t border-aixis-400/40 px-3 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between gap-2">
+        <p class="info-banner-text text-xs text-gray-400">
             総合グレードは無料で閲覧可能。詳細スコア・分析レポートは有料プランで提供。
         </p>
         <a href="/contact"
-           class="shrink-0 text-xs font-medium text-aixis-500 dark:text-aixis-400 hover:text-aixis-600 dark:hover:text-aixis-300 transition-colors duration-150">
+           class="shrink-0 text-xs font-medium text-aixis-500 hover:text-aixis-600 transition-colors duration-150">
             詳細&rarr;
         </a>
     </div>
@@ -185,31 +185,31 @@
     <div class="mb-5">
         <div class="relative mb-3">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
             </div>
             <input id="search-input"
                    type="search"
                    placeholder="ツール名・キーワードで検索..."
-                   class="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/50 rounded-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-aixis-400 dark:focus:border-aixis-400 focus:ring-1 focus:ring-aixis-400/30 dark:focus:ring-aixis-400/20 outline-none transition-all duration-150">
+                   class="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-200 rounded-sm text-gray-900 placeholder-gray-400 focus:border-aixis-400 focus:ring-1 focus:ring-aixis-400/30 outline-none transition-all duration-150">
         </div>
 
         <div class="flex flex-col sm:flex-row sm:items-center gap-2.5">
             <div id="category-pills" class="flex-1 flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
                 <button data-category=""
-                        class="category-pill shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 bg-aixis-500 dark:bg-aixis-400 text-white dark:text-aixis-900">
+                        class="category-pill shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 bg-aixis-500 text-white">
                     すべて
                 </button>
             </div>
             <div class="flex items-center gap-2.5 shrink-0">
                 <select id="sort-select"
-                        class="px-2.5 py-1 text-xs bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/50 rounded-md text-gray-600 dark:text-gray-300 outline-none focus:border-aixis-400 dark:focus:border-aixis-400 transition-colors duration-150 cursor-pointer">
+                        class="px-2.5 py-1 text-xs bg-white border border-gray-200 rounded-md text-gray-600 outline-none focus:border-aixis-400 transition-colors duration-150 cursor-pointer">
                     <option value="score">スコア順</option>
                     <option value="name">名前順</option>
                     <option value="newest">新着順</option>
                 </select>
-                <span id="result-count" class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                <span id="result-count" class="text-xs text-gray-400 whitespace-nowrap">
                     --件のツール
                 </span>
             </div>

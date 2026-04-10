@@ -36,56 +36,56 @@
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
     <nav class="mb-5" aria-label="パンくずリスト">
-        <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
-            <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
-            <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
-            <li class="text-gray-600 dark:text-gray-300 font-medium">リーダーボード</li>
+        <ol class="flex items-center gap-1 text-xs text-gray-400 font-jp">
+            <li><a href="/" class="hover:text-aixis-500 transition-colors">ホーム</a></li>
+            <li><span class="mx-1 text-gray-300">/</span></li>
+            <li class="text-gray-600 font-medium">リーダーボード</li>
         </ol>
     </nav>
 
     <!-- Header -->
     <div class="text-center mb-10">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white font-jp" id="suite-title">ベンチマークリーダーボード</h1>
-        <p class="mt-2 text-gray-500 dark:text-gray-400 font-jp" id="suite-desc">AIツールのベンチマーク結果ランキング</p>
+        <h1 class="text-3xl font-bold text-gray-900 font-jp" id="suite-title">ベンチマークリーダーボード</h1>
+        <p class="mt-2 text-gray-500 font-jp" id="suite-desc">AIツールのベンチマーク結果ランキング</p>
     </div>
 
     <!-- Suite Info Card -->
-    <div id="suite-info" class="hidden mb-8 bg-white dark:bg-[#1e2235] rounded-sm shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
+    <div id="suite-info" class="hidden mb-8 bg-white rounded-sm shadow-sm border border-gray-100 p-6">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
-                <div class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums" id="info-version">-</div>
+                <div class="text-2xl font-bold text-gray-900 tabular-nums" id="info-version">-</div>
                 <div class="text-xs text-gray-500 font-jp">バージョン</div>
             </div>
             <div>
-                <div class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums" id="info-cases">-</div>
+                <div class="text-2xl font-bold text-gray-900 tabular-nums" id="info-cases">-</div>
                 <div class="text-xs text-gray-500 font-jp">テストケース数</div>
             </div>
             <div>
-                <div class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums" id="info-tools">-</div>
+                <div class="text-2xl font-bold text-gray-900 tabular-nums" id="info-tools">-</div>
                 <div class="text-xs text-gray-500 font-jp">参加ツール</div>
             </div>
             <div>
-                <div class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums" id="info-published">-</div>
+                <div class="text-2xl font-bold text-gray-900 tabular-nums" id="info-published">-</div>
                 <div class="text-xs text-gray-500 font-jp">公開日</div>
             </div>
         </div>
     </div>
 
     <!-- Leaderboard Table -->
-    <div class="bg-white dark:bg-[#1e2235] rounded-sm shadow-sm border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+    <div class="bg-white rounded-sm shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-sm">
             <thead>
-                <tr class="border-b border-gray-100 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-800/30">
-                    <th class="text-center px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-16 font-jp">順位</th>
-                    <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase font-jp">ツール</th>
-                    <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase font-jp">スコア</th>
-                    <th class="text-center px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase font-jp">グレード</th>
-                    <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase font-jp">更新日</th>
+                <tr class="border-b border-gray-100 bg-gray-50">
+                    <th class="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase w-16 font-jp">順位</th>
+                    <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase font-jp">ツール</th>
+                    <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase font-jp">スコア</th>
+                    <th class="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase font-jp">グレード</th>
+                    <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase font-jp">更新日</th>
                 </tr>
             </thead>
             <tbody id="leaderboard-body">
                 <tr>
-                    <td colspan="5" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500 font-jp">読み込み中...</td>
+                    <td colspan="5" class="px-4 py-12 text-center text-gray-400 font-jp">読み込み中...</td>
                 </tr>
             </tbody>
         </table>
@@ -107,10 +107,10 @@ function getGrade(score) {
 }
 
 function rankBadge(rank) {
-    if (rank === 1) return '<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold">1</span>';
-    if (rank === 2) return '<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold">2</span>';
-    if (rank === 3) return '<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-bold">3</span>';
-    return `<span class="inline-flex items-center justify-center w-8 h-8 text-gray-500 dark:text-gray-400 font-semibold">${rank}</span>`;
+    if (rank === 1) return '<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 text-yellow-700 font-bold">1</span>';
+    if (rank === 2) return '<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold">2</span>';
+    if (rank === 3) return '<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold">3</span>';
+    return `<span class="inline-flex items-center justify-center w-8 h-8 text-gray-500 font-semibold">${rank}</span>`;
 }
 
 async function loadSuite() {
@@ -136,7 +136,7 @@ async function loadLeaderboard() {
         document.getElementById('info-tools').textContent = data.length;
 
         if (!data.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500 font-jp">まだ結果がありません</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 font-jp">まだ結果がありません</td></tr>';
             return;
         }
 
@@ -144,23 +144,23 @@ async function loadLeaderboard() {
             const grade = getGrade(e.best_score);
             const barWidth = Math.min(100, Math.max(0, (e.best_score / 5) * 100));
             return `
-            <tr class="border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                 <td class="px-4 py-4 text-center">${rankBadge(e.rank)}</td>
                 <td class="px-4 py-4">
-                    <a href="/tools/${e.tool_slug}" class="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 font-jp">${e.tool_name_jp || e.tool_name}</a>
+                    <a href="/tools/${e.tool_slug}" class="font-medium text-gray-900 hover:text-blue-600 font-jp">${e.tool_name_jp || e.tool_name}</a>
                 </td>
                 <td class="px-4 py-4">
                     <div class="flex items-center gap-3">
-                        <div class="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                             <div class="h-full rounded-full ${e.best_score >= 3.8 ? 'bg-emerald-500' : e.best_score >= 2.5 ? 'bg-blue-500' : e.best_score >= 1.25 ? 'bg-amber-500' : 'bg-red-500'}" style="width:${barWidth}%"></div>
                         </div>
-                        <span class="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">${e.best_score.toFixed(1)}</span>
+                        <span class="text-sm font-semibold text-gray-900 tabular-nums">${e.best_score.toFixed(1)}</span>
                     </div>
                 </td>
                 <td class="px-4 py-4 text-center">
                     <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold ${grade.color}">${grade.label}</span>
                 </td>
-                <td class="px-4 py-4 text-right text-xs text-gray-500 dark:text-gray-400">${new Date(e.updated_at).toLocaleDateString('ja-JP')}</td>
+                <td class="px-4 py-4 text-right text-xs text-gray-500">${new Date(e.updated_at).toLocaleDateString('ja-JP')}</td>
             </tr>`;
         }).join('');
     } catch(e) { console.error(e); }

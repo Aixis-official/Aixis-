@@ -162,28 +162,28 @@
             <svg viewBox="0 0 100 100" class="w-full h-full">
                 <!-- Outer pentagon (faint) -->
                 <polygon points="50,8 93,35 78,82 22,82 7,35" fill="none"
-                         stroke="currentColor" stroke-width="1" class="text-gray-200 dark:text-gray-700" />
+                         stroke="currentColor" stroke-width="1" class="text-gray-200" />
                 <!-- Animated pentagon (draws in) -->
                 <polygon points="50,8 93,35 78,82 22,82 7,35" fill="none"
-                         stroke="currentColor" stroke-width="2" class="text-indigo-500/60 dark:text-indigo-400/60"
+                         stroke="currentColor" stroke-width="2" class="text-indigo-500/60"
                          stroke-dasharray="280" stroke-dashoffset="280"
                          stroke-linecap="round" stroke-linejoin="round">
                     <animate attributeName="stroke-dashoffset" values="280;0;280" dur="2.4s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
                 </polygon>
                 <!-- Center dot pulse -->
-                <circle cx="50" cy="50" r="2.5" fill="currentColor" class="text-indigo-400 dark:text-indigo-400">
+                <circle cx="50" cy="50" r="2.5" fill="currentColor" class="text-indigo-400">
                     <animate attributeName="r" values="2;4;2" dur="1.6s" repeatCount="indefinite" />
                     <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.6s" repeatCount="indefinite" />
                 </circle>
                 <!-- 5 vertex dots (appear sequentially) -->
-                <circle cx="50" cy="8" r="2" fill="currentColor" class="text-gray-300 dark:text-gray-600"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="0s" repeatCount="indefinite"/></circle>
-                <circle cx="93" cy="35" r="2" fill="currentColor" class="text-gray-300 dark:text-gray-600"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="0.4s" repeatCount="indefinite"/></circle>
-                <circle cx="78" cy="82" r="2" fill="currentColor" class="text-gray-300 dark:text-gray-600"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="0.8s" repeatCount="indefinite"/></circle>
-                <circle cx="22" cy="82" r="2" fill="currentColor" class="text-gray-300 dark:text-gray-600"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></circle>
-                <circle cx="7" cy="35" r="2" fill="currentColor" class="text-gray-300 dark:text-gray-600"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="1.6s" repeatCount="indefinite"/></circle>
+                <circle cx="50" cy="8" r="2" fill="currentColor" class="text-gray-300"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="0s" repeatCount="indefinite"/></circle>
+                <circle cx="93" cy="35" r="2" fill="currentColor" class="text-gray-300"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="0.4s" repeatCount="indefinite"/></circle>
+                <circle cx="78" cy="82" r="2" fill="currentColor" class="text-gray-300"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="0.8s" repeatCount="indefinite"/></circle>
+                <circle cx="22" cy="82" r="2" fill="currentColor" class="text-gray-300"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></circle>
+                <circle cx="7" cy="35" r="2" fill="currentColor" class="text-gray-300"><animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="1.6s" repeatCount="indefinite"/></circle>
             </svg>
         </div>
-        <p id="loading-status" class="mt-5 text-xs tracking-wider text-gray-400 dark:text-gray-500 font-serif uppercase">
+        <p id="loading-status" class="mt-5 text-xs tracking-wider text-gray-400 font-serif uppercase">
             読み込み中
         </p>
         <script>
@@ -212,17 +212,17 @@
     {% if ssr %}
     <article id="ssr-content" class="mb-8">
         <nav class="mb-5" aria-label="パンくずリスト">
-            <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
+            <ol class="flex items-center gap-1 text-xs text-gray-400 font-jp">
                 <li><a href="/" class="hover:text-aixis-500 transition-colors">ホーム</a></li>
                 <li><span class="mx-1 text-gray-300">/</span></li>
                 <li><a href="/tools" class="hover:text-aixis-500 transition-colors">監査データベース</a></li>
                 <li><span class="mx-1 text-gray-300">/</span></li>
-                <li class="text-gray-600 dark:text-gray-300 font-medium">{{ ssr.name }}</li>
+                <li class="text-gray-600 font-medium">{{ ssr.name }}</li>
             </ol>
         </nav>
 
         <!-- Hero -->
-        <section class="relative overflow-hidden rounded-sm mb-6 bg-gradient-to-br from-aixis-600/90 via-aixis-700/90 to-aixis-800/90 dark:from-aixis-800/80 dark:via-aixis-900/90 dark:to-gray-900">
+        <section class="relative overflow-hidden rounded-sm mb-6 bg-gradient-to-br from-aixis-600/90 via-aixis-700/90 to-aixis-800/90">
             <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.04),transparent_60%)]"></div>
             <div class="relative px-7 py-7 md:px-10 md:py-9">
                 <!-- Mobile: compact header with icon + name + grade in one row -->
@@ -286,42 +286,42 @@
         </section>
 
         {% if ssr.executive_summary %}
-        <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-3">エグゼクティブサマリー</h2>
-            <p class="text-xs text-gray-600 dark:text-gray-300 font-jp leading-relaxed">{{ ssr.executive_summary }}</p>
+        <section class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-3">エグゼクティブサマリー</h2>
+            <p class="text-xs text-gray-600 font-jp leading-relaxed">{{ ssr.executive_summary }}</p>
         </section>
         {% endif %}
 
         <!-- Tool info -->
-        <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">ツール情報</h2>
+        <section class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">ツール情報</h2>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
                 <div class="flex items-start gap-3">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">ツール名</dt>
-                    <dd class="text-xs font-semibold text-gray-800 dark:text-gray-200 font-jp">{{ ssr.name }}</dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">ツール名</dt>
+                    <dd class="text-xs font-semibold text-gray-800 font-jp">{{ ssr.name }}</dd>
                 </div>
                 {% if ssr.vendor %}
                 <div class="flex items-start gap-3">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">提供元</dt>
-                    <dd class="text-xs text-gray-600 dark:text-gray-300 font-jp">{{ ssr.vendor }}</dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">提供元</dt>
+                    <dd class="text-xs text-gray-600 font-jp">{{ ssr.vendor }}</dd>
                 </div>
                 {% endif %}
                 {% if ssr.category %}
                 <div class="flex items-start gap-3">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">カテゴリ</dt>
-                    <dd class="text-xs text-gray-600 dark:text-gray-300 font-jp">{{ ssr.category }}</dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">カテゴリ</dt>
+                    <dd class="text-xs text-gray-600 font-jp">{{ ssr.category }}</dd>
                 </div>
                 {% endif %}
                 {% if ssr.pricing_model %}
                 <div class="flex items-start gap-3">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">料金モデル</dt>
-                    <dd class="text-xs text-gray-600 dark:text-gray-300 font-jp">{{ ssr.pricing_model }}</dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">料金モデル</dt>
+                    <dd class="text-xs text-gray-600 font-jp">{{ ssr.pricing_model }}</dd>
                 </div>
                 {% endif %}
                 {% if ssr.url %}
                 <div class="flex items-start gap-3">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">公式サイト</dt>
-                    <dd class="text-xs"><a href="{{ ssr.url }}" target="_blank" rel="noopener noreferrer" class="text-aixis-500 dark:text-aixis-400 hover:underline truncate block max-w-[200px]">{{ ssr.url }}</a></dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">公式サイト</dt>
+                    <dd class="text-xs"><a href="{{ ssr.url }}" target="_blank" rel="noopener noreferrer" class="text-aixis-500 hover:underline truncate block max-w-[200px]">{{ ssr.url }}</a></dd>
                 </div>
                 {% endif %}
             </dl>
@@ -335,129 +335,129 @@
 
         <!-- 5-axis scores (SSR) — blurred for non-logged-in, detailed scores behind paywall -->
         {% if ssr.score %}
-        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:200px;">
+        <section class="paywall-section bg-white border border-gray-200/80 rounded-sm p-5 mb-6" style="min-height:200px;">
             <div class="paywall-blur">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">5軸詳細スコア</h2>
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">5軸詳細スコア</h2>
             <div class="max-w-lg mx-auto">
                 <div class="chart-container" style="min-height:420px;"></div>
             </div>
             </div>{# /paywall-blur #}
             <div class="paywall-overlay">
-                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
-                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="bg-white border border-gray-200 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
+                    <svg class="w-5 h-5 text-gray-400 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    <div class="text-sm font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">5軸詳細スコア</div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-4 leading-relaxed">各軸のスコア・レーダーチャート・スコアカードは有料プランでご確認いただけます。</p>
-                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-2">
+                    <div class="text-sm font-bold text-gray-800 font-jp mb-1">5軸詳細スコア</div>
+                    <p class="text-xs text-gray-500 font-jp mb-4 leading-relaxed">各軸のスコア・レーダーチャート・スコアカードは有料プランでご確認いただけます。</p>
+                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp mb-2">
                         14日間無料トライアルで詳細を見る
                     </a>
-                    <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">アカウントをお持ちの方はこちら</a>
+                    <a href="/login" class="text-[11px] text-gray-400 hover:text-aixis-500 transition-colors font-jp">アカウントをお持ちの方はこちら</a>
                 </div>
             </div>
         </section>
         {% endif %}
 
         <!-- Paywall: 導入分析 (SSR) -->
-        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:180px;">
+        <section class="paywall-section bg-white border border-gray-200/80 rounded-sm p-5 mb-6" style="min-height:180px;">
             <div class="paywall-blur">
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">導入の前提条件・制約</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">導入の前提条件・制約</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-16"></div>
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-16"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-16"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-16"></div>
                 </div>
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">推奨ユースケース・業種適性</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">推奨ユースケース・業種適性</h2>
                 <div class="space-y-2 mb-5">
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-5/6"></div>
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/4"></div>
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-4/5"></div>
+                    <div class="h-3 bg-gray-100 rounded w-5/6"></div>
+                    <div class="h-3 bg-gray-100 rounded w-3/4"></div>
+                    <div class="h-3 bg-gray-100 rounded w-4/5"></div>
                 </div>
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">ユースケース</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">ユースケース</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-3 h-20"></div>
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-3 h-20"></div>
+                    <div class="border border-gray-200 rounded-sm p-3 h-20"></div>
+                    <div class="border border-gray-200 rounded-sm p-3 h-20"></div>
                 </div>
             </div>
             <div class="paywall-overlay">
-                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
-                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="bg-white border border-gray-200 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
+                    <svg class="w-5 h-5 text-gray-400 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    <div class="text-sm font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">導入分析</div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-4 leading-relaxed">前提条件・推奨ユースケース・業種適性の分析結果にアクセスできます。</p>
-                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-2">
+                    <div class="text-sm font-bold text-gray-800 font-jp mb-1">導入分析</div>
+                    <p class="text-xs text-gray-500 font-jp mb-4 leading-relaxed">前提条件・推奨ユースケース・業種適性の分析結果にアクセスできます。</p>
+                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp mb-2">
                         14日間無料トライアルで詳細を見る
                     </a>
-                    <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">アカウントをお持ちの方はこちら</a>
+                    <a href="/login" class="text-[11px] text-gray-400 hover:text-aixis-500 transition-colors font-jp">アカウントをお持ちの方はこちら</a>
                 </div>
             </div>
         </section>
 
         <!-- Paywall: スコア変遷 + ポジショニング (SSR) -->
-        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:200px;">
+        <section class="paywall-section bg-white border border-gray-200/80 rounded-sm p-5 mb-6" style="min-height:200px;">
             <div class="paywall-blur">
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">スコア変遷</h2>
-                <div class="h-40 bg-gray-50 dark:bg-gray-800 rounded-sm mb-5 flex items-end gap-2 p-4">
-                    <div class="w-1/6 bg-gray-200 dark:bg-gray-600 rounded-t" style="height:60%"></div>
-                    <div class="w-1/6 bg-gray-200 dark:bg-gray-600 rounded-t" style="height:75%"></div>
-                    <div class="w-1/6 bg-gray-200 dark:bg-gray-600 rounded-t" style="height:50%"></div>
-                    <div class="w-1/6 bg-gray-200 dark:bg-gray-600 rounded-t" style="height:80%"></div>
-                    <div class="w-1/6 bg-gray-200 dark:bg-gray-600 rounded-t" style="height:65%"></div>
-                    <div class="w-1/6 bg-gray-200 dark:bg-gray-600 rounded-t" style="height:85%"></div>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">スコア変遷</h2>
+                <div class="h-40 bg-gray-50 rounded-sm mb-5 flex items-end gap-2 p-4">
+                    <div class="w-1/6 bg-gray-200 rounded-t" style="height:60%"></div>
+                    <div class="w-1/6 bg-gray-200 rounded-t" style="height:75%"></div>
+                    <div class="w-1/6 bg-gray-200 rounded-t" style="height:50%"></div>
+                    <div class="w-1/6 bg-gray-200 rounded-t" style="height:80%"></div>
+                    <div class="w-1/6 bg-gray-200 rounded-t" style="height:65%"></div>
+                    <div class="w-1/6 bg-gray-200 rounded-t" style="height:85%"></div>
                 </div>
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">カテゴリ内ポジショニング</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">カテゴリ内ポジショニング</h2>
                 <div class="grid grid-cols-3 gap-3">
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-16"></div>
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-16"></div>
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-16"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-16"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-16"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-16"></div>
                 </div>
             </div>
             <div class="paywall-overlay">
-                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
-                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="bg-white border border-gray-200 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
+                    <svg class="w-5 h-5 text-gray-400 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    <div class="text-sm font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">スコア分析</div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-4 leading-relaxed">スコア推移・カテゴリ内ポジショニングの分析結果にアクセスできます。</p>
-                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-2">
+                    <div class="text-sm font-bold text-gray-800 font-jp mb-1">スコア分析</div>
+                    <p class="text-xs text-gray-500 font-jp mb-4 leading-relaxed">スコア推移・カテゴリ内ポジショニングの分析結果にアクセスできます。</p>
+                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp mb-2">
                         14日間無料トライアルで詳細を見る
                     </a>
-                    <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">アカウントをお持ちの方はこちら</a>
+                    <a href="/login" class="text-[11px] text-gray-400 hover:text-aixis-500 transition-colors font-jp">アカウントをお持ちの方はこちら</a>
                 </div>
             </div>
         </section>
 
         <!-- Paywall: メリット・デメリット + 料金詳細 (SSR) -->
-        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:200px;">
+        <section class="paywall-section bg-white border border-gray-200/80 rounded-sm p-5 mb-6" style="min-height:200px;">
             <div class="paywall-blur">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-4">
+                    <div class="border border-gray-200 rounded-sm p-4">
                         <div class="flex items-center gap-2 mb-3">
-                            <div class="w-5 h-5 rounded-sm bg-gray-100 dark:bg-gray-800"></div>
-                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">メリット</span>
+                            <div class="w-5 h-5 rounded-sm bg-gray-100"></div>
+                            <span class="text-sm font-semibold text-gray-800 font-jp">メリット</span>
                         </div>
                         <div class="space-y-2">
-                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-4/5"></div>
-                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/5"></div>
-                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-4/6"></div>
+                            <div class="h-3 bg-gray-100 rounded w-4/5"></div>
+                            <div class="h-3 bg-gray-100 rounded w-3/5"></div>
+                            <div class="h-3 bg-gray-100 rounded w-4/6"></div>
                         </div>
                     </div>
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-4">
+                    <div class="border border-gray-200 rounded-sm p-4">
                         <div class="flex items-center gap-2 mb-3">
-                            <div class="w-5 h-5 rounded-sm bg-gray-100 dark:bg-gray-800"></div>
-                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">デメリット</span>
+                            <div class="w-5 h-5 rounded-sm bg-gray-100"></div>
+                            <span class="text-sm font-semibold text-gray-800 font-jp">デメリット</span>
                         </div>
                         <div class="space-y-2">
-                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/5"></div>
-                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-2/5"></div>
+                            <div class="h-3 bg-gray-100 rounded w-3/5"></div>
+                            <div class="h-3 bg-gray-100 rounded w-2/5"></div>
                         </div>
                     </div>
                 </div>
-                <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-4">
-                    <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">料金プラン詳細</span>
+                <div class="border border-gray-200 rounded-sm p-4">
+                    <span class="text-sm font-semibold text-gray-800 font-jp">料金プラン詳細</span>
                     <div class="mt-3 space-y-2">
-                        <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-full"></div>
-                        <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/4"></div>
+                        <div class="h-3 bg-gray-100 rounded w-full"></div>
+                        <div class="h-3 bg-gray-100 rounded w-3/4"></div>
                     </div>
                 </div>
             </div>
@@ -468,61 +468,61 @@
                 {% if ssr.features %}<h3>主な機能</h3><ul>{% for f in ssr.features[:10] %}<li>{{ f }}</li>{% endfor %}</ul>{% endif %}
             </div>
             <div class="paywall-overlay">
-                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-8 max-w-md w-full mx-4 text-center">
-                    <svg class="w-6 h-6 text-gray-400 dark:text-gray-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="bg-white border border-gray-200 rounded-sm shadow-sm p-8 max-w-md w-full mx-4 text-center">
+                    <svg class="w-6 h-6 text-gray-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    <div class="text-base font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">詳細情報</div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-5 leading-relaxed">メリット・デメリット・料金プラン詳細を含む詳細なレポートにアクセスできます。</p>
-                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-3">
+                    <div class="text-base font-bold text-gray-800 font-jp mb-1">詳細情報</div>
+                    <p class="text-xs text-gray-500 font-jp mb-5 leading-relaxed">メリット・デメリット・料金プラン詳細を含む詳細なレポートにアクセスできます。</p>
+                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp mb-3">
                         14日間無料トライアルで詳細を見る
                     </a>
-                    <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">アカウントをお持ちの方はこちら</a>
+                    <a href="/login" class="text-[11px] text-gray-400 hover:text-aixis-500 transition-colors font-jp">アカウントをお持ちの方はこちら</a>
                 </div>
             </div>
         </section>
 
         <!-- Paywall: リスク・ガバナンス分析 (SSR) -->
-        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:220px;">
+        <section class="paywall-section bg-white border border-gray-200/80 rounded-sm p-5 mb-6" style="min-height:220px;">
             <div class="paywall-blur">
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">リスク・ガバナンス</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">リスク・ガバナンス</h2>
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-400 font-jp">リスクレベル</div>
-                    <div class="w-6 h-6 rounded bg-gray-200 dark:bg-gray-700"></div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs bg-gray-100 text-gray-400 font-jp">リスクレベル</div>
+                    <div class="w-6 h-6 rounded bg-gray-200"></div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-14"></div>
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-14"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-14"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-14"></div>
                 </div>
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">導入企業像</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">導入企業像</h2>
                 <div class="space-y-2 mb-5">
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-5/6"></div>
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-2/3"></div>
+                    <div class="h-3 bg-gray-100 rounded w-5/6"></div>
+                    <div class="h-3 bg-gray-100 rounded w-2/3"></div>
                 </div>
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">リスク・注意点</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">リスク・注意点</h2>
                 <div class="space-y-2">
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-4/5"></div>
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/5"></div>
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-4/6"></div>
+                    <div class="h-3 bg-gray-100 rounded w-4/5"></div>
+                    <div class="h-3 bg-gray-100 rounded w-3/5"></div>
+                    <div class="h-3 bg-gray-100 rounded w-4/6"></div>
                 </div>
             </div>
             <div class="paywall-overlay">
-                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
-                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="bg-white border border-gray-200 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
+                    <svg class="w-5 h-5 text-gray-400 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    <div class="text-sm font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">リスク・ガバナンス分析</div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-4 leading-relaxed">コンプライアンス状況・導入企業像・リスク評価にアクセスできます。</p>
-                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-2">
+                    <div class="text-sm font-bold text-gray-800 font-jp mb-1">リスク・ガバナンス分析</div>
+                    <p class="text-xs text-gray-500 font-jp mb-4 leading-relaxed">コンプライアンス状況・導入企業像・リスク評価にアクセスできます。</p>
+                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp mb-2">
                         14日間無料トライアルで詳細を見る
                     </a>
-                    <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">アカウントをお持ちの方はこちら</a>
+                    <a href="/login" class="text-[11px] text-gray-400 hover:text-aixis-500 transition-colors font-jp">アカウントをお持ちの方はこちら</a>
                 </div>
             </div>
         </section>
 
         <!-- Paywall: 詳細分析レポート (SSR) -->
-        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:320px;">
+        <section class="paywall-section bg-white border border-gray-200/80 rounded-sm p-5 mb-6" style="min-height:320px;">
             <div class="paywall-blur">
                 <div class="section-line"></div>
                 <h2 class="text-lg font-bold text-gray-900 font-jp mb-4">詳細分析レポート</h2>
@@ -531,7 +531,7 @@
                     <div class="border border-gray-200 rounded-sm p-4 h-32"></div>
                     <div class="border border-gray-200 rounded-sm p-4 h-32"></div>
                 </div>
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-3">信頼度指標</h3>
+                <h3 class="text-sm font-semibold text-gray-800 font-jp mb-3">信頼度指標</h3>
                 <div class="grid grid-cols-4 gap-4">
                     <div class="bg-gray-50 rounded-sm p-3 h-20"></div>
                     <div class="bg-gray-50 rounded-sm p-3 h-20"></div>
@@ -540,27 +540,27 @@
                 </div>
             </div>
             <div class="paywall-overlay">
-                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-8 max-w-md w-full mx-4 text-center">
-                    <svg class="w-6 h-6 text-gray-400 dark:text-gray-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="bg-white border border-gray-200 rounded-sm shadow-sm p-8 max-w-md w-full mx-4 text-center">
+                    <svg class="w-6 h-6 text-gray-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    <div class="text-base font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">詳細分析レポート</div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-5 leading-relaxed">5軸詳細分析・信頼度指標・テスト結果を含む詳細なレポートにアクセスできます。</p>
-                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-3">
+                    <div class="text-base font-bold text-gray-800 font-jp mb-1">詳細分析レポート</div>
+                    <p class="text-xs text-gray-500 font-jp mb-5 leading-relaxed">5軸詳細分析・信頼度指標・テスト結果を含む詳細なレポートにアクセスできます。</p>
+                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp mb-3">
                         14日間無料トライアルで詳細を見る
                     </a>
-                    <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">アカウントをお持ちの方はこちら</a>
+                    <a href="/login" class="text-[11px] text-gray-400 hover:text-aixis-500 transition-colors font-jp">アカウントをお持ちの方はこちら</a>
                 </div>
             </div>
         </section>
 
         <!-- Navigation (SSR) -->
         <section class="flex flex-wrap gap-2.5 mt-2 mb-10">
-            <a href="/tools" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm hover:bg-gray-50 dark:hover:bg-aixis-700/50 transition-colors duration-150 font-jp">
+            <a href="/tools" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 transition-colors duration-150 font-jp">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
                 データベースに戻る
             </a>
-            <a href="/compare" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm hover:bg-gray-50 dark:hover:bg-aixis-700/50 transition-colors duration-150 font-jp">
+            <a href="/compare" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 transition-colors duration-150 font-jp">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
                 ツール比較
             </a>
@@ -573,17 +573,17 @@
 
         <!-- 1. Breadcrumb -->
         <nav id="breadcrumb" class="mb-5" aria-label="パンくずリスト">
-            <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
-                <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
-                <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
-                <li><a href="/tools" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">監査データベース</a></li>
-                <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
-                <li class="text-gray-600 dark:text-gray-300 font-medium" id="breadcrumb-name"></li>
+            <ol class="flex items-center gap-1 text-xs text-gray-400 font-jp">
+                <li><a href="/" class="hover:text-aixis-500 transition-colors">ホーム</a></li>
+                <li><span class="mx-1 text-gray-300">/</span></li>
+                <li><a href="/tools" class="hover:text-aixis-500 transition-colors">監査データベース</a></li>
+                <li><span class="mx-1 text-gray-300">/</span></li>
+                <li class="text-gray-600 font-medium" id="breadcrumb-name"></li>
             </ol>
         </nav>
 
         <!-- 2. Tool Hero Section -->
-        <section id="hero-section" class="relative overflow-hidden rounded-sm mb-6 bg-gradient-to-br from-aixis-600/90 via-aixis-700/90 to-aixis-800/90 dark:from-aixis-800/80 dark:via-aixis-900/90 dark:to-gray-900">
+        <section id="hero-section" class="relative overflow-hidden rounded-sm mb-6 bg-gradient-to-br from-aixis-600/90 via-aixis-700/90 to-aixis-800/90">
             <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.04),transparent_60%)]"></div>
             <div class="relative px-7 py-7 md:px-10 md:py-9">
                 <!-- Mobile: compact header with icon + name + grade in one row -->
@@ -632,130 +632,130 @@
         </section>
 
         <!-- 3. Executive Summary (① エグゼクティブサマリー) — always visible -->
-        <section id="executive-summary" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
-            <h2 class="section-line text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-3">エグゼクティブサマリー</h2>
-            <p id="executive-summary-text" class="text-xs text-gray-600 dark:text-gray-300 font-jp leading-relaxed"></p>
+        <section id="executive-summary" class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6 hidden">
+            <h2 class="section-line text-sm font-semibold text-gray-800 font-jp mb-3">エグゼクティブサマリー</h2>
+            <p id="executive-summary-text" class="text-xs text-gray-600 font-jp leading-relaxed"></p>
         </section>
 
         <!-- 4. Tool Information Table (⑦ 充実版) -->
-        <section class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">ツール情報</h2>
+        <section class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">ツール情報</h2>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
                 <div class="flex items-start gap-3">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">ツール名</dt>
-                    <dd id="info-name" class="text-xs font-semibold text-gray-800 dark:text-gray-200 font-jp"></dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">ツール名</dt>
+                    <dd id="info-name" class="text-xs font-semibold text-gray-800 font-jp"></dd>
                 </div>
                 <div class="flex items-start gap-3">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">ベンダー</dt>
-                    <dd id="info-vendor" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">ベンダー</dt>
+                    <dd id="info-vendor" class="text-xs text-gray-600 font-jp"></dd>
                 </div>
                 <div class="flex items-start gap-3">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">カテゴリ</dt>
-                    <dd id="info-category" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">カテゴリ</dt>
+                    <dd id="info-category" class="text-xs text-gray-600 font-jp"></dd>
                 </div>
                 <div class="flex items-start gap-3">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">料金モデル</dt>
-                    <dd id="info-pricing" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">料金モデル</dt>
+                    <dd id="info-pricing" class="text-xs text-gray-600 font-jp"></dd>
                 </div>
                 <div id="info-price-range-row" class="flex items-start gap-3 hidden">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">価格帯</dt>
-                    <dd id="info-price-range" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">価格帯</dt>
+                    <dd id="info-price-range" class="text-xs text-gray-600 font-jp"></dd>
                 </div>
                 <div id="info-trial-row" class="flex items-start gap-3 hidden">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">無料トライアル</dt>
-                    <dd id="info-trial" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">無料トライアル</dt>
+                    <dd id="info-trial" class="text-xs text-gray-600 font-jp"></dd>
                 </div>
                 <div id="info-url-row" class="flex items-start gap-3 hidden">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">公式サイト</dt>
-                    <dd><a id="info-url" href="#" target="_blank" rel="noopener noreferrer" class="text-xs text-aixis-500 dark:text-aixis-400 hover:underline font-jp truncate block max-w-[200px]"></a></dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">公式サイト</dt>
+                    <dd><a id="info-url" href="#" target="_blank" rel="noopener noreferrer" class="text-xs text-aixis-500 hover:underline font-jp truncate block max-w-[200px]"></a></dd>
                 </div>
                 <div id="info-vendor-location-row" class="flex items-start gap-3 hidden">
-                    <dt class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp min-w-[5rem]">本社所在地</dt>
-                    <dd id="info-vendor-location" class="text-xs text-gray-600 dark:text-gray-300 font-jp"></dd>
+                    <dt class="text-xs font-medium text-gray-400 font-jp min-w-[5rem]">本社所在地</dt>
+                    <dd id="info-vendor-location" class="text-xs text-gray-600 font-jp"></dd>
                 </div>
             </dl>
             <!-- Industry Tags -->
-            <div id="info-industries" class="mt-4 pt-3 border-t border-gray-100 dark:border-aixis-600/30 hidden">
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">対応業界:</span>
+            <div id="info-industries" class="mt-4 pt-3 border-t border-gray-100 hidden">
+                <span class="text-xs font-medium text-gray-400 font-jp mr-2">対応業界:</span>
                 <span id="info-industries-tags"></span>
             </div>
             <!-- Use Case Tags -->
             <div id="info-use-cases" class="mt-2.5 hidden">
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">ユースケース:</span>
+                <span class="text-xs font-medium text-gray-400 font-jp mr-2">ユースケース:</span>
                 <span id="info-use-cases-tags"></span>
             </div>
-            <div id="info-features" class="mt-4 pt-3 border-t border-gray-100 dark:border-aixis-600/30 hidden">
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">機能:</span>
+            <div id="info-features" class="mt-4 pt-3 border-t border-gray-100 hidden">
+                <span class="text-xs font-medium text-gray-400 font-jp mr-2">機能:</span>
                 <span id="info-features-tags"></span>
             </div>
             <div id="info-japanese" class="mt-2.5 hidden">
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">日本語対応:</span>
+                <span class="text-xs font-medium text-gray-400 font-jp mr-2">日本語対応:</span>
                 <span id="info-japanese-badge"></span>
             </div>
         </section>
 
         <!-- 4b. Prerequisites & Constraints (③ 導入の前提条件・制約) -->
         {% if user %}
-        <section id="prerequisites-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">導入の前提条件・制約</h2>
+        <section id="prerequisites-section" class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">導入の前提条件・制約</h2>
             <div id="prerequisites-content" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
         </section>
         {% endif %}
 
         <!-- 5. Recommended Use Cases & Industry Fit (② 推奨ユースケース/業種適性) -->
         {% if user %}
-        <section id="industry-fit-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">推奨ユースケース・業種適性</h2>
+        <section id="industry-fit-section" class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">推奨ユースケース・業種適性</h2>
             <div id="industry-fit-content"></div>
         </section>
         {% endif %}
 
         <!-- 5b. Use Cases Section -->
         {% if user %}
-        <section id="use-cases-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">ユースケース</h2>
+        <section id="use-cases-section" class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">ユースケース</h2>
             <div id="use-cases-content" class="space-y-4"></div>
         </section>
         {% else %}
         <!-- Paywall: 導入分析セクション群 -->
-        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:180px;">
+        <section class="paywall-section bg-white border border-gray-200/80 rounded-sm p-5 mb-6" style="min-height:180px;">
             <div class="paywall-blur">
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">導入の前提条件・制約</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">導入の前提条件・制約</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-16"></div>
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-16"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-16"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-16"></div>
                 </div>
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">推奨ユースケース・業種適性</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">推奨ユースケース・業種適性</h2>
                 <div class="space-y-2 mb-5">
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-5/6"></div>
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/4"></div>
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-4/5"></div>
+                    <div class="h-3 bg-gray-100 rounded w-5/6"></div>
+                    <div class="h-3 bg-gray-100 rounded w-3/4"></div>
+                    <div class="h-3 bg-gray-100 rounded w-4/5"></div>
                 </div>
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">ユースケース</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">ユースケース</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-3 h-20"></div>
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-3 h-20"></div>
+                    <div class="border border-gray-200 rounded-sm p-3 h-20"></div>
+                    <div class="border border-gray-200 rounded-sm p-3 h-20"></div>
                 </div>
             </div>
             <div class="paywall-overlay">
-                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
-                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="bg-white border border-gray-200 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
+                    <svg class="w-5 h-5 text-gray-400 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    <div class="text-sm font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">導入分析</div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-4 leading-relaxed">前提条件・推奨ユースケース・業種適性の分析結果にアクセスできます。</p>
-                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-2">
+                    <div class="text-sm font-bold text-gray-800 font-jp mb-1">導入分析</div>
+                    <p class="text-xs text-gray-500 font-jp mb-4 leading-relaxed">前提条件・推奨ユースケース・業種適性の分析結果にアクセスできます。</p>
+                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp mb-2">
                         14日間無料トライアルで詳細を見る
                     </a>
-                    <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">アカウントをお持ちの方</a>
+                    <a href="/login" class="text-[11px] text-gray-400 hover:text-aixis-500 transition-colors font-jp">アカウントをお持ちの方</a>
                 </div>
             </div>
         </section>
         {% endif %}
 
         <!-- 6. 5-Axis Score Dashboard -->
-        <section id="score-dashboard" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">5軸詳細スコア</h2>
+        <section id="score-dashboard" class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">5軸詳細スコア</h2>
             <div class="relative">
                 {% if user %}
                 <!-- Logged-in: interactive radar chart -->
@@ -776,15 +776,15 @@
                         </style>
                         <div id="radar-chart" style="height:460px;cursor:default;"></div>
                         <!-- Axis detail panel (shown on click) -->
-                        <div id="radar-detail-panel" class="hidden absolute z-20 pointer-events-none left-1/2 bottom-2 w-56 px-4 py-3 rounded-sm text-xs font-jp shadow-lg border border-gray-200 dark:border-aixis-600/40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm text-gray-800 dark:text-gray-100" style="transform:translateX(-50%);">
+                        <div id="radar-detail-panel" class="hidden absolute z-20 pointer-events-none left-1/2 bottom-2 w-56 px-4 py-3 rounded-sm text-xs font-jp shadow-lg border border-gray-200 bg-white/95 backdrop-blur-sm text-gray-800" style="transform:translateX(-50%);">
                             <div class="flex items-center justify-between mb-1.5">
                                 <span id="radar-detail-label" class="font-bold text-sm"></span>
-                                <span id="radar-detail-score" class="text-sm font-bold tabular-nums text-indigo-600 dark:text-indigo-400"></span>
+                                <span id="radar-detail-score" class="text-sm font-bold tabular-nums text-indigo-600"></span>
                             </div>
-                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mb-1.5">
-                                <div id="radar-detail-bar" class="h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 transition-all duration-500" style="width:0%"></div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 mb-1.5">
+                                <div id="radar-detail-bar" class="h-1.5 rounded-full bg-indigo-500 transition-all duration-500" style="width:0%"></div>
                             </div>
-                            <div id="radar-detail-grade" class="text-[10px] text-gray-500 dark:text-gray-400"></div>
+                            <div id="radar-detail-grade" class="text-[10px] text-gray-500"></div>
                         </div>
                     </div>
                 </div>
@@ -795,17 +795,17 @@
                         <div id="radar-chart" class="chart-container" style="min-height:420px;"></div>
                     </div>
                 </div>
-                <div class="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm rounded-sm z-10">
-                    <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
-                        <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="absolute inset-0 flex items-center justify-center bg-white/70 backdrop-blur-sm rounded-sm z-10">
+                    <div class="bg-white border border-gray-200 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
+                        <svg class="w-5 h-5 text-gray-400 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                         </svg>
-                        <div class="text-sm font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">5軸詳細スコア</div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-4 leading-relaxed">各軸のスコア・レーダーチャートは有料プランでご確認いただけます。</p>
-                        <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-2">
+                        <div class="text-sm font-bold text-gray-800 font-jp mb-1">5軸詳細スコア</div>
+                        <p class="text-xs text-gray-500 font-jp mb-4 leading-relaxed">各軸のスコア・レーダーチャートは有料プランでご確認いただけます。</p>
+                        <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp mb-2">
                             14日間無料トライアルで詳細を見る
                         </a>
-                        <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">アカウントをお持ちの方</a>
+                        <a href="/login" class="text-[11px] text-gray-400 hover:text-aixis-500 transition-colors font-jp">アカウントをお持ちの方</a>
                     </div>
                 </div>
                 {% endif %}
@@ -814,47 +814,47 @@
 
         <!-- 6a. Score History Timeline -->
         {% if user %}
-        <section id="score-history-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">スコア変遷</h2>
+        <section id="score-history-section" class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">スコア変遷</h2>
             <div id="score-history-chart" style="height:300px;"></div>
             <div id="score-history-empty" class="hidden text-center py-8">
-                <svg class="w-10 h-10 text-gray-200 dark:text-gray-700 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+                <svg class="w-10 h-10 text-gray-200 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                 </svg>
-                <p class="text-xs text-gray-400 dark:text-gray-500 font-jp">監査データが蓄積されると、スコアの推移がここに表示されます。</p>
+                <p class="text-xs text-gray-400 font-jp">監査データが蓄積されると、スコアの推移がここに表示されます。</p>
             </div>
         </section>
         {% else %}
         <!-- Paywall: スコア変遷 + ポジショニング -->
-        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:200px;">
+        <section class="paywall-section bg-white border border-gray-200/80 rounded-sm p-5 mb-6" style="min-height:200px;">
             <div class="paywall-blur">
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">スコア変遷</h2>
-                <div class="h-40 bg-gray-50 dark:bg-gray-800 rounded-sm mb-5 flex items-end gap-2 p-4">
-                    <div class="w-1/6 bg-gray-200 dark:bg-gray-600 rounded-t" style="height:60%"></div>
-                    <div class="w-1/6 bg-gray-200 dark:bg-gray-600 rounded-t" style="height:75%"></div>
-                    <div class="w-1/6 bg-gray-200 dark:bg-gray-600 rounded-t" style="height:50%"></div>
-                    <div class="w-1/6 bg-gray-200 dark:bg-gray-600 rounded-t" style="height:80%"></div>
-                    <div class="w-1/6 bg-gray-200 dark:bg-gray-600 rounded-t" style="height:65%"></div>
-                    <div class="w-1/6 bg-gray-200 dark:bg-gray-600 rounded-t" style="height:85%"></div>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">スコア変遷</h2>
+                <div class="h-40 bg-gray-50 rounded-sm mb-5 flex items-end gap-2 p-4">
+                    <div class="w-1/6 bg-gray-200 rounded-t" style="height:60%"></div>
+                    <div class="w-1/6 bg-gray-200 rounded-t" style="height:75%"></div>
+                    <div class="w-1/6 bg-gray-200 rounded-t" style="height:50%"></div>
+                    <div class="w-1/6 bg-gray-200 rounded-t" style="height:80%"></div>
+                    <div class="w-1/6 bg-gray-200 rounded-t" style="height:65%"></div>
+                    <div class="w-1/6 bg-gray-200 rounded-t" style="height:85%"></div>
                 </div>
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">カテゴリ内ポジショニング</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">カテゴリ内ポジショニング</h2>
                 <div class="grid grid-cols-3 gap-3">
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-16"></div>
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-16"></div>
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-16"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-16"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-16"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-16"></div>
                 </div>
             </div>
             <div class="paywall-overlay">
-                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
-                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="bg-white border border-gray-200 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
+                    <svg class="w-5 h-5 text-gray-400 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    <div class="text-sm font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">スコア分析</div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-4 leading-relaxed">スコア推移・カテゴリ内ポジショニングの分析結果にアクセスできます。</p>
-                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-2">
+                    <div class="text-sm font-bold text-gray-800 font-jp mb-1">スコア分析</div>
+                    <p class="text-xs text-gray-500 font-jp mb-4 leading-relaxed">スコア推移・カテゴリ内ポジショニングの分析結果にアクセスできます。</p>
+                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp mb-2">
                         14日間無料トライアルで詳細を見る
                     </a>
-                    <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">アカウントをお持ちの方</a>
+                    <a href="/login" class="text-[11px] text-gray-400 hover:text-aixis-500 transition-colors font-jp">アカウントをお持ちの方</a>
                 </div>
             </div>
         </section>
@@ -862,8 +862,8 @@
 
         <!-- 6b. Category Positioning (⑤ 類似ツールとのポジショニング) -->
         {% if user %}
-        <section id="positioning-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">カテゴリ内ポジショニング</h2>
+        <section id="positioning-section" class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">カテゴリ内ポジショニング</h2>
             <div id="positioning-content"></div>
         </section>
         {% endif %}
@@ -871,75 +871,75 @@
         <!-- 5c. Pros & Cons -->
         {% if user %}
         <section id="pros-cons-section" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 hidden">
-            <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5">
+            <div class="bg-white border border-gray-200/80 rounded-sm p-5">
                 <div class="flex items-center gap-2 mb-3">
-                    <div class="w-5 h-5 rounded-sm flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-                        <svg class="w-3 h-3 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <div class="w-5 h-5 rounded-sm flex items-center justify-center bg-gray-100">
+                        <svg class="w-3 h-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
                     </div>
-                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">メリット</h3>
+                    <h3 class="text-sm font-semibold text-gray-800 font-jp">メリット</h3>
                 </div>
                 <ul id="pros-list" class="space-y-2 font-jp"></ul>
             </div>
-            <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5">
+            <div class="bg-white border border-gray-200/80 rounded-sm p-5">
                 <div class="flex items-center gap-2 mb-3">
-                    <div class="w-5 h-5 rounded-sm flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-                        <svg class="w-3 h-3 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <div class="w-5 h-5 rounded-sm flex items-center justify-center bg-gray-100">
+                        <svg class="w-3 h-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
                         </svg>
                     </div>
-                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">デメリット</h3>
+                    <h3 class="text-sm font-semibold text-gray-800 font-jp">デメリット</h3>
                 </div>
                 <ul id="cons-list" class="space-y-2 font-jp"></ul>
             </div>
         </section>
         {% else %}
         <!-- Not logged in: paywall for pros/cons + pricing -->
-        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:200px;">
+        <section class="paywall-section bg-white border border-gray-200/80 rounded-sm p-5 mb-6" style="min-height:200px;">
             <div class="paywall-blur">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-4">
+                    <div class="border border-gray-200 rounded-sm p-4">
                         <div class="flex items-center gap-2 mb-3">
-                            <div class="w-5 h-5 rounded-sm bg-gray-100 dark:bg-gray-800"></div>
-                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">メリット</span>
+                            <div class="w-5 h-5 rounded-sm bg-gray-100"></div>
+                            <span class="text-sm font-semibold text-gray-800 font-jp">メリット</span>
                         </div>
                         <div class="space-y-2">
-                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-4/5"></div>
-                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/5"></div>
-                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-4/6"></div>
+                            <div class="h-3 bg-gray-100 rounded w-4/5"></div>
+                            <div class="h-3 bg-gray-100 rounded w-3/5"></div>
+                            <div class="h-3 bg-gray-100 rounded w-4/6"></div>
                         </div>
                     </div>
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-4">
+                    <div class="border border-gray-200 rounded-sm p-4">
                         <div class="flex items-center gap-2 mb-3">
-                            <div class="w-5 h-5 rounded-sm bg-gray-100 dark:bg-gray-800"></div>
-                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">デメリット</span>
+                            <div class="w-5 h-5 rounded-sm bg-gray-100"></div>
+                            <span class="text-sm font-semibold text-gray-800 font-jp">デメリット</span>
                         </div>
                         <div class="space-y-2">
-                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/5"></div>
-                            <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-2/5"></div>
+                            <div class="h-3 bg-gray-100 rounded w-3/5"></div>
+                            <div class="h-3 bg-gray-100 rounded w-2/5"></div>
                         </div>
                     </div>
                 </div>
-                <div class="border border-gray-200 dark:border-gray-700 rounded-sm p-4">
-                    <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp">料金プラン詳細</span>
+                <div class="border border-gray-200 rounded-sm p-4">
+                    <span class="text-sm font-semibold text-gray-800 font-jp">料金プラン詳細</span>
                     <div class="mt-3 space-y-2">
-                        <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-full"></div>
-                        <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/4"></div>
+                        <div class="h-3 bg-gray-100 rounded w-full"></div>
+                        <div class="h-3 bg-gray-100 rounded w-3/4"></div>
                     </div>
                 </div>
             </div>
             <div class="paywall-overlay">
-                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-8 max-w-md w-full mx-4 text-center">
-                    <svg class="w-6 h-6 text-gray-400 dark:text-gray-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="bg-white border border-gray-200 rounded-sm shadow-sm p-8 max-w-md w-full mx-4 text-center">
+                    <svg class="w-6 h-6 text-gray-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    <div class="text-base font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">詳細情報</div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-5 leading-relaxed">メリット・デメリット・料金プラン詳細を含む詳細なレポートにアクセスできます。</p>
-                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-3">
+                    <div class="text-base font-bold text-gray-800 font-jp mb-1">詳細情報</div>
+                    <p class="text-xs text-gray-500 font-jp mb-5 leading-relaxed">メリット・デメリット・料金プラン詳細を含む詳細なレポートにアクセスできます。</p>
+                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp mb-3">
                         14日間無料トライアルで詳細を見る
                     </a>
-                    <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">アカウントをお持ちの方</a>
+                    <a href="/login" class="text-[11px] text-gray-400 hover:text-aixis-500 transition-colors font-jp">アカウントをお持ちの方</a>
                 </div>
             </div>
         </section>
@@ -947,81 +947,81 @@
 
         <!-- 5d. Pricing Detail -->
         {% if user %}
-        <section id="pricing-detail-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">料金プラン詳細</h2>
-            <div id="pricing-detail-content" class="text-xs text-gray-600 dark:text-gray-300 font-jp leading-relaxed"></div>
+        <section id="pricing-detail-section" class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">料金プラン詳細</h2>
+            <div id="pricing-detail-content" class="text-xs text-gray-600 font-jp leading-relaxed"></div>
             <div id="pricing-tiers-content" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </section>
         {% endif %}
 
         <!-- 5e. Risk / Governance -->
         {% if user %}
-        <section id="governance-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">リスク・ガバナンス</h2>
+        <section id="governance-section" class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">リスク・ガバナンス</h2>
             <div class="flex items-center gap-3 mb-4">
                 <div id="gov-risk-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold font-jp"></div>
                 <div id="gov-grade-badge" class="grade-badge"></div>
-                <span id="gov-score-value" class="text-sm font-bold text-gray-700 dark:text-gray-200 tabular-nums"></span>
+                <span id="gov-score-value" class="text-sm font-bold text-gray-700 tabular-nums"></span>
             </div>
             <!-- Compliance status -->
             <div id="gov-compliance" class="flex flex-wrap gap-2 mb-4"></div>
             <!-- Certifications -->
             <div id="gov-certifications" class="mb-4 hidden">
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 font-jp mr-2">セキュリティ認証:</span>
+                <span class="text-xs font-medium text-gray-400 font-jp mr-2">セキュリティ認証:</span>
                 <span id="gov-cert-tags"></span>
             </div>
             <!-- Governance summary (Markdown rendered) -->
-            <div id="gov-summary" class="text-xs text-gray-600 dark:text-gray-300 font-jp leading-relaxed"></div>
+            <div id="gov-summary" class="text-xs text-gray-600 font-jp leading-relaxed"></div>
         </section>
 
         <!-- 5f. Target Company Profile -->
-        <section id="target-company-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">導入企業像</h2>
-            <div id="target-company-content" class="text-xs text-gray-600 dark:text-gray-300 font-jp leading-relaxed"></div>
+        <section id="target-company-section" class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">導入企業像</h2>
+            <div id="target-company-content" class="text-xs text-gray-600 font-jp leading-relaxed"></div>
             <div id="target-company-tags" class="mt-3"></div>
         </section>
 
         <!-- 5g. Risks / Cautions -->
-        <section id="risks-section" class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6 hidden">
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">リスク・注意点</h2>
-            <div id="risks-content" class="text-xs text-gray-600 dark:text-gray-300 font-jp leading-relaxed"></div>
+        <section id="risks-section" class="bg-white border border-gray-200/80 rounded-sm p-5 mb-6 hidden">
+            <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">リスク・注意点</h2>
+            <div id="risks-content" class="text-xs text-gray-600 font-jp leading-relaxed"></div>
         </section>
         {% else %}
         <!-- Paywall: ガバナンス・リスク分析セクション群 -->
-        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:220px;">
+        <section class="paywall-section bg-white border border-gray-200/80 rounded-sm p-5 mb-6" style="min-height:220px;">
             <div class="paywall-blur">
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">リスク・ガバナンス</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">リスク・ガバナンス</h2>
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-400 font-jp">リスクレベル</div>
-                    <div class="w-6 h-6 rounded bg-gray-200 dark:bg-gray-700"></div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs bg-gray-100 text-gray-400 font-jp">リスクレベル</div>
+                    <div class="w-6 h-6 rounded bg-gray-200"></div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-14"></div>
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-sm p-3 h-14"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-14"></div>
+                    <div class="bg-gray-50 rounded-sm p-3 h-14"></div>
                 </div>
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">導入企業像</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">導入企業像</h2>
                 <div class="space-y-2 mb-5">
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-5/6"></div>
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-2/3"></div>
+                    <div class="h-3 bg-gray-100 rounded w-5/6"></div>
+                    <div class="h-3 bg-gray-100 rounded w-2/3"></div>
                 </div>
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-4">リスク・注意点</h2>
+                <h2 class="text-sm font-semibold text-gray-800 font-jp mb-4">リスク・注意点</h2>
                 <div class="space-y-2">
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-4/5"></div>
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-3/5"></div>
-                    <div class="h-3 bg-gray-100 dark:bg-gray-700 rounded w-4/6"></div>
+                    <div class="h-3 bg-gray-100 rounded w-4/5"></div>
+                    <div class="h-3 bg-gray-100 rounded w-3/5"></div>
+                    <div class="h-3 bg-gray-100 rounded w-4/6"></div>
                 </div>
             </div>
             <div class="paywall-overlay">
-                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
-                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="bg-white border border-gray-200 rounded-sm shadow-sm p-6 max-w-sm w-full mx-4 text-center">
+                    <svg class="w-5 h-5 text-gray-400 mx-auto mb-2.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    <div class="text-sm font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">リスク・ガバナンス分析</div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-4 leading-relaxed">コンプライアンス状況・導入企業像・リスク評価にアクセスできます。</p>
-                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-2">
+                    <div class="text-sm font-bold text-gray-800 font-jp mb-1">リスク・ガバナンス分析</div>
+                    <p class="text-xs text-gray-500 font-jp mb-4 leading-relaxed">コンプライアンス状況・導入企業像・リスク評価にアクセスできます。</p>
+                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-xs font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp mb-2">
                         14日間無料トライアルで詳細を見る
                     </a>
-                    <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">アカウントをお持ちの方</a>
+                    <a href="/login" class="text-[11px] text-gray-400 hover:text-aixis-500 transition-colors font-jp">アカウントをお持ちの方</a>
                 </div>
             </div>
         </section>
@@ -1031,24 +1031,24 @@
         {% if user %}
         <section id="analysis-report" class="mb-6">
             <div class="section-line"></div>
-            <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100 font-jp mb-5">詳細分析レポート</h2>
+            <h2 class="text-lg font-bold text-gray-900 font-jp mb-5">詳細分析レポート</h2>
 
             <!-- 7a. Per-axis analysis cards (stacked, uniform width) -->
             <div id="report-axis-cards" class="space-y-4 mb-6"></div>
 
             <!-- 7b. Reliability Indicators (⑨ 説明改善) -->
             <div id="reliability-section" class="hidden">
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-3 flex items-center gap-2">
+                <h3 class="text-sm font-semibold text-gray-800 font-jp mb-3 flex items-center gap-2">
                     <svg class="w-4 h-4 text-aixis-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                     </svg>
                     監査信頼度指標
                 </h3>
-                <div class="bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5">
+                <div class="bg-white border border-gray-200/80 rounded-sm p-5">
                     <!-- Improved explanation (⑨) -->
-                    <div class="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-aixis-600/30 rounded-sm p-3.5 mb-5">
-                        <p class="text-[11px] text-gray-600 dark:text-gray-400 font-jp leading-relaxed">
-                            <span class="font-semibold text-gray-700 dark:text-gray-300">この指標はAixisの評価自体の品質保証です。</span>
+                    <div class="bg-gray-50 border border-gray-200 rounded-sm p-3.5 mb-5">
+                        <p class="text-[11px] text-gray-600 font-jp leading-relaxed">
+                            <span class="font-semibold text-gray-700">この指標はAixisの評価自体の品質保証です。</span>
                             ツールのスコア（上記5軸評価）とは異なり、「Aixisの監査プロセスがどれだけ信頼できるか」を4次元で自己評価しています。
                             BenchRiskフレームワークに基づき、各指標は0〜100のスケールで算出されます。スコアが高いほど、上記の5軸評価の信頼性が高いことを意味します。
                         </p>
@@ -1058,16 +1058,16 @@
                     <div id="reliability-gauges" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"></div>
 
                     <!-- Overall score -->
-                    <div id="reliability-overall" class="pt-4 border-t border-gray-100 dark:border-aixis-600/30 flex items-center justify-between">
-                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400 font-jp">総合信頼度</span>
-                        <span id="reliability-overall-value" class="text-sm font-bold tabular-nums text-gray-800 dark:text-gray-100"></span>
+                    <div id="reliability-overall" class="pt-4 border-t border-gray-100 flex items-center justify-between">
+                        <span class="text-xs font-medium text-gray-500 font-jp">総合信頼度</span>
+                        <span id="reliability-overall-value" class="text-sm font-bold tabular-nums text-gray-800"></span>
                     </div>
                 </div>
             </div>
         </section>
         {% else %}
         <!-- Not logged in: paywall for analysis report -->
-        <section class="paywall-section bg-white dark:bg-aixis-800 border border-gray-200/80 dark:border-aixis-600/30 rounded-sm p-5 mb-6" style="min-height:320px;">
+        <section class="paywall-section bg-white border border-gray-200/80 rounded-sm p-5 mb-6" style="min-height:320px;">
             <div class="paywall-blur">
                 <div class="section-line"></div>
                 <h2 class="text-lg font-bold text-gray-900 font-jp mb-4">詳細分析レポート</h2>
@@ -1076,7 +1076,7 @@
                     <div class="border border-gray-200 rounded-sm p-4 h-32"></div>
                     <div class="border border-gray-200 rounded-sm p-4 h-32"></div>
                 </div>
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-jp mb-3">信頼度指標</h3>
+                <h3 class="text-sm font-semibold text-gray-800 font-jp mb-3">信頼度指標</h3>
                 <div class="grid grid-cols-4 gap-4">
                     <div class="bg-gray-50 rounded-sm p-3 h-20"></div>
                     <div class="bg-gray-50 rounded-sm p-3 h-20"></div>
@@ -1085,16 +1085,16 @@
                 </div>
             </div>
             <div class="paywall-overlay">
-                <div class="bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm shadow-sm p-8 max-w-md w-full mx-4 text-center">
-                    <svg class="w-6 h-6 text-gray-400 dark:text-gray-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="bg-white border border-gray-200 rounded-sm shadow-sm p-8 max-w-md w-full mx-4 text-center">
+                    <svg class="w-6 h-6 text-gray-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    <div class="text-base font-bold text-gray-800 dark:text-gray-100 font-jp mb-1">詳細分析レポート</div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-jp mb-5 leading-relaxed">5軸詳細分析・信頼度指標・テスト結果を含む詳細なレポートにアクセスできます。</p>
-                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp mb-3">
+                    <div class="text-base font-bold text-gray-800 font-jp mb-1">詳細分析レポート</div>
+                    <p class="text-xs text-gray-500 font-jp mb-5 leading-relaxed">5軸詳細分析・信頼度指標・テスト結果を含む詳細なレポートにアクセスできます。</p>
+                    <a href="/contact" class="inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp mb-3">
                         14日間無料トライアルで詳細を見る
                     </a>
-                    <a href="/login" class="text-[11px] text-gray-400 dark:text-gray-500 hover:text-aixis-500 dark:hover:text-gray-300 transition-colors font-jp">
+                    <a href="/login" class="text-[11px] text-gray-400 hover:text-aixis-500 transition-colors font-jp">
                         アカウントをお持ちの方
                     </a>
                 </div>
@@ -1105,20 +1105,20 @@
         <!-- 8. CTA Buttons -->
         <div class="flex flex-wrap items-center justify-end gap-2 mb-6">
             {% if user %}
-            <a id="compare-link" href="/compare" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp">
+            <a id="compare-link" href="/compare" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                 </svg>
                 他のツールと比較
             </a>
-            <a href="/contact" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm hover:bg-gray-50 dark:hover:bg-aixis-700/50 transition-colors duration-150 font-jp">
+            <a href="/contact" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 transition-colors duration-150 font-jp">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
                 </svg>
                 この結果について相談する
             </a>
             {% else %}
-            <a href="/contact" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-aixis-500 hover:bg-aixis-600 dark:bg-aixis-400 dark:hover:bg-aixis-300 dark:text-aixis-900 rounded-sm transition-colors duration-150 font-jp">
+            <a href="/contact" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-aixis-500 hover:bg-aixis-600 rounded-sm transition-colors duration-150 font-jp">
                 14日間無料トライアルで詳細を見る
             </a>
             {% endif %}
@@ -1127,19 +1127,19 @@
         <!-- 9. Related Tools (internal links for SEO) -->
         <section id="related-tools-section" class="hidden mt-8 mb-8">
             <div class="section-line"></div>
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white font-jp mb-4">関連ツール</h2>
+            <h2 class="text-lg font-bold text-gray-900 font-jp mb-4">関連ツール</h2>
             <div id="related-tools-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </section>
 
         <!-- 10. Navigation Buttons -->
         <section class="flex flex-wrap gap-2.5 mt-2 mb-10">
-            <a href="/tools" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm hover:bg-gray-50 dark:hover:bg-aixis-700/50 transition-colors duration-150 font-jp">
+            <a href="/tools" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 transition-colors duration-150 font-jp">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                 </svg>
                 データベースに戻る
             </a>
-            <a href="/compare" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-600/40 rounded-sm hover:bg-gray-50 dark:hover:bg-aixis-700/50 transition-colors duration-150 font-jp">
+            <a href="/compare" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 transition-colors duration-150 font-jp">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                 </svg>

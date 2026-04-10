@@ -6,46 +6,46 @@
 <div class="max-w-4xl mx-auto">
 
     <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">Webhook管理</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">監査イベントを外部サービスに通知します</p>
+        <h1 class="text-2xl font-bold text-gray-900 font-jp">Webhook管理</h1>
+        <p class="mt-1 text-sm text-gray-500 font-jp">監査イベントを外部サービスに通知します</p>
     </div>
 
     <!-- Alert Area -->
     <div id="alert-area" class="hidden mb-4 p-3 rounded-lg text-sm font-jp"></div>
 
     <!-- Create Webhook Form -->
-    <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6 mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp mb-4">新規Webhook登録</h2>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 font-jp mb-4">新規Webhook登録</h2>
 
         <div class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 font-jp mb-1">
+                <label class="block text-sm font-medium text-gray-700 font-jp mb-1">
                     エンドポイントURL
                 </label>
                 <input id="webhook-url"
                        type="url"
                        placeholder="https://example.com/webhook"
-                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 font-jp mb-2">
+                <label class="block text-sm font-medium text-gray-700 font-jp mb-2">
                     購読するイベント
                 </label>
                 <div class="flex flex-wrap gap-3">
-                    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 font-jp">
+                    <label class="flex items-center gap-2 text-sm text-gray-700 font-jp">
                         <input type="checkbox" value="audit.completed" class="webhook-event rounded" checked>
                         監査完了
                     </label>
-                    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 font-jp">
+                    <label class="flex items-center gap-2 text-sm text-gray-700 font-jp">
                         <input type="checkbox" value="audit.failed" class="webhook-event rounded">
                         監査失敗
                     </label>
-                    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 font-jp">
+                    <label class="flex items-center gap-2 text-sm text-gray-700 font-jp">
                         <input type="checkbox" value="score.published" class="webhook-event rounded">
                         スコア公開
                     </label>
-                    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 font-jp">
+                    <label class="flex items-center gap-2 text-sm text-gray-700 font-jp">
                         <input type="checkbox" value="tool.created" class="webhook-event rounded">
                         ツール登録
                     </label>
@@ -62,34 +62,34 @@
     </div>
 
     <!-- Webhook List -->
-    <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-700/50 p-6 mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp mb-4">登録済みWebhook</h2>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 font-jp mb-4">登録済みWebhook</h2>
 
         <div id="webhook-list" class="space-y-3">
-            <p class="text-sm text-gray-500 dark:text-gray-400 font-jp">読み込み中...</p>
+            <p class="text-sm text-gray-500 font-jp">読み込み中...</p>
         </div>
     </div>
 
     <!-- Delivery Log Modal -->
     <div id="delivery-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden mx-4">
-            <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">配信ログ</h3>
-                <button onclick="closeDeliveryModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden mx-4">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 font-jp">配信ログ</h3>
+                <button onclick="closeDeliveryModal()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
             <div id="delivery-log" class="p-4 overflow-y-auto max-h-[60vh] space-y-2">
-                <p class="text-sm text-gray-500 dark:text-gray-400 font-jp">読み込み中...</p>
+                <p class="text-sm text-gray-500 font-jp">読み込み中...</p>
             </div>
         </div>
     </div>
 
     <!-- Back link -->
     <div class="mt-6">
-        <a href="/dashboard" class="text-sm text-blue-600 dark:text-blue-400 hover:underline font-jp">
+        <a href="/dashboard" class="text-sm text-blue-600 hover:underline font-jp">
             &larr; ダッシュボードに戻る
         </a>
     </div>
@@ -104,15 +104,15 @@
             const container = document.getElementById('webhook-list');
 
             if (!data || data.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 font-jp">登録されたWebhookはありません。</p>';
+                container.innerHTML = '<p class="text-sm text-gray-500 font-jp">登録されたWebhookはありません。</p>';
                 return;
             }
 
             container.innerHTML = data.map(wh => `
-                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div class="min-w-0 flex-1">
-                        <div class="text-sm font-medium text-gray-900 dark:text-white truncate">${escapeHtml(wh.url)}</div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <div class="text-sm font-medium text-gray-900 truncate">${escapeHtml(wh.url)}</div>
+                        <div class="text-xs text-gray-500 mt-1">
                             イベント: ${(wh.events || []).map(e => escapeHtml(e)).join(', ')}
                             <span class="mx-1">|</span>
                             作成: ${new Date(wh.created_at).toLocaleDateString('ja-JP')}
@@ -120,15 +120,15 @@
                     </div>
                     <div class="flex items-center gap-2 ml-4 shrink-0">
                         <button onclick="testWebhook('${wh.id}')"
-                                class="px-2 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors font-jp">
+                                class="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200 transition-colors font-jp">
                             テスト
                         </button>
                         <button onclick="showDeliveries('${wh.id}')"
-                                class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors font-jp">
+                                class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-jp">
                             ログ
                         </button>
                         <button onclick="deleteWebhook('${wh.id}')"
-                                class="px-2 py-1 text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors font-jp">
+                                class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors font-jp">
                             削除
                         </button>
                     </div>
@@ -194,26 +194,26 @@
     async function showDeliveries(id) {
         document.getElementById('delivery-modal').classList.remove('hidden');
         const container = document.getElementById('delivery-log');
-        container.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 font-jp">読み込み中...</p>';
+        container.innerHTML = '<p class="text-sm text-gray-500 font-jp">読み込み中...</p>';
 
         try {
             const data = await aixisAPI('/webhooks/' + id + '/deliveries');
             if (!data || data.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 font-jp">配信ログはありません。</p>';
+                container.innerHTML = '<p class="text-sm text-gray-500 font-jp">配信ログはありません。</p>';
                 return;
             }
 
             container.innerHTML = data.map(d => {
                 const statusColor = d.response_status && d.response_status >= 200 && d.response_status < 300
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-red-600 dark:text-red-400';
+                    ? 'text-emerald-600'
+                    : 'text-red-600';
                 return `
-                    <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg text-sm">
+                    <div class="p-3 bg-gray-50 rounded-lg text-sm">
                         <div class="flex items-center justify-between">
-                            <span class="font-medium text-gray-900 dark:text-white">${escapeHtml(d.event_type)}</span>
+                            <span class="font-medium text-gray-900">${escapeHtml(d.event_type)}</span>
                             <span class="${statusColor} font-mono">${d.response_status || 'N/A'}</span>
                         </div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <div class="text-xs text-gray-500 mt-1">
                             試行: ${d.attempt_count}回
                             <span class="mx-1">|</span>
                             ${d.delivered_at ? '配信済: ' + new Date(d.delivered_at).toLocaleString('ja-JP') : '未配信'}
@@ -240,15 +240,15 @@
 
     function showAlert(msg, type) {
         const el = document.getElementById('alert-area');
-        el.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'dark:bg-emerald-900/30', 'dark:text-emerald-300',
-                           'bg-red-50', 'text-red-800', 'dark:bg-red-900/30', 'dark:text-red-300',
-                           'bg-amber-50', 'text-amber-800', 'dark:bg-amber-900/30', 'dark:text-amber-300');
+        el.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', '', '',
+                           'bg-red-50', 'text-red-800', '', '',
+                           'bg-amber-50', 'text-amber-800', '', '');
         if (type === 'ok') {
-            el.classList.add('bg-emerald-50', 'text-emerald-800', 'dark:bg-emerald-900/30', 'dark:text-emerald-300');
+            el.classList.add('bg-emerald-50', 'text-emerald-800', '', '');
         } else if (type === 'err') {
-            el.classList.add('bg-red-50', 'text-red-800', 'dark:bg-red-900/30', 'dark:text-red-300');
+            el.classList.add('bg-red-50', 'text-red-800', '', '');
         } else {
-            el.classList.add('bg-amber-50', 'text-amber-800', 'dark:bg-amber-900/30', 'dark:text-amber-300');
+            el.classList.add('bg-amber-50', 'text-amber-800', '', '');
         }
         el.textContent = msg;
         setTimeout(() => el.classList.add('hidden'), 5000);

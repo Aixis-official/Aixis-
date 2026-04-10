@@ -5,75 +5,75 @@
 
     <!-- Header -->
     <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">ダッシュボード</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp">ようこそ、{{ user.name }} さん</p>
+        <h1 class="text-2xl font-bold text-gray-900 font-jp">ダッシュボード</h1>
+        <p class="mt-1 text-sm text-gray-500 font-jp">ようこそ、{{ user.name }} さん</p>
     </div>
 
     <!-- KPI Cards -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <!-- 登録ツール -->
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 transition-colors duration-200">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-colors duration-200">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-gray-500 dark:text-gray-400">
+                <span class="text-gray-500">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
                     </svg>
                 </span>
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 tracking-wider font-jp">ツール</span>
+                <span class="text-xs font-medium text-gray-400 tracking-wider font-jp">ツール</span>
             </div>
-            <div class="text-3xl font-bold text-gray-900 dark:text-white tabular-nums" id="stat-tools">0</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-jp">登録ツール</div>
+            <div class="text-3xl font-bold text-gray-900 tabular-nums" id="stat-tools">0</div>
+            <div class="text-sm text-gray-500 mt-1 font-jp">登録ツール</div>
         </div>
         <!-- 監査セッション -->
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 transition-colors duration-200">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-colors duration-200">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-gray-500 dark:text-gray-400">
+                <span class="text-gray-500">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
                     </svg>
                 </span>
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 tracking-wider font-jp">監査</span>
+                <span class="text-xs font-medium text-gray-400 tracking-wider font-jp">監査</span>
             </div>
-            <div class="text-3xl font-bold text-gray-900 dark:text-white tabular-nums" id="stat-audits">0</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-jp">監査セッション</div>
+            <div class="text-3xl font-bold text-gray-900 tabular-nums" id="stat-audits">0</div>
+            <div class="text-sm text-gray-500 mt-1 font-jp">監査セッション</div>
         </div>
         <!-- 手動評価待ち -->
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 transition-all duration-200" id="stat-pending-card">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-200" id="stat-pending-card">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-gray-500 dark:text-gray-400">
+                <span class="text-gray-500">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </span>
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 tracking-wider font-jp">評価待ち</span>
+                <span class="text-xs font-medium text-gray-400 tracking-wider font-jp">評価待ち</span>
             </div>
-            <div class="text-3xl font-bold text-gray-900 dark:text-white tabular-nums" id="stat-pending">0</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-jp">手動評価待ち</div>
+            <div class="text-3xl font-bold text-gray-900 tabular-nums" id="stat-pending">0</div>
+            <div class="text-sm text-gray-500 mt-1 font-jp">手動評価待ち</div>
         </div>
         <!-- 完了済み -->
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6 transition-colors duration-200">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-colors duration-200">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-gray-500 dark:text-gray-400">
+                <span class="text-gray-500">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </span>
-                <span class="text-xs font-medium text-gray-400 dark:text-gray-500 tracking-wider font-jp">完了</span>
+                <span class="text-xs font-medium text-gray-400 tracking-wider font-jp">完了</span>
             </div>
-            <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums" id="stat-completed">0</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-jp">完了済み</div>
+            <div class="text-3xl font-bold text-emerald-600 tabular-nums" id="stat-completed">0</div>
+            <div class="text-sm text-gray-500 mt-1 font-jp">完了済み</div>
         </div>
     </div>
 
     <!-- Published Tools Quick Access -->
     <div class="mb-8">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">公開済みツール</h2>
-            <a href="/dashboard/tools" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-jp">すべてのツール管理</a>
+            <h2 class="text-lg font-semibold text-gray-900 font-jp">公開済みツール</h2>
+            <a href="/dashboard/tools" class="text-xs text-indigo-600 hover:underline font-jp">すべてのツール管理</a>
         </div>
         <div id="published-tools" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="col-span-full flex items-center justify-center py-8 text-gray-400 dark:text-gray-500">
-                <svg class="animate-spin h-5 w-5 mr-2 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24">
+            <div class="col-span-full flex items-center justify-center py-8 text-gray-400">
+                <svg class="animate-spin h-5 w-5 mr-2 text-gray-300" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
@@ -87,10 +87,10 @@
 
         <!-- Left 2/3: Recent Audits -->
         <div class="lg:col-span-2">
-            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 transition-colors duration-200">
-                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">最近の監査セッション</h2>
-                    <button id="bulk-delete-btn" onclick="bulkDeleteSelected()" class="hidden items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/50 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors font-jp">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 transition-colors duration-200">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900 font-jp">最近の監査セッション</h2>
+                    <button id="bulk-delete-btn" onclick="bulkDeleteSelected()" class="hidden items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors font-jp">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
                         <span id="bulk-delete-count">0</span>件を削除
                     </button>
@@ -98,21 +98,21 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="border-b border-gray-100 dark:border-gray-700/50">
-                                <th class="px-3 py-3 w-10"><input type="checkbox" id="select-all-audits" onchange="toggleSelectAll(this)" class="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"></th>
-                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
-                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ツール</th>
-                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">開始</th>
-                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">テスト</th>
-                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">状態</th>
-                                <th class="px-2 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
+                            <tr class="border-b border-gray-100">
+                                <th class="px-3 py-3 w-10"><input type="checkbox" id="select-all-audits" onchange="toggleSelectAll(this)" class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"></th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ツール</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">開始</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">テスト</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">状態</th>
+                                <th class="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">操作</th>
                             </tr>
                         </thead>
                         <tbody id="audits-body">
                             <tr>
-                                <td colspan="7" class="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
+                                <td colspan="7" class="px-4 py-12 text-center text-gray-400">
                                     <div class="flex flex-col items-center gap-2">
-                                        <svg class="animate-spin h-6 w-6 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24">
+                                        <svg class="animate-spin h-6 w-6 text-gray-300" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                         </svg>
@@ -128,13 +128,13 @@
 
         <!-- Right 1/3: Manual Pending -->
         <div class="lg:col-span-1">
-            <div class="bg-white dark:bg-[#1e2235] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 transition-all duration-200" id="manual-section">
-                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700/50">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white font-jp">手動評価待ち</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-200" id="manual-section">
+                <div class="px-6 py-4 border-b border-gray-100">
+                    <h2 class="text-lg font-semibold text-gray-900 font-jp">手動評価待ち</h2>
                 </div>
                 <div class="p-4" id="manual-pending-list">
-                    <div class="flex flex-col items-center py-6 text-gray-400 dark:text-gray-500">
-                        <svg class="animate-spin h-5 w-5 mb-2 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24">
+                    <div class="flex flex-col items-center py-6 text-gray-400">
+                        <svg class="animate-spin h-5 w-5 mb-2 text-gray-300" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
@@ -216,14 +216,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 function renderPublishedTools(tools) {
     const container = document.getElementById('published-tools');
     if (!tools || tools.length === 0) {
-        container.innerHTML = '<div class="col-span-full text-center py-8"><p class="text-sm text-gray-400 dark:text-gray-500 font-jp">公開済みツールはありません</p><a href="/dashboard/tools" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-jp mt-2 inline-block">ツールを登録する</a></div>';
+        container.innerHTML = '<div class="col-span-full text-center py-8"><p class="text-sm text-gray-400 font-jp">公開済みツールはありません</p><a href="/dashboard/tools" class="text-sm text-indigo-600 hover:underline font-jp mt-2 inline-block">ツールを登録する</a></div>';
         return;
     }
 
     container.innerHTML = tools.map(t => {
         const iconHtml = t.logo_url
-            ? `<img src="${escapeHtml(t.logo_url)}" class="w-8 h-8 rounded-lg shrink-0 object-cover" alt="${escapeHtml(t.name || '')}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 items-center justify-center text-xs font-bold text-indigo-400 shrink-0 hidden">${escapeHtml((t.name || '?')[0])}</div>`
-            : `<div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0">${escapeHtml((t.name || '?')[0])}</div>`;
+            ? `<img src="${escapeHtml(t.logo_url)}" class="w-8 h-8 rounded-lg shrink-0 object-cover" alt="${escapeHtml(t.name || '')}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="w-8 h-8 rounded-lg bg-indigo-100 items-center justify-center text-xs font-bold text-indigo-400 shrink-0 hidden">${escapeHtml((t.name || '?')[0])}</div>`
+            : `<div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-400 shrink-0">${escapeHtml((t.name || '?')[0])}</div>`;
 
         let scoreInfo = '';
         if (t.scores && t.scores.length > 0) {
@@ -233,19 +233,19 @@ function renderPublishedTools(tools) {
         }
 
         return `
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl border border-gray-100 dark:border-gray-700/50 p-4 hover:shadow-md transition-all duration-200">
+        <div class="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md transition-all duration-200">
             <div class="flex items-center gap-3 mb-3">
                 ${iconHtml}
                 <div class="flex-1 min-w-0">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate font-jp">${escapeHtml(t.name_jp || t.name)}</h3>
+                    <h3 class="text-sm font-semibold text-gray-900 truncate font-jp">${escapeHtml(t.name_jp || t.name)}</h3>
                     <p class="text-[10px] text-gray-400 truncate">${escapeHtml(t.vendor || '')}</p>
                 </div>
                 <div>${scoreInfo}</div>
             </div>
             <div class="flex items-center gap-2 text-xs">
-                <a href="/dashboard/tools" onclick="setTimeout(()=>window.editTool&&window.editTool('${escapeHtml(t.slug)}'),500)" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline font-jp">編集</a>
-                <a href="/db/${escapeHtml(t.slug)}" target="_blank" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-jp">DB表示</a>
-                <button onclick="startReAudit('${escapeHtml(t.id)}', '${escapeHtml(t.name_jp || t.name)}')" class="ml-auto font-medium text-amber-600 dark:text-amber-400 hover:underline font-jp">再監査</button>
+                <a href="/dashboard/tools" onclick="setTimeout(()=>window.editTool&&window.editTool('${escapeHtml(t.slug)}'),500)" class="font-medium text-indigo-600 hover:underline font-jp">編集</a>
+                <a href="/db/${escapeHtml(t.slug)}" target="_blank" class="text-gray-400 hover:text-gray-600 font-jp">DB表示</a>
+                <button onclick="startReAudit('${escapeHtml(t.id)}', '${escapeHtml(t.name_jp || t.name)}')" class="ml-auto font-medium text-amber-600 hover:underline font-jp">再監査</button>
             </div>
         </div>`;
     }).join('');
@@ -286,7 +286,7 @@ function updateStats(audits, totalFromApi) {
 // Override status badge for published sessions
 function auditStatusBadge(audit) {
     if (audit.is_published) {
-        return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700/50"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>公開済み</span>';
+        return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>公開済み</span>';
     }
     return createStatusBadge(audit.status);
 }
@@ -298,10 +298,10 @@ function renderAudits(audits) {
         body.innerHTML = `
             <tr>
                 <td colspan="7" class="px-4 py-12 text-center">
-                    <div class="flex flex-col items-center gap-2 text-gray-400 dark:text-gray-500">
+                    <div class="flex flex-col items-center gap-2 text-gray-400">
                         <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9.75m3 0h.008v.008H12.75v-.008zM12 18h.008v.008H12V18zm-2.25 0h.008v.008H9.75V18zM6.75 3v17.25A2.25 2.25 0 009 22.5h6a2.25 2.25 0 002.25-2.25V3"/></svg>
                         <span class="text-sm font-jp">監査セッションはまだありません。</span>
-                        <a href="/dashboard/audits/new" class="mt-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline font-jp">新規監査を開始</a>
+                        <a href="/dashboard/audits/new" class="mt-2 text-sm font-medium text-indigo-600 hover:underline font-jp">新規監査を開始</a>
                     </div>
                 </td>
             </tr>`;
@@ -316,30 +316,30 @@ function renderAudits(audits) {
         // Build action buttons
         let actions = '';
         if (a.status === 'awaiting_manual') {
-            actions += `<a href="/dashboard/audits/${encodeURIComponent(a.id)}/manual" class="inline-flex items-center px-2 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 rounded hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors font-jp">評価</a> `;
+            actions += `<a href="/dashboard/audits/${encodeURIComponent(a.id)}/manual" class="inline-flex items-center px-2 py-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded hover:bg-amber-100 transition-colors font-jp">評価</a> `;
         }
         if (a.status === 'completed' || a.status === 'aborted') {
-            actions += `<a href="/dashboard/audits/${encodeURIComponent(a.id)}" class="inline-flex items-center px-2 py-1 text-[11px] font-medium text-white bg-indigo-600 dark:bg-indigo-500 rounded hover:bg-indigo-700 dark:hover:bg-indigo-400 transition-colors font-jp">詳細</a> `;
+            actions += `<a href="/dashboard/audits/${encodeURIComponent(a.id)}" class="inline-flex items-center px-2 py-1 text-[11px] font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700 transition-colors font-jp">詳細</a> `;
         }
         if (a.status === 'running' || a.status === 'waiting_login') {
-            actions += `<a href="/dashboard/audits/${encodeURIComponent(a.id)}" class="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 font-jp"><svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>記録中</a> `;
+            actions += `<a href="/dashboard/audits/${encodeURIComponent(a.id)}" class="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-indigo-600 font-jp"><svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>記録中</a> `;
         }
         if (a.status === 'scoring') {
-            actions += `<a href="/dashboard/audits/${encodeURIComponent(a.id)}" class="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-purple-600 dark:text-purple-400 font-jp"><svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>採点中</a> `;
+            actions += `<a href="/dashboard/audits/${encodeURIComponent(a.id)}" class="inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-medium text-purple-600 font-jp"><svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>採点中</a> `;
         }
         // Delete: published sessions need double-confirm, others just normal confirm
         if (a.is_published) {
-            actions += `<button onclick="deletePublishedAudit('${escapeJsString(a.id)}', '${escapeJsString(a.tool_name || '')}', this)" class="inline-flex items-center px-1.5 py-1 text-[11px] text-gray-300 dark:text-gray-600 hover:text-red-400 dark:hover:text-red-500 transition-colors" title="公開済みセッション（保護）"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg></button>`;
+            actions += `<button onclick="deletePublishedAudit('${escapeJsString(a.id)}', '${escapeJsString(a.tool_name || '')}', this)" class="inline-flex items-center px-1.5 py-1 text-[11px] text-gray-300 hover:text-red-400 transition-colors" title="公開済みセッション（保護）"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg></button>`;
         } else {
-            actions += `<button onclick="deleteAudit('${escapeJsString(a.id)}', this)" class="inline-flex items-center px-1.5 py-1 text-[11px] text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="削除"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg></button>`;
+            actions += `<button onclick="deleteAudit('${escapeJsString(a.id)}', this)" class="inline-flex items-center px-1.5 py-1 text-[11px] text-gray-400 hover:text-red-500 transition-colors" title="削除"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg></button>`;
         }
         return `
-        <tr class="border-b border-gray-50 dark:border-gray-700/30 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors duration-150${a.is_published ? ' bg-indigo-50/30 dark:bg-indigo-900/10' : ''}">
-            <td class="px-3 py-3"><input type="checkbox" class="audit-select-cb w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer" value="${escapeHtml(a.id)}" data-published="${a.is_published ? '1' : '0'}" onchange="updateBulkDeleteBtn()"></td>
-            <td class="px-3 py-3 font-mono text-xs whitespace-nowrap"><a href="/dashboard/audits/${encodeURIComponent(a.id)}" class="text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml(a.session_code || a.id).substring(0, 16)}</a></td>
-            <td class="px-3 py-3 font-semibold text-gray-900 dark:text-white text-xs max-w-[120px] truncate">${escapeHtml(a.tool_name || a.tool_id || '--')}</td>
-            <td class="px-3 py-3 text-gray-600 dark:text-gray-400 text-xs whitespace-nowrap">${formatDateTime(a.started_at)}</td>
-            <td class="px-3 py-3 text-gray-600 dark:text-gray-400 tabular-nums text-xs">${a.total_executed || 0}/${a.total_planned || 0}</td>
+        <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors duration-150${a.is_published ? ' bg-indigo-50/30 : ''}">
+            <td class="px-3 py-3"><input type="checkbox" class="audit-select-cb w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" value="${escapeHtml(a.id)}" data-published="${a.is_published ? '1' : '0'}" onchange="updateBulkDeleteBtn()"></td>
+            <td class="px-3 py-3 font-mono text-xs whitespace-nowrap"><a href="/dashboard/audits/${encodeURIComponent(a.id)}" class="text-indigo-600 hover:underline">${escapeHtml(a.session_code || a.id).substring(0, 16)}</a></td>
+            <td class="px-3 py-3 font-semibold text-gray-900 text-xs max-w-[120px] truncate">${escapeHtml(a.tool_name || a.tool_id || '--')}</td>
+            <td class="px-3 py-3 text-gray-600 text-xs whitespace-nowrap">${formatDateTime(a.started_at)}</td>
+            <td class="px-3 py-3 text-gray-600 tabular-nums text-xs">${a.total_executed || 0}/${a.total_planned || 0}</td>
             <td class="px-3 py-3">${auditStatusBadge(a)}</td>
             <td class="px-2 py-3">
                 <div class="flex items-center gap-1 flex-nowrap">${actions}</div>
@@ -356,25 +356,25 @@ function renderManualPending(items) {
         section.classList.remove('ring-2', 'ring-amber-400');
         list.innerHTML = `
             <div class="flex flex-col items-center py-8 text-center">
-                <span class="text-emerald-500 dark:text-emerald-400 mb-2">
+                <span class="text-emerald-500 mb-2">
                     <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </span>
-                <p class="text-sm font-medium text-emerald-600 dark:text-emerald-400 font-jp">手動評価待ちはありません</p>
+                <p class="text-sm font-medium text-emerald-600 font-jp">手動評価待ちはありません</p>
             </div>`;
         return;
     }
 
     section.classList.add('ring-2', 'ring-amber-400');
     list.innerHTML = items.map(a => `
-        <div class="flex flex-col gap-2 p-3 rounded-lg border border-gray-100 dark:border-gray-700/50 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors duration-150 mb-2 last:mb-0">
+        <div class="flex flex-col gap-2 p-3 rounded-lg border border-gray-100 hover:bg-gray-50/50 transition-colors duration-150 mb-2 last:mb-0">
             <div class="flex items-center justify-between gap-2">
-                <span class="text-sm font-semibold text-gray-900 dark:text-white truncate">${escapeHtml(a.tool_name || a.tool_id || a.id)}</span>
+                <span class="text-sm font-semibold text-gray-900 truncate">${escapeHtml(a.tool_name || a.tool_id || a.id)}</span>
                 ${createStatusBadge(a.status)}
             </div>
             <a href="/dashboard/audits/${encodeURIComponent(a.id)}/manual"
-               class="inline-flex items-center justify-center w-full px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors duration-150 font-jp">
+               class="inline-flex items-center justify-center w-full px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 transition-colors duration-150 font-jp">
                 手動評価を入力
             </a>
         </div>
@@ -386,14 +386,14 @@ function renderAuditsError() {
     body.innerHTML = `
         <tr>
             <td colspan="7" class="px-4 py-12 text-center">
-                <div class="flex flex-col items-center gap-2 text-red-400 dark:text-red-500">
+                <div class="flex flex-col items-center gap-2 text-red-400">
                     <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
                     <span class="text-sm font-jp">データの読み込みに失敗しました。</span>
                 </div>
             </td>
         </tr>`;
     document.getElementById('manual-pending-list').innerHTML = `
-        <div class="flex flex-col items-center py-6 text-center text-red-400 dark:text-red-500">
+        <div class="flex flex-col items-center py-6 text-center text-red-400">
             <span class="text-sm font-jp">読み込みエラー</span>
         </div>`;
 }

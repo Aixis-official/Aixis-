@@ -49,19 +49,19 @@
 
 {% block content %}
 <!-- Page Header -->
-<section class="bg-white dark:bg-aixis-800 border-b border-gray-200 dark:border-aixis-700">
+<section class="bg-white border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-center">
         <nav class="mb-5" aria-label="パンくずリスト">
-            <ol class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-jp">
-                <li><a href="/" class="hover:text-aixis-500 dark:hover:text-gray-300 transition-colors">ホーム</a></li>
-                <li><span class="mx-1 text-gray-300 dark:text-gray-600">/</span></li>
-                <li class="text-gray-600 dark:text-gray-300 font-medium">カテゴリ一覧</li>
+            <ol class="flex items-center gap-1 text-xs text-gray-400 font-jp">
+                <li><a href="/" class="hover:text-aixis-500 transition-colors">ホーム</a></li>
+                <li><span class="mx-1 text-gray-300">/</span></li>
+                <li class="text-gray-600 font-medium">カテゴリ一覧</li>
             </ol>
         </nav>
-        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif tracking-tight text-gray-900 dark:text-white">
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif tracking-tight text-gray-900">
             カテゴリ別比較・ランキング
         </h1>
-        <p class="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+        <p class="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-gray-600 leading-relaxed">
             注力カテゴリのAIツールを、Aixisの5軸評価基準で横並び比較。同一基準で公平に評価・ランキングしています。
         </p>
         <!-- Focus Categories -->
@@ -78,10 +78,10 @@
     <!-- Search & Stats -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
-            <h2 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
+            <h2 class="text-lg sm:text-xl font-bold text-gray-900">
                 全カテゴリ
             </h2>
-            <p id="category-count" class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p id="category-count" class="mt-1 text-sm text-gray-500">
                 読み込み中...
             </p>
         </div>
@@ -91,7 +91,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
                 <input type="text" id="category-search" placeholder="AIツール名やカテゴリを検索（例: チャットボット）"
-                       class="w-full pl-10 pr-4 py-2 text-sm bg-white dark:bg-aixis-800 border border-gray-200 dark:border-aixis-700 rounded-sm focus:outline-none focus:ring-2 focus:ring-aixis-400 focus:border-transparent"
+                       class="w-full pl-10 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-sm focus:outline-none focus:ring-2 focus:ring-aixis-400 focus:border-transparent"
                        autocomplete="off">
             </div>
         </div>
@@ -108,11 +108,11 @@
 
     <!-- Empty State (hidden by default) -->
     <div id="empty-state" class="hidden col-span-full text-center py-20">
-        <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+        <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
         </svg>
-        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300">カテゴリデータを準備中です</h3>
-        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">AIツールの監査が完了次第、カテゴリ別ランキングを公開します。</p>
+        <h3 class="text-lg font-semibold text-gray-700">カテゴリデータを準備中です</h3>
+        <p class="mt-2 text-sm text-gray-500">AIツールの監査が完了次第、カテゴリ別ランキングを公開します。</p>
     </div>
 </section>
 {% endblock %}
@@ -123,25 +123,25 @@
     'use strict';
 
     function getCategoryIcon() {
-        return '<svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">' +
+        return '<svg class="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">' +
             '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />' +
             '</svg>';
     }
 
     const GRADE_STYLES = {
-        'S':  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 ring-yellow-300/30',
-        'A':  'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 ring-green-300/30',
-        'A+': 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 ring-green-300/30',
-        'B':  'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 ring-blue-300/30',
-        'B+': 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 ring-blue-300/30',
-        'C':  'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 ring-orange-300/30',
-        'C+': 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 ring-orange-300/30',
-        'D':  'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 ring-red-300/30'
+        'S':  'bg-yellow-100 text-yellow-800 ring-yellow-300/30',
+        'A':  'bg-green-100 text-green-800 ring-green-300/30',
+        'A+': 'bg-green-100 text-green-800 ring-green-300/30',
+        'B':  'bg-blue-100 text-blue-800 ring-blue-300/30',
+        'B+': 'bg-blue-100 text-blue-800 ring-blue-300/30',
+        'C':  'bg-orange-100 text-orange-800 ring-orange-300/30',
+        'C+': 'bg-orange-100 text-orange-800 ring-orange-300/30',
+        'D':  'bg-red-100 text-red-800 ring-red-300/30'
     };
 
     function getGradeBadge(grade) {
         if (!grade) return '';
-        var style = GRADE_STYLES[grade] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 ring-gray-300/30';
+        var style = GRADE_STYLES[grade] || 'bg-gray-100 text-gray-700 ring-gray-300/30';
         return '<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold ring-1 ring-inset ' + style + '">' + grade + '</span>';
     }
 
@@ -189,11 +189,11 @@
             var toolName = topTool.name || topTool.tool_name || '不明';
             var grade = topTool.grade || '';
             topToolHTML =
-                '<div class="mt-4 pt-4 border-t border-gray-100 dark:border-aixis-700/50">' +
+                '<div class="mt-4 pt-4 border-t border-gray-100">' +
                     '<div class="flex items-center justify-between gap-2">' +
                         '<div class="min-w-0">' +
-                            '<p class="text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">Top</p>' +
-                            '<span class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate block">' + esc(toolName) + '</span>' +
+                            '<p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-0.5">Top</p>' +
+                            '<span class="text-sm font-semibold text-gray-800 truncate block">' + esc(toolName) + '</span>' +
                         '</div>' +
                         (grade ? getGradeBadge(grade) : '') +
                     '</div>' +
@@ -203,25 +203,25 @@
         var card = document.createElement('a');
         card.href = '/categories/' + slug;
         card.className =
-            'category-card group block rounded-sm border border-gray-200 dark:border-aixis-700/60 ' +
-            'bg-white dark:bg-aixis-800/50 ' +
+            'category-card group block rounded-sm border border-gray-200 ' +
+            'bg-white ' +
             'p-6 ' +
-            'hover:shadow-md hover:shadow-gray-200/50 dark:hover:shadow-aixis-900/50 ' +
-            'hover:border-gray-300 dark:hover:border-aixis-500/40 ' +
-            'focus:outline-none focus:ring-2 focus:ring-aixis-400 focus:ring-offset-2 dark:focus:ring-offset-aixis-900';
+            'hover:shadow-md hover:shadow-gray-200/50 ' +
+            'hover:border-gray-300 ' +
+            'focus:outline-none focus:ring-2 focus:ring-aixis-400 focus:ring-offset-2';
 
         card.innerHTML =
             '<div class="flex items-start justify-between">' +
                 '<div class="flex items-center gap-3">' +
-                    '<div class="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-50 dark:bg-aixis-700/50 flex items-center justify-center">' +
+                    '<div class="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center">' +
                         getCategoryIcon() +
                     '</div>' +
                     '<div>' +
-                        '<h3 class="text-base font-bold text-gray-900 dark:text-white group-hover:text-aixis-500 dark:group-hover:text-aixis-300 transition-colors duration-200">' + esc(cat.name) + '</h3>' +
-                        '<p class="text-sm text-gray-500 dark:text-gray-400">' + toolCount + ' ツール</p>' +
+                        '<h3 class="text-base font-bold text-gray-900 group-hover:text-aixis-500 transition-colors duration-200">' + esc(cat.name) + '</h3>' +
+                        '<p class="text-sm text-gray-500">' + toolCount + ' ツール</p>' +
                     '</div>' +
                 '</div>' +
-                '<svg class="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-400 dark:group-hover:text-gray-400 transition-colors duration-200 flex-shrink-0 mt-1.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">' +
+                '<svg class="w-4 h-4 text-gray-300 group-hover:text-gray-400 transition-colors duration-200 flex-shrink-0 mt-1.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">' +
                     '<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />' +
                 '</svg>' +
             '</div>' +
@@ -311,11 +311,11 @@
                 var loading = document.getElementById('loading-state');
                 if (loading) {
                     loading.innerHTML =
-                        '<svg class="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">' +
+                        '<svg class="w-10 h-10 text-gray-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">' +
                             '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>' +
                         '</svg>' +
-                        '<p class="text-sm text-gray-500 dark:text-gray-400">エラーが発生しました</p>' +
-                        '<p class="mt-1 text-xs text-gray-400 dark:text-gray-500">' + err.message + '</p>';
+                        '<p class="text-sm text-gray-500">エラーが発生しました</p>' +
+                        '<p class="mt-1 text-xs text-gray-400">' + err.message + '</p>';
                 }
             });
     });

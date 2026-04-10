@@ -6,35 +6,35 @@
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="mb-6 flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-jp">監査ログ詳細</h1>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-jp" id="log-subtitle">テストケース実行ログ</p>
+            <h1 class="text-2xl font-bold text-gray-900 font-jp">監査ログ詳細</h1>
+            <p class="mt-1 text-sm text-gray-500 font-jp" id="log-subtitle">テストケース実行ログ</p>
         </div>
-        <a href="javascript:history.back()" class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors font-jp">← 戻る</a>
+        <a href="javascript:history.back()" class="px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-jp">← 戻る</a>
     </div>
 
     <!-- Volume Metrics Summary -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6" id="volume-metrics" style="display:none;">
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl border border-gray-100 dark:border-gray-700/50 p-4 text-center">
-            <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums" id="metric-steps">--</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 font-jp">総ステップ数</div>
+        <div class="bg-white rounded-xl border border-gray-100 p-4 text-center">
+            <div class="text-2xl font-bold text-indigo-600 tabular-nums" id="metric-steps">--</div>
+            <div class="text-xs text-gray-500 font-jp">総ステップ数</div>
         </div>
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl border border-gray-100 dark:border-gray-700/50 p-4 text-center">
-            <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums" id="metric-calls">--</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 font-jp">API呼出数</div>
+        <div class="bg-white rounded-xl border border-gray-100 p-4 text-center">
+            <div class="text-2xl font-bold text-indigo-600 tabular-nums" id="metric-calls">--</div>
+            <div class="text-xs text-gray-500 font-jp">API呼出数</div>
         </div>
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl border border-gray-100 dark:border-gray-700/50 p-4 text-center">
-            <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums" id="metric-tokens">--</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 font-jp">総トークン</div>
+        <div class="bg-white rounded-xl border border-gray-100 p-4 text-center">
+            <div class="text-2xl font-bold text-indigo-600 tabular-nums" id="metric-tokens">--</div>
+            <div class="text-xs text-gray-500 font-jp">総トークン</div>
         </div>
-        <div class="bg-white dark:bg-[#1e2235] rounded-xl border border-gray-100 dark:border-gray-700/50 p-4 text-center">
-            <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums" id="metric-cost">--</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 font-jp">推定コスト</div>
+        <div class="bg-white rounded-xl border border-gray-100 p-4 text-center">
+            <div class="text-2xl font-bold text-emerald-600 tabular-nums" id="metric-cost">--</div>
+            <div class="text-xs text-gray-500 font-jp">推定コスト</div>
         </div>
     </div>
 
     <!-- Test Result Timeline -->
     <div class="space-y-3" id="log-timeline">
-        <div class="text-center py-12 text-gray-400 dark:text-gray-500">
+        <div class="text-center py-12 text-gray-400">
             <svg class="animate-spin h-6 w-6 mx-auto mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
             <span class="font-jp">読み込み中...</span>
         </div>
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const timeline = document.getElementById('log-timeline');
 
         if (results.length === 0) {
-            timeline.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-12 font-jp">テスト結果がありません</p>';
+            timeline.innerHTML = '<p class="text-center text-gray-500 py-12 font-jp">テスト結果がありません</p>';
             return;
         }
 
@@ -82,33 +82,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ? '<span class="text-red-500">✗</span>'
                 : (hasResponse ? '<span class="text-emerald-500">✓</span>' : '<span class="text-gray-400">—</span>');
             const borderColor = hasError
-                ? 'border-red-200 dark:border-red-700/50'
-                : 'border-gray-100 dark:border-gray-700/50';
+                ? 'border-red-200'
+                : 'border-gray-100';
             const meta = r.metadata_json || {};
             const aiInfo = (meta.ai_steps_taken || r.ai_steps_taken)
-                ? `<span class="text-[10px] text-indigo-500 dark:text-indigo-400">${meta.ai_steps_taken || r.ai_steps_taken || 0}ステップ / ${meta.ai_calls_used || r.ai_calls_used || 0}API</span>`
+                ? `<span class="text-[10px] text-indigo-500">${meta.ai_steps_taken || r.ai_steps_taken || 0}ステップ / ${meta.ai_calls_used || r.ai_calls_used || 0}API</span>`
                 : '';
 
             return `
-            <div class="bg-white dark:bg-[#1e2235] rounded-xl border ${borderColor} p-4 transition-colors">
+            <div class="bg-white rounded-xl border ${borderColor} p-4 transition-colors">
                 <div class="flex items-start gap-3">
                     <div class="text-lg mt-0.5">${statusIcon}</div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 flex-wrap mb-1">
-                            <span class="text-xs font-medium text-gray-900 dark:text-white">#${i + 1}</span>
-                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">${r.category}</span>
+                            <span class="text-xs font-medium text-gray-900">#${i + 1}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">${r.category}</span>
                             <span class="text-[10px] text-gray-400 tabular-nums">${r.response_time_ms ? Math.round(r.response_time_ms) + 'ms' : ''}</span>
                             ${aiInfo}
                         </div>
                         <details class="group">
-                            <summary class="text-sm text-gray-700 dark:text-gray-300 font-jp cursor-pointer line-clamp-1 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">${escapeHtml((r.prompt_sent || '').substring(0, 120))}</summary>
+                            <summary class="text-sm text-gray-700 font-jp cursor-pointer line-clamp-1 hover:text-indigo-600 transition-colors">${escapeHtml((r.prompt_sent || '').substring(0, 120))}</summary>
                             <div class="mt-2 space-y-2 text-xs">
-                                <div class="bg-gray-50 dark:bg-gray-800/50 rounded p-2">
-                                    <div class="font-medium text-gray-500 dark:text-gray-400 mb-1">プロンプト:</div>
-                                    <div class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-jp">${escapeHtml(r.prompt_sent || '')}</div>
+                                <div class="bg-gray-50 rounded p-2">
+                                    <div class="font-medium text-gray-500 mb-1">プロンプト:</div>
+                                    <div class="text-gray-700 whitespace-pre-wrap font-jp">${escapeHtml(r.prompt_sent || '')}</div>
                                 </div>
-                                ${hasResponse ? '<div class="bg-emerald-50 dark:bg-emerald-900/20 rounded p-2"><div class="font-medium text-emerald-600 dark:text-emerald-400 mb-1">応答:</div><div class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-jp max-h-48 overflow-y-auto">' + escapeHtml((r.response_raw || '').substring(0, 1000)) + '</div></div>' : ''}
-                                ${hasError ? '<div class="bg-red-50 dark:bg-red-900/20 rounded p-2"><div class="font-medium text-red-600 dark:text-red-400 mb-1">エラー:</div><div class="text-red-700 dark:text-red-300 font-jp">' + escapeHtml(r.error) + '</div></div>' : ''}
+                                ${hasResponse ? '<div class="bg-emerald-50 rounded p-2"><div class="font-medium text-emerald-600 mb-1">応答:</div><div class="text-gray-700 whitespace-pre-wrap font-jp max-h-48 overflow-y-auto">' + escapeHtml((r.response_raw || '').substring(0, 1000)) + '</div></div>' : ''}
+                                ${hasError ? '<div class="bg-red-50 rounded p-2"><div class="font-medium text-red-600 mb-1">エラー:</div><div class="text-red-700 font-jp">' + escapeHtml(r.error) + '</div></div>' : ''}
                                 ${r.screenshot_path ? '<div><img src="' + r.screenshot_path + '" alt="監査スクリーンショット" class="rounded border max-w-full max-h-64" loading="lazy" onerror="this.style.display=\'none\'"></div>' : ''}
                             </div>
                         </details>
