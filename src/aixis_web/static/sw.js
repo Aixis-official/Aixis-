@@ -1,15 +1,28 @@
 // Aixis Service Worker — network-first navigation, cache-first static assets
-const CACHE_NAME = 'aixis-static-v2';
+const CACHE_NAME = 'aixis-static-v3';
 const OFFLINE_URL = '/offline';
 const PRE_CACHE_URLS = [
   OFFLINE_URL,
   '/static/img/Aixis-logo-final.png',
+  '/static/css/style.min.css',
+  '/static/css/tailwind.min.css',
+  '/static/js/aixis-common.min.js',
+  '/static/js/ga4-events.min.js',
+  '/static/manifest.json',
 ];
 
-// Install: pre-cache offline page and key assets
+// Install: pre-cache offline page and key assets (tolerate individual failures)
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRE_CACHE_URLS))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(
+        PRE_CACHE_URLS.map((url) =>
+          fetch(url, { cache: 'reload' })
+            .then((resp) => (resp.ok ? cache.put(url, resp) : null))
+            .catch(() => null)
+        )
+      )
+    )
   );
   self.skipWaiting();
 });

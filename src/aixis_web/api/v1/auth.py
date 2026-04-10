@@ -410,6 +410,25 @@ async def reset_password(
         new_password: str = Field(min_length=8)
         new_password_confirm: str
 
+    # Rate limit by IP to prevent token brute-force attacks.
+    # Reset tokens are 48-byte URL-safe (sha256 hashed), so the search space is
+    # astronomical — but rate limiting adds defense-in-depth against abuse.
+    client_ip = get_client_ip(request)
+    if client_ip not in _ADMIN_IPS:
+        try:
+            rl_key = f"pw_reset_submit:{client_ip}"
+            allowed, _ = await check_rate_limit(db, rl_key, 10, 600)  # 10 per 10min
+            if not allowed:
+                await db.commit()
+                raise HTTPException(
+                    status_code=429,
+                    detail="試行回数が上限に達しました。しばらく時間をおいて再度お試しください。",
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            pass
+
     body = ResetPasswordRequest(**(await request.json()))
 
     if body.new_password != body.new_password_confirm:

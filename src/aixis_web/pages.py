@@ -330,6 +330,13 @@ async def tokushoho_page(request: Request, user: _OptionalUser = None):
     return RedirectResponse("https://aixis.jp/tokushoho", status_code=301)
 
 
+@page_router.get("/accessibility")
+async def accessibility_page(request: Request, user: _OptionalUser = None):
+    """Redirect to aixis.jp/accessibility (legal/policy pages consolidated there)."""
+    from starlette.responses import RedirectResponse
+    return RedirectResponse("https://aixis.jp/accessibility", status_code=301)
+
+
 @page_router.get("/pricing")
 async def pricing_page(request: Request, user: _OptionalUser = None):
     """Pricing plans page."""

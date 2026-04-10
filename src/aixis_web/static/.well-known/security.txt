@@ -1,0 +1,4 @@
+Contact: mailto:info@aixis.jp
+Expires: 2027-04-09T00:00:00.000Z
+Preferred-Languages: ja, en
+Canonical: https://platform.aixis.jp/.well-known/security.txt

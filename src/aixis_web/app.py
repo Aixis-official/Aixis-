@@ -133,7 +133,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         else:
             csp_directives = [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.plot.ly https://unpkg.com",
+                "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.plot.ly",
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                 "font-src 'self' https://fonts.gstatic.com",
                 "img-src 'self' data: https:",
@@ -352,6 +352,10 @@ def create_app() -> FastAPI:
     # Mount static files (app assets — bundled in container image, OK to be ephemeral)
     static_dir = BASE_DIR / "static"
     static_dir.mkdir(exist_ok=True)
+    # Mount /.well-known (security.txt etc) before /static
+    well_known_dir = static_dir / ".well-known"
+    if well_known_dir.exists():
+        app.mount("/.well-known", StaticFiles(directory=str(well_known_dir)), name="well-known")
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
     # Include API router

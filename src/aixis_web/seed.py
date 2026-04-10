@@ -5,6 +5,7 @@ Usage:
 """
 
 import asyncio
+import logging
 
 from sqlalchemy import select
 
@@ -12,6 +13,8 @@ from aixis_web.api.deps import hash_password
 from aixis_web.config import settings
 from aixis_web.db.base import async_session, init_db
 from aixis_web.db.models.user import Organization, User
+
+logger = logging.getLogger(__name__)
 
 
 async def seed() -> None:
@@ -29,7 +32,7 @@ async def seed() -> None:
             existing.hashed_password = hash_password(settings.admin_password)
             existing.is_active = True
             await session.commit()
-            print(f"[更新] 管理者ユーザー ({settings.admin_email}) のパスワードを更新しました。")
+            logger.info("[更新] 管理者ユーザー (%s) のパスワードを更新しました。", settings.admin_email)
             return
 
         # --- 組織の作成（存在しなければ） ---
@@ -42,9 +45,9 @@ async def seed() -> None:
             org = Organization(name=org_name, name_jp="Aixis株式会社")
             session.add(org)
             await session.flush()  # org.id を確定
-            print(f"[作成] 組織 '{org_name}' を作成しました。")
+            logger.info("[作成] 組織 '%s' を作成しました。", org_name)
         else:
-            print(f"[スキップ] 組織 '{org_name}' は既に存在します。")
+            logger.info("[スキップ] 組織 '%s' は既に存在します。", org_name)
 
         # --- 管理者ユーザーの作成 ---
         admin = User(
@@ -58,8 +61,9 @@ async def seed() -> None:
         )
         session.add(admin)
         await session.commit()
-        print(f"[作成] 管理者ユーザー ({settings.admin_email}) を作成しました。")
+        logger.info("[作成] 管理者ユーザー (%s) を作成しました。", settings.admin_email)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     asyncio.run(seed())
