@@ -18,7 +18,10 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://platform.aixis.jp/contact">
 <meta property="og:description" content="Aixisへのお問い合わせ。AIツール監査のご依頼、料金のご相談、導入支援、無料トライアル申請など、お気軽にご連絡ください。">
-<meta property="og:image" content="https://platform.aixis.jp/static/img/Aixis-logo-final.png">
+<meta property="og:image" content="https://platform.aixis.jp/static/img/og/aixis-platform-ogp.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:description" content="Aixisへのお問い合わせ。AIツール監査のご依頼、料金のご相談、導入支援、無料トライアル申請など、お気軽にご連絡ください。">
 {% endblock %}
@@ -236,7 +239,7 @@
                     <label for="company_name">
                         貴社名 <span class="required-dot">*</span>
                     </label>
-                    <input type="text" id="company_name" name="company_name" required
+                    <input type="text" id="company_name" name="company_name" required aria-required="true" aria-invalid="false" autocomplete="organization"
                            placeholder="株式会社サンプル">
                 </div>
 
@@ -245,7 +248,7 @@
                     <label for="department">
                         部署名 <span class="text-xs text-gray-400 font-normal">任意</span>
                     </label>
-                    <input type="text" id="department" name="department"
+                    <input type="text" id="department" name="department" autocomplete="organization-title"
                            placeholder="情報システム部">
                 </div>
 
@@ -254,7 +257,7 @@
                     <label for="name">
                         ご担当者名 <span class="required-dot">*</span>
                     </label>
-                    <input type="text" id="name" name="name" required
+                    <input type="text" id="name" name="name" required aria-required="true" aria-invalid="false" autocomplete="name"
                            placeholder="山田 太郎">
                 </div>
 
@@ -263,7 +266,7 @@
                     <label for="email">
                         メールアドレス <span class="required-dot">*</span>
                     </label>
-                    <input type="email" id="email" name="email" required
+                    <input type="email" id="email" name="email" required aria-required="true" aria-invalid="false" autocomplete="email"
                            placeholder="yamada@example.co.jp">
                 </div>
 
@@ -272,7 +275,7 @@
                     <label for="phone">
                         電話番号 <span class="text-xs text-gray-400 font-normal">任意</span>
                     </label>
-                    <input type="tel" id="phone" name="phone"
+                    <input type="tel" id="phone" name="phone" autocomplete="tel"
                            placeholder="03-1234-5678">
                 </div>
 
@@ -281,7 +284,7 @@
                     <label for="inquiry_type">
                         お問い合わせ種別 <span class="required-dot">*</span>
                     </label>
-                    <select id="inquiry_type" name="inquiry_type" required>
+                    <select id="inquiry_type" name="inquiry_type" required aria-required="true" aria-invalid="false">
                         <option value="" disabled selected>選択してください</option>
                         <option value="監査データベース利用（無料トライアル）に関するご相談">監査データベース利用（無料トライアル）に関するご相談</option>
                         <option value="クイック診断のご相談">クイック診断のご相談</option>
@@ -297,7 +300,7 @@
                     <label for="message">
                         お問い合わせ内容 <span class="required-dot">*</span>
                     </label>
-                    <textarea id="message" name="message" required rows="5"
+                    <textarea id="message" name="message" required aria-required="true" aria-invalid="false" rows="5"
                               placeholder="ご質問・ご依頼の内容をご記入ください。"></textarea>
                 </div>
 

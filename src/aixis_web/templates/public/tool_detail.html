@@ -36,10 +36,15 @@
 <script type="application/ld+json">
 {
     "@context": "https://schema.org",
-    "@type": "Product",
+    "@type": ["Product", "SoftwareApplication"],
     "name": "{{ tool_data.name_jp or tool_data.name if tool_data else title }}",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
     {% if tool_data and tool_data.description_jp %}"description": {{ tool_data.description_jp | tojson }},{% endif %}
-    {% if tool_data and tool_data.logo_url %}"image": "{{ tool_data.logo_url }}",{% endif %}
+    "image": [
+        "https://platform.aixis.jp/card/{{ slug }}.png"{% if tool_data and tool_data.logo_url %},
+        "{{ tool_data.logo_url }}"{% endif %}
+    ],
     {% if tool_data and tool_data.url %}"url": "{{ tool_data.url }}",{% endif %}
     {% if tool_data and tool_data.vendor %}"brand": {"@type": "Brand", "name": "{{ tool_data.vendor }}"},{% endif %}
     "review": {
@@ -62,13 +67,27 @@
 {
     "@context": "https://schema.org",
     "@type": "ImageObject",
+    "@id": "https://platform.aixis.jp/card/{{ slug }}.png#image",
     "contentUrl": "https://platform.aixis.jp/card/{{ slug }}.png",
-    "name": "{{ tool_data.name_jp or tool_data.name if tool_data else title }} AI監査スコアカード",
-    "description": "{{ tool_data.name_jp or tool_data.name if tool_data else title }}の独立AI監査スコア（5軸評価）",
-    "width": "1200",
-    "height": "630",
-    "author": {"@type": "Organization", "name": "株式会社Aixis"},
-    "datePublished": "{{ ssr.score.published_at }}"
+    "url": "https://platform.aixis.jp/card/{{ slug }}.png",
+    "name": "{{ tool_data.name_jp or tool_data.name if tool_data else title }} - Aixis AI監査スコアカード（総合{{ '%.1f'|format(ssr.score.overall_score) }}/5.0 · グレード{{ ssr.score.overall_grade }}）",
+    "caption": "{{ tool_data.name_jp or tool_data.name if tool_data else title }}の独立AI監査スコアカード — Aixisが独立した5軸（実務適性・費用対効果・日本語能力・信頼性・安全性・革新性）で評価",
+    "description": "{{ tool_data.name_jp or tool_data.name if tool_data else title }}の独立AI監査スコア（5軸評価）。総合{{ '%.1f'|format(ssr.score.overall_score) }}/5.0、グレード{{ ssr.score.overall_grade }}。",
+    "encodingFormat": "image/png",
+    "width": {"@type": "QuantitativeValue", "value": 1200, "unitCode": "E37"},
+    "height": {"@type": "QuantitativeValue", "value": 630, "unitCode": "E37"},
+    "representativeOfPage": true,
+    "isAccessibleForFree": true,
+    "creator": {"@type": "Organization", "name": "株式会社Aixis", "url": "https://aixis.jp"},
+    "author": {"@type": "Organization", "name": "株式会社Aixis", "url": "https://aixis.jp"},
+    "copyrightHolder": {"@type": "Organization", "name": "株式会社Aixis"},
+    "copyrightNotice": "© 株式会社Aixis",
+    "license": "https://platform.aixis.jp/terms",
+    "acquireLicensePage": "https://platform.aixis.jp/contact",
+    "creditText": "Aixis 独立AI監査プラットフォーム",
+    "datePublished": "{{ ssr.score.published_at }}",
+    "contentLocation": {"@type": "Place", "name": "Japan"},
+    "thumbnailUrl": "https://platform.aixis.jp/card/{{ slug }}.png"
 }
 </script>
 {% endif %}
@@ -210,7 +229,7 @@
                 <div class="flex items-center gap-3.5 md:hidden mb-4">
                     {% if ssr.logo_url %}
                     <div class="flex-shrink-0">
-                        <img src="{{ ssr.logo_url }}" class="w-12 h-12 rounded bg-white/10 p-1 object-contain" alt="{{ ssr.name }} icon" loading="lazy" />
+                        <img src="{{ ssr.logo_url }}" class="w-12 h-12 rounded bg-white/10 p-1 object-contain" alt="{{ ssr.name }} ロゴ — Aixis AI監査対象ツール" loading="lazy" />
                     </div>
                     {% endif %}
                     <div class="flex-1 min-w-0">
@@ -237,7 +256,7 @@
                     <div class="flex-1 text-white flex items-start gap-5">
                         {% if ssr.logo_url %}
                         <div class="flex-shrink-0">
-                            <img src="{{ ssr.logo_url }}" class="w-14 h-14 rounded bg-white/10 p-1.5 object-contain" alt="{{ ssr.name }} icon" loading="lazy" />
+                            <img src="{{ ssr.logo_url }}" class="w-14 h-14 rounded bg-white/10 p-1.5 object-contain" alt="{{ ssr.name }} ロゴ — Aixis AI監査プラットフォーム" loading="lazy" width="56" height="56" />
                         </div>
                         {% endif %}
                         <div class="flex-1 min-w-0">

@@ -36,15 +36,16 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://platform.aixis.jp{{ request.path }}">
     <meta property="og:description" content="Aixis（アイクシス） — AIツールを独立した5軸監査で定量評価。企業のAIツール選定をデータで支援する独立系AI監査プラットフォーム。">
-    <meta property="og:image" content="https://platform.aixis.jp/static/img/Aixis-logo-final.png">
-    <meta property="og:image:alt" content="Aixis（アイクシス）ロゴ — 独立系AI監査プラットフォーム">
-    <meta property="og:image:width" content="192">
-    <meta property="og:image:height" content="192">
-    <meta name="twitter:card" content="summary">
+    <meta property="og:image" content="https://platform.aixis.jp/static/img/og/aixis-platform-ogp.png">
+    <meta property="og:image:alt" content="Aixis AI監査プラットフォーム — 独立した5軸でAIを監査する。">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ title | default('Aixis') }} - Aixis AI監査プラットフォーム">
     <meta name="twitter:description" content="Aixis（アイクシス） — AIツールを独立した5軸監査で定量評価。企業のAIツール選定をデータで支援。">
-    <meta name="twitter:image" content="https://platform.aixis.jp/static/img/Aixis-logo-final.png">
-    <meta name="twitter:image:alt" content="Aixis ロゴ">
+    <meta name="twitter:image" content="https://platform.aixis.jp/static/img/og/aixis-platform-ogp.png">
+    <meta name="twitter:image:alt" content="Aixis AI監査プラットフォーム — 独立した5軸でAIを監査する。">
     {% endblock %}
     {% block structured_data %}{% endblock %}
 
@@ -144,7 +145,7 @@
 
                 <!-- Left: Logo -->
                 <a href="/" class="flex items-center gap-2.5 group shrink-0">
-                    <img src="/static/img/Aixis-logo-final.png" alt="Aixis" class="h-10 w-auto rounded-sm group-hover:opacity-80 transition-opacity duration-150" width="40" height="40">
+                    <img src="/static/img/Aixis-logo-final.png" alt="Aixis（アイクシス） — 独立系AI監査プラットフォーム" class="h-10 w-auto rounded-sm group-hover:opacity-80 transition-opacity duration-150" width="40" height="40">
                 </a>
 
                 <!-- Center: Navigation links (desktop) -->
@@ -253,7 +254,8 @@
                             type="button"
                             class="md:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-aixis-700 transition-colors duration-150"
                             aria-label="メニュー"
-                            aria-expanded="false">
+                            aria-expanded="false"
+                            aria-controls="mobile-drawer">
                         <svg id="menu-icon-open" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                         </svg>
@@ -265,11 +267,11 @@
 
     <!-- Mobile drawer overlay + panel (slide-from-right) -->
     <div id="mobile-drawer-backdrop" class="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 md:hidden"></div>
-    <div id="mobile-drawer" class="fixed top-0 right-0 z-[70] h-full w-[280px] max-w-[85vw] bg-white dark:bg-aixis-800 shadow-2xl translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] md:hidden overflow-y-auto font-serif">
+    <div id="mobile-drawer" role="dialog" aria-modal="true" aria-label="メインナビゲーション" aria-hidden="true" class="fixed top-0 right-0 z-[70] h-full w-[280px] max-w-[85vw] bg-white dark:bg-aixis-800 shadow-2xl translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] md:hidden overflow-y-auto font-serif">
         <!-- Drawer header -->
         <div class="flex items-center justify-between px-5 pt-5 pb-3">
             <a href="/" class="flex items-center">
-                <img src="/static/img/Aixis-logo-final.png" alt="Aixis" class="h-8 w-auto rounded-sm" loading="lazy" width="32" height="32">
+                <img src="/static/img/Aixis-logo-final.png" alt="Aixis（アイクシス） — 独立系AI監査プラットフォーム" class="h-8 w-auto rounded-sm" loading="lazy" width="32" height="32">
             </a>
             <button id="mobile-drawer-close" type="button" aria-label="メニューを閉じる" class="p-2 -mr-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-aixis-700 transition-colors">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -371,7 +373,7 @@
                 <!-- Brand column -->
                 <div class="lg:col-span-4 mb-8 lg:mb-0">
                     <a href="/" class="inline-block">
-                        <img src="/static/img/Aixis-logo-final.png" alt="Aixis" class="h-8 w-auto rounded-sm" loading="lazy" width="32" height="32">
+                        <img src="/static/img/Aixis-logo-final.png" alt="Aixis（アイクシス） — 独立系AI監査プラットフォーム" class="h-8 w-auto rounded-sm" loading="lazy" width="32" height="32">
                     </a>
                     <p class="mt-3 text-[13px] text-gray-600 dark:text-gray-400 leading-relaxed font-serif">
                         AI導入に、中立な審判を。
@@ -491,14 +493,28 @@
             var drawer = document.getElementById('mobile-drawer');
             var backdrop = document.getElementById('mobile-drawer-backdrop');
             var closeBtn = document.getElementById('mobile-drawer-close');
+            var previouslyFocused = null;
+
+            function getDrawerFocusables() {
+                if (!drawer) return [];
+                return drawer.querySelectorAll(
+                    'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                );
+            }
 
             function openMobileDrawer() {
+                previouslyFocused = document.activeElement;
                 drawer.classList.remove('translate-x-full');
                 drawer.classList.add('translate-x-0');
                 backdrop.classList.remove('opacity-0', 'pointer-events-none');
                 backdrop.classList.add('opacity-100');
                 document.body.style.overflow = 'hidden';
                 menuBtn.setAttribute('aria-expanded', 'true');
+                drawer.setAttribute('aria-hidden', 'false');
+                setTimeout(function() {
+                    var focusables = getDrawerFocusables();
+                    if (focusables.length) focusables[0].focus();
+                }, 50);
             }
 
             window.closeMobileDrawer = function() {
@@ -508,16 +524,32 @@
                 backdrop.classList.add('opacity-0', 'pointer-events-none');
                 document.body.style.overflow = '';
                 menuBtn.setAttribute('aria-expanded', 'false');
+                drawer.setAttribute('aria-hidden', 'true');
+                if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+                    previouslyFocused.focus();
+                }
             };
 
             if (menuBtn) menuBtn.addEventListener('click', openMobileDrawer);
             if (closeBtn) closeBtn.addEventListener('click', closeMobileDrawer);
             if (backdrop) backdrop.addEventListener('click', closeMobileDrawer);
 
-            // Close on Escape key
+            // Close on Escape key + focus trap
             document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && !drawer.classList.contains('translate-x-full')) {
-                    closeMobileDrawer();
+                if (!drawer || drawer.classList.contains('translate-x-full')) return;
+                if (e.key === 'Escape') { closeMobileDrawer(); return; }
+                if (e.key === 'Tab') {
+                    var focusables = getDrawerFocusables();
+                    if (!focusables.length) return;
+                    var first = focusables[0];
+                    var last = focusables[focusables.length - 1];
+                    if (e.shiftKey && document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    } else if (!e.shiftKey && document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
                 }
             });
 

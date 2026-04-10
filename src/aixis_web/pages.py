@@ -822,12 +822,26 @@ async def sitemap_xml(db: AsyncSession = Depends(get_db)):
         ' xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">',
     ]
 
-    # Static pages
+    # Static pages — all reference the brand OGP so Google Image Search indexes it
+    _PLATFORM_OGP = f"{SITE_ORIGIN}/static/img/og/aixis-platform-ogp.png"
+    _PLATFORM_OGP_TITLE = (
+        "Aixis AI監査プラットフォーム — 独立した5軸でAIを監査する"
+    )
+    _PLATFORM_OGP_CAPTION = (
+        "AIツールを独立した第三者の立場から5軸（実務適性・費用対効果・"
+        "日本語能力・信頼性・安全性・革新性）で監査・評価する独立系AI監査プラットフォーム"
+    )
     for path, freq, prio in _STATIC_PAGES:
         lines.append(
             f"  <url><loc>{SITE_ORIGIN}{path}</loc>"
             f"<changefreq>{freq}</changefreq>"
-            f"<priority>{prio}</priority></url>"
+            f"<priority>{prio}</priority>"
+            f"<image:image>"
+            f"<image:loc>{_PLATFORM_OGP}</image:loc>"
+            f"<image:title>{html_escape(_PLATFORM_OGP_TITLE)}</image:title>"
+            f"<image:caption>{html_escape(_PLATFORM_OGP_CAPTION)}</image:caption>"
+            f"</image:image>"
+            f"</url>"
         )
 
     # Tool detail pages (only public + active) with image entries
@@ -856,12 +870,20 @@ async def sitemap_xml(db: AsyncSession = Depends(get_db)):
         )
 
     # Category pages
-    cat_result = await db.execute(select(ToolCategory.slug))
-    for (cat_slug,) in cat_result.all():
+    cat_result = await db.execute(
+        select(ToolCategory.slug, ToolCategory.name_jp, ToolCategory.name)
+    )
+    for (cat_slug, cat_name_jp, cat_name) in cat_result.all():
+        cat_display = html_escape(cat_name_jp or cat_name or cat_slug)
         lines.append(
             f"  <url><loc>{SITE_ORIGIN}/categories/{cat_slug}</loc>"
             f"<changefreq>weekly</changefreq>"
-            f"<priority>0.6</priority></url>"
+            f"<priority>0.6</priority>"
+            f"<image:image>"
+            f"<image:loc>{_PLATFORM_OGP}</image:loc>"
+            f"<image:title>{cat_display} - Aixis AI監査ランキング</image:title>"
+            f"</image:image>"
+            f"</url>"
         )
 
     # Benchmark leaderboard pages
@@ -944,17 +966,275 @@ async def indexnow_key_file(key: str):
     return PlainTextResponse(content=key)
 
 
+# ── Shared OGP card constants ────────────────────────────────────────
+# Dark neon theme to match Aixis brand (pentagon motif + teal glow)
+_OG_W, _OG_H = 1200, 630
+_OG_SS = 2  # supersample factor for smooth edges
+
+# Dark gradient background
+_BG_TOP = (8, 14, 28)       # #080e1c
+_BG_BOT = (20, 28, 46)      # #141c2e
+
+# Neon accent (teal — matches Aixis logo)
+_TEAL = (94, 234, 212)      # #5eead4
+_TEAL_SOFT = (45, 158, 140) # #2d9e8c
+
+# Foreground text
+_FG = (248, 250, 252)       # #f8fafc  (near white)
+_FG_DIM = (148, 163, 184)   # #94a3b8  (slate-400)
+_FG_FAINT = (71, 85, 105)   # #475569  (slate-600)
+_PANEL = (22, 31, 51)       # #161f33  (subtle panel bg)
+
+# Grade badge 3-stop gradients — EXACT match to .grade-S/A/B/C/D in style.css
+# (linear-gradient 135deg start → middle → end)
+_GRADE_GRADIENT = {
+    "S": [(230, 209, 139), (221, 198, 125), (230, 209, 139)],  # #E6D18B/#DDC67D
+    "A": [(156, 195, 215), (139, 178, 202), (123, 162, 189)],  # #9CC3D7/#8BB2CA/#7BA2BD
+    "B": [(170, 198, 185), (157, 185, 173), (145, 173, 160)],  # #AAC6B9/#9DB9AD/#91ADA0
+    "C": [(198, 184, 173), (185, 171, 160), (173, 158, 147)],  # #C6B8AD/#B9ABA0/#AD9E93
+    "D": [(198, 153, 153), (185, 141, 141), (173, 128, 128)],  # #C69999/#B98D8D/#AD8080
+}
+# Mid-tone for score number color
+_GRADE_MID = {k: v[1] for k, v in _GRADE_GRADIENT.items()}
+
+
+def _og_score_color(v: float) -> tuple[int, int, int]:
+    """Accent color for the hero score number (matches site grade thresholds)."""
+    if v >= 4.5:
+        return _GRADE_MID["S"]
+    if v >= 3.8:
+        return _GRADE_MID["A"]
+    if v >= 3.0:
+        return _GRADE_MID["B"]
+    if v >= 2.0:
+        return _GRADE_MID["C"]
+    return _GRADE_MID["D"]
+
+
+def _og_build_background(w: int, h: int):
+    """Build a vertical dark gradient background with a subtle radial glow.
+
+    Returns a PIL RGBA image.
+    """
+    import numpy as np
+    from PIL import Image, ImageFilter
+
+    # Vertical gradient (#080e1c -> #141c2e)
+    t = np.linspace(0.0, 1.0, h, dtype=np.float32)[:, None]  # (H, 1)
+    top = np.array(_BG_TOP, dtype=np.float32)
+    bot = np.array(_BG_BOT, dtype=np.float32)
+    grad = top * (1.0 - t) + bot * t  # (H, 3)
+    arr = np.tile(grad[:, None, :], (1, w, 1)).astype(np.uint8)
+    bg = Image.fromarray(arr, "RGB").convert("RGBA")
+
+    # Soft radial glow (teal) behind the center — gives the "neon" feel
+    glow = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    from PIL import ImageDraw as _ID
+    gd = _ID.Draw(glow)
+    cx, cy = w // 2, int(h * 0.58)
+    for rr, a in [(520, 22), (380, 28), (260, 32), (160, 34)]:
+        gd.ellipse(
+            [cx - rr, cy - rr, cx + rr, cy + rr],
+            fill=(_TEAL[0], _TEAL[1], _TEAL[2], a),
+        )
+    glow = glow.filter(ImageFilter.GaussianBlur(radius=60))
+    bg = Image.alpha_composite(bg, glow)
+    return bg
+
+
+def _og_fit_font(draw, text: str, font_path: str, max_w: int, sizes: list[int]):
+    """Return (font, fitted_text) — largest font that fits, or ellipsized
+    smallest."""
+    from PIL import ImageFont
+    for sz in sizes:
+        try:
+            f = ImageFont.truetype(font_path, sz)
+        except (IOError, OSError):
+            return ImageFont.load_default(), text
+        if draw.textlength(text, font=f) <= max_w:
+            return f, text
+    # Still too wide at smallest — truncate char-by-char with ellipsis
+    f = ImageFont.truetype(font_path, sizes[-1])
+    ell = "…"
+    ell_w = draw.textlength(ell, font=f)
+    t = text
+    while t and draw.textlength(t, font=f) + ell_w > max_w:
+        t = t[:-1]
+    return f, (t + ell) if t else ell
+
+
+def _og_draw_pentagon_frame(draw, cx: int, cy: int, r: int):
+    """Draw an empty pentagon outline (frame only, no fills)."""
+    import math
+    pts = []
+    for i in range(5):
+        ang = math.radians(-90 + i * 72)
+        pts.append((cx + r * math.cos(ang), cy + r * math.sin(ang)))
+    # Outer soft glow (wider teal with low opacity)
+    draw.line(pts + [pts[0]], fill=(_TEAL[0], _TEAL[1], _TEAL[2], 60), width=18)
+    # Mid glow
+    draw.line(pts + [pts[0]], fill=(_TEAL[0], _TEAL[1], _TEAL[2], 110), width=8)
+    # Bright core outline
+    draw.line(pts + [pts[0]], fill=(_TEAL[0], _TEAL[1], _TEAL[2], 220), width=3)
+    # Vertex dots
+    for (x, y) in pts:
+        d = 6
+        draw.ellipse([x - d, y - d, x + d, y + d], fill=_TEAL + (255,))
+    return pts
+
+
+def _og_make_grade_badge(size: int, grade: str):
+    """Build a rounded-square grade badge as an RGBA image.
+
+    Matches the site's .grade-badge-lg CSS exactly:
+    - 3-stop linear gradient (135deg)
+    - White letter with drop shadow
+    - Subtle inner highlight
+    - Soft outer shadow
+    """
+    import numpy as np
+    from PIL import Image, ImageDraw, ImageFilter
+
+    stops = _GRADE_GRADIENT.get(grade, [(176, 190, 197)] * 3)
+    N = size
+
+    # 135deg gradient: top-left → bottom-right (normalized position)
+    x = np.linspace(0.0, 1.0, N, dtype=np.float32)
+    y = np.linspace(0.0, 1.0, N, dtype=np.float32)
+    X, Y = np.meshgrid(x, y)
+    pos = (X + Y) / 2.0  # 0 at TL, 1 at BR
+
+    c1 = np.array(stops[0], dtype=np.float32)
+    c2 = np.array(stops[1], dtype=np.float32)
+    c3 = np.array(stops[2], dtype=np.float32)
+
+    # 3-stop interpolation: 0→0.5 uses c1→c2, 0.5→1.0 uses c2→c3
+    t_low = np.clip(pos * 2.0, 0.0, 1.0)[..., None]
+    t_high = np.clip((pos - 0.5) * 2.0, 0.0, 1.0)[..., None]
+    low = c1 + (c2 - c1) * t_low
+    high = c2 + (c3 - c2) * t_high
+    mask = (pos < 0.5)[..., None]
+    rgb = np.where(mask, low, high).astype(np.uint8)
+
+    alpha = np.full((N, N, 1), 255, dtype=np.uint8)
+    rgba = np.concatenate([rgb, alpha], axis=-1)
+    body = Image.fromarray(rgba, "RGBA")
+
+    # Rounded corner mask (radius ~N/6 = matches 10px radius on 64px)
+    corner_r = max(4, N // 6)
+    mask_img = Image.new("L", (N, N), 0)
+    md = ImageDraw.Draw(mask_img)
+    md.rounded_rectangle([0, 0, N - 1, N - 1], radius=corner_r, fill=255)
+    body.putalpha(mask_img)
+
+    # Add subtle inner highlight (top edge)
+    hl = Image.new("RGBA", (N, N), (0, 0, 0, 0))
+    hd = ImageDraw.Draw(hl)
+    hd.rounded_rectangle(
+        [2, 2, N - 3, N // 2],
+        radius=corner_r - 2,
+        fill=(255, 255, 255, 30),
+    )
+    body = Image.alpha_composite(body, hl)
+
+    # Add thin dark border
+    border = Image.new("RGBA", (N, N), (0, 0, 0, 0))
+    bd = ImageDraw.Draw(border)
+    bd.rounded_rectangle(
+        [1, 1, N - 2, N - 2],
+        radius=corner_r - 1, outline=(0, 0, 0, 28), width=2,
+    )
+    body = Image.alpha_composite(body, border)
+
+    return body
+
+
+def _og_paste_grade_badge(img, x: int, y: int, size: int, grade: str, font):
+    """Paste a grade badge with drop shadow and white letter onto img."""
+    from PIL import Image, ImageDraw, ImageFilter
+
+    badge = _og_make_grade_badge(size, grade)
+
+    # Drop shadow (soft blur beneath the badge)
+    shadow_pad = max(12, size // 6)
+    shadow = Image.new("RGBA", (size + shadow_pad * 2, size + shadow_pad * 2), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(shadow)
+    corner_r = max(4, size // 6)
+    sd.rounded_rectangle(
+        [shadow_pad, shadow_pad + shadow_pad // 2,
+         shadow_pad + size, shadow_pad + size + shadow_pad // 2],
+        radius=corner_r, fill=(0, 0, 0, 110),
+    )
+    shadow = shadow.filter(ImageFilter.GaussianBlur(radius=shadow_pad // 2))
+    img.paste(shadow, (x - shadow_pad, y - shadow_pad), shadow)
+    img.paste(badge, (x, y), badge)
+
+    # White letter + drop shadow (matches CSS text-shadow)
+    draw = ImageDraw.Draw(img, "RGBA")
+    bb = draw.textbbox((0, 0), grade, font=font)
+    bw, bh = bb[2] - bb[0], bb[3] - bb[1]
+    # Nudge letter up slightly for optical balance (text hangs below baseline)
+    nudge = int(size * 0.02)
+    tx = x + (size - bw) // 2 - bb[0]
+    ty = y + (size - bh) // 2 - bb[1] - nudge
+    # Text shadow (2 layers for softness)
+    draw.text((tx + 2, ty + 4), grade, fill=(0, 0, 0, 110), font=font)
+    draw.text((tx + 1, ty + 2), grade, fill=(0, 0, 0, 60), font=font)
+    # Main letter
+    draw.text((tx, ty), grade, fill=(255, 255, 255, 255), font=font)
+    return draw
+
+
+async def _og_fetch_logo(logo_url: str, target_size: int, logger_):
+    """Fetch a tool logo and return a resized RGBA PIL image (or None)."""
+    if not logo_url:
+        return None
+    try:
+        import httpx
+        import io as _io
+        from PIL import Image
+        # Upgrade Google favicon size
+        if "google.com/s2/favicons" in logo_url and "sz=" in logo_url:
+            logo_url = logo_url.rsplit("sz=", 1)[0] + "sz=256"
+        async with httpx.AsyncClient(
+            timeout=6.0,
+            follow_redirects=True,
+            headers={"User-Agent": "Aixis-CardGen/2.0"},
+        ) as client:
+            resp = await client.get(logo_url)
+            if resp.status_code != 200 or len(resp.content) < 100:
+                return None
+            logo = Image.open(_io.BytesIO(resp.content)).convert("RGBA")
+            # Resize with aspect preserve, then center in a square
+            logo.thumbnail((target_size, target_size), Image.LANCZOS)
+            sq = Image.new("RGBA", (target_size, target_size), (0, 0, 0, 0))
+            ox = (target_size - logo.width) // 2
+            oy = (target_size - logo.height) // 2
+            sq.paste(logo, (ox, oy), logo)
+            return sq
+    except Exception as e:
+        if logger_:
+            logger_.warning("Logo fetch failed: %s", e)
+        return None
+
+
 @page_router.get("/card/{slug}.png")
 async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
-    """Generate a PNG card image for Google Images & social sharing.
+    """Dynamic OGP card for a tool (1200×630, dark neon theme).
 
-    Light-themed card matching the platform's tool detail card UI.
-    1200×630 (standard OG size). Shows tool name, logo, grade, overall score.
-    5-axis detail scores are intentionally omitted (paid feature).
+    Design principles:
+    - Pentagon frame (no fills) with the 5 axis LABELS only (no per-axis
+      scores — those are login-gated).
+    - Central total score fits inside the pentagon's inscribed circle.
+    - Header row: logo + name/vendor + grade badge. No divider lines that
+      could collide with pentagon labels.
+    - Grade badge matches site CSS exactly (3-stop gradient + white letter
+      + drop shadow + inner highlight).
+    - Supersampled at 2× and downscaled with LANCZOS for smooth edges.
     """
-    from .db.models.tool import Tool, ToolCategory
-    from .db.models.score import ToolPublishedScore
+    from .db.models.tool import Tool
     from sqlalchemy.orm import selectinload
+    import math
 
     result = await db.execute(
         select(Tool).where(Tool.slug == slug, Tool.is_public == True)  # noqa: E712
@@ -968,220 +1248,273 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
         from PIL import Image, ImageDraw, ImageFont
         import io as _io
     except ImportError:
-        logger.error("Pillow not installed — card image generation unavailable")
+        _page_logger.error("Pillow not installed — card image generation unavailable")
         return Response(status_code=503)
 
     latest_score = tool.scores[0] if tool.scores else None
     category_name = tool.category.name_jp if tool.category else ""
-    tool_name = tool.name_jp or tool.name or slug
-
-    # ── Colors (matching platform card UI) ──
-    W, H = 1200, 630
-    BG = (255, 255, 255)
-    BORDER = (232, 236, 241)   # #e8ecf1
-    DARK = (45, 55, 72)        # #2d3748
-    GRAY = (113, 128, 150)     # #718096
-    LIGHT = (160, 174, 192)    # #a0aec0
-    VLIGHT = (237, 242, 247)   # #edf2f7
-    BRAND = (26, 54, 93)       # #1a365d
-
-    GRADE_MID = {
-        "S": (212, 175, 55), "A": (56, 161, 105), "B": (43, 108, 176),
-        "C": (237, 137, 54), "D": (229, 62, 62),
-    }
-    GRADE_HI = {
-        "S": (230, 200, 90), "A": (85, 195, 135), "B": (80, 155, 210),
-        "C": (250, 165, 85), "D": (252, 130, 130),
-    }
-    GRADE_LO = {
-        "S": (175, 140, 20), "A": (40, 125, 82), "B": (35, 78, 125),
-        "C": (200, 100, 25), "D": (190, 40, 40),
-    }
-
-    def _score_color(v):
-        if v >= 4.0: return (56, 161, 105)
-        if v >= 3.0: return (43, 108, 176)
-        if v >= 2.0: return (214, 158, 46)
-        return (229, 62, 62)
+    tool_name = (tool.name_jp or tool.name or slug).strip()
 
     try:
-        img = Image.new("RGB", (W, H), BG)
-        draw = ImageDraw.Draw(img)
+        S = _OG_SS  # supersample
+        W, H = _OG_W * S, _OG_H * S
 
-        # ── Fonts (sized for impact) ──
+        # Build background (teal radial glow on dark gradient)
+        bg = _og_build_background(W, H)
+        img = bg.copy()
+        draw = ImageDraw.Draw(img, "RGBA")
+
+        # ── Fonts (scaled by S) ──
         _FD = Path(__file__).resolve().parent / "static" / "fonts"
         _FB = str(_FD / "NotoSansJP-Bold.ttf")
         _FM = str(_FD / "NotoSansJP-Medium.ttf")
-        try:
-            fn = ImageFont.truetype(_FB, 44)       # tool name — large
-            fv = ImageFont.truetype(_FM, 20)       # vendor
-            fc = ImageFont.truetype(_FM, 15)       # category pill
-            fg = ImageFont.truetype(_FB, 50)       # grade letter
-            fs = ImageFont.truetype(_FB, 156)      # hero score — very large
-            fu = ImageFont.truetype(_FM, 46)       # "/ 5.0"
-            fl = ImageFont.truetype(_FM, 20)       # "総合スコア" label
-            fbr = ImageFont.truetype(_FB, 14)      # footer brand
-            fbs = ImageFont.truetype(_FM, 12)      # footer sub
-        except (IOError, OSError):
-            _d = ImageFont.load_default()
-            fn = fv = fc = fg = fs = fu = fl = fbr = fbs = _d
 
-        PL, PR = 60, 60
-        draw.rounded_rectangle([0, 0, W - 1, H - 1], radius=12, outline=BORDER, width=2)
-
-        # ── Try to load the tool's logo from URL ──
-        logo_img = None
-        logo_size = 80
-        if tool.logo_url:
+        def _tt(path: str, sz: int):
             try:
-                import httpx
-                # Upgrade Google favicon size to 128 for sharper rendering
-                logo_url = tool.logo_url
-                if "google.com/s2/favicons" in logo_url and "sz=" in logo_url:
-                    logo_url = logo_url.rsplit("sz=", 1)[0] + "sz=128"
-                async with httpx.AsyncClient(
-                    timeout=8.0,
-                    follow_redirects=True,
-                    headers={"User-Agent": "Aixis-CardGen/1.0"},
-                ) as client:
-                    resp = await client.get(logo_url)
-                    if resp.status_code == 200 and len(resp.content) > 100:
-                        logo_img = Image.open(_io.BytesIO(resp.content)).convert("RGBA")
-                        logo_img = logo_img.resize((logo_size, logo_size), Image.LANCZOS)
-            except Exception as e:
-                logger.warning("Logo fetch failed for %s: %s", slug, e)
-                logo_img = None
+                return ImageFont.truetype(path, sz * S)
+            except (IOError, OSError):
+                return ImageFont.load_default()
 
-        # ── HEADER: Logo + Name/Vendor ... Grade badge ──
-        name_display = tool_name[:20]
-        name_bb = draw.textbbox((0, 0), name_display, font=fn)
-        name_h = name_bb[3] - name_bb[1]
+        fc = _tt(_FM, 15)          # category pill
+        fg_letter = _tt(_FB, 50)   # grade badge letter
+        fs = _tt(_FB, 100)         # hero score — sized to fit inside pentagon
+        fu = _tt(_FM, 28)          # "/ 5.0"
+        fl = _tt(_FM, 16)          # "総合スコア" label
+        fax = _tt(_FM, 19)         # pentagon axis labels
+        fbr = _tt(_FB, 16)         # footer brand "Aixis"
+        fbs = _tt(_FM, 13)         # footer subtitle / url
 
-        has_vendor = bool(tool.vendor)
-        vendor_display = (tool.vendor or "")[:28]
-        vendor_bb = draw.textbbox((0, 0), vendor_display, font=fv) if has_vendor else (0, 0, 0, 0)
-        vendor_h = vendor_bb[3] - vendor_bb[1] if has_vendor else 0
+        PL, PR = 60 * S, 60 * S
 
-        name_vendor_gap = 12 if has_vendor else 0
-        text_block_h = name_h + name_vendor_gap + (vendor_h if has_vendor else 0)
+        # ── Layout zones (carefully allocated so labels never collide) ──
+        # Header:      y=40..150  (height 110)
+        # Pentagon:    labels need y=160..540, pentagon r=150
+        # Footer:      y=560..600 (height 40)
+        header_top = 40 * S
+        footer_top = 560 * S
 
-        header_top = 44
-        logo_cy = header_top + logo_size // 2
-        text_block_top = logo_cy - text_block_h // 2
+        # ── Header: logo + name + vendor + grade badge ──
+        logo_size = 80 * S
+        logo_x = PL
+        logo_y = header_top
+        logo_cy = logo_y + logo_size // 2
 
-        # Draw logo
-        logo_x, logo_y = PL, header_top
+        # Grade badge (top right, same row as logo)
+        badge_size = 80 * S
+        badge_x = W - PR - badge_size
+        badge_y = logo_cy - badge_size // 2
+
+        # Load tool logo
+        logo_img = await _og_fetch_logo(tool.logo_url, int(logo_size * 0.85), _page_logger)
+
+        # Logo container (white rounded square with subtle shadow)
+        from PIL import ImageFilter as _IF
+        # Drop shadow for logo
+        lshadow = Image.new("RGBA", (logo_size + 24 * S, logo_size + 24 * S), (0, 0, 0, 0))
+        lsd = ImageDraw.Draw(lshadow)
+        lsd.rounded_rectangle(
+            [12 * S, 14 * S, 12 * S + logo_size, 14 * S + logo_size],
+            radius=16 * S, fill=(0, 0, 0, 90),
+        )
+        lshadow = lshadow.filter(_IF.GaussianBlur(radius=8 * S))
+        img.paste(lshadow, (logo_x - 12 * S, logo_y - 12 * S), lshadow)
+
+        # Container body
+        draw = ImageDraw.Draw(img, "RGBA")
+        draw.rounded_rectangle(
+            [logo_x, logo_y, logo_x + logo_size, logo_y + logo_size],
+            radius=16 * S, fill=(255, 255, 255, 250),
+            outline=(255, 255, 255, 80), width=1,
+        )
         if logo_img:
-            bg_patch = img.crop((logo_x, logo_y, logo_x + logo_size, logo_y + logo_size)).convert("RGBA")
-            bg_patch = Image.alpha_composite(bg_patch, logo_img)
-            img.paste(bg_patch.convert("RGB"), (logo_x, logo_y))
-            draw = ImageDraw.Draw(img)
+            inset = (logo_size - logo_img.width) // 2
+            img.paste(logo_img, (logo_x + inset, logo_y + inset), logo_img)
+            draw = ImageDraw.Draw(img, "RGBA")
         else:
-            # Placeholder: initial letter in a rounded square
-            draw.rounded_rectangle(
-                [logo_x, logo_y, logo_x + logo_size, logo_y + logo_size],
-                radius=18, fill=VLIGHT, outline=(215, 224, 232),
-            )
-            init_char = (tool_name[0] if tool_name else "?").upper()
-            fi = ImageFont.truetype(_FB, 36) if _FB else ImageFont.load_default()
+            # Initial letter fallback — styled like site's empty-state
+            init_char = (tool_name[:1] or "?").upper()
+            fi = _tt(_FB, 36)
             ib = draw.textbbox((0, 0), init_char, font=fi)
             iw, ih = ib[2] - ib[0], ib[3] - ib[1]
             draw.text(
                 (logo_x + (logo_size - iw) // 2 - ib[0],
                  logo_y + (logo_size - ih) // 2 - ib[1]),
-                init_char, fill=GRAY, font=fi,
+                init_char, fill=(71, 85, 105, 255), font=fi,
             )
 
-        # Draw name and vendor
-        nx = PL + logo_size + 24
-        name_y = text_block_top - name_bb[1]
-        draw.text((nx, name_y), name_display, fill=DARK, font=fn)
+        # Name text area bounds (between logo and badge)
+        name_x = logo_x + logo_size + 22 * S
+        name_max_w = badge_x - name_x - 24 * S
 
+        # Auto-fit tool name
+        name_font, name_display = _og_fit_font(
+            draw, tool_name, _FB, name_max_w,
+            [42 * S, 36 * S, 32 * S, 28 * S, 24 * S],
+        )
+        nb = draw.textbbox((0, 0), name_display, font=name_font)
+        name_h = nb[3] - nb[1]
+
+        # Vendor (auto-fit)
+        has_vendor = bool(tool.vendor)
+        vendor_display = ""
+        vendor_h = 0
+        vendor_font = None
         if has_vendor:
-            vendor_y = text_block_top + name_h + name_vendor_gap - vendor_bb[1]
-            draw.text((nx, vendor_y), vendor_display, fill=GRAY, font=fv)
+            vendor_font, vendor_display = _og_fit_font(
+                draw, tool.vendor.strip(), _FM, name_max_w, [20 * S, 18 * S, 16 * S],
+            )
+            vb = draw.textbbox((0, 0), vendor_display, font=vendor_font)
+            vendor_h = vb[3] - vb[1]
 
-        # Grade badge (top-right, vertically centered with logo)
-        if latest_score and latest_score.overall_grade:
-            grade = latest_score.overall_grade
-            gc = GRADE_MID.get(grade, (148, 163, 184))
-            gl = GRADE_HI.get(grade, gc)
-            gd = GRADE_LO.get(grade, gc)
-            bs = 72
-            bx = W - PR - bs
-            by = logo_cy - bs // 2
-            draw.rounded_rectangle([bx, by, bx + bs, by + bs], radius=14, fill=gc)
-            for i in range(5):
-                draw.line([(bx + 6, by + 2 + i), (bx + bs - 6, by + 2 + i)], fill=gl)
-            for i in range(4):
-                draw.line([(bx + 6, by + bs - 5 + i), (bx + bs - 6, by + bs - 5 + i)], fill=gd)
-            draw.rounded_rectangle([bx, by, bx + bs, by + bs], radius=14, outline=gd, width=2)
-            glb = draw.textbbox((0, 0), grade, font=fg)
-            glw, glh = glb[2] - glb[0], glb[3] - glb[1]
-            gx = bx + (bs - glw) // 2 - glb[0]
-            gy = by + (bs - glh) // 2 - glb[1]
-            draw.text((gx, gy), grade, fill=(255, 255, 255), font=fg)
+        # Category pill (small, above the tool name)
+        has_category = bool(category_name)
+        cat_h = 0
+        if has_category:
+            cb = draw.textbbox((0, 0), category_name, font=fc)
+            cat_h = (cb[3] - cb[1]) + 14 * S  # pill internal padding
 
-        # Category pill
-        header_bottom = header_top + logo_size
-        if category_name:
-            cat_y = header_bottom + 18
+        gap_name_vendor = 8 * S if has_vendor else 0
+        gap_cat_name = 10 * S if has_category else 0
+        block_h = cat_h + gap_cat_name + name_h + gap_name_vendor + vendor_h
+        block_top = logo_cy - block_h // 2
+
+        # Draw category pill above name
+        cursor_y = block_top
+        if has_category:
             cb = draw.textbbox((0, 0), category_name, font=fc)
             ctw = cb[2] - cb[0]
-            pill_h = 30
-            draw.rounded_rectangle([PL, cat_y, PL + ctw + 26, cat_y + pill_h], radius=7, fill=VLIGHT, outline=BORDER)
-            draw.text((PL + 13, cat_y + (pill_h - (cb[3] - cb[1])) // 2 - cb[1]), category_name, fill=GRAY, font=fc)
-            div_y = cat_y + pill_h + 18
-        else:
-            div_y = header_bottom + 30
+            pill_h = cat_h
+            pill_pad = 14 * S
+            draw.rounded_rectangle(
+                [name_x, cursor_y, name_x + ctw + pill_pad * 2, cursor_y + pill_h],
+                radius=7 * S, fill=(255, 255, 255, 20),
+                outline=(_TEAL[0], _TEAL[1], _TEAL[2], 80), width=1,
+            )
+            draw.text(
+                (name_x + pill_pad,
+                 cursor_y + (pill_h - (cb[3] - cb[1])) // 2 - cb[1]),
+                category_name, fill=(_TEAL[0], _TEAL[1], _TEAL[2], 230), font=fc,
+            )
+            cursor_y += pill_h + gap_cat_name
 
-        # Divider
-        draw.line([(PL, div_y), (W - PR, div_y)], fill=BORDER, width=1)
+        # Draw name
+        draw.text((name_x, cursor_y - nb[1]), name_display, fill=_FG + (255,), font=name_font)
+        cursor_y += name_h + gap_name_vendor
 
-        # ── CENTER HERO: Big overall score ──
-        footer_line_y = H - 48
-        hero_top = div_y + 4
-        hero_bottom = footer_line_y - 4
-        hero_cy = (hero_top + hero_bottom) // 2
+        # Draw vendor
+        if has_vendor:
+            draw.text(
+                (name_x, cursor_y - vb[1]),
+                vendor_display, fill=_FG_DIM + (255,), font=vendor_font,
+            )
 
-        # "総合スコア" label
+        # Grade badge (with gradient, white letter, shadow)
+        if latest_score and getattr(latest_score, "overall_grade", None):
+            _og_paste_grade_badge(
+                img, badge_x, badge_y, badge_size,
+                latest_score.overall_grade, fg_letter,
+            )
+            draw = ImageDraw.Draw(img, "RGBA")
+
+        # ── Pentagon + centered total score (NO divider lines above/below) ──
+        pent_cx = W // 2
+        # Center pentagon in the area between header and footer
+        main_top = max(logo_y + logo_size, block_top + block_h) + 24 * S
+        main_bot = footer_top - 24 * S
+        pent_cy = (main_top + main_bot) // 2
+        pent_r = 150 * S  # smaller — ensures labels stay inside main zone
+
+        _og_draw_pentagon_frame(draw, pent_cx, pent_cy, pent_r)
+
+        # Axis labels (exact names from aixis_agent/core/enums.py)
+        AXIS_NAMES = [
+            "実務適性",        # top
+            "費用対効果",      # top-right
+            "日本語能力",      # bottom-right
+            "信頼性・安全性",  # bottom-left
+            "革新性",          # top-left
+        ]
+        label_r = pent_r + 30 * S
+        # Label anchor offsets — how to place text relative to the computed
+        # point (0=centered, -1=above/left, +1=below/right on that axis).
+        label_offsets = [
+            (0, -1),           # top: center, above vertex
+            (0.85, -0.2),      # top-right: to the right, slightly above center
+            (0.55, 1),         # bottom-right: right, below vertex
+            (-0.55, 1),        # bottom-left: left, below vertex
+            (-0.85, -0.2),     # top-left: to the left, slightly above center
+        ]
+        for i, name in enumerate(AXIS_NAMES):
+            ang = math.radians(-90 + i * 72)
+            lx = pent_cx + label_r * math.cos(ang)
+            ly = pent_cy + label_r * math.sin(ang)
+            lb = draw.textbbox((0, 0), name, font=fax)
+            lw_, lh_ = lb[2] - lb[0], lb[3] - lb[1]
+            ox, oy = label_offsets[i]
+            tx = lx - lw_ / 2 + (ox * lw_ / 2) - lb[0]
+            ty = ly - lh_ / 2 + (oy * lh_ / 2) - lb[1]
+            draw.text((tx, ty), name, fill=_FG_DIM + (255,), font=fax)
+
+        # "総合スコア" label (above the score, inside pentagon)
         label_text = "総合スコア"
-        label_w = draw.textlength(label_text, font=fl)
+        lb = draw.textbbox((0, 0), label_text, font=fl)
+        lw_ = lb[2] - lb[0]
         draw.text(
-            (W // 2 - label_w / 2, hero_cy - 110),
-            label_text, fill=LIGHT, font=fl,
+            (pent_cx - lw_ // 2 - lb[0], pent_cy - 70 * S - lb[1]),
+            label_text, fill=_FG_DIM + (255,), font=fl,
         )
 
-        # Score number
+        # Hero score number (sized to fit inside pentagon's inscribed circle)
+        # Pentagon inscribed radius = pent_r * cos(36°) ≈ 0.809 * pent_r
+        # Inscribed width ≈ 2 * 0.809 * pent_r ≈ 243 at 1× (pent_r=150)
         if latest_score and latest_score.overall_score is not None:
-            overall = latest_score.overall_score
+            overall = float(latest_score.overall_score)
             s_str = f"{overall:.1f}"
             sb = draw.textbbox((0, 0), s_str, font=fs)
-            sw, sh = sb[2] - sb[0], sb[3] - sb[1]
+            sw_, sh_ = sb[2] - sb[0], sb[3] - sb[1]
             ub = draw.textbbox((0, 0), "/ 5.0", font=fu)
-            uw = ub[2] - ub[0]
-            uh = ub[3] - ub[1]
-            total_w = sw + 16 + uw
-            sx = W // 2 - total_w // 2
-            sy = hero_cy - 46
-            draw.text((sx, sy), s_str, fill=_score_color(overall), font=fs)
-            unit_y = sy + (sh - uh) + (sb[1] - ub[1])
-            draw.text((sx + sw + 16, unit_y), "/ 5.0", fill=LIGHT, font=fu)
+            uw_, uh_ = ub[2] - ub[0], ub[3] - ub[1]
+            gap_su = 10 * S
+            total_w = sw_ + gap_su + uw_
+            sx = pent_cx - total_w // 2 - sb[0]
+            # Vertical center, with slight optical compensation
+            sy = pent_cy - sh_ // 2 - sb[1] + 8 * S
+            draw.text((sx, sy), s_str, fill=_og_score_color(overall) + (255,), font=fs)
+            ux = sx + sw_ + gap_su + (sb[0] - ub[0])
+            # Align "/ 5.0" baseline with bottom of score
+            uy = sy + (sh_ - uh_) + (sb[1] - ub[1])
+            draw.text((ux, uy), "/ 5.0", fill=_FG_DIM + (255,), font=fu)
         else:
-            draw.text((W // 2 - 30, hero_cy - 20), "—", fill=LIGHT, font=fs)
+            placeholder = "—"
+            pb = draw.textbbox((0, 0), placeholder, font=fs)
+            pw_, ph_ = pb[2] - pb[0], pb[3] - pb[1]
+            draw.text(
+                (pent_cx - pw_ // 2 - pb[0], pent_cy - ph_ // 2 - pb[1] + 8 * S),
+                placeholder, fill=_FG_DIM + (255,), font=fs,
+            )
 
-        # ── Footer ──
-        draw.line([(PL, footer_line_y), (W - PR, footer_line_y)], fill=BORDER, width=1)
-        fy = footer_line_y + 10
-        draw.text((PL, fy), "Aixis", fill=BRAND, font=fbr)
-        draw.text((PL + 46, fy + 2), "独立AI監査プラットフォーム", fill=LIGHT, font=fbs)
+        # ── Footer (no divider line — keeps pentagon labels uncluttered) ──
+        fy = footer_top + 20 * S
+        draw.text((PL, fy), "Aixis", fill=_TEAL + (255,), font=fbr)
+        brand_bb = draw.textbbox((0, 0), "Aixis", font=fbr)
+        brand_w = brand_bb[2] - brand_bb[0]
+        draw.text(
+            (PL + brand_w + 10 * S, fy + 5 * S),
+            "独立AI監査プラットフォーム",
+            fill=_FG_DIM + (255,), font=fbs,
+        )
         url = "platform.aixis.jp"
         urb = draw.textbbox((0, 0), url, font=fbs)
-        draw.text((W - PR - (urb[2] - urb[0]), fy + 2), url, fill=LIGHT, font=fbs)
+        draw.text(
+            (W - PR - (urb[2] - urb[0]), fy + 5 * S),
+            url, fill=_FG_DIM + (255,), font=fbs,
+        )
 
-        # Encode
+        # Downscale to target dimensions for smooth edges
+        final = img.convert("RGB").resize((_OG_W, _OG_H), Image.LANCZOS)
+
         buf = _io.BytesIO()
-        img.save(buf, format="PNG", optimize=True)
+        final.save(buf, format="PNG", optimize=True)
         buf.seek(0)
         return Response(
             content=buf.getvalue(),
@@ -1193,7 +1526,7 @@ async def card_image(slug: str, db: AsyncSession = Depends(get_db)):
             },
         )
     except Exception:
-        logger.exception("Failed to generate card image for %s", slug)
+        _page_logger.exception("Failed to generate card image for %s", slug)
         return Response(status_code=500)
 
 
