@@ -5,7 +5,7 @@ Regenerate whenever the audit methodology version or site content changes:
     .venv/bin/python -m pip install reportlab   # first time only
     .venv/bin/python scripts/build_whitepaper.py
 
-Output → src/aixis_web/static/pdf/aixis-audit-whitepaper.pdf
+Output → src/aixis_web/static/pdf/aixis-audit-methodology-v1_0.pdf
 
 Design principles
 -----------------
