@@ -208,6 +208,7 @@ async def landing(
     """Landing page."""
     stats = await _get_platform_stats_for_ssr(db)
     ctx = _get_template_context(request, user=user, title="Aixis（アイクシス） | AIツール独立5軸監査・比較", active_page="home", stats=stats)
+    ctx["en_alternate"] = "/en"
     return _render("public/landing.html", ctx)
 
 
@@ -350,6 +351,7 @@ async def accessibility_page(request: Request, user: _OptionalUser = None):
 async def pricing_page(request: Request, user: _OptionalUser = None):
     """Pricing plans page."""
     ctx = _get_template_context(request, user=user, title="料金プラン | Aixis AI監査サービス", active_page="pricing")
+    ctx["en_alternate"] = "/en/pricing"
     return _render("public/pricing.html", ctx)
 
 
@@ -357,6 +359,7 @@ async def pricing_page(request: Request, user: _OptionalUser = None):
 async def audit_process_page(request: Request, user: _OptionalUser = None):
     """Audit process explanation page."""
     ctx = _get_template_context(request, user=user, title="Aixis監査プロセス | AI評価方法の詳細", active_page="audit-process")
+    ctx["en_alternate"] = "/en/audit-process"
     return _render("public/audit_process.html", ctx)
 
 
@@ -379,6 +382,45 @@ async def audit_protocol_page(request: Request, user: _OptionalUser = None):
     """Detailed audit protocol page."""
     ctx = _get_template_context(request, user=user, title="Aixis監査プロトコル | 5軸評価フレームワーク詳細", active_page="audit-protocol")
     return _render("public/audit_protocol.html", ctx)
+
+
+@page_router.get("/en")
+async def en_landing_page(request: Request, user: _OptionalUser = None):
+    """Phase D-1: English landing page."""
+    ctx = _get_template_context(
+        request,
+        user=user,
+        title="Aixis",
+        active_page="home",
+    )
+    ctx["ja_alternate"] = "/"
+    return _render("public/en/landing.html", ctx)
+
+
+@page_router.get("/en/audit-process")
+async def en_audit_process_page(request: Request, user: _OptionalUser = None):
+    """Phase D-1: English audit process page."""
+    ctx = _get_template_context(
+        request,
+        user=user,
+        title="How We Audit AI Tools",
+        active_page="audit-process",
+    )
+    ctx["ja_alternate"] = "/audit-process"
+    return _render("public/en/audit_process.html", ctx)
+
+
+@page_router.get("/en/pricing")
+async def en_pricing_page(request: Request, user: _OptionalUser = None):
+    """Phase D-1: English pricing page."""
+    ctx = _get_template_context(
+        request,
+        user=user,
+        title="Pricing",
+        active_page="pricing",
+    )
+    ctx["ja_alternate"] = "/pricing"
+    return _render("public/en/pricing.html", ctx)
 
 
 @page_router.get("/score-changelog")
@@ -825,6 +867,10 @@ _STATIC_PAGES = [
     ("/transparency", "monthly", "0.4"),
     ("/audit-protocol", "monthly", "0.4"),
     ("/score-changelog", "monthly", "0.3"),
+    # Phase D-1: English microsite
+    ("/en", "weekly", "0.7"),
+    ("/en/audit-process", "monthly", "0.4"),
+    ("/en/pricing", "monthly", "0.4"),
     ("/faq", "monthly", "0.5"),
     ("/contact", "monthly", "0.3"),
     ("/company", "monthly", "0.4"),

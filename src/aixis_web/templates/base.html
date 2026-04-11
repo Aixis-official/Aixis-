@@ -29,6 +29,7 @@
     {% block canonical %}{% endblock %}
     <link rel="alternate" hreflang="ja" href="https://platform.aixis.jp{{ request.path }}">
     <link rel="alternate" hreflang="x-default" href="https://platform.aixis.jp{{ request.path }}">
+    {% if en_alternate %}<link rel="alternate" hreflang="en" href="https://platform.aixis.jp{{ en_alternate }}">{% endif %}
     <!-- OGP -->
     <meta property="og:site_name" content="株式会社Aixis">
     <meta property="og:locale" content="ja_JP">

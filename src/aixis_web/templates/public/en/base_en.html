@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="author" content="Aixis">
+    {% block meta_robots %}<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">{% endblock %}
+    {% block meta_description %}{% endblock %}
+    {% block page_title_tag %}<title>{{ title | default("Aixis") }} — Independent AI Audit Platform</title>{% endblock %}
+
+    <!-- Favicon -->
+    <link rel="icon" href="/static/img/favicon.ico" sizes="16x16" type="image/x-icon">
+    <link rel="icon" href="/static/img/favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
+
+    {% block canonical %}{% endblock %}
+    {% block hreflang %}{% endblock %}
+
+    <!-- OGP -->
+    <meta property="og:site_name" content="Aixis">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="ja_JP">
+    {% block ogp %}
+    <meta property="og:title" content="{{ title | default('Aixis') }} — Independent AI Audit Platform">
+    <meta property="og:type" content="website">
+    <meta property="og:description" content="Aixis runs independent five-axis audits of AI tools for the Japanese enterprise market. Choose by data, not by feeling.">
+    <meta property="og:image" content="https://platform.aixis.jp/static/img/og/aixis-platform-ogp.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    {% endblock %}
+
+    {% block structured_data %}{% endblock %}
+
+    <!-- Tailwind CSS (shared with JA site) -->
+    <link rel="stylesheet" href="/static/css/tailwind.min.css?v=20260406e">
+    <link rel="stylesheet" href="/static/css/style.min.css?v=20260411b">
+
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .font-serif { font-family: "Times New Roman", Georgia, serif; }
+        .section-line { width: 32px; height: 1px; background: #cbd5e1; margin-bottom: 12px; }
+        .divider-thin { border: none; border-top: 1px solid #e5e7eb; margin-top: 24px; }
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col bg-white text-gray-900 leading-relaxed text-base">
+
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-white focus:text-gray-900 focus:rounded-md focus:shadow-lg focus:text-sm focus:font-bold">
+        Skip to content
+    </a>
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 w-full bg-white/90 backdrop-blur border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="/en" class="flex items-center gap-2.5 shrink-0">
+                    <img src="/static/img/Aixis-logo-final.png" alt="Aixis — Independent AI Audit Platform" class="h-10 w-auto rounded-sm" width="40" height="40">
+                </a>
+                <div class="hidden md:flex items-center gap-1">
+                    <a href="/en" class="relative px-3.5 py-2 text-sm font-medium tracking-wide {% if active_page == 'home' %}text-gray-900{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                        Home
+                        {% if active_page == 'home' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900"></span>{% endif %}
+                    </a>
+                    <a href="/en/audit-process" class="relative px-3.5 py-2 text-sm font-medium tracking-wide {% if active_page == 'audit-process' %}text-gray-900{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                        Audit Process
+                        {% if active_page == 'audit-process' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900"></span>{% endif %}
+                    </a>
+                    <a href="/en/pricing" class="relative px-3.5 py-2 text-sm font-medium tracking-wide {% if active_page == 'pricing' %}text-gray-900{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                        Pricing
+                        {% if active_page == 'pricing' %}<span class="absolute bottom-0 left-3.5 right-3.5 h-[1px] bg-gray-900"></span>{% endif %}
+                    </a>
+                    <a href="/tools" class="relative px-3.5 py-2 text-sm font-medium tracking-wide text-gray-500 hover:text-gray-900">
+                        Audit Database
+                    </a>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="{{ ja_alternate | default('/') }}" class="text-xs text-gray-500 hover:text-gray-900 tracking-wide" lang="ja" hreflang="ja">日本語</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main id="main-content" class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-gray-900 text-gray-400 text-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <p class="text-white font-bold tracking-wider">AIXIS</p>
+                    <p class="mt-3 text-gray-500 text-xs leading-relaxed">Independent five-axis audit platform for AI tools in the Japanese enterprise market. We accept no compensation from vendors.</p>
+                </div>
+                <div>
+                    <h3 class="text-white text-xs font-bold uppercase tracking-wider">Platform</h3>
+                    <ul class="mt-3 space-y-2 text-xs">
+                        <li><a href="/en/audit-process" class="hover:text-white transition-colors">Audit Process</a></li>
+                        <li><a href="/en/pricing" class="hover:text-white transition-colors">Pricing</a></li>
+                        <li><a href="/tools" class="hover:text-white transition-colors">Audit Database</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-white text-xs font-bold uppercase tracking-wider">Company</h3>
+                    <ul class="mt-3 space-y-2 text-xs">
+                        <li><a href="https://aixis.jp/company" class="hover:text-white transition-colors">About Aixis Inc.</a></li>
+                        <li><a href="/contact" class="hover:text-white transition-colors">Contact</a></li>
+                        <li><a href="{{ ja_alternate | default('/') }}" class="hover:text-white transition-colors" lang="ja" hreflang="ja">日本語版</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-10 pt-6 border-t border-gray-800 text-xs text-gray-500">
+                © 2026 Aixis Inc. — Independent. No vendor compensation accepted.
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
