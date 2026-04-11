@@ -54,7 +54,8 @@ def test_load_pattern_file(patterns_dir):
 def test_load_all_patterns(patterns_dir):
     if patterns_dir.exists():
         patterns = load_all_patterns(patterns_dir)
-        assert len(patterns) >= 2  # At least dialect + unicode_edge
+        assert len(patterns) >= 2  # catalog always ships multiple categories
         categories = [p["category"] for p in patterns]
-        assert "dialect" in categories
-        assert "unicode_edge" in categories
+        # Pin two representative canonical categories that currently ship.
+        assert "minutes_japanese" in categories
+        assert "slide_basic" in categories

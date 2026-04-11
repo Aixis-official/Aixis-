@@ -84,8 +84,10 @@ def test_scoring_with_errors():
 
 
 def test_overall_grade_mapping():
+    # Canonical thresholds per the methodology whitepaper:
+    # S >= 4.5, A >= 3.8, B >= 3.0, C >= 2.0, D < 2.0
     assert OverallGrade.from_score(4.5) == OverallGrade.S
-    assert OverallGrade.from_score(3.5) == OverallGrade.A
-    assert OverallGrade.from_score(2.5) == OverallGrade.B
-    assert OverallGrade.from_score(1.5) == OverallGrade.C
-    assert OverallGrade.from_score(1.0) == OverallGrade.D
+    assert OverallGrade.from_score(3.8) == OverallGrade.A
+    assert OverallGrade.from_score(3.0) == OverallGrade.B
+    assert OverallGrade.from_score(2.0) == OverallGrade.C
+    assert OverallGrade.from_score(1.9) == OverallGrade.D

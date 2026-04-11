@@ -192,16 +192,26 @@ class TestCostPerformanceScorer:
         assert score.axis == ScoreAxis.COST_PERFORMANCE
         assert 0.0 <= score.score <= 5.0
 
-    def test_confidence_is_zero(self):
-        """Cost performance is manual-only, so auto confidence must be 0."""
+    def test_confidence_is_capped_and_flags_manual(self):
+        """Cost performance uses hybrid auto signals but must still flag manual review.
+
+        The analyzer evolved from pure-manual into a hybrid scorer (response
+        speed / success rate / output quality). Auto confidence is capped at
+        0.3 so a manual business-ROI review is always required.
+        """
         results = [_make_result("cp-001", TestCategory.DIALECT)]
         cases = [_make_case("cp-001", TestCategory.DIALECT)]
         score = score_cost_performance(results, _build_cases_map(cases), {})
-        assert score.confidence == 0.0
 
-    def test_source_is_manual(self):
+        assert score.source == ScoreSource.HYBRID
+        assert 0.0 < score.confidence <= 0.3
+        assert any("手動評価" in r for r in score.risks)
+
+    def test_source_is_manual_when_no_signal(self):
+        """With no results the analyzer falls back to pure manual."""
         score = score_cost_performance([], {}, {})
         assert score.source == ScoreSource.MANUAL
+        assert score.confidence == 0.0
 
     def test_score_is_zero_without_manual_input(self):
         score = score_cost_performance([], {}, {})
@@ -220,16 +230,26 @@ class TestUniquenessScorer:
         assert score.axis == ScoreAxis.UNIQUENESS
         assert 0.0 <= score.score <= 5.0
 
-    def test_confidence_is_zero(self):
-        """Uniqueness is manual-only, so auto confidence must be 0."""
+    def test_confidence_is_capped_and_flags_manual(self):
+        """Uniqueness uses hybrid auto signals but must still flag manual review.
+
+        Output richness is evaluated automatically, but market differentiation
+        / competitive comparison remain manual-only. Auto confidence is capped
+        at 0.5 to make that constraint explicit.
+        """
         results = [_make_result("u-001", TestCategory.DIALECT)]
         cases = [_make_case("u-001", TestCategory.DIALECT)]
         score = score_uniqueness(results, _build_cases_map(cases), {})
-        assert score.confidence == 0.0
 
-    def test_source_is_manual(self):
+        assert score.source == ScoreSource.HYBRID
+        assert 0.0 < score.confidence <= 0.5
+        assert any("手動評価" in r for r in score.risks)
+
+    def test_source_is_manual_when_no_signal(self):
+        """With no results the analyzer falls back to pure manual."""
         score = score_uniqueness([], {}, {})
         assert score.source == ScoreSource.MANUAL
+        assert score.confidence == 0.0
 
     def test_score_is_zero_without_manual_input(self):
         score = score_uniqueness([], {}, {})
@@ -405,7 +425,15 @@ class TestAggregateAxisScores:
 
 
 class TestGradeMapping:
-    """Tests for OverallGrade.from_score on the 0.0-5.0 scale."""
+    """Tests for OverallGrade.from_score on the 0.0-5.0 scale.
+
+    Canonical thresholds (published in the methodology whitepaper):
+        S: >= 4.5
+        A: >= 3.8
+        B: >= 3.0
+        C: >= 2.0
+        D: <  2.0
+    """
 
     def test_s_grade_at_threshold(self):
         assert OverallGrade.from_score(4.5) == OverallGrade.S
@@ -414,7 +442,7 @@ class TestGradeMapping:
         assert OverallGrade.from_score(5.0) == OverallGrade.S
 
     def test_a_grade_at_threshold(self):
-        assert OverallGrade.from_score(3.5) == OverallGrade.A
+        assert OverallGrade.from_score(3.8) == OverallGrade.A
 
     def test_a_grade_mid_range(self):
         assert OverallGrade.from_score(4.0) == OverallGrade.A
@@ -423,19 +451,25 @@ class TestGradeMapping:
         assert OverallGrade.from_score(4.4) == OverallGrade.A
 
     def test_b_grade_at_threshold(self):
-        assert OverallGrade.from_score(2.5) == OverallGrade.B
-
-    def test_b_grade_mid_range(self):
         assert OverallGrade.from_score(3.0) == OverallGrade.B
 
-    def test_c_grade_at_threshold(self):
-        assert OverallGrade.from_score(1.5) == OverallGrade.C
+    def test_b_grade_mid_range(self):
+        assert OverallGrade.from_score(3.4) == OverallGrade.B
 
-    def test_c_grade_mid_range(self):
+    def test_b_grade_just_below_a(self):
+        assert OverallGrade.from_score(3.7) == OverallGrade.B
+
+    def test_c_grade_at_threshold(self):
         assert OverallGrade.from_score(2.0) == OverallGrade.C
 
+    def test_c_grade_mid_range(self):
+        assert OverallGrade.from_score(2.5) == OverallGrade.C
+
+    def test_c_grade_just_below_b(self):
+        assert OverallGrade.from_score(2.9) == OverallGrade.C
+
     def test_d_grade_below_threshold(self):
-        assert OverallGrade.from_score(1.4) == OverallGrade.D
+        assert OverallGrade.from_score(1.9) == OverallGrade.D
 
     def test_d_grade_zero(self):
         assert OverallGrade.from_score(0.0) == OverallGrade.D

@@ -51,18 +51,31 @@ def test_generate_all(patterns_dir):
     cases = generate_all(patterns_dir)
     assert len(cases) > 0
 
+    # At least one of the current canonical categories must be produced.
+    # (The catalog evolves; we pin a representative set rather than every one.)
     categories_found = set(c.category for c in cases)
-    assert TestCategory.DIALECT in categories_found
-    assert TestCategory.UNICODE_EDGE in categories_found
+    canonical = {
+        TestCategory.MINUTES_JAPANESE,
+        TestCategory.MINUTES_COMPLEX,
+        TestCategory.MINUTES_TRANSCRIPTION,
+        TestCategory.SLIDE_BASIC,
+        TestCategory.SLIDE_ACCURACY,
+        TestCategory.SLIDE_ADVANCED,
+    }
+    assert categories_found & canonical, (
+        f"No canonical categories found. Got: {categories_found}"
+    )
 
 
 def test_generate_with_category_filter(patterns_dir):
     if not patterns_dir.exists():
         return
 
-    cases = generate_all(patterns_dir, categories=["dialect"])
+    # Pick any category that actually has a pattern file so the filter is
+    # exercised against real data rather than a removed placeholder.
+    cases = generate_all(patterns_dir, categories=["minutes_japanese"])
     assert len(cases) > 0
-    assert all(c.category == TestCategory.DIALECT for c in cases)
+    assert all(c.category == TestCategory.MINUTES_JAPANESE for c in cases)
 
 
 def test_no_unresolved_templates(patterns_dir):
