@@ -170,6 +170,9 @@ def test_tool_detail_renders_with_score_overall_none():
         "public/about.html",
         "public/contact.html",
         "public/pricing.html",
+        "public/audit_protocol.html",
+        "public/score_changelog.html",
+        "public/faq.html",
     ],
 )
 def test_public_template_parses(template_name):

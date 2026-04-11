@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% set active_page = 'score-changelog' %}
+
+{% block meta_description %}
+<meta name="description" content="Aixisの監査プロトコル・スコアリング方法論の改訂履歴を時系列で公開。各バージョンで何がどう変わったか、再監査の対象範囲、影響を受けたツール群までを明示します。">
+{% endblock %}
+
+{% block meta_keywords %}
+<meta name="keywords" content="Aixis スコア改訂,AI監査 方法論 変更履歴,5軸評価 アップデート,スコアリング 改訂ログ,Aixis changelog">
+{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="https://platform.aixis.jp/score-changelog">
+{% endblock %}
+
+{% block ogp %}
+<meta property="og:title" content="スコア改訂履歴 - Aixis">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://platform.aixis.jp/score-changelog">
+<meta property="og:description" content="Aixisの監査プロトコル・スコアリング方法論の改訂履歴。各バージョンで何が変わったか、再監査の範囲を明示。">
+<meta property="og:image" content="https://platform.aixis.jp/static/img/og/aixis-platform-ogp.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:description" content="Aixisの監査プロトコル・スコアリング方法論の改訂履歴を時系列で公開しています。">
+{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"ホーム","item":"https://platform.aixis.jp/"},{"@type":"ListItem","position":2,"name":"監査プロトコル","item":"https://platform.aixis.jp/audit-protocol"},{"@type":"ListItem","position":3,"name":"スコア改訂履歴","item":"https://platform.aixis.jp/score-changelog"}]}
+</script>
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"Aixis スコアリング方法論 改訂履歴","description":"Aixisの監査プロトコル・5軸スコアリング方法論の公開改訂履歴。","author":{"@type":"Organization","name":"Aixis","url":"https://aixis.jp/"},"publisher":{"@type":"Organization","name":"Aixis","url":"https://aixis.jp/"},"inLanguage":"ja","mainEntityOfPage":"https://platform.aixis.jp/score-changelog"}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<section class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-left">
+        <nav class="mb-5" aria-label="パンくずリスト">
+            <ol class="flex items-center gap-1 text-xs text-gray-400 font-jp">
+                <li><a href="/" class="hover:text-aixis-500 transition-colors">ホーム</a></li>
+                <li><span class="mx-1 text-gray-300">/</span></li>
+                <li><a href="/audit-protocol" class="hover:text-aixis-500 transition-colors">監査プロトコル</a></li>
+                <li><span class="mx-1 text-gray-300">/</span></li>
+                <li class="text-gray-600 font-medium">スコア改訂履歴</li>
+            </ol>
+        </nav>
+        <div class="section-line"></div>
+        <span class="report-label font-serif text-gray-400">Score Methodology Changelog</span>
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 tracking-tight mt-2">
+            スコア改訂履歴
+        </h1>
+        <p class="mt-4 text-base sm:text-lg text-gray-600 max-w-2xl">
+            5軸評価フレームワークの公開リビジョン履歴。各改訂で何が変わり、どの範囲が再監査の対象になったかを記録します。
+        </p>
+        <hr class="divider-thin">
+    </div>
+</section>
+
+<!-- Intro / Policy -->
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+    <div class="section-line"></div>
+    <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+        改訂方針
+    </h2>
+    <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-serif">Revision Policy</p>
+    <hr class="divider-thin">
+
+    <div class="mt-8 space-y-4 text-sm text-gray-600 leading-relaxed">
+        <p>
+            Aixisの監査プロトコルおよびスコアリング方法論は、AIツール市場の進化に追従するため定期的に改訂されます。改訂は以下の3区分で管理し、過去スコアとの比較可能性を保ちます。
+        </p>
+        <div class="border border-gray-200 rounded-sm overflow-hidden bg-white">
+            <div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-200">
+                <div class="p-5">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-serif">Major</span>
+                    <p class="mt-2 text-sm font-bold text-gray-900">x.0.0</p>
+                    <p class="mt-2 text-xs text-gray-500 leading-relaxed">評価軸の追加・削除、配分比率の大幅変更。全ツールの再監査対象。</p>
+                </div>
+                <div class="p-5">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-serif">Minor</span>
+                    <p class="mt-2 text-sm font-bold text-gray-900">x.y.0</p>
+                    <p class="mt-2 text-xs text-gray-500 leading-relaxed">計測項目の追加・テストプロトコルの改善。該当カテゴリのみ再監査。</p>
+                </div>
+                <div class="p-5">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-serif">Patch</span>
+                    <p class="mt-2 text-sm font-bold text-gray-900">x.y.z</p>
+                    <p class="mt-2 text-xs text-gray-500 leading-relaxed">表記揺れ・文言の整理・誤記訂正。スコアへの影響はありません。</p>
+                </div>
+            </div>
+        </div>
+        <p class="text-xs text-gray-500 border-l-2 border-gray-200 pl-4">
+            本ページは追記専用（append-only）で運用しています。過去エントリの内容は訂正注記を伴う形でのみ更新されます。
+        </p>
+    </div>
+</section>
+
+<!-- Changelog Entries -->
+<section class="bg-gray-50 border-y border-gray-200">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div class="section-line"></div>
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-gray-900 tracking-tight">
+            改訂履歴
+        </h2>
+        <p class="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-serif">Revision Log</p>
+        <hr class="divider-thin">
+
+        <ol class="mt-10 space-y-8">
+
+            <!-- v1.1.0 -->
+            <li class="border border-gray-200 rounded-sm overflow-hidden bg-white">
+                <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-baseline justify-between gap-2">
+                    <h3 class="text-base font-bold text-gray-900 font-serif">v1.1.0</h3>
+                    <time class="text-xs text-gray-500 font-mono" datetime="2026-04-01">2026-04-01</time>
+                </div>
+                <div class="px-6 py-5 space-y-4 text-sm text-gray-600 leading-relaxed">
+                    <div>
+                        <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-50 text-blue-700 rounded-sm">Minor</span>
+                        <span class="ml-2 text-xs text-gray-400">該当カテゴリのみ再監査</span>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-900 font-jp">変更点</h4>
+                        <ul class="mt-2 space-y-1.5 text-sm text-gray-600">
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>「日本語能力」軸にビジネス敬語の自動評価サブテストを追加</li>
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>「信頼性・安全性」軸でデータ越境移転ポリシーを必須計測項目化</li>
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">~</span>応答速度の参考計測を全ツール共通の基準環境（東京リージョン）に統一</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-900 font-jp">影響範囲</h4>
+                        <p class="mt-1.5 text-sm text-gray-600">日本語能力・信頼性/安全性軸を持つ全ツール（汎用AI / オフィス / カスタマーサポート系を中心に再監査）</p>
+                    </div>
+                </div>
+            </li>
+
+            <!-- v1.0.1 -->
+            <li class="border border-gray-200 rounded-sm overflow-hidden bg-white">
+                <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-baseline justify-between gap-2">
+                    <h3 class="text-base font-bold text-gray-900 font-serif">v1.0.1</h3>
+                    <time class="text-xs text-gray-500 font-mono" datetime="2026-02-15">2026-02-15</time>
+                </div>
+                <div class="px-6 py-5 space-y-4 text-sm text-gray-600 leading-relaxed">
+                    <div>
+                        <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gray-100 text-gray-600 rounded-sm">Patch</span>
+                        <span class="ml-2 text-xs text-gray-400">スコアへの影響なし</span>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-900 font-jp">変更点</h4>
+                        <ul class="mt-2 space-y-1.5 text-sm text-gray-600">
+                            <li class="flex items-start gap-2"><span class="text-gray-400 shrink-0 mt-0.5">~</span>各軸の説明文の表記揺れを整理（「日本語能力 / Localization」表記に統一）</li>
+                            <li class="flex items-start gap-2"><span class="text-gray-400 shrink-0 mt-0.5">~</span>グレード境界値の数式表記を `>=` に統一</li>
+                        </ul>
+                    </div>
+                </div>
+            </li>
+
+            <!-- v1.0.0 -->
+            <li class="border border-gray-200 rounded-sm overflow-hidden bg-white">
+                <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-baseline justify-between gap-2">
+                    <h3 class="text-base font-bold text-gray-900 font-serif">v1.0.0</h3>
+                    <time class="text-xs text-gray-500 font-mono" datetime="2026-01-15">2026-01-15</time>
+                </div>
+                <div class="px-6 py-5 space-y-4 text-sm text-gray-600 leading-relaxed">
+                    <div>
+                        <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-amber-50 text-amber-700 rounded-sm">Major</span>
+                        <span class="ml-2 text-xs text-gray-400">初版公開</span>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-900 font-jp">変更点</h4>
+                        <ul class="mt-2 space-y-1.5 text-sm text-gray-600">
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>5軸評価フレームワークの初版を公開（実務適性 / 費用対効果 / 日本語能力 / 信頼性・安全性 / 革新性）</li>
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>S〜Dの5段階グレード制度を導入</li>
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>自動テスト60% / AI定性評価40% の加重平均モデルを採用</li>
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>90日サイクル定期再監査ポリシーを制定</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-900 font-jp">影響範囲</h4>
+                        <p class="mt-1.5 text-sm text-gray-600">監査公開対象の全ツール</p>
+                    </div>
+                </div>
+            </li>
+        </ol>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="bg-gradient-to-br from-[#0f172a] to-[#1e3a5f]">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <div class="section-line" style="--line-color: #334155;"></div>
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-white">監査プロトコルの全文を見る</h2>
+        <p class="mt-3 text-sm text-slate-300">5軸評価の詳細・スコアリング数式・再監査トリガーを公開しています</p>
+        <div class="mt-8 flex flex-wrap justify-center gap-4">
+            <a href="/audit-protocol"
+               class="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-bold bg-white text-[#0f172a] hover:bg-gray-100 shadow-sm transition-all duration-200">
+                監査プロトコルを読む
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+            </a>
+            <a href="/transparency"
+               class="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-bold text-white border border-white/30 hover:bg-white/10 transition-all duration-200">
+                透明性ポリシーを読む
+            </a>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

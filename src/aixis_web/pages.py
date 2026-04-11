@@ -377,6 +377,18 @@ async def audit_protocol_page(request: Request, user: _OptionalUser = None):
     return _render("public/audit_protocol.html", ctx)
 
 
+@page_router.get("/score-changelog")
+async def score_changelog_page(request: Request, user: _OptionalUser = None):
+    """Score methodology changelog — public revision history of the audit protocol."""
+    ctx = _get_template_context(
+        request,
+        user=user,
+        title="スコア改訂履歴 | Aixis監査プロトコル変更ログ",
+        active_page="score-changelog",
+    )
+    return _render("public/score_changelog.html", ctx)
+
+
 @page_router.get("/faq")
 async def faq_page(request: Request, user: _OptionalUser = None):
     """FAQ page with FAQPage structured data for rich results."""
@@ -808,6 +820,7 @@ _STATIC_PAGES = [
     ("/independence", "monthly", "0.4"),
     ("/transparency", "monthly", "0.4"),
     ("/audit-protocol", "monthly", "0.4"),
+    ("/score-changelog", "monthly", "0.3"),
     ("/faq", "monthly", "0.5"),
     ("/contact", "monthly", "0.3"),
     ("/company", "monthly", "0.4"),
