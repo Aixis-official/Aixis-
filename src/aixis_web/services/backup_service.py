@@ -21,6 +21,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
+from .._time import as_aware_utc, utc_now
 from ..config import settings
 
 logger = logging.getLogger(__name__)
@@ -708,7 +709,7 @@ def _verify_pg_after_restore(parsed) -> bool:
 def get_backup_health() -> dict:
     """Return backup system health status for monitoring dashboards."""
     backups = list_backups()
-    now = datetime.now(timezone.utc)
+    now = utc_now()
 
     # Find latest backup of each type
     latest_by_reason: dict[str, dict] = {}
@@ -717,25 +718,38 @@ def get_backup_health() -> dict:
         if reason not in latest_by_reason:
             latest_by_reason[reason] = b
 
-    # Check if hourly backup is stale (>2 hours old)
+    # Check if hourly backup is stale (>2 hours old).
+    #
+    # Historical bug: `(now - ts)` with naive ts (SQLite-style tz round-trip)
+    # raised TypeError and was silently swallowed, causing the health dashboard
+    # to *always* report hourly_ok=False. We now normalize timestamps through
+    # as_aware_utc() and log the error loudly if parsing genuinely fails.
     hourly_ok = False
     hourly_latest = latest_by_reason.get("hourly")
     if hourly_latest:
         try:
-            ts = datetime.fromisoformat(hourly_latest["created_at"])
-            hourly_ok = (now - ts) < timedelta(hours=2)
+            ts = as_aware_utc(hourly_latest["created_at"])
+            hourly_ok = ts is not None and (now - ts) < timedelta(hours=2)
         except Exception:
-            pass
+            logger.warning(
+                "Failed to parse hourly backup timestamp %r",
+                hourly_latest.get("created_at"),
+                exc_info=True,
+            )
 
-    # Check if daily backup exists within last 25 hours
+    # Check if daily backup exists within last 25 hours.
     daily_ok = False
     daily_latest = latest_by_reason.get("daily")
     if daily_latest:
         try:
-            ts = datetime.fromisoformat(daily_latest["created_at"])
-            daily_ok = (now - ts) < timedelta(hours=25)
+            ts = as_aware_utc(daily_latest["created_at"])
+            daily_ok = ts is not None and (now - ts) < timedelta(hours=25)
         except Exception:
-            pass
+            logger.warning(
+                "Failed to parse daily backup timestamp %r",
+                daily_latest.get("created_at"),
+                exc_info=True,
+            )
 
     # Overall health
     total_size_mb = sum(b["size_mb"] for b in backups)
