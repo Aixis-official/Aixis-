@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    name: pytest (template smoke)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install minimal test deps
+        # The full project pulls in weasyprint / asyncpg / Pillow which need
+        # OS libs. The Phase C-2 smoke tests only need Jinja2 + pytest, so we
+        # install the slim subset directly to keep CI fast and reliable.
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest jinja2
+
+      - name: Run template smoke tests
+        run: pytest tests/test_template_smoke.py -v --color=yes
+
+  jslint:
+    name: JS bundles parse cleanly
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate every shipped .min.js with `node -c`
+        # Catches the kind of dark-mode-removal artifact that broke
+        # tool-detail-page.min.js: literal SyntaxError in shipped JS that the
+        # browser only surfaces at runtime.
+        run: |
+          set -e
+          shopt -s nullglob
+          for f in src/aixis_web/static/js/*.min.js; do
+            echo "node -c $f"
+            node -c "$f"
+          done
+
+  ruff:
+    name: ruff (lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ruff
+        run: pip install "ruff>=0.8"
+
+      - name: Lint (non-blocking — surfaces issues without failing the build)
+        # We start ruff in non-blocking mode so the existing codebase doesn't
+        # turn red on day one. Flip `continue-on-error` to false once the
+        # backlog is cleaned up.
+        continue-on-error: true
+        run: ruff check src/aixis_web

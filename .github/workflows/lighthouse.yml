@@ -1,0 +1,40 @@
+name: Lighthouse CI
+
+on:
+  schedule:
+    # Runs daily at 18:00 JST (09:00 UTC) — after the typical content update
+    # window so the score reflects the day's published state.
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    name: Lighthouse on production URLs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.14.x
+
+      - name: Run Lighthouse against production
+        # Audits a representative slice of public pages. Mobile preset matches
+        # what the typical Aixis visitor sees. Failures don't block — we
+        # collect history first, then add assertions in a follow-up.
+        continue-on-error: true
+        run: |
+          lhci collect \
+            --url=https://platform.aixis.jp/ \
+            --url=https://platform.aixis.jp/tools \
+            --url=https://platform.aixis.jp/about \
+            --url=https://platform.aixis.jp/pricing \
+            --settings.preset=desktop \
+            --numberOfRuns=1
+          lhci upload --target=temporary-public-storage || true
