@@ -6,6 +6,18 @@
       "runtimeExecutable": "env",
       "runtimeArgs": ["PYTHONPATH=src", "DEBUG=true", "DATABASE_URL=sqlite+aiosqlite:////tmp/aixis_preview.db", "SCREENSHOTS_DIR=/tmp/aixis_screenshots", "UPLOADS_DIR=/tmp/aixis_uploads", ".venv/bin/python", "-m", "uvicorn", "aixis_web.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
       "port": 8000
+    },
+    {
+      "name": "aixis-corp",
+      "runtimeExecutable": "/Users/shiro/Downloads/aixis.jp/.venv/bin/python",
+      "runtimeArgs": ["-m", "uvicorn", "aixis_corp.app:app", "--host", "0.0.0.0", "--port", "8001", "--reload"],
+      "port": 8001,
+      "env": {
+        "PYTHONPATH": "/Users/shiro/Downloads/aixis.jp/src",
+        "DEBUG": "true",
+        "DATABASE_URL": "sqlite+aiosqlite:////tmp/aixis_corp_preview.db",
+        "UPLOADS_DIR": "/tmp/aixis_corp_uploads"
+      }
     }
   ]
 }

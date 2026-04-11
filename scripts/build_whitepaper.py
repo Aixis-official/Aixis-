@@ -1,4 +1,4 @@
-"""Phase D-2: Build the Aixis audit whitepaper PDF.
+"""Phase D-2 / Phase E-2: Build the Aixis 監査方法論書 PDF.
 
 Regenerate whenever the audit methodology version or site content changes:
 
@@ -220,7 +220,7 @@ def _draw_body(canvas, doc, f: dict[str, str]) -> None:
     canvas.drawRightString(
         width - 25 * mm,
         height - 15 * mm,
-        f"監査ホワイトペーパー  ·  方法論 {METHODOLOGY_VERSION}",
+        f"監査方法論書  ·  Audit Methodology  {METHODOLOGY_VERSION}",
     )
 
     # Bottom hairline + page number + copyright.
@@ -280,30 +280,35 @@ def _bullet(text: str, styles) -> Paragraph:
 def _axis_table(f, styles) -> Table:
     """5軸評価フレームワーク.
 
-    Content from /audit-protocol.html (meta description + axis breakdown).
-    Weights are *均等* (equal) per the site's explicit statement.
+    Content from /audit-protocol.html. Weights are equal (均等) per the
+    site's explicit statement; the English axis labels are used verbatim.
     """
     data = [
-        ["軸", "評価対象", "重み"],
-        ["実務適性",
-         "実際の業務フローにおける到達点・UX・統合容易性",
-         "20%"],
-        ["費用対効果",
-         "価格の透明性・無償枠・ROI",
-         "20%"],
-        ["日本語能力",
-         "UI・敬語・文書・サポートの日本語品質",
-         "20%"],
-        ["信頼性・安全性",
-         "セキュリティ・個人情報保護法対応・監査ログ",
-         "20%"],
-        ["革新性",
-         "差別化技術・ロードマップ・依存リスク",
-         "20%"],
+        ["軸", "評価観点", "重み"],
+        ["実務適性\nPracticality",
+         "業務フローにおける到達点、UXと操作性、既存環境への\n"
+         "統合容易性、出力品質の一貫性",
+         "均等"],
+        ["費用対効果\nCost Performance",
+         "料金体系の透明性、無償枠の実用性、有料プランの妥当性、\n"
+         "乗り換えコスト、応答速度",
+         "均等"],
+        ["日本語能力\nJapanese Readiness",
+         "UI日本語化、ビジネス日本語の適切性、日本語ドキュメント、\n"
+         "レイアウト・フォント対応",
+         "均等"],
+        ["信頼性・安全性\nSafety",
+         "データ保護とアクセス制御、監査ログ、保存場所と越境移転、\n"
+         "インシデント対応体制",
+         "均等"],
+        ["革新性\nUniqueness",
+         "独自技術・差別化機能、エコシステム、ロードマップ透明性、\n"
+         "APIラッパー依存度",
+         "均等"],
     ]
     t = Table(
         data,
-        colWidths=[32 * mm, 95 * mm, 18 * mm],
+        colWidths=[36 * mm, 95 * mm, 14 * mm],
         hAlign="LEFT",
     )
     t.setStyle(TableStyle([
@@ -328,18 +333,19 @@ def _axis_table(f, styles) -> Table:
 
 
 def _grade_table(f) -> Table:
-    """グレードスケール. Thresholds copied verbatim from /audit-protocol."""
+    """グレードスケール. Thresholds and 判定基準 copied verbatim from
+    /audit-protocol."""
     data = [
-        ["グレード", "総合スコア", "評価"],
-        ["S", "4.5 – 5.0", "最高評価"],
-        ["A", "3.8 – 4.4", "高品質・推奨"],
-        ["B", "3.0 – 3.7", "標準的"],
-        ["C", "2.0 – 2.9", "改善の余地あり"],
-        ["D", "0.0 – 1.9", "要注意"],
+        ["グレード", "総合スコア", "評価", "判定基準"],
+        ["S", "4.5 – 5.0", "最高評価", "全軸3.0以上 かつ 総合4.5以上"],
+        ["A", "3.8 – 4.4", "高品質・推奨", "全軸2.0以上 かつ 総合3.8以上"],
+        ["B", "3.0 – 3.7", "標準的", "致命的欠陥なし かつ 総合3.0以上"],
+        ["C", "2.0 – 2.9", "改善の余地あり", "複数軸で基準未達"],
+        ["D", "0.0 – 1.9", "要注意", "重大な品質問題あり"],
     ]
     t = Table(
         data,
-        colWidths=[24 * mm, 36 * mm, 85 * mm],
+        colWidths=[18 * mm, 26 * mm, 30 * mm, 71 * mm],
         hAlign="LEFT",
     )
     t.setStyle(TableStyle([
@@ -377,14 +383,14 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
     s.append(Paragraph("AIXIS AUDIT METHODOLOGY", styles["cover_kicker"]))
     s.append(
         Paragraph(
-            "AIツール監査<br/>ホワイトペーパー",
+            "監査方法論書",
             styles["cover_title"],
         )
     )
     s.append(
         Paragraph(
-            "独立監査による5軸評価で、<br/>"
-            "AI導入の意思決定をデータに変える。",
+            "独立系AI監査機関 Aixis が用いる<br/>"
+            "評価フレームワーク、採点ロジック、品質保証プロセスの全容。",
             styles["cover_sub"],
         )
     )
@@ -424,13 +430,15 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
     toc_lines = [
         "1.  はじめに — なぜ独立監査か",
         "2.  5軸評価フレームワーク",
-        "3.  スコア算出ロジック",
-        "4.  グレードスケール",
-        "5.  監査ライフサイクル",
-        "6.  再監査サイクル",
-        "7.  方法論バージョニング",
-        "8.  独立性4原則",
-        "9.  参考リンク",
+        "3.  スコア算出ロジックと採点式",
+        "4.  グレードスケールと判定基準",
+        "5.  品質保証プロセス",
+        "6.  監査信頼度メタ評価（BenchRisk準拠）",
+        "7.  監査ライフサイクル",
+        "8.  再監査サイクルと臨時トリガー",
+        "9.  方法論バージョニング",
+        "10.  独立性4原則",
+        "11.  参考リンク",
     ]
     for line in toc_lines:
         s.append(Paragraph(line, styles["toc_row"]))
@@ -443,25 +451,32 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
     s.append(Paragraph("はじめに — なぜ独立監査か", styles["h1"]))
 
     s.append(Paragraph(
-        "国内のAIツール市場は、ベンダー自身による発信、有償レビューサイト、"
-        "個人ブログが入り混じり、購買担当者が中立的な比較情報にたどり着くこと"
-        "が困難になっている。Aixisは、評価対象ベンダーから一切の金銭・成果"
-        "報酬・紹介手数料・広告費を受け取らないことを公開ポリシーとして"
-        "宣言する独立監査プラットフォームである。",
+        "国内のAIツール市場では、ベンダー自身による発信、有償レビューサイト、"
+        "個人ブログが入り混じり、購買担当者が中立的な比較情報に到達することが"
+        "難しくなっている。多くのレビューサイトは紹介手数料や広告費を主要収益と"
+        "しており、「高評価を付けるほど収益が増える」構造的な利益相反を抱えている。",
         styles["body"],
     ))
     s.append(Paragraph(
-        "本ホワイトペーパーは、platform.aixis.jp で公開されている監査プロトコル・"
-        "監査プロセス・透明性ポリシー・スコア改訂履歴の各公開ページに記載された"
-        "内容を、単一の参照文書として整理したものである。本書は購買担当者・"
-        "情報システム部門・法務部門が同時に確認できる一次資料として、社内稟議・"
-        "ベンダー選定資料への引用を想定している。",
+        "Aixisはこの構造的課題を解決するために設計された独立系AI監査機関である。"
+        "評価対象ベンダーから紹介手数料、広告費、掲載料、スポンサー費用を含む"
+        "いかなる名目の報酬も一切受け取らないことを公開ポリシーとして宣言し、"
+        "収益源を利用者組織からのサブスクリプション契約および個別監査レポートの"
+        "販売のみに限定している。",
         styles["body"],
     ))
     s.append(Paragraph(
-        "本書に記載される数値・手順・ポリシーはすべて platform.aixis.jp 上で"
-        "公開されている内容と一致する。相違がある場合は、常にウェブ上の"
-        "最新ページを正とする。",
+        "本書は、platform.aixis.jp で公開している監査プロトコル、監査プロセス、"
+        "透明性ポリシー、独立性宣言、スコア改訂履歴の各ページに記載された内容を、"
+        "単一の参照文書として再構成したものである。購買担当者・情報システム部門・"
+        "法務部門のそれぞれが社内稟議やベンダー選定資料の一次資料として引用できる"
+        "ことを意図している。",
+        styles["body"],
+    ))
+    s.append(Paragraph(
+        "本書に記載されている数値・手順・ポリシーはすべて platform.aixis.jp 上で"
+        "公開されている内容と一致する。相違がある場合は、常にウェブ上の最新ページを"
+        "正として扱う。",
         styles["body"],
     ))
 
@@ -473,14 +488,14 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
 
     s.append(Paragraph(
         "Aixisはすべての監査対象ツールを、実務適性・費用対効果・日本語能力・"
-        "信頼性/安全性・革新性の5つの独立した評価軸で採点する。各軸は"
-        "0.0〜5.0のスコアを持ち、標準の総合スコアでは5軸を均等に扱う。",
+        "信頼性/安全性・革新性の5つの独立した評価軸で採点する。各軸は0.0から"
+        "5.0までの連続スコアを持ち、標準の総合スコアでは5軸を均等に扱う。",
         styles["body"],
     ))
     s.append(KeepTogether(_axis_table(f, styles)))
     s.append(Paragraph(
-        "なお業界別ランキングでは、ユースケースに応じた重み付けが適用される"
-        "場合がある。重み付けが適用される場合は、ランキングページ上でその旨を"
+        "業界別ランキングでは、ユースケースに応じた重み付けが適用される場合が"
+        "ある。重み付けが適用される場合は、該当ランキングページ上でその旨を"
         "明示する。",
         styles["caption"],
     ))
@@ -489,12 +504,13 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
     # 3. Scoring formula
     # ======================================================================
     s.append(Paragraph("SECTION 03", styles["h1_number"]))
-    s.append(Paragraph("スコア算出ロジック", styles["h1"]))
+    s.append(Paragraph("スコア算出ロジックと採点式", styles["h1"]))
 
     s.append(Paragraph(
-        "各評価軸のスコアは、実環境での自動テスト結果と、監査担当者による"
-        "AI定性評価の加重平均で算出される。テストと定性評価の比率は固定で、"
-        "それぞれ60%と40%である。",
+        "各評価軸のスコアは、実環境での自動テスト結果と、AI定性評価による加重"
+        "平均で算出する。自動テストと定性評価の比率は固定で、それぞれ60%と"
+        "40%である。両者はいずれも0.0から5.0の範囲に正規化されたうえで合成"
+        "される。",
         styles["body"],
     ))
     s.append(Paragraph("3.1  軸スコア", styles["h2"]))
@@ -503,8 +519,9 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
         styles["formula"],
     ))
     s.append(Paragraph(
-        "自動テスト結果・AI定性評価はいずれも0.0〜5.0の範囲に正規化された"
-        "のちに合成される。",
+        "自動テストは実環境でのプロトコル実行により、応答速度・成功率・UI操作性・"
+        "日本語処理精度などの定量データを取得する。定性評価は主としてLLMによる"
+        "自動評価を基盤とし、必要に応じて手動チェックリストで補完する。",
         styles["body"],
     ))
     s.append(Paragraph("3.2  総合スコア", styles["h2"]))
@@ -514,7 +531,7 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
     ))
     s.append(Paragraph(
         "5軸の算術平均が総合スコアとなる。総合スコアは第4節で定めるグレード"
-        "スケールに従い、S〜Dの5段階のグレードにマッピングされる。",
+        "スケールに従い、S〜Dの5段階にマッピングされる。",
         styles["body"],
     ))
 
@@ -522,25 +539,92 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
     # 4. Grade scale
     # ======================================================================
     s.append(Paragraph("SECTION 04", styles["h1_number"]))
-    s.append(Paragraph("グレードスケール", styles["h1"]))
+    s.append(Paragraph("グレードスケールと判定基準", styles["h1"]))
 
     s.append(Paragraph(
-        "総合スコアは次の閾値でS〜Dの5段階に区分される。いずれの閾値も"
-        "platform.aixis.jp/audit-protocol に公開されている確定値である。",
+        "総合スコアは次の閾値でS〜Dの5段階に区分される。いずれの閾値および"
+        "判定基準も、platform.aixis.jp/audit-protocol に公開されている確定"
+        "値を転載したものである。",
         styles["body"],
     ))
     s.append(KeepTogether(_grade_table(f)))
     s.append(Paragraph(
-        "グレードは総合スコアのみならず、各軸の最低スコアも考慮して判定される。"
+        "グレードは総合スコアだけでなく、各軸の最低スコアも考慮して判定する。"
         "特定の軸が極端に低い場合、総合スコアが高くても上位グレードに判定され"
         "ないことがある。",
         styles["body"],
     ))
 
     # ======================================================================
-    # 5. Audit lifecycle
+    # 5. Quality Assurance
     # ======================================================================
     s.append(Paragraph("SECTION 05", styles["h1_number"]))
+    s.append(Paragraph("品質保証プロセス", styles["h1"]))
+
+    s.append(Paragraph(
+        "監査結果の品質は次の5段階の工程によって担保される。各工程は監査プロ"
+        "トコル（/audit-protocol）に「品質保証プロセス」として公開されている。",
+        styles["body"],
+    ))
+    qa_steps = [
+        ("5.1  独立評価者の選定",
+         "評価対象ベンダーとの利害関係がない評価者を選定する。利益相反チェック"
+         "を事前に実施し、評価を開始する前段階で構造的中立性を確認する。"),
+        ("5.2  ダブルチェック評価",
+         "手動評価結果はLLMによる自動評価との整合性を確認する。大きな乖離が"
+         "検出された場合はレビューを実施する。将来的に複数評価者体制への移行"
+         "を予定している。"),
+        ("5.3  自動テスト検証",
+         "LLMによる評価基準（ルーブリック）は定期的に検証・改善し、評価の一貫"
+         "性を確保する。"),
+        ("5.4  最終レビュー",
+         "シニアアナリストがすべてのスコアを最終レビューし、異常値の検出と"
+         "データ整合性の確認を行う。"),
+        ("5.5  公開前チェック",
+         "公開直前に、スコア・判定・コメントが監査プロトコルに準拠しているか"
+         "を最終確認したうえでデータベースに反映する。"),
+    ]
+    for head, body in qa_steps:
+        s.append(Paragraph(head, styles["h2"]))
+        s.append(Paragraph(body, styles["body"]))
+
+    # ======================================================================
+    # 6. Reliability meta-evaluation (BenchRisk-inspired)
+    # ======================================================================
+    s.append(Paragraph("SECTION 06", styles["h1_number"]))
+    s.append(Paragraph("監査信頼度メタ評価", styles["h1"]))
+
+    s.append(Paragraph(
+        "Aixisは評価結果そのものの信頼性についても定量的に検証する。"
+        "AVERI が提唱する BenchRisk フレームワークに着想を得た4次元の信頼度"
+        "指標を各監査セッションに対して自動算出し、監査プロトコル上で公開"
+        "している。",
+        styles["body"],
+    ))
+    reliability_dims = [
+        ("6.1  再現性 (Consistency)",
+         "同一条件での再実行時にスコアが安定するか。応答時間の変動係数と"
+         "エラー率で計測する。手動評価比率が高い軸は構造的に低くなる傾向が"
+         "あるため、手動評価の必要性の根拠にもなる。"),
+        ("6.2  正確性 (Correctness)",
+         "評価エンジンの確信度分布と、有効なエビデンス（非エラー応答）の"
+         "割合で計測する。自動スコアの信頼区間を定量化する役割を持つ。"),
+        ("6.3  網羅性 (Comprehensiveness)",
+         "テスト計画の完遂率とカテゴリカバー率で計測する。基本作成・構成力・"
+         "日本語品質・正確性・応用機能の各カテゴリを網羅的に実行したかを"
+         "評価する。"),
+        ("6.4  解釈性 (Intelligibility)",
+         "結果の解釈しやすさを評価する。応答データの充実度、軸スコアの詳細・"
+         "強み・リスク情報の付与率で計測する。"),
+    ]
+    for head, body in reliability_dims:
+        s.append(Paragraph(head, styles["h2"]))
+        s.append(Paragraph(body, styles["body"]))
+
+    # ======================================================================
+    # 7. Audit lifecycle
+    # ======================================================================
+    s.append(Paragraph("SECTION 07", styles["h1_number"]))
     s.append(Paragraph("監査ライフサイクル", styles["h1"]))
 
     s.append(Paragraph(
@@ -573,29 +657,34 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
         s.append(Paragraph(body, styles["body"]))
 
     # ======================================================================
-    # 6. Re-audit cadence
+    # 8. Re-audit cadence
     # ======================================================================
-    s.append(Paragraph("SECTION 06", styles["h1_number"]))
-    s.append(Paragraph("再監査サイクル", styles["h1"]))
+    s.append(Paragraph("SECTION 08", styles["h1_number"]))
+    s.append(Paragraph("再監査サイクルと臨時トリガー", styles["h1"]))
 
     s.append(Paragraph(
-        "Aixisは全ツールを原則として90日ごとに再監査し、スコアを更新する。"
-        "ツールの大幅なバージョンアップや重大なセキュリティインシデントが"
-        "確認された場合は、サイクルを待たず臨時再評価を実施する。",
+        "すべての監査対象ツールは原則として90日サイクルで定期再監査の対象と"
+        "なる。再監査では前回と同一のテストケースに加え、新たに追加されたテスト"
+        "ケースも適用される。",
+        styles["body"],
+    ))
+    s.append(Paragraph(
+        "定期サイクルを待たずに臨時再監査を実施するトリガーとして、AIモデルの"
+        "大幅な変更（基盤モデルの切り替え等）、重大なセキュリティインシデント、"
+        "料金体系・ポリシーの大幅な変更が挙げられる。",
         styles["body"],
     ))
     s.append(Paragraph(
         "再監査の対象となる方法論の変更は、スコア改訂履歴ページ"
-        "(platform.aixis.jp/score-changelog)で時系列に公開される。各"
-        "リビジョンで何が変わり、どの範囲が再監査対象となったかを、"
-        "改訂と同時に明示する。",
+        "(platform.aixis.jp/score-changelog) に時系列で公開される。各リビジョン"
+        "で何が変わり、どの範囲が再監査対象となったかを、改訂と同時に明示する。",
         styles["body"],
     ))
 
     # ======================================================================
-    # 7. Versioning
+    # 9. Versioning
     # ======================================================================
-    s.append(Paragraph("SECTION 07", styles["h1_number"]))
+    s.append(Paragraph("SECTION 09", styles["h1_number"]))
     s.append(Paragraph("方法論バージョニング", styles["h1"]))
 
     s.append(Paragraph(
@@ -620,9 +709,9 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
     ))
 
     # ======================================================================
-    # 8. Independence
+    # 10. Independence
     # ======================================================================
-    s.append(Paragraph("SECTION 08", styles["h1_number"]))
+    s.append(Paragraph("SECTION 10", styles["h1_number"]))
     s.append(Paragraph("独立性4原則", styles["h1"]))
 
     s.append(Paragraph(
@@ -631,14 +720,14 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
         styles["body"],
     ))
 
-    s.append(Paragraph("8.1  ベンダーからの報酬受領の完全禁止", styles["h2"]))
+    s.append(Paragraph("10.1  ベンダーからの報酬受領の完全禁止", styles["h2"]))
     s.append(Paragraph(
         "紹介手数料、広告費、掲載料、スポンサーシップその他いかなる名目に"
         "おいても、評価対象ベンダーからの報酬を受け取らない。",
         styles["body"],
     ))
 
-    s.append(Paragraph("8.2  収益源の限定と公開", styles["h2"]))
+    s.append(Paragraph("10.2  収益源の限定と公開", styles["h2"]))
     s.append(Paragraph(
         "収益は利用者組織からのサブスクリプション契約および個別監査レポート"
         "の販売に限定される。収益モデルは常に公開され、変更がある場合は"
@@ -646,14 +735,14 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
         styles["body"],
     ))
 
-    s.append(Paragraph("8.3  掲載順序の中立性", styles["h2"]))
+    s.append(Paragraph("10.3  掲載順序の中立性", styles["h2"]))
     s.append(Paragraph(
         "ツールの掲載順序はスコアに基づいてのみ決定される。有料枠、優先掲載、"
         "スポンサード表示は一切存在しない。",
         styles["body"],
     ))
 
-    s.append(Paragraph("8.4  評価者の利益相反チェック", styles["h2"]))
+    s.append(Paragraph("10.4  評価者の利益相反チェック", styles["h2"]))
     s.append(Paragraph(
         "手動評価を行う評価者は、評価対象ベンダーとの利害関係がないことを"
         "事前に申告・確認する。",
@@ -661,9 +750,9 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
     ))
 
     # ======================================================================
-    # 9. References
+    # 11. References
     # ======================================================================
-    s.append(Paragraph("SECTION 09", styles["h1_number"]))
+    s.append(Paragraph("SECTION 11", styles["h1_number"]))
     s.append(Paragraph("参考リンク", styles["h1"]))
 
     s.append(Paragraph(
@@ -709,11 +798,11 @@ def main() -> None:
         rightMargin=25 * mm,
         topMargin=25 * mm,
         bottomMargin=25 * mm,
-        title="Aixis AIツール監査ホワイトペーパー",
+        title="Aixis 監査方法論書 — Audit Methodology",
         author="株式会社Aixis",
-        subject=f"AIツール監査メソドロジー {METHODOLOGY_VERSION}",
+        subject=f"Aixis Audit Methodology {METHODOLOGY_VERSION}",
         creator="scripts/build_whitepaper.py",
-        keywords="Aixis, AI監査, 独立監査, 5軸評価, whitepaper",
+        keywords="Aixis, AI監査, 独立監査, 5軸評価, 監査方法論書, methodology",
     )
 
     cover_frame = Frame(
