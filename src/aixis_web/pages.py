@@ -968,10 +968,10 @@ async def sitemap_xml(db: AsyncSession = Depends(get_db)):
 
     # Category pages
     cat_result = await db.execute(
-        select(ToolCategory.slug, ToolCategory.name_jp, ToolCategory.name)
+        select(ToolCategory.slug, ToolCategory.name_jp, ToolCategory.name_en)
     )
-    for (cat_slug, cat_name_jp, cat_name) in cat_result.all():
-        cat_display = html_escape(cat_name_jp or cat_name or cat_slug)
+    for (cat_slug, cat_name_jp, cat_name_en) in cat_result.all():
+        cat_display = html_escape(cat_name_jp or cat_name_en or cat_slug)
         lines.append(
             f"  <url><loc>{SITE_ORIGIN}/categories/{cat_slug}</loc>"
             f"<changefreq>weekly</changefreq>"
