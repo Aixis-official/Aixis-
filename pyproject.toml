@@ -24,7 +24,7 @@ dependencies = [
     "python-jose[cryptography]>=3.3",
     "passlib[bcrypt]>=1.7",
     "python-multipart>=0.0.12",
-    "httpx>=0.28",
+    "httpx>=0.28.1",
     # htmx is loaded via CDN in templates, not a Python package
     # Background tasks
     "arq>=0.26",
