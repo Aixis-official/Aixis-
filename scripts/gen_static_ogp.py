@@ -96,9 +96,9 @@ def render_brand_card(
         (pent_col_cx - iw // 2 - ib[0], pent_cy - 8 * S - ib[1]),
         inner_text, fill=(_TEAL[0], _TEAL[1], _TEAL[2], 200), font=fc,
     )
-    # Subtle "AIXIS" underneath
+    # Subtle "Aixis" underneath
     fa = _tt(SANS_BOLD, 16)
-    aixis_text = "AIXIS"
+    aixis_text = "Aixis"
     ab = draw.textbbox((0, 0), aixis_text, font=fa)
     aw = ab[2] - ab[0]
     draw.text(

@@ -244,7 +244,7 @@ def _draw_body(canvas, doc, f: dict[str, str]) -> None:
 
     canvas.setFont(f["sans_bold"], 7.5)
     canvas.setFillColor(INK_MUTED)
-    canvas.drawString(PAGE_MARGIN, height - HEADER_Y + 5, "AIXIS")
+    canvas.drawString(PAGE_MARGIN, height - HEADER_Y + 5, "Aixis")
     canvas.setFont(f["sans"], 7.5)
     canvas.drawRightString(
         width - PAGE_MARGIN,
@@ -286,7 +286,7 @@ def _draw_cover(canvas, doc, f: dict[str, str]) -> None:
     # Tiny sans wordmark above the rule.
     canvas.setFont(f["sans_bold"], 8.5)
     canvas.setFillColor(INK)
-    canvas.drawString(PAGE_MARGIN, height - 23 * mm, "AIXIS")
+    canvas.drawString(PAGE_MARGIN, height - 23 * mm, "Aixis")
 
     # Footer: a single slate-900 hairline + meta strip.
     canvas.setStrokeColor(RULE)
@@ -452,7 +452,7 @@ def _build_story(
     # Cover page
     # ======================================================================
     s.append(Spacer(1, 84 * mm))
-    s.append(Paragraph("AIXIS AUDIT METHODOLOGY", styles["cover_kicker"]))
+    s.append(Paragraph("Aixis Audit Methodology", styles["cover_kicker"]))
     s.append(
         Paragraph(
             "監査方法論書",
