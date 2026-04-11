@@ -62,11 +62,14 @@ OUT_DIR = REPO_ROOT / "src" / "aixis_web" / "static" / "pdf"
 OUT_PATH = OUT_DIR / "aixis-audit-methodology-v1_0.pdf"
 
 # Methodology version and publication date — mirrors the public
-# /score-changelog page. The initial public methodology (v1.0.0) was
-# published on 2026-03-15 when /audit-protocol first went live; no
-# substantive revisions have been applied since.
+# /score-changelog page.
 METHODOLOGY_VERSION = "v1.0.0"
-PUBLISHED_ON = date(2026, 3, 15)
+PUBLISHED_ON = date(2026, 4, 11)
+
+
+def _format_jp_date(d: date) -> str:
+    """Render a date as ``2026年4月11日`` (no zero-padding on month/day)."""
+    return f"{d.year}年{d.month}月{d.day}日"
 
 # Design tokens — identical palette to the web UI.
 INK = HexColor("#0f172a")   # slate-900 — body
@@ -124,80 +127,80 @@ def _make_styles(f: dict[str, str]) -> dict[str, ParagraphStyle]:
         "cover_kicker": ParagraphStyle(
             "cover_kicker", parent=base,
             fontName=f["sans_bold"], fontSize=9, leading=14,
-            textColor=INK_DIM, alignment=TA_LEFT, spaceAfter=10,
-            # generous letter-spacing via a trailing character trick isn't
-            # available in ReportLab, so we rely on the uppercase Latin
-            # kicker for visual contrast with the serif title below.
+            textColor=INK_DIM, alignment=TA_LEFT, spaceAfter=14,
         ),
         "cover_title": ParagraphStyle(
             "cover_title", parent=base,
-            fontName=f["serif_bold"], fontSize=30, leading=42,
-            textColor=INK, alignment=TA_LEFT, spaceAfter=14,
+            fontName=f["serif_bold"], fontSize=32, leading=48,
+            textColor=INK, alignment=TA_LEFT, spaceAfter=18,
         ),
         "cover_sub": ParagraphStyle(
             "cover_sub", parent=base,
-            fontName=f["serif"], fontSize=11.5, leading=22,
-            textColor=INK_DIM, alignment=TA_LEFT, spaceAfter=24,
+            fontName=f["serif"], fontSize=11.5, leading=24,
+            textColor=INK_DIM, alignment=TA_LEFT, spaceAfter=28,
         ),
         "cover_meta_label": ParagraphStyle(
             "cover_meta_label", parent=base,
             fontName=f["sans_bold"], fontSize=7, leading=12,
-            textColor=INK_MUTED, alignment=TA_LEFT, spaceAfter=0,
+            textColor=INK_MUTED, alignment=TA_LEFT, spaceAfter=2,
         ),
         "cover_meta_value": ParagraphStyle(
             "cover_meta_value", parent=base,
-            fontName=f["serif"], fontSize=11, leading=18,
+            fontName=f["serif"], fontSize=11, leading=20,
             textColor=INK, alignment=TA_LEFT, spaceAfter=4,
         ),
-        # Running body
+        # Running body. `h1_number` carries the generous top air before a
+        # new section starts; `h1` sits flush below it with no extra top
+        # space so kicker + title read as a unit.
         "h1_number": ParagraphStyle(
             "h1_number", parent=base,
             fontName=f["sans_bold"], fontSize=8, leading=12,
-            textColor=INK_MUTED, spaceBefore=16, spaceAfter=2,
+            textColor=INK_MUTED, spaceBefore=32, spaceAfter=4,
         ),
         "h1": ParagraphStyle(
             "h1", parent=base,
-            fontName=f["serif_bold"], fontSize=17, leading=26,
-            textColor=INK, spaceBefore=0, spaceAfter=12, keepWithNext=True,
+            fontName=f["serif_bold"], fontSize=18, leading=28,
+            textColor=INK, spaceBefore=0, spaceAfter=18, keepWithNext=True,
         ),
         "h2": ParagraphStyle(
             "h2", parent=base,
-            fontName=f["serif_bold"], fontSize=12, leading=20,
-            textColor=INK, spaceBefore=14, spaceAfter=6, keepWithNext=True,
+            fontName=f["serif_bold"], fontSize=12, leading=22,
+            textColor=INK, spaceBefore=20, spaceAfter=8, keepWithNext=True,
         ),
         "body": ParagraphStyle(
             "body", parent=base,
-            fontName=f["serif"], fontSize=10.5, leading=19,
-            textColor=INK, alignment=TA_JUSTIFY, spaceAfter=9,
+            fontName=f["serif"], fontSize=10.5, leading=20,
+            textColor=INK, alignment=TA_JUSTIFY, spaceAfter=11,
             firstLineIndent=0,
         ),
         "quote": ParagraphStyle(
             "quote", parent=base,
-            fontName=f["serif"], fontSize=10, leading=18,
-            textColor=INK_DIM, alignment=TA_LEFT, spaceAfter=9,
-            leftIndent=14, rightIndent=14,
+            fontName=f["serif"], fontSize=10, leading=19,
+            textColor=INK_DIM, alignment=TA_LEFT, spaceAfter=11,
+            leftIndent=16, rightIndent=16,
             borderPadding=(0, 0, 0, 0),
         ),
         "bullet": ParagraphStyle(
             "bullet", parent=base,
-            fontName=f["serif"], fontSize=10.5, leading=19,
-            textColor=INK, alignment=TA_LEFT, spaceAfter=4,
-            leftIndent=16, firstLineIndent=-10,
+            fontName=f["serif"], fontSize=10.5, leading=20,
+            textColor=INK, alignment=TA_LEFT, spaceAfter=6,
+            leftIndent=18, firstLineIndent=-11,
         ),
         "formula": ParagraphStyle(
             "formula", parent=base,
-            fontName=f["sans"], fontSize=10, leading=18,
-            textColor=INK, alignment=TA_LEFT, spaceAfter=9,
-            leftIndent=14,
+            fontName=f["sans"], fontSize=10, leading=19,
+            textColor=INK, alignment=TA_LEFT, spaceAfter=12,
+            spaceBefore=2,
+            leftIndent=16,
         ),
         "caption": ParagraphStyle(
             "caption", parent=base,
-            fontName=f["sans"], fontSize=7.5, leading=12,
-            textColor=INK_MUTED, alignment=TA_LEFT, spaceBefore=4, spaceAfter=14,
+            fontName=f["sans"], fontSize=7.5, leading=13,
+            textColor=INK_MUTED, alignment=TA_LEFT, spaceBefore=6, spaceAfter=18,
         ),
         "toc_row": ParagraphStyle(
             "toc_row", parent=base,
-            fontName=f["serif"], fontSize=10.5, leading=22,
+            fontName=f["serif"], fontSize=11, leading=26,
             textColor=INK, alignment=TA_LEFT,
         ),
     }
@@ -207,6 +210,11 @@ def _make_styles(f: dict[str, str]) -> dict[str, ParagraphStyle]:
 # Page chrome
 # ---------------------------------------------------------------------------
 
+PAGE_MARGIN = 28 * mm   # outer page margin (left/right)
+HEADER_Y = 22 * mm      # distance from top to the running header hairline
+FOOTER_Y = 22 * mm      # distance from bottom to the running footer hairline
+
+
 def _draw_body(canvas, doc, f: dict[str, str]) -> None:
     """Running header + footer for every non-cover page."""
     width, height = A4
@@ -215,29 +223,35 @@ def _draw_body(canvas, doc, f: dict[str, str]) -> None:
     # Top hairline with tiny brand mark on the left and context on the right.
     canvas.setStrokeColor(RULE)
     canvas.setLineWidth(0.3)
-    canvas.line(25 * mm, height - 20 * mm, width - 25 * mm, height - 20 * mm)
+    canvas.line(
+        PAGE_MARGIN, height - HEADER_Y,
+        width - PAGE_MARGIN, height - HEADER_Y,
+    )
 
     canvas.setFont(f["sans_bold"], 7.5)
     canvas.setFillColor(INK_MUTED)
-    canvas.drawString(25 * mm, height - 15 * mm, "AIXIS")
+    canvas.drawString(PAGE_MARGIN, height - HEADER_Y + 5, "AIXIS")
     canvas.setFont(f["sans"], 7.5)
     canvas.drawRightString(
-        width - 25 * mm,
-        height - 15 * mm,
+        width - PAGE_MARGIN,
+        height - HEADER_Y + 5,
         f"監査方法論書  ·  Audit Methodology  {METHODOLOGY_VERSION}",
     )
 
     # Bottom hairline + page number + copyright.
     canvas.setStrokeColor(RULE)
-    canvas.line(25 * mm, 20 * mm, width - 25 * mm, 20 * mm)
+    canvas.line(
+        PAGE_MARGIN, FOOTER_Y,
+        width - PAGE_MARGIN, FOOTER_Y,
+    )
     canvas.setFont(f["sans"], 7.5)
     canvas.setFillColor(INK_MUTED)
     canvas.drawString(
-        25 * mm, 14 * mm,
-        f"© 2026 株式会社Aixis   発行日 {PUBLISHED_ON.isoformat()}",
+        PAGE_MARGIN, FOOTER_Y - 6,
+        f"© 2026 株式会社Aixis   発行日 {_format_jp_date(PUBLISHED_ON)}",
     )
     canvas.drawRightString(
-        width - 25 * mm, 14 * mm, f"— {doc.page - 1} —"
+        width - PAGE_MARGIN, FOOTER_Y - 6, f"— {doc.page - 1} —"
     )
     canvas.restoreState()
 
@@ -250,25 +264,31 @@ def _draw_cover(canvas, doc, f: dict[str, str]) -> None:
     # Thin serif rule near the top, flush with the text frame.
     canvas.setStrokeColor(INK)
     canvas.setLineWidth(0.6)
-    canvas.line(25 * mm, height - 25 * mm, 25 * mm + 45 * mm, height - 25 * mm)
+    canvas.line(
+        PAGE_MARGIN, height - 27 * mm,
+        PAGE_MARGIN + 48 * mm, height - 27 * mm,
+    )
 
     # Tiny sans wordmark above the rule.
     canvas.setFont(f["sans_bold"], 8.5)
     canvas.setFillColor(INK)
-    canvas.drawString(25 * mm, height - 21 * mm, "AIXIS")
+    canvas.drawString(PAGE_MARGIN, height - 23 * mm, "AIXIS")
 
     # Footer: a single slate-900 hairline + meta strip.
     canvas.setStrokeColor(RULE)
     canvas.setLineWidth(0.3)
-    canvas.line(25 * mm, 25 * mm, width - 25 * mm, 25 * mm)
+    canvas.line(
+        PAGE_MARGIN, 27 * mm,
+        width - PAGE_MARGIN, 27 * mm,
+    )
     canvas.setFont(f["sans"], 7.5)
     canvas.setFillColor(INK_MUTED)
     canvas.drawString(
-        25 * mm, 19 * mm,
-        f"方法論 {METHODOLOGY_VERSION}    発行日 {PUBLISHED_ON.isoformat()}",
+        PAGE_MARGIN, 21 * mm,
+        f"方法論 {METHODOLOGY_VERSION}    発行日 {_format_jp_date(PUBLISHED_ON)}",
     )
     canvas.drawRightString(
-        width - 25 * mm, 19 * mm, "platform.aixis.jp"
+        width - PAGE_MARGIN, 21 * mm, "platform.aixis.jp"
     )
     canvas.restoreState()
 
@@ -383,7 +403,7 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
     # ======================================================================
     # Cover page
     # ======================================================================
-    s.append(Spacer(1, 70 * mm))
+    s.append(Spacer(1, 78 * mm))
     s.append(Paragraph("AIXIS AUDIT METHODOLOGY", styles["cover_kicker"]))
     s.append(
         Paragraph(
@@ -398,7 +418,7 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
             styles["cover_sub"],
         )
     )
-    s.append(Spacer(1, 30 * mm))
+    s.append(Spacer(1, 36 * mm))
 
     # Cover meta grid
     meta = [
@@ -409,15 +429,15 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
         ],
         [
             Paragraph(METHODOLOGY_VERSION, styles["cover_meta_value"]),
-            Paragraph(PUBLISHED_ON.isoformat(), styles["cover_meta_value"]),
+            Paragraph(_format_jp_date(PUBLISHED_ON), styles["cover_meta_value"]),
             Paragraph("株式会社Aixis", styles["cover_meta_value"]),
         ],
     ]
-    meta_tbl = Table(meta, colWidths=[55 * mm, 55 * mm, 55 * mm], hAlign="LEFT")
+    meta_tbl = Table(meta, colWidths=[52 * mm, 52 * mm, 50 * mm], hAlign="LEFT")
     meta_tbl.setStyle(TableStyle([
         ("LEFTPADDING", (0, 0), (-1, -1), 0),
         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
         ("TOPPADDING", (0, 1), (-1, 1), 0),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
     ]))
@@ -798,10 +818,10 @@ def main() -> None:
     doc = BaseDocTemplate(
         str(OUT_PATH),
         pagesize=A4,
-        leftMargin=25 * mm,
-        rightMargin=25 * mm,
-        topMargin=25 * mm,
-        bottomMargin=25 * mm,
+        leftMargin=PAGE_MARGIN,
+        rightMargin=PAGE_MARGIN,
+        topMargin=28 * mm,
+        bottomMargin=28 * mm,
         title="Aixis 監査方法論書 — Audit Methodology",
         author="株式会社Aixis",
         subject=f"Aixis Audit Methodology {METHODOLOGY_VERSION}",
@@ -809,17 +829,21 @@ def main() -> None:
         keywords="Aixis, AI監査, 独立監査, 5軸評価, 監査方法論書, methodology",
     )
 
+    # Cover frame: sits comfortably between the top wordmark and the
+    # bottom meta strip with generous breathing room on both ends.
     cover_frame = Frame(
-        25 * mm, 28 * mm,
-        A4[0] - 50 * mm, A4[1] - 56 * mm,
+        PAGE_MARGIN, 32 * mm,
+        A4[0] - 2 * PAGE_MARGIN, A4[1] - 64 * mm,
         showBoundary=0,
         leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
     )
+    # Body frame: leaves clearance for the header/footer hairlines so
+    # running chrome never touches the text column.
     body_frame = Frame(
-        25 * mm, 24 * mm,
-        A4[0] - 50 * mm, A4[1] - 48 * mm,
+        PAGE_MARGIN, 28 * mm,
+        A4[0] - 2 * PAGE_MARGIN, A4[1] - 56 * mm,
         showBoundary=0,
-        leftPadding=0, rightPadding=0, topPadding=2, bottomPadding=2,
+        leftPadding=0, rightPadding=0, topPadding=4, bottomPadding=4,
     )
 
     doc.addPageTemplates([
