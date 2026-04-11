@@ -127,27 +127,27 @@ def _make_styles(f: dict[str, str]) -> dict[str, ParagraphStyle]:
         "cover_kicker": ParagraphStyle(
             "cover_kicker", parent=base,
             fontName=f["sans_bold"], fontSize=9, leading=14,
-            textColor=INK_DIM, alignment=TA_LEFT, spaceAfter=14,
+            textColor=INK_DIM, alignment=TA_LEFT, spaceAfter=18,
         ),
         "cover_title": ParagraphStyle(
             "cover_title", parent=base,
-            fontName=f["serif_bold"], fontSize=32, leading=48,
-            textColor=INK, alignment=TA_LEFT, spaceAfter=18,
+            fontName=f["serif_bold"], fontSize=32, leading=52,
+            textColor=INK, alignment=TA_LEFT, spaceAfter=22,
         ),
         "cover_sub": ParagraphStyle(
             "cover_sub", parent=base,
-            fontName=f["serif"], fontSize=11.5, leading=24,
-            textColor=INK_DIM, alignment=TA_LEFT, spaceAfter=28,
+            fontName=f["serif"], fontSize=11.5, leading=26,
+            textColor=INK_DIM, alignment=TA_LEFT, spaceAfter=32,
         ),
         "cover_meta_label": ParagraphStyle(
             "cover_meta_label", parent=base,
             fontName=f["sans_bold"], fontSize=7, leading=12,
-            textColor=INK_MUTED, alignment=TA_LEFT, spaceAfter=2,
+            textColor=INK_MUTED, alignment=TA_LEFT, spaceAfter=4,
         ),
         "cover_meta_value": ParagraphStyle(
             "cover_meta_value", parent=base,
-            fontName=f["serif"], fontSize=11, leading=20,
-            textColor=INK, alignment=TA_LEFT, spaceAfter=4,
+            fontName=f["serif"], fontSize=11, leading=22,
+            textColor=INK, alignment=TA_LEFT, spaceAfter=6,
         ),
         # Running body. `h1_number` carries the generous top air before a
         # new section starts; `h1` sits flush below it with no extra top
@@ -155,52 +155,52 @@ def _make_styles(f: dict[str, str]) -> dict[str, ParagraphStyle]:
         "h1_number": ParagraphStyle(
             "h1_number", parent=base,
             fontName=f["sans_bold"], fontSize=8, leading=12,
-            textColor=INK_MUTED, spaceBefore=32, spaceAfter=4,
+            textColor=INK_MUTED, spaceBefore=44, spaceAfter=6,
         ),
         "h1": ParagraphStyle(
             "h1", parent=base,
-            fontName=f["serif_bold"], fontSize=18, leading=28,
-            textColor=INK, spaceBefore=0, spaceAfter=18, keepWithNext=True,
+            fontName=f["serif_bold"], fontSize=18, leading=30,
+            textColor=INK, spaceBefore=0, spaceAfter=24, keepWithNext=True,
         ),
         "h2": ParagraphStyle(
             "h2", parent=base,
-            fontName=f["serif_bold"], fontSize=12, leading=22,
-            textColor=INK, spaceBefore=20, spaceAfter=8, keepWithNext=True,
+            fontName=f["serif_bold"], fontSize=12, leading=24,
+            textColor=INK, spaceBefore=24, spaceAfter=12, keepWithNext=True,
         ),
         "body": ParagraphStyle(
             "body", parent=base,
-            fontName=f["serif"], fontSize=10.5, leading=20,
-            textColor=INK, alignment=TA_JUSTIFY, spaceAfter=11,
+            fontName=f["serif"], fontSize=10.5, leading=22,
+            textColor=INK, alignment=TA_JUSTIFY, spaceAfter=14,
             firstLineIndent=0,
         ),
         "quote": ParagraphStyle(
             "quote", parent=base,
-            fontName=f["serif"], fontSize=10, leading=19,
-            textColor=INK_DIM, alignment=TA_LEFT, spaceAfter=11,
+            fontName=f["serif"], fontSize=10, leading=20,
+            textColor=INK_DIM, alignment=TA_LEFT, spaceAfter=14,
             leftIndent=16, rightIndent=16,
             borderPadding=(0, 0, 0, 0),
         ),
         "bullet": ParagraphStyle(
             "bullet", parent=base,
-            fontName=f["serif"], fontSize=10.5, leading=20,
-            textColor=INK, alignment=TA_LEFT, spaceAfter=6,
+            fontName=f["serif"], fontSize=10.5, leading=22,
+            textColor=INK, alignment=TA_LEFT, spaceAfter=8,
             leftIndent=18, firstLineIndent=-11,
         ),
         "formula": ParagraphStyle(
             "formula", parent=base,
-            fontName=f["sans"], fontSize=10, leading=19,
-            textColor=INK, alignment=TA_LEFT, spaceAfter=12,
-            spaceBefore=2,
+            fontName=f["sans"], fontSize=10, leading=22,
+            textColor=INK, alignment=TA_LEFT, spaceAfter=18,
+            spaceBefore=8,
             leftIndent=16,
         ),
         "caption": ParagraphStyle(
             "caption", parent=base,
-            fontName=f["sans"], fontSize=7.5, leading=13,
-            textColor=INK_MUTED, alignment=TA_LEFT, spaceBefore=6, spaceAfter=18,
+            fontName=f["sans"], fontSize=7.5, leading=14,
+            textColor=INK_MUTED, alignment=TA_LEFT, spaceBefore=22, spaceAfter=26,
         ),
         "toc_row": ParagraphStyle(
             "toc_row", parent=base,
-            fontName=f["serif"], fontSize=11, leading=26,
+            fontName=f["serif"], fontSize=11, leading=30,
             textColor=INK, alignment=TA_LEFT,
         ),
     }
@@ -210,9 +210,9 @@ def _make_styles(f: dict[str, str]) -> dict[str, ParagraphStyle]:
 # Page chrome
 # ---------------------------------------------------------------------------
 
-PAGE_MARGIN = 28 * mm   # outer page margin (left/right)
-HEADER_Y = 22 * mm      # distance from top to the running header hairline
-FOOTER_Y = 22 * mm      # distance from bottom to the running footer hairline
+PAGE_MARGIN = 30 * mm   # outer page margin (left/right)
+HEADER_Y = 20 * mm      # distance from top to the running header hairline
+FOOTER_Y = 20 * mm      # distance from bottom to the running footer hairline
 
 
 def _draw_body(canvas, doc, f: dict[str, str]) -> None:
@@ -332,7 +332,7 @@ def _axis_table(f, styles) -> Table:
     ]
     t = Table(
         data,
-        colWidths=[36 * mm, 95 * mm, 14 * mm],
+        colWidths=[36 * mm, 93 * mm, 16 * mm],
         hAlign="LEFT",
     )
     t.setStyle(TableStyle([
@@ -342,15 +342,17 @@ def _axis_table(f, styles) -> Table:
         ("FONTNAME", (0, 1), (0, -1), f["serif_bold"]),
         ("FONTNAME", (1, 1), (2, -1), f["serif"]),
         ("FONTSIZE", (0, 1), (-1, -1), 10),
-        ("LEADING", (0, 1), (-1, -1), 16),
+        ("LEADING", (0, 1), (-1, -1), 20),
         ("TEXTCOLOR", (0, 1), (-1, -1), INK),
         ("LINEBELOW", (0, 0), (-1, 0), 0.6, INK),
         ("LINEBELOW", (0, 1), (-1, -2), 0.2, RULE),
         ("LINEBELOW", (0, -1), (-1, -1), 0.6, INK),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("TOPPADDING", (0, 0), (-1, 0), 4),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 14),
+        ("TOPPADDING", (0, 1), (-1, -1), 14),
         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
     ]))
     return t
@@ -369,7 +371,7 @@ def _grade_table(f) -> Table:
     ]
     t = Table(
         data,
-        colWidths=[18 * mm, 26 * mm, 30 * mm, 71 * mm],
+        colWidths=[18 * mm, 26 * mm, 32 * mm, 69 * mm],
         hAlign="LEFT",
     )
     t.setStyle(TableStyle([
@@ -379,15 +381,17 @@ def _grade_table(f) -> Table:
         ("FONTNAME", (0, 1), (0, -1), f["serif_bold"]),
         ("FONTNAME", (1, 1), (-1, -1), f["serif"]),
         ("FONTSIZE", (0, 1), (-1, -1), 10.5),
-        ("LEADING", (0, 1), (-1, -1), 18),
+        ("LEADING", (0, 1), (-1, -1), 20),
         ("TEXTCOLOR", (0, 1), (-1, -1), INK),
         ("LINEBELOW", (0, 0), (-1, 0), 0.6, INK),
         ("LINEBELOW", (0, 1), (-1, -2), 0.2, RULE),
         ("LINEBELOW", (0, -1), (-1, -1), 0.6, INK),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("TOPPADDING", (0, 0), (-1, 0), 4),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 14),
+        ("TOPPADDING", (0, 1), (-1, -1), 14),
         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
     ]))
     return t
@@ -403,7 +407,7 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
     # ======================================================================
     # Cover page
     # ======================================================================
-    s.append(Spacer(1, 78 * mm))
+    s.append(Spacer(1, 84 * mm))
     s.append(Paragraph("AIXIS AUDIT METHODOLOGY", styles["cover_kicker"]))
     s.append(
         Paragraph(
@@ -418,7 +422,7 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
             styles["cover_sub"],
         )
     )
-    s.append(Spacer(1, 36 * mm))
+    s.append(Spacer(1, 44 * mm))
 
     # Cover meta grid
     meta = [
@@ -433,11 +437,11 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
             Paragraph("株式会社Aixis", styles["cover_meta_value"]),
         ],
     ]
-    meta_tbl = Table(meta, colWidths=[52 * mm, 52 * mm, 50 * mm], hAlign="LEFT")
+    meta_tbl = Table(meta, colWidths=[50 * mm, 50 * mm, 50 * mm], hAlign="LEFT")
     meta_tbl.setStyle(TableStyle([
         ("LEFTPADDING", (0, 0), (-1, -1), 0),
         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
         ("TOPPADDING", (0, 1), (-1, 1), 0),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
     ]))
@@ -516,6 +520,7 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
         "5.0までの連続スコアを持ち、標準の総合スコアでは5軸を均等に扱う。",
         styles["body"],
     ))
+    s.append(Spacer(1, 6 * mm))
     s.append(KeepTogether(_axis_table(f, styles)))
     s.append(Paragraph(
         "業界別ランキングでは、ユースケースに応じた重み付けが適用される場合が"
@@ -571,7 +576,9 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
         "値を転載したものである。",
         styles["body"],
     ))
+    s.append(Spacer(1, 6 * mm))
     s.append(KeepTogether(_grade_table(f)))
+    s.append(Spacer(1, 8 * mm))
     s.append(Paragraph(
         "グレードは総合スコアだけでなく、各軸の最低スコアも考慮して判定する。"
         "特定の軸が極端に低い場合、総合スコアが高くても上位グレードに判定され"
@@ -820,8 +827,8 @@ def main() -> None:
         pagesize=A4,
         leftMargin=PAGE_MARGIN,
         rightMargin=PAGE_MARGIN,
-        topMargin=28 * mm,
-        bottomMargin=28 * mm,
+        topMargin=34 * mm,
+        bottomMargin=34 * mm,
         title="Aixis 監査方法論書 — Audit Methodology",
         author="株式会社Aixis",
         subject=f"Aixis Audit Methodology {METHODOLOGY_VERSION}",
@@ -832,18 +839,18 @@ def main() -> None:
     # Cover frame: sits comfortably between the top wordmark and the
     # bottom meta strip with generous breathing room on both ends.
     cover_frame = Frame(
-        PAGE_MARGIN, 32 * mm,
-        A4[0] - 2 * PAGE_MARGIN, A4[1] - 64 * mm,
+        PAGE_MARGIN, 34 * mm,
+        A4[0] - 2 * PAGE_MARGIN, A4[1] - 68 * mm,
         showBoundary=0,
         leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
     )
-    # Body frame: leaves clearance for the header/footer hairlines so
-    # running chrome never touches the text column.
+    # Body frame: leaves generous clearance between the running header/footer
+    # hairlines and the text column so the page reads like a proper monograph.
     body_frame = Frame(
-        PAGE_MARGIN, 28 * mm,
-        A4[0] - 2 * PAGE_MARGIN, A4[1] - 56 * mm,
+        PAGE_MARGIN, 34 * mm,
+        A4[0] - 2 * PAGE_MARGIN, A4[1] - 68 * mm,
         showBoundary=0,
-        leftPadding=0, rightPadding=0, topPadding=4, bottomPadding=4,
+        leftPadding=0, rightPadding=0, topPadding=10, bottomPadding=10,
     )
 
     doc.addPageTemplates([
