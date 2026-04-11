@@ -18,6 +18,12 @@ from starlette.responses import Response
 from .config import settings
 from .db.base import init_db
 from .api.v1.router import api_router
+from .observability import init_sentry
+
+# Phase C-1: Sentry must be initialised BEFORE FastAPI is constructed so that
+# the Starlette/FastAPI integrations can hook into the ASGI lifecycle. The
+# call is a no-op when SENTRY_DSN is unset.
+init_sentry()
 
 logger = logging.getLogger(__name__)
 

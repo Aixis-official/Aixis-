@@ -41,6 +41,8 @@ dependencies = [
     "Pillow>=10.0",
     # CLI
     "typer>=0.15",
+    # Observability (Phase C-1) — no-op when SENTRY_DSN is unset
+    "sentry-sdk[fastapi]>=2.18",
 ]
 
 [project.optional-dependencies]
