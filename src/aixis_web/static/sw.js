@@ -1,5 +1,5 @@
 // Aixis Service Worker — network-first navigation, cache-first static assets
-const CACHE_NAME = 'aixis-static-v3';
+const CACHE_NAME = 'aixis-static-v4';
 const OFFLINE_URL = '/offline';
 const PRE_CACHE_URLS = [
   OFFLINE_URL,
@@ -9,6 +9,11 @@ const PRE_CACHE_URLS = [
   '/static/js/aixis-common.min.js',
   '/static/js/ga4-events.min.js',
   '/static/manifest.json',
+  '/static/fonts/NotoSerifJP-Regular.woff2',
+  '/static/fonts/NotoSerifJP-Medium.woff2',
+  '/static/fonts/NotoSerifJP-SemiBold.woff2',
+  '/static/fonts/NotoSerifJP-Bold.woff2',
+  '/static/fonts/NotoSerifJP-ExtraBold.woff2',
 ];
 
 // Install: pre-cache offline page and key assets (tolerate individual failures)

@@ -46,7 +46,6 @@ _PUBLIC_HANDLER_HASHES = (
     " 'sha256-8yxwzYUtemhCVZc2qptUsoPTKDfWOtRce20XRYw4JD4='"  # setPricingTab('monthly')
     " 'sha256-UxVC6nkGyq+M56T2/f5VDDG8hHGZey7bcFyI7p30qmw='"  # setPricingTab('yearly')
     " 'sha256-eIRcdTTKX99KNOtEPHEwMnz2LD/Uv/CacqAtxvTviaw='"  # this.classList.add('hero-bg-loaded')
-    " 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc='"  # this.media='all' (loadCSS pattern)
     " 'sha256-oe4Mglfmu7V2vPjC+RomULN/Dmtj2gdBL26S0T8SWsc='"  # mouseout (rgba .04/.1)
     " 'sha256-chi+Z2cJjzQA+g+61ypkIrFza3ZXzeHAsxWPERmsHBo='"  # mouseover (rgba .08/.18)
     " 'sha256-1u/HNenE0qxoHyh3hP2+b7LWiaHDk8y1P79VtwjkhsU='"  # mouseout bg .1
@@ -171,8 +170,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                     f"{_PUBLIC_HANDLER_HASHES} "
                     "https://www.googletagmanager.com https://cdn.plot.ly"
                 ),
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-                "font-src 'self' https://fonts.gstatic.com",
+                "style-src 'self' 'unsafe-inline'",
+                "font-src 'self'",
                 "img-src 'self' data: https:",
                 "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com",
                 "frame-ancestors 'none'",
@@ -415,8 +414,8 @@ def create_app() -> FastAPI:
 <title>{title} - Aixis AI監査プラットフォーム</title>
 <meta name="robots" content="noindex, follow">
 <link rel="canonical" href="https://platform.aixis.jp/">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="/static/fonts/NotoSerifJP-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/css/style.min.css">
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
 body{{font-family:'Noto Serif JP',serif;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;background:#fafafa;color:#111827}}
@@ -467,7 +466,8 @@ body{{font-family:'Noto Serif JP',serif;display:flex;flex-direction:column;justi
     <meta name="robots" content="noindex">
     <title>監査失敗 - 404 | Aixis</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="preload" href="/static/fonts/NotoSerifJP-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/static/css/style.min.css">
     <style>
         @keyframes stamp-appear {
             0% { transform: scale(2) rotate(-15deg); opacity: 0; }

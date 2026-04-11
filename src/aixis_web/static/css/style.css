@@ -10,6 +10,48 @@
    ========================================================================== */
 
 /* ==========================================================================
+   0. Self-hosted Noto Serif JP (subset to JIS X 0208 第一+第二水準)
+      Built by scripts/build_fonts.py — replaces the Google Fonts CDN to
+      remove third-party tracking, drop fonts.googleapis.com from CSP,
+      and improve LCP.
+   ========================================================================== */
+@font-face {
+    font-family: 'Noto Serif JP';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/static/fonts/NotoSerifJP-Regular.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Noto Serif JP';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('/static/fonts/NotoSerifJP-Medium.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Noto Serif JP';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('/static/fonts/NotoSerifJP-SemiBold.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Noto Serif JP';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/static/fonts/NotoSerifJP-Bold.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Noto Serif JP';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url('/static/fonts/NotoSerifJP-ExtraBold.woff2') format('woff2');
+}
+
+/* ==========================================================================
    1. CSS Custom Properties -- Light Theme
    ========================================================================== */
 
