@@ -62,7 +62,7 @@
     }
 }
 </script>
-{% if ssr and ssr.score %}
+{% if ssr and ssr.score and ssr.score.overall is not none %}
 <script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
     "@context": "https://schema.org",
@@ -70,9 +70,9 @@
     "@id": "https://platform.aixis.jp/card/{{ slug }}.png#image",
     "contentUrl": "https://platform.aixis.jp/card/{{ slug }}.png",
     "url": "https://platform.aixis.jp/card/{{ slug }}.png",
-    "name": "{{ tool_data.name_jp or tool_data.name if tool_data else title }} - Aixis AI監査スコアカード（総合{{ '%.1f'|format(ssr.score.overall_score) }}/5.0 · グレード{{ ssr.score.overall_grade }}）",
+    "name": "{{ tool_data.name_jp or tool_data.name if tool_data else title }} - Aixis AI監査スコアカード（総合{{ '%.1f'|format(ssr.score.overall) }}/5.0 · グレード{{ ssr.score.grade }}）",
     "caption": "{{ tool_data.name_jp or tool_data.name if tool_data else title }}の独立AI監査スコアカード — Aixisが独立した5軸（実務適性・費用対効果・日本語能力・信頼性・安全性・革新性）で評価",
-    "description": "{{ tool_data.name_jp or tool_data.name if tool_data else title }}の独立AI監査スコア（5軸評価）。総合{{ '%.1f'|format(ssr.score.overall_score) }}/5.0、グレード{{ ssr.score.overall_grade }}。",
+    "description": "{{ tool_data.name_jp or tool_data.name if tool_data else title }}の独立AI監査スコア（5軸評価）。総合{{ '%.1f'|format(ssr.score.overall) }}/5.0、グレード{{ ssr.score.grade }}。",
     "encodingFormat": "image/png",
     "width": {"@type": "QuantitativeValue", "value": 1200, "unitCode": "E37"},
     "height": {"@type": "QuantitativeValue", "value": 630, "unitCode": "E37"},
