@@ -61,6 +61,7 @@ def _get_template_context(request: Request, user=None, **extra) -> dict:
         "_": translator,
         "lang": lang,
         "subscription": None,
+        "csp_nonce": getattr(request.state, "csp_nonce", ""),
         **extra,
     }
     # Attach subscription info when user is authenticated
@@ -926,7 +927,10 @@ async def manifest_json():
 @page_router.get("/offline")
 async def offline_page(request: Request):
     """Offline fallback page for PWA/service worker."""
-    return templates.TemplateResponse("public/offline.html", {"request": request})
+    return templates.TemplateResponse(
+        "public/offline.html",
+        {"request": request, "csp_nonce": getattr(request.state, "csp_nonce", "")},
+    )
 
 
 @page_router.get("/.well-known/security.txt")

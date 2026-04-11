@@ -164,7 +164,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (function() {
     var form = document.getElementById('password-change-form');
     var msgEl = document.getElementById('pw-change-msg');

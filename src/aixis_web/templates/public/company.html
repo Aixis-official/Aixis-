@@ -26,7 +26,7 @@
 {% endblock %}
 
 {% block structured_data %}
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
   "@context": "https://schema.org",
   "@type": "Corporation",
@@ -60,7 +60,7 @@
   "knowsAbout": ["AIツール評価", "AI監査", "AI導入支援", "企業向けコンサルティング"]
 }
 </script>
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",

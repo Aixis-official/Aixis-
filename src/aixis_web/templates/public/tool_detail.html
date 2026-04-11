@@ -33,7 +33,7 @@
 {% endblock %}
 
 {% block structured_data %}
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
     "@context": "https://schema.org",
     "@type": ["Product", "SoftwareApplication"],
@@ -63,7 +63,7 @@
 }
 </script>
 {% if ssr and ssr.score %}
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
     "@context": "https://schema.org",
     "@type": "ImageObject",
@@ -91,7 +91,7 @@
 }
 </script>
 {% endif %}
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -103,7 +103,7 @@
 }
 </script>
 {% if tool_data %}
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
     "@context": "https://schema.org",
     "@type": "WebPage",
@@ -186,7 +186,7 @@
         <p id="loading-status" class="mt-5 text-xs tracking-wider text-gray-400 font-serif uppercase">
             読み込み中
         </p>
-        <script>
+        <script nonce="{{ csp_nonce }}">
         (function(){
             var msgs = ['読み込み中','データ取得中','スコア分析中','レポート生成中'];
             var idx = 0;
@@ -1152,6 +1152,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script>window.__AIXIS_PAGE = { slug: '{{ slug }}', isLoggedIn: {{ 'true' if user else 'false' }} };</script>
+<script nonce="{{ csp_nonce }}">window.__AIXIS_PAGE = { slug: '{{ slug }}', isLoggedIn: {{ 'true' if user else 'false' }} };</script>
 <script defer src="/static/js/tool-detail-page.min.js?v=20260406e"></script>
 {% endblock %}

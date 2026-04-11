@@ -26,7 +26,7 @@
 {% endblock %}
 
 {% block structured_data %}
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
@@ -40,7 +40,7 @@
   }
 }
 </script>
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
@@ -240,7 +240,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>window.__AIXIS_PAGE = { isLoggedIn: {{ 'true' if user else 'false' }} };</script>
+<script nonce="{{ csp_nonce }}">window.__AIXIS_PAGE = { isLoggedIn: {{ 'true' if user else 'false' }} };</script>
 <script defer src="/static/js/tools-page.min.js?v=20260406e"></script>
 <!-- tools-page JS (29KB) extracted to external file for cacheability -->
 <style>

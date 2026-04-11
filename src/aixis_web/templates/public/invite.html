@@ -123,7 +123,7 @@
 
 {% block scripts %}
 {% if invite_valid %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (function() {
     var form = document.getElementById('invite-form');
     var pw = document.getElementById('password');

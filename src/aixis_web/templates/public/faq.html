@@ -27,7 +27,7 @@
 {% endblock %}
 
 {% block structured_data %}
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -99,7 +99,7 @@
   ]
 }
 </script>
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
@@ -226,7 +226,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 document.querySelectorAll('.faq-toggle').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var content = this.nextElementSibling;

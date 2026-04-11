@@ -32,6 +32,28 @@ BASE_DIR = Path(__file__).parent
 _CSRF_COOKIE = "aixis_csrf"
 _CSRF_HEADER = "X-CSRF-Token"
 _CSRF_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+# CSP: SHA-256 hashes of inline event handler attribute values found in
+# public-facing templates. Required when using `'unsafe-hashes'` to allow
+# specific inline handlers without `'unsafe-inline'`. Regenerate this list
+# with scripts/csp_handler_hashes.py whenever public-template handlers change.
+_PUBLIC_HANDLER_HASHES = (
+    "'sha256-fN9jpWA/xW93Y41eWCy53d8smzYAlCWm/8fXBUMsmKg='"  # aixisLogout()
+    " 'sha256-nyp45uB5eoqcjEacmV90ifrUqc7MMLJjYfZEx/4KGog='"  # aixisLogout(); closeMobileDrawer();
+    " 'sha256-f/yQ0eBgE0fSe6eEHInB2BG60LG6DchDnZBKg6WcMbc='"  # contact form error reset
+    " 'sha256-h6B3t6yWoa79lyTqNlifWCze4U+j2KkhDs1kSi+u0rY='"  # loadReports()
+    " 'sha256-9gOBGqEQINNDuds+tkXbNzih6klbz+KeCyxEj4KRLeM='"  # location.reload()
+    " 'sha256-8yxwzYUtemhCVZc2qptUsoPTKDfWOtRce20XRYw4JD4='"  # setPricingTab('monthly')
+    " 'sha256-UxVC6nkGyq+M56T2/f5VDDG8hHGZey7bcFyI7p30qmw='"  # setPricingTab('yearly')
+    " 'sha256-eIRcdTTKX99KNOtEPHEwMnz2LD/Uv/CacqAtxvTviaw='"  # this.classList.add('hero-bg-loaded')
+    " 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc='"  # this.media='all' (loadCSS pattern)
+    " 'sha256-oe4Mglfmu7V2vPjC+RomULN/Dmtj2gdBL26S0T8SWsc='"  # mouseout (rgba .04/.1)
+    " 'sha256-chi+Z2cJjzQA+g+61ypkIrFza3ZXzeHAsxWPERmsHBo='"  # mouseover (rgba .08/.18)
+    " 'sha256-1u/HNenE0qxoHyh3hP2+b7LWiaHDk8y1P79VtwjkhsU='"  # mouseout bg .1
+    " 'sha256-l09P5LtYc8dQ2iWAH/YKETPpv/9yZ9NOeYqWq4WZDPk='"  # mouseover bg .16
+    " 'sha256-Lbiqh8Ix+0Jzqj7mUD8hhtCAkMQNBhZI5vLI8gl2yLE='"  # mouseout border .25
+    " 'sha256-QNIKHoiH6dIEvfWK/Z9UJsbko4lKxCgnZe99EIvmE4Q='"  # mouseover border .6
+)
 # Paths exempt from CSRF (API-key auth, health, login — no session to hijack)
 _CSRF_EXEMPT_PREFIXES = (
     "/api/public/",
@@ -77,6 +99,11 @@ class SecurityMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next):
+        # --- Per-request CSP nonce (must be set BEFORE the route runs so
+        # that templates can render `nonce="{{ csp_nonce }}"` attributes
+        # matching the eventual Content-Security-Policy header) ---
+        request.state.csp_nonce = secrets.token_urlsafe(16)
+
         # --- CSRF check (before calling route) ---
         if request.method not in _CSRF_SAFE_METHODS:
             path = request.url.path
@@ -131,9 +158,19 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 "object-src 'none'",
             ]
         else:
+            # Public site CSP: nonce-based, no `'unsafe-inline'` for scripts.
+            # Inline event handlers are allow-listed via `'unsafe-hashes'`
+            # plus their SHA-256 hashes (see _PUBLIC_HANDLER_HASHES). Inline
+            # `style="..."` attributes are still common, so style-src keeps
+            # `'unsafe-inline'` for now (lower XSS impact than scripts).
+            nonce = request.state.csp_nonce
             csp_directives = [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.plot.ly",
+                (
+                    f"script-src 'self' 'nonce-{nonce}' 'unsafe-hashes' "
+                    f"{_PUBLIC_HANDLER_HASHES} "
+                    "https://www.googletagmanager.com https://cdn.plot.ly"
+                ),
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                 "font-src 'self' https://fonts.gstatic.com",
                 "img-src 'self' data: https:",

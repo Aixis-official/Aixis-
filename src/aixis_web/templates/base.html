@@ -51,7 +51,7 @@
     {% block structured_data %}{% endblock %}
 
     <!-- Google Analytics 4 (default load; opt-out via cookie banner or ?notrack=1) -->
-    <script>
+    <script nonce="{{ csp_nonce }}">
         (function() {
             var skip = false;
             try {
@@ -433,7 +433,7 @@
     <script src="/static/js/aixis-common.min.js?v=20260406e"></script>
 
     <!-- Logout helper -->
-    <script>
+    <script nonce="{{ csp_nonce }}">
         function aixisLogout() {
             var token = localStorage.getItem('aixis_token') || '';
             var csrfToken = (document.cookie.match(/(?:^|;\s*)aixis_csrf=([^;]+)/) || [])[1] || '';
@@ -456,7 +456,7 @@
     </script>
 
     <!-- Mobile drawer & dropdown logic -->
-    <script>
+    <script nonce="{{ csp_nonce }}">
         (function() {
             // Mobile drawer (slide-from-right)
             var menuBtn = document.getElementById('mobile-menu-btn');
@@ -551,7 +551,7 @@
             <button id="cookie-accept" style="padding:7px 20px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.1); color:rgba(230,234,240,0.95); border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:500; letter-spacing:0.04em; transition:all 0.2s;" class="font-jp" onmouseover="this.style.background='rgba(255,255,255,0.16)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">閉じる</button>
         </div>
     </div>
-    <script>
+    <script nonce="{{ csp_nonce }}">
     (function() {
         var banner = document.getElementById('cookie-consent');
         if (!banner) return;
@@ -574,7 +574,7 @@
     </script>
 
     {% block scripts %}{% endblock %}
-    <script>
+    <script nonce="{{ csp_nonce }}">
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/static/sw.js', { scope: '/' });
     }

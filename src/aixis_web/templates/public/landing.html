@@ -33,7 +33,7 @@
 {% endblock %}
 
 {% block structured_data %}
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
   "@context": "https://schema.org",
   "@type": "Corporation",
@@ -71,7 +71,7 @@
   }
 }
 </script>
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
@@ -88,7 +88,7 @@
   }
 }
 </script>
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
   "@context": "https://schema.org",
   "@type": "ItemList",
@@ -133,7 +133,7 @@
      * the browser renders the white bg from Tailwind classes for one frame before CSS specificity
      * kicks in — causing a flash on navigation from other pages.
      *
-     * The nav starts as .nav-transparent (added via inline <script> below, before first paint).
+     * The nav starts as .nav-transparent (added via inline <script nonce="{{ csp_nonce }}"> below, before first paint).
      * On scroll past hero, JS swaps to .nav-solid.
      */
     #main-nav {
@@ -756,7 +756,7 @@
             </div>
 
             <!-- Scoreboard animation script -->
-            <script>
+            <script nonce="{{ csp_nonce }}">
             (function(){
                 var board = document.getElementById('about-scoreboard');
                 if (!board) return;
@@ -904,7 +904,7 @@
                     <text x="108" y="179" text-anchor="end" class="fill-gray-400" font-size="11" font-family="'Noto Serif JP',serif">Uniqueness</text>
                 </g>
             </svg>
-            <script>
+            <script nonce="{{ csp_nonce }}">
             (function(){
                 var svg = document.getElementById('axis-radar');
                 if (!svg) return;

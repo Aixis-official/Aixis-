@@ -27,7 +27,7 @@
 {% endblock %}
 
 {% block structured_data %}
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
@@ -331,7 +331,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 function setPricingTab(tab) {
     var monthly = document.getElementById('tab-monthly');
     var yearly = document.getElementById('tab-yearly');

@@ -127,7 +127,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (function() {
     var form = document.getElementById('login-form');
     var errorDiv = document.getElementById('login-error');

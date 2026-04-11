@@ -27,7 +27,7 @@
 {% endblock %}
 
 {% block structured_data %}
-<script type="application/ld+json">
+<script type="application/ld+json" nonce="{{ csp_nonce }}">
 {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"ホーム","item":"https://platform.aixis.jp/"},{"@type":"ListItem","position":2,"name":"リーダーボード","item":"https://platform.aixis.jp/benchmarks/{{ slug }}/leaderboard"}]}
 </script>
 {% endblock %}
@@ -94,7 +94,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 const slug = '{{ slug }}';
 const API = '/api/v1';
 
