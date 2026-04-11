@@ -430,6 +430,18 @@
                             <li><a href="https://aixis.jp/company" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">運営会社</a></li>
                             <li><a href="/faq" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">よくある質問</a></li>
                             <li><a href="/contact" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">お問い合わせ</a></li>
+                            {% if status_page_url %}
+                            <li>
+                                <a href="{{ status_page_url }}" target="_blank" rel="noopener noreferrer" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp inline-flex items-center gap-2">
+                                    {% if status_page_badge_url %}
+                                    <img src="{{ status_page_badge_url }}" alt="" width="10" height="10" class="inline-block" loading="lazy" decoding="async">
+                                    {% else %}
+                                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" aria-hidden="true"></span>
+                                    {% endif %}
+                                    稼働状況
+                                </a>
+                            </li>
+                            {% endif %}
                             <li><a href="/login" class="text-[13px] text-gray-500 hover:text-aixis-500 transition-colors duration-150 font-jp">ログイン</a></li>
                         </ul>
                     </div>

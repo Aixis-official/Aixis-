@@ -66,6 +66,10 @@ def _get_template_context(request: Request, user=None, **extra) -> dict:
         # template emits a privacy-first analytics snippet alongside GA4.
         "umami_url": settings.umami_url,
         "umami_website_id": settings.umami_website_id,
+        # Phase D-4: Public status page (env-gated). When set, base.html
+        # surfaces a "稼働状況" link in the footer.
+        "status_page_url": settings.status_page_url,
+        "status_page_badge_url": settings.status_page_badge_url,
         **extra,
     }
     # Attach subscription info when user is authenticated

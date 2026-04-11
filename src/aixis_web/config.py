@@ -137,6 +137,13 @@ class Settings(BaseSettings):
     umami_url: str = ""
     umami_website_id: str = ""
 
+    # Phase D-4: Public status page (BetterStack / Statuspage / Instatus / etc.)
+    # Vendor-agnostic — surface a "稼働状況" link in the footer when set.
+    # Example:  STATUS_PAGE_URL=https://status.aixis.jp
+    #           STATUS_PAGE_BADGE_URL=https://status.aixis.jp/badge   (optional, must be SVG)
+    status_page_url: str = ""
+    status_page_badge_url: str = ""
+
     model_config = {"env_file": ".env"}
 
 
