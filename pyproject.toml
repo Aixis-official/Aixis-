@@ -51,6 +51,11 @@ dev = [
     "pytest-asyncio>=0.24",
     "pytest-httpx>=0.34",
     "ruff>=0.8",
+    # Whitepaper PDF build toolchain
+    "reportlab>=4.4",
+    "pikepdf>=10.0",
+    "pypdfium2>=4.30",
+    "pdfminer.six>=20240706",
 ]
 
 [project.scripts]

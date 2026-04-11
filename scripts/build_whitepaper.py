@@ -44,6 +44,7 @@ from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
     KeepTogether,
+    NextPageTemplate,
     PageBreak,
     PageTemplate,
     Paragraph,
@@ -202,6 +203,19 @@ def _make_styles(f: dict[str, str]) -> dict[str, ParagraphStyle]:
             "toc_row", parent=base,
             fontName=f["serif"], fontSize=11, leading=30,
             textColor=INK, alignment=TA_LEFT,
+        ),
+        # Two-column TOC: title on the left, page number on the right of a
+        # fixed-width Table cell. Using a table rather than in-paragraph tabs
+        # keeps the leader-dot width stable between rendering passes.
+        "toc_title": ParagraphStyle(
+            "toc_title", parent=base,
+            fontName=f["serif"], fontSize=11, leading=30,
+            textColor=INK, alignment=TA_LEFT,
+        ),
+        "toc_page": ParagraphStyle(
+            "toc_page", parent=base,
+            fontName=f["sans"], fontSize=10, leading=30,
+            textColor=INK_MUTED, alignment=2,  # TA_RIGHT
         ),
     }
 
@@ -401,7 +415,37 @@ def _grade_table(f) -> Table:
 # Story (the actual content)
 # ---------------------------------------------------------------------------
 
-def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
+#: Canonical TOC entries. The text must match the ``h1`` Paragraphs emitted
+#: inside the body so that the two-pass renderer can pair each entry with the
+#: correct page number. ``expected_h1`` is the title as it appears in the body.
+TOC_ENTRIES: list[tuple[str, str]] = [
+    ("1.  はじめに — なぜ独立監査か", "はじめに — なぜ独立監査か"),
+    ("2.  5軸評価フレームワーク", "5軸評価フレームワーク"),
+    ("3.  スコア算出ロジックと採点式", "スコア算出ロジックと採点式"),
+    ("4.  グレードスケールと判定基準", "グレードスケールと判定基準"),
+    ("5.  品質保証プロセス", "品質保証プロセス"),
+    ("6.  監査信頼度メタ評価（BenchRisk準拠）", "監査信頼度メタ評価"),
+    ("7.  監査ライフサイクル", "監査ライフサイクル"),
+    ("8.  再監査サイクルと臨時トリガー", "再監査サイクルと臨時トリガー"),
+    ("9.  方法論バージョニング", "方法論バージョニング"),
+    ("10.  独立性4原則", "独立性4原則"),
+    ("11.  参考リンク", "参考リンク"),
+]
+
+
+def _build_story(
+    styles: dict[str, ParagraphStyle],
+    f: dict[str, str],
+    section_pages: dict[str, int] | None = None,
+) -> list:
+    """Build the flowable story.
+
+    ``section_pages`` is an optional mapping of body-H1 plain text to the
+    body-relative page number captured during a previous rendering pass.
+    When ``None`` (first pass) TOC page-number cells render blank so the
+    layout is still stable.
+    """
+    section_pages = section_pages or {}
     s: list = []
 
     # ======================================================================
@@ -446,30 +490,50 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
     ]))
     s.append(meta_tbl)
+    # Switch from the cover chrome to the running body chrome for every
+    # subsequent page. Must be placed BEFORE the PageBreak so the next
+    # page picks up the new template.
+    s.append(NextPageTemplate("body"))
     s.append(PageBreak())
 
     # ======================================================================
-    # Table of contents (simple static list — page numbers kept implicit to
-    # avoid a second rendering pass).
+    # Table of contents (two-pass: page numbers are captured by
+    # ``_TwoPassDocTemplate.afterFlowable`` on the first build, then injected
+    # here during the second build so each row renders with its real page
+    # number). Using a Table with fixed column widths keeps the layout
+    # identical between passes so the body pagination never shifts.
     # ======================================================================
     s.append(Paragraph("CONTENTS", styles["h1_number"]))
     s.append(Paragraph("目次", styles["h1"]))
 
-    toc_lines = [
-        "1.  はじめに — なぜ独立監査か",
-        "2.  5軸評価フレームワーク",
-        "3.  スコア算出ロジックと採点式",
-        "4.  グレードスケールと判定基準",
-        "5.  品質保証プロセス",
-        "6.  監査信頼度メタ評価（BenchRisk準拠）",
-        "7.  監査ライフサイクル",
-        "8.  再監査サイクルと臨時トリガー",
-        "9.  方法論バージョニング",
-        "10.  独立性4原則",
-        "11.  参考リンク",
-    ]
-    for line in toc_lines:
-        s.append(Paragraph(line, styles["toc_row"]))
+    toc_rows: list[list] = []
+    for display, h1_key in TOC_ENTRIES:
+        page_number = section_pages.get(h1_key)
+        page_cell = Paragraph(
+            f"{page_number:02d}" if page_number is not None else "",
+            styles["toc_page"],
+        )
+        toc_rows.append([
+            Paragraph(display, styles["toc_title"]),
+            page_cell,
+        ])
+
+    toc_content_width = A4[0] - 2 * PAGE_MARGIN
+    toc_tbl = Table(
+        toc_rows,
+        colWidths=[toc_content_width - 18 * mm, 18 * mm],
+        hAlign="LEFT",
+    )
+    toc_tbl.setStyle(TableStyle([
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        # Hair-line between entries matches the document's other rule-work.
+        ("LINEBELOW", (0, 0), (-1, -2), 0.2, RULE),
+    ]))
+    s.append(toc_tbl)
     s.append(PageBreak())
 
     # ======================================================================
@@ -817,13 +881,37 @@ def _build_story(styles: dict[str, ParagraphStyle], f: dict[str, str]) -> list:
 # Entry point
 # ---------------------------------------------------------------------------
 
-def main() -> None:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    f = _register_fonts()
-    styles = _make_styles(f)
+class _TwoPassDocTemplate(BaseDocTemplate):
+    """BaseDocTemplate that records the body-page number of every H1.
 
-    doc = BaseDocTemplate(
-        str(OUT_PATH),
+    On each rendering pass it walks the flowables and, whenever it sees an
+    ``h1`` Paragraph, records ``(plain_text -> page_number)`` into
+    ``self.section_pages``. Page numbers are **body-relative** (page 1 = the
+    first body page, matching the footer "—  1 —" format) so they can be
+    fed back into ``_build_story`` without any off-by-one juggling.
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.section_pages: dict[str, int] = {}
+
+    def afterFlowable(self, flowable) -> None:  # noqa: N802 (reportlab API)
+        if not isinstance(flowable, Paragraph):
+            return
+        style = getattr(flowable, "style", None)
+        if style is None or style.name != "h1":
+            return
+        title = flowable.getPlainText()
+        # Skip the static TOC heading ("目次"); its page number is not useful.
+        if title == "目次":
+            return
+        # First write wins — some H1s are split across keepWithNext groups.
+        self.section_pages.setdefault(title, max(self.page - 1, 1))
+
+
+def _build_doc(out_path: Path, f: dict[str, str]) -> _TwoPassDocTemplate:
+    doc = _TwoPassDocTemplate(
+        str(out_path),
         pagesize=A4,
         leftMargin=PAGE_MARGIN,
         rightMargin=PAGE_MARGIN,
@@ -836,23 +924,18 @@ def main() -> None:
         keywords="Aixis, AI監査, 独立監査, 5軸評価, 監査方法論書, methodology",
     )
 
-    # Cover frame: sits comfortably between the top wordmark and the
-    # bottom meta strip with generous breathing room on both ends.
     cover_frame = Frame(
         PAGE_MARGIN, 34 * mm,
         A4[0] - 2 * PAGE_MARGIN, A4[1] - 68 * mm,
         showBoundary=0,
         leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
     )
-    # Body frame: leaves generous clearance between the running header/footer
-    # hairlines and the text column so the page reads like a proper monograph.
     body_frame = Frame(
         PAGE_MARGIN, 34 * mm,
         A4[0] - 2 * PAGE_MARGIN, A4[1] - 68 * mm,
         showBoundary=0,
         leftPadding=0, rightPadding=0, topPadding=10, bottomPadding=10,
     )
-
     doc.addPageTemplates([
         PageTemplate(
             id="cover",
@@ -865,12 +948,109 @@ def main() -> None:
             onPage=lambda c, d: _draw_body(c, d, f),
         ),
     ])
+    return doc
 
-    story = _build_story(styles, f)
-    doc.build(story)
+
+def main() -> None:
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    f = _register_fonts()
+    styles = _make_styles(f)
+
+    # ------------------------------------------------------------------
+    # Pass 1 — render into a throwaway path so we can capture the real
+    # body-page number for every H1. TOC rows have empty page cells here
+    # but their column widths are identical to the final render, so the
+    # body pagination stays stable across the two passes.
+    # ------------------------------------------------------------------
+    draft_path = OUT_PATH.with_name(OUT_PATH.stem + "__pass1.pdf")
+    draft_doc = _build_doc(draft_path, f)
+    draft_doc.build(_build_story(styles, f, section_pages=None))
+    captured = dict(draft_doc.section_pages)
+
+    # Report any TOC entries we failed to resolve so the operator notices.
+    missing = [key for _, key in TOC_ENTRIES if key not in captured]
+    if missing:
+        print(
+            "warning: TOC entries without a captured page number: "
+            + ", ".join(missing),
+            file=sys.stderr,
+        )
+
+    # ------------------------------------------------------------------
+    # Pass 2 — final render with real TOC page numbers injected.
+    # ------------------------------------------------------------------
+    final_doc = _build_doc(OUT_PATH, f)
+    final_doc.build(_build_story(styles, f, section_pages=captured))
+
+    try:
+        draft_path.unlink()
+    except OSError:
+        pass
+
+    # ------------------------------------------------------------------
+    # Post-process: stamp accessibility hints and XMP metadata that
+    # ReportLab 4.x cannot emit directly. This adds:
+    #
+    #   * /Catalog /Lang (ja-JP)               — screen-reader pronunciation
+    #   * /Catalog /ViewerPreferences
+    #           /DisplayDocTitle true          — show Title not filename
+    #   * Dublin Core XMP (dc:title / dc:creator / dc:language)
+    #
+    # Full PDF/UA compliance requires a tagged structure tree which
+    # ReportLab 4.4 does not provide; the hints above are the most
+    # impactful subset we can ship without a rendering rewrite.
+    # ------------------------------------------------------------------
+    try:
+        _stamp_accessibility_metadata(OUT_PATH)
+    except Exception as exc:  # noqa: BLE001 — non-fatal post-process
+        print(
+            f"warning: accessibility post-process skipped ({exc})",
+            file=sys.stderr,
+        )
 
     size = OUT_PATH.stat().st_size
     print(f"wrote {OUT_PATH.relative_to(REPO_ROOT)} ({size:,} bytes)")
+
+
+def _stamp_accessibility_metadata(path: Path) -> None:
+    """Stamp /Lang, /ViewerPreferences, and XMP metadata onto a finished PDF.
+
+    Uses pikepdf (a lightweight QPDF binding). The edits are idempotent so
+    re-running the build script will not accumulate duplicate keys.
+    """
+    import pikepdf  # type: ignore[import-not-found]
+
+    with pikepdf.open(path, allow_overwriting_input=True) as pdf:
+        root = pdf.Root
+        # /Lang — ISO 639-1 + region; Adobe/Acrobat use this for reading order.
+        root.Lang = pikepdf.String("ja-JP")
+        # /ViewerPreferences /DisplayDocTitle true — show the Title from
+        # document info instead of the PDF filename in the viewer tab.
+        root.ViewerPreferences = pikepdf.Dictionary(
+            DisplayDocTitle=True,
+        )
+        # XMP metadata (Dublin Core) — duplicates DocInfo but is what modern
+        # accessibility checkers and content management systems inspect.
+        with pdf.open_metadata(set_pikepdf_as_editor=False) as meta:
+            meta["dc:title"] = "Aixis 監査方法論書 — Audit Methodology"
+            meta["dc:creator"] = ["株式会社Aixis"]
+            meta["dc:language"] = ["ja-JP"]
+            meta["dc:description"] = (
+                "独立系AI監査機関 Aixis が用いる評価フレームワーク、"
+                "採点ロジック、品質保証プロセスの全容。"
+            )
+            meta["dc:subject"] = [
+                "Aixis",
+                "AI監査",
+                "独立監査",
+                "5軸評価",
+                "監査方法論書",
+                "methodology",
+            ]
+            meta["pdf:Keywords"] = (
+                "Aixis, AI監査, 独立監査, 5軸評価, 監査方法論書, methodology"
+            )
+        pdf.save(path)
 
 
 if __name__ == "__main__":
