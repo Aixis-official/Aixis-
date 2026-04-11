@@ -108,7 +108,9 @@
 {% endblock %}
 
 {% block preload %}
-<link rel="preload" as="image" type="image/webp" href="/static/img/Aixis-platform-hero.webp">
+{# Preload AVIF — supported in Chrome 85+, Firefox 93+, Safari 16.4+ (~95%+ of users).
+   Older browsers ignore the preload and still load via <picture> webp/jpeg fallback. #}
+<link rel="preload" as="image" type="image/avif" href="/static/img/Aixis-platform-hero.avif">
 {% endblock %}
 
 {% block head %}
@@ -394,6 +396,7 @@
 <section class="relative overflow-hidden bg-[#0a0f1a] min-h-screen lg:min-h-0 lg:flex-1 flex flex-col justify-center">
     <div class="absolute inset-0">
         <picture>
+            <source srcset="/static/img/Aixis-platform-hero.avif" type="image/avif">
             <source srcset="/static/img/Aixis-platform-hero.webp" type="image/webp">
             <img src="/static/img/Aixis-platform-hero.jpeg" alt="Aixis AI監査プラットフォーム — AIツールを5軸定量評価する独立監査機関"
                  class="w-full h-full object-cover object-center hero-bg-img"
