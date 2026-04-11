@@ -16,6 +16,23 @@ _checker_thread: threading.Thread | None = None
 _checker_stop = threading.Event()
 
 
+def _as_aware_utc(value) -> datetime:
+    """Normalize a datetime/ISO-string to an offset-aware UTC datetime.
+
+    SQLAlchemy's ``DateTime(timezone=True)`` is honored by Postgres but SQLite
+    has no native tz type, so depending on the driver round-trip we may get
+    back a naive ``datetime`` or an ISO-8601 string without offset.  The trial
+    checker compares these values against ``datetime.now(timezone.utc)``, so
+    any naive result triggers ``TypeError: can't subtract offset-naive and
+    offset-aware datetimes``.  Normalize here defensively.
+    """
+    if isinstance(value, str):
+        value = datetime.fromisoformat(value)
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
 def start_trial_checker():
     """Start the background trial checker. Called from app lifespan."""
     from ..config import settings
@@ -103,9 +120,9 @@ def _send_reminders(conn, now, reminder_cutoff):
     ).fetchall()
 
     for row in rows:
-        user_id, name, email, trial_end_str = row
+        user_id, name, email, trial_end_raw = row
         try:
-            trial_end = datetime.fromisoformat(trial_end_str) if isinstance(trial_end_str, str) else trial_end_str
+            trial_end = _as_aware_utc(trial_end_raw)
             days_remaining = max(0, (trial_end - now).days)
             send_trial_reminder_email(name, email, days_remaining)
 
