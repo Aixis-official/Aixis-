@@ -28,7 +28,9 @@
     {% block canonical %}{% endblock %}
     <link rel="alternate" hreflang="ja" href="https://platform.aixis.jp{{ request.path }}">
     <link rel="alternate" hreflang="x-default" href="https://platform.aixis.jp{{ request.path }}">
-    {% if en_alternate %}<link rel="alternate" hreflang="en" href="https://platform.aixis.jp{{ en_alternate }}">{% endif %}
+    {# English localization is currently disabled. Re-enable by restoring en_alternate context in pages.py.
+       {% if en_alternate %}<link rel="alternate" hreflang="en" href="https://platform.aixis.jp{{ en_alternate }}">{% endif %}
+    #}
     <!-- OGP -->
     <meta property="og:site_name" content="株式会社Aixis">
     <meta property="og:locale" content="ja_JP">
@@ -37,7 +39,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://platform.aixis.jp{{ request.path }}">
     <meta property="og:description" content="Aixis（アイクシス） — AIツールを独立した5軸監査で定量評価。企業のAIツール選定をデータで支援する独立系AI監査プラットフォーム。">
-    <meta property="og:image" content="https://platform.aixis.jp/static/img/og/aixis-platform-ogp.png">
+    <meta property="og:image" content="https://platform.aixis.jp/static/img/og/aixis-platform-ogp.png?v=20260412">
     <meta property="og:image:alt" content="Aixis AI監査プラットフォーム — 独立した5軸でAIを監査する。">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
@@ -45,7 +47,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ title | default('Aixis') }} - Aixis AI監査プラットフォーム">
     <meta name="twitter:description" content="Aixis（アイクシス） — AIツールを独立した5軸監査で定量評価。企業のAIツール選定をデータで支援。">
-    <meta name="twitter:image" content="https://platform.aixis.jp/static/img/og/aixis-platform-ogp.png">
+    <meta name="twitter:image" content="https://platform.aixis.jp/static/img/og/aixis-platform-ogp.png?v=20260412">
     <meta name="twitter:image:alt" content="Aixis AI監査プラットフォーム — 独立した5軸でAIを監査する。">
     {% endblock %}
     {% block structured_data %}{% endblock %}
@@ -200,6 +202,7 @@
                 <div class="flex items-center gap-2">
                     <!-- Auth links (desktop) -->
                     <div class="hidden md:flex items-center gap-2">
+                        {# English localization is currently disabled — UI hidden, backend routes preserved.
                         {% if en_alternate %}
                         <a href="{{ en_alternate }}"
                            class="px-2.5 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-gray-500 hover:text-gray-900 border border-gray-200 hover:border-gray-400 rounded-sm transition-colors duration-150"
@@ -209,6 +212,7 @@
                             EN
                         </a>
                         {% endif %}
+                        #}
                         {% if user %}
                         <a href="{% if user.role in ('admin', 'analyst', 'auditor') %}/dashboard{% else %}/mypage{% endif %}"
                            class="px-4 py-1.5 text-sm font-semibold text-white bg-aixis-500 hover:bg-aixis-600 rounded-lg shadow-sm transition-all duration-150">
@@ -308,6 +312,7 @@
                 監査プロトコル
             </a>
 
+            {# English localization is currently disabled — mobile drawer UI hidden, backend routes preserved.
             {% if en_alternate %}
             <div class="mx-3 mt-4 pt-4 border-t border-gray-200">
                 <a href="{{ en_alternate }}"
@@ -318,6 +323,7 @@
                 </a>
             </div>
             {% endif %}
+            #}
 
             <!-- Auth section -->
             <div class="mx-3 mt-4 pt-4 border-t border-gray-200">

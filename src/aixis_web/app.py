@@ -229,6 +229,13 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             # Prevent browser caching of authenticated API responses
             response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
             response.headers["Pragma"] = "no-cache"
+        elif not path.startswith(("/admin", "/dashboard", "/mypage", "/login", "/logout", "/reset-password", "/forgot-password", "/invite", "/api")):
+            # Public HTML pages — short CDN cache with must-revalidate so Googlebot
+            # always re-validates freshness on re-indexing requests, but human users
+            # still benefit from 1-hour edge caching.
+            response.headers.setdefault(
+                "Cache-Control", "public, max-age=3600, must-revalidate"
+            )
 
         # --- CSRF cookie (set on every response if not already present) ---
         if _CSRF_COOKIE not in request.cookies:

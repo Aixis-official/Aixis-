@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="author" content="Aixis">
-    {% block meta_robots %}<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">{% endblock %}
+    {# English pages are temporarily behind noindex until the full English localization phase ships. #}
+    {% block meta_robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
     {% block meta_description %}{% endblock %}
     {% block page_title_tag %}<title>{{ title | default("Aixis") }} — Independent AI Audit Platform</title>{% endblock %}
 
@@ -77,7 +78,9 @@
                     </a>
                 </div>
                 <div class="flex items-center gap-3">
+                    {# English localization is currently disabled site-wide — 日本語 switcher hidden for consistency.
                     <a href="{{ ja_alternate | default('/') }}" class="text-xs text-gray-500 hover:text-gray-900 tracking-wide" lang="ja" hreflang="ja">日本語</a>
+                    #}
                 </div>
             </div>
         </div>
