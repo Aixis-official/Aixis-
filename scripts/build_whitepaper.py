@@ -57,12 +57,16 @@ SANS_FONT_DIR = REPO_ROOT / "src" / "aixis_web" / "static" / "fonts"
 SERIF_CACHE_DIR = REPO_ROOT / "scripts" / ".build-cache"
 MACOS_FONT_DIR = Path.home() / "Library" / "Fonts"
 OUT_DIR = REPO_ROOT / "src" / "aixis_web" / "static" / "pdf"
-OUT_PATH = OUT_DIR / "aixis-audit-whitepaper.pdf"
+# Versioned filename ensures long-lived CDN / browser caches do not serve
+# a stale PDF after methodology updates.
+OUT_PATH = OUT_DIR / "aixis-audit-methodology-v1_0.pdf"
 
 # Methodology version and publication date — mirrors the public
-# /score-changelog page (latest published minor version).
-METHODOLOGY_VERSION = "v1.1.0"
-PUBLISHED_ON = date(2026, 4, 1)
+# /score-changelog page. The initial public methodology (v1.0.0) was
+# published on 2026-03-15 when /audit-protocol first went live; no
+# substantive revisions have been applied since.
+METHODOLOGY_VERSION = "v1.0.0"
+PUBLISHED_ON = date(2026, 3, 15)
 
 # Design tokens — identical palette to the web UI.
 INK = HexColor("#0f172a")   # slate-900 — body

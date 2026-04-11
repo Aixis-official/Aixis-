@@ -111,80 +111,48 @@
 
         <ol class="mt-10 space-y-8">
 
-            <!-- v1.1.0 -->
+            <!-- v1.0.0 — 初版公開（現行版）: /audit-protocol が初回公開された日付に基づく -->
             <li class="border border-gray-200 rounded-sm overflow-hidden bg-white">
                 <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-baseline justify-between gap-2">
-                    <h3 class="text-base font-bold text-gray-900 font-serif">v1.1.0</h3>
-                    <time class="text-xs text-gray-500 font-mono" datetime="2026-04-01">2026-04-01</time>
-                </div>
-                <div class="px-6 py-5 space-y-4 text-sm text-gray-600 leading-relaxed">
-                    <div>
-                        <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-50 text-blue-700 rounded-sm">Minor</span>
-                        <span class="ml-2 text-xs text-gray-400">該当カテゴリのみ再監査</span>
-                    </div>
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-900 font-jp">変更点</h4>
-                        <ul class="mt-2 space-y-1.5 text-sm text-gray-600">
-                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>「日本語能力」軸にビジネス敬語の自動評価サブテストを追加</li>
-                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>「信頼性・安全性」軸でデータ越境移転ポリシーを必須計測項目化</li>
-                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">~</span>応答速度の参考計測を全ツール共通の基準環境（東京リージョン）に統一</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-900 font-jp">影響範囲</h4>
-                        <p class="mt-1.5 text-sm text-gray-600">日本語能力・信頼性/安全性軸を持つ全ツール（汎用AI / オフィス / カスタマーサポート系を中心に再監査）</p>
-                    </div>
-                </div>
-            </li>
-
-            <!-- v1.0.1 -->
-            <li class="border border-gray-200 rounded-sm overflow-hidden bg-white">
-                <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-baseline justify-between gap-2">
-                    <h3 class="text-base font-bold text-gray-900 font-serif">v1.0.1</h3>
-                    <time class="text-xs text-gray-500 font-mono" datetime="2026-02-15">2026-02-15</time>
-                </div>
-                <div class="px-6 py-5 space-y-4 text-sm text-gray-600 leading-relaxed">
-                    <div>
-                        <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gray-100 text-gray-600 rounded-sm">Patch</span>
-                        <span class="ml-2 text-xs text-gray-400">スコアへの影響なし</span>
-                    </div>
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-900 font-jp">変更点</h4>
-                        <ul class="mt-2 space-y-1.5 text-sm text-gray-600">
-                            <li class="flex items-start gap-2"><span class="text-gray-400 shrink-0 mt-0.5">~</span>各軸の説明文の表記揺れを整理（「日本語能力 / Localization」表記に統一）</li>
-                            <li class="flex items-start gap-2"><span class="text-gray-400 shrink-0 mt-0.5">~</span>グレード境界値の数式表記を `>=` に統一</li>
-                        </ul>
-                    </div>
-                </div>
-            </li>
-
-            <!-- v1.0.0 -->
-            <li class="border border-gray-200 rounded-sm overflow-hidden bg-white">
-                <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-baseline justify-between gap-2">
-                    <h3 class="text-base font-bold text-gray-900 font-serif">v1.0.0</h3>
-                    <time class="text-xs text-gray-500 font-mono" datetime="2026-01-15">2026-01-15</time>
-                </div>
-                <div class="px-6 py-5 space-y-4 text-sm text-gray-600 leading-relaxed">
-                    <div>
+                    <div class="flex items-baseline gap-3">
+                        <h3 class="text-base font-bold text-gray-900 font-serif">v1.0.0</h3>
                         <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-amber-50 text-amber-700 rounded-sm">Major</span>
-                        <span class="ml-2 text-xs text-gray-400">初版公開</span>
+                        <span class="text-xs text-gray-500">現行版 / Current</span>
                     </div>
+                    <time class="text-xs text-gray-500 font-mono" datetime="2026-03-15">2026-03-15</time>
+                </div>
+                <div class="px-6 py-5 space-y-4 text-sm text-gray-600 leading-relaxed">
                     <div>
-                        <h4 class="text-xs font-bold text-gray-900 font-jp">変更点</h4>
+                        <h4 class="text-xs font-bold text-gray-900 font-jp">初版公開内容</h4>
                         <ul class="mt-2 space-y-1.5 text-sm text-gray-600">
-                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>5軸評価フレームワークの初版を公開（実務適性 / 費用対効果 / 日本語能力 / 信頼性・安全性 / 革新性）</li>
-                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>S〜Dの5段階グレード制度を導入</li>
-                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>自動テスト60% / AI定性評価40% の加重平均モデルを採用</li>
-                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>90日サイクル定期再監査ポリシーを制定</li>
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>5軸評価フレームワークを公開（実務適性 / 費用対効果 / 日本語能力 / 信頼性・安全性 / 革新性）</li>
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>S / A / B / C / D の5段階グレード判定を制定</li>
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>自動テストと AI 定性評価を組み合わせた合算採点モデルを採用</li>
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>品質保証プロセス（独立評価者選定・ダブルチェック・自動テスト検証・最終レビュー・公開前チェック）を確立</li>
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>90日サイクルの定期再監査と、基盤モデル切替 / セキュリティ事故 / 料金ポリシー変更を臨時トリガーとして採用</li>
+                            <li class="flex items-start gap-2"><span class="text-blue-500 shrink-0 mt-0.5">+</span>監査信頼度メタ評価（再現性・正確性・網羅性・解釈性）を採用</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 class="text-xs font-bold text-gray-900 font-jp">影響範囲</h4>
-                        <p class="mt-1.5 text-sm text-gray-600">監査公開対象の全ツール</p>
+                        <h4 class="text-xs font-bold text-gray-900 font-jp">根拠ドキュメント</h4>
+                        <p class="mt-1.5 text-sm text-gray-600">
+                            <a href="/audit-protocol" class="text-aixis-600 hover:underline">監査プロトコル（全文）</a>
+                            ／
+                            <a href="/whitepaper" class="text-aixis-600 hover:underline">監査方法論書（PDF）</a>
+                        </p>
                     </div>
                 </div>
             </li>
         </ol>
+
+        <div class="mt-8 p-5 border border-dashed border-gray-300 rounded-sm bg-white">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider font-serif">Upcoming Revisions</p>
+            <p class="mt-2 text-sm text-gray-700 font-jp">これまでに方法論の改訂はありません。</p>
+            <p class="mt-2 text-xs text-gray-500 leading-relaxed">
+                今後の改訂は本ページに追記専用で記録されます。Minor 以上の改訂では、影響範囲に含まれるツールの再監査を行い、結果を公開時に反映します。
+                methodology version のバンプタイミングは <a href="/audit-protocol#lifecycle" class="text-aixis-600 hover:underline">監査ライフサイクル</a> に準拠します。
+            </p>
+        </div>
     </div>
 </section>
 
