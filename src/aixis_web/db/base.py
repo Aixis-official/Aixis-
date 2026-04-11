@@ -52,17 +52,29 @@ except Exception as _e:
     raise
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-# Enable SQLite WAL mode for better concurrent read performance and crash resilience
+# Enable SQLite WAL mode for better concurrent read performance and crash resilience.
+#
+# aiosqlite exposes its DBAPI connection via an awaitable coroutine API, so
+# calling ``raw.execute(...)`` directly from a sync "connect" event listener
+# leaves a dangling coroutine (RuntimeWarning: coroutine was never awaited).
+# Instead, issue the PRAGMAs via the real underlying sqlite3 connection using
+# ``_conn`` (the synchronous handle aiosqlite holds internally). If that's not
+# available, fall back silently — WAL is an optimization, not a correctness
+# requirement.
 if "sqlite" in _db_url:
     from sqlalchemy import event
 
     @event.listens_for(engine.sync_engine, "connect")
     def _set_sqlite_pragma(dbapi_conn, connection_record):
-        # aiosqlite wraps the real connection; unwrap if needed
-        raw = getattr(dbapi_conn, "_connection", dbapi_conn)
+        # aiosqlite.Connection wraps a real sqlite3.Connection at ._conn
+        raw_sync = getattr(dbapi_conn, "_conn", None)
+        if raw_sync is None:
+            return  # not aiosqlite — nothing to do
         try:
-            raw.execute("PRAGMA journal_mode=WAL")
-            raw.execute("PRAGMA synchronous=NORMAL")
+            cur = raw_sync.cursor()
+            cur.execute("PRAGMA journal_mode=WAL")
+            cur.execute("PRAGMA synchronous=NORMAL")
+            cur.close()
         except Exception:
             pass  # WAL requires write access to create -wal/-shm files
 

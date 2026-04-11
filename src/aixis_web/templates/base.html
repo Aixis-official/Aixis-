@@ -4,7 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     {% block preload %}{% endblock %}
+
+    {# Critical CSS: prevent FOUC and give the browser enough to paint the hero
+       without blocking on the full stylesheet. Keep this block small (<2kB)
+       and load the rest via the preloaded stylesheet below. #}
     <style>
+        :root { --primary:#1a365d; --bg:#f7fafc; --text:#2d3748; --heading:#1a202c; --dark-bg:#0a0f1a; }
+        *,*::before,*::after { box-sizing: border-box; }
+        html { -webkit-font-smoothing: antialiased; scrollbar-width: none; -ms-overflow-style: none; }
+        html::-webkit-scrollbar { display: none; }
+        body { margin: 0; font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif; color: var(--text); background: var(--bg); min-height: 100dvh; line-height: 1.6; }
+        img, picture, svg, video { max-width: 100%; height: auto; display: block; }
+        a { color: inherit; text-decoration: none; }
         /* Prevent iOS zoom on input focus */
         @supports (-webkit-touch-callout: none) {
             input, select, textarea { font-size: 16px !important; }
@@ -89,6 +100,12 @@
         })();
     </script>
     {% endif %}
+
+    <!-- Preload the two render-blocking stylesheets so the browser fetches
+         them in parallel before parsing the rest of <head>, then load them
+         via regular <link rel="stylesheet"> so there's no FOUC. -->
+    <link rel="preload" href="/static/css/tailwind.min.css?v=20260406e" as="style">
+    <link rel="preload" href="/static/css/style.min.css?v=20260411b" as="style">
 
     <!-- Tailwind CSS (pre-built static, replaces 3.6MB CDN JIT compiler) -->
     <link rel="stylesheet" href="/static/css/tailwind.min.css?v=20260406e">
