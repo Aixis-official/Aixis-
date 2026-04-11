@@ -433,7 +433,7 @@
     <script nonce="{{ csp_nonce }}">
         function aixisLogout() {
             var token = localStorage.getItem('aixis_token') || '';
-            var csrfToken = (document.cookie.match(/(?:^|;\s*)aixis_csrf=([^;]+)/) || [])[1] || '';
+            var csrfToken = (document.cookie.match(/(?:^|;\s*)(?:__Host-)?aixis_csrf=([^;]+)/) || [])[1] || '';
             // Call server logout to clear HttpOnly cookie
             fetch('/api/v1/auth/logout', {
                 method: 'POST',

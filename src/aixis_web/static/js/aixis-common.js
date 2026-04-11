@@ -180,7 +180,7 @@ function formatDateTime(isoString) {
 // ===== CSRF HELPER =====
 
 function getCSRFToken() {
-  const match = document.cookie.match(/(?:^|;\s*)aixis_csrf=([^;]+)/);
+  const match = document.cookie.match(/(?:^|;\s*)(?:__Host-)?aixis_csrf=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : '';
 }
 

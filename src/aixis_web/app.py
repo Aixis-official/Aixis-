@@ -29,7 +29,13 @@ BASE_DIR = Path(__file__).parent
 # to avoid Starlette's known issue with stacking multiple BaseHTTPMiddleware)
 # ---------------------------------------------------------------------------
 
-_CSRF_COOKIE = "aixis_csrf"
+# In production we use the `__Host-` cookie prefix for defence-in-depth:
+# browsers only accept the cookie when it is (1) sent with `Secure`, (2) has
+# `Path=/`, and (3) has no `Domain` attribute — which prevents sub-domain
+# injection of an attacker-controlled token. In local development the app
+# typically runs over plain HTTP on non-localhost hosts, so we fall back to
+# the legacy name there.
+_CSRF_COOKIE = "aixis_csrf" if settings.debug else "__Host-aixis_csrf"
 _CSRF_HEADER = "X-CSRF-Token"
 _CSRF_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
@@ -92,9 +98,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
     """Combined security headers + CSRF protection middleware.
 
     Security headers: X-Frame-Options, CSP, HSTS, etc.
-    CSRF: Double-submit cookie — sets `aixis_csrf` cookie, validates
-    X-CSRF-Token header on state-changing requests. Bearer-token and
-    API-key-authenticated requests are exempt.
+    CSRF: Double-submit cookie — sets `__Host-aixis_csrf` cookie (prod) or
+    `aixis_csrf` (dev), validates X-CSRF-Token header on state-changing
+    requests. Bearer-token and API-key-authenticated requests are exempt.
     """
 
     async def dispatch(self, request: Request, call_next):
@@ -146,7 +152,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         if admin_path:
             csp_directives = [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.plot.ly https://unpkg.com",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.plot.ly",
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                 "font-src 'self' https://fonts.gstatic.com",
                 "img-src 'self' data: https:",

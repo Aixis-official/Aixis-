@@ -157,9 +157,11 @@ async def login(
         secure=is_production,
     )
 
-    # Regenerate CSRF token after login (Medium 1: session fixation prevention)
+    # Regenerate CSRF token after login (Medium 1: session fixation prevention).
+    # Cookie name matches the one middleware sets (`__Host-` prefix in prod).
+    from ...app import _CSRF_COOKIE
     response.set_cookie(
-        key="aixis_csrf",
+        key=_CSRF_COOKIE,
         value=secrets.token_urlsafe(32),
         max_age=86400,
         path="/",
@@ -196,9 +198,10 @@ async def logout(
         secure=is_production,
     )
 
-    # Clear CSRF cookie
+    # Clear CSRF cookie — use same name the middleware set (`__Host-` in prod).
+    from ...app import _CSRF_COOKIE
     response.delete_cookie(
-        key="aixis_csrf",
+        key=_CSRF_COOKIE,
         path="/",
         httponly=False,
         samesite="lax",
