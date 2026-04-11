@@ -129,6 +129,14 @@ class Settings(BaseSettings):
     # Admin IPs that bypass login rate limiting (comma-separated)
     admin_ips: str = ""
 
+    # Phase C-4: Umami self-hosted analytics (opt-in via env vars).
+    # When both are set, the public templates emit the umami.js loader and
+    # the CSP allow-lists the configured host for script-src + connect-src.
+    # Example:  UMAMI_URL=https://analytics.aixis.jp
+    #           UMAMI_WEBSITE_ID=11111111-2222-3333-4444-555555555555
+    umami_url: str = ""
+    umami_website_id: str = ""
+
     model_config = {"env_file": ".env"}
 
 

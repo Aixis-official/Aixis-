@@ -45,6 +45,24 @@ _CSRF_COOKIE = "aixis_csrf" if settings.debug else "__Host-aixis_csrf"
 _CSRF_HEADER = "X-CSRF-Token"
 _CSRF_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
+
+def _umami_origin() -> str:
+    """Extract the scheme+host of the configured Umami instance, or ''.
+
+    Used to allow-list the analytics host in CSP script-src / connect-src
+    only when both UMAMI_URL and UMAMI_WEBSITE_ID are set.
+    """
+    if not (settings.umami_url and settings.umami_website_id):
+        return ""
+    from urllib.parse import urlsplit
+    parts = urlsplit(settings.umami_url)
+    if not parts.scheme or not parts.netloc:
+        return ""
+    return f"{parts.scheme}://{parts.netloc}"
+
+
+_UMAMI_ORIGIN = _umami_origin()
+
 # CSP: SHA-256 hashes of inline event handler attribute values found in
 # public-facing templates. Required when using `'unsafe-hashes'` to allow
 # specific inline handlers without `'unsafe-inline'`. Regenerate this list
@@ -175,17 +193,19 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             # `style="..."` attributes are still common, so style-src keeps
             # `'unsafe-inline'` for now (lower XSS impact than scripts).
             nonce = request.state.csp_nonce
+            extra_script = f" {_UMAMI_ORIGIN}" if _UMAMI_ORIGIN else ""
+            extra_connect = f" {_UMAMI_ORIGIN}" if _UMAMI_ORIGIN else ""
             csp_directives = [
                 "default-src 'self'",
                 (
                     f"script-src 'self' 'nonce-{nonce}' 'unsafe-hashes' "
                     f"{_PUBLIC_HANDLER_HASHES} "
-                    "https://www.googletagmanager.com https://cdn.plot.ly"
+                    f"https://www.googletagmanager.com https://cdn.plot.ly{extra_script}"
                 ),
                 "style-src 'self' 'unsafe-inline'",
                 "font-src 'self'",
                 "img-src 'self' data: https:",
-                "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com",
+                f"connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com{extra_connect}",
                 "frame-ancestors 'none'",
                 "base-uri 'self'",
                 "form-action 'self'",

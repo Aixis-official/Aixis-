@@ -62,6 +62,10 @@ def _get_template_context(request: Request, user=None, **extra) -> dict:
         "lang": lang,
         "subscription": None,
         "csp_nonce": getattr(request.state, "csp_nonce", ""),
+        # Phase C-4: Umami self-host (opt-in via env). When both are set the
+        # template emits a privacy-first analytics snippet alongside GA4.
+        "umami_url": settings.umami_url,
+        "umami_website_id": settings.umami_website_id,
         **extra,
     }
     # Attach subscription info when user is authenticated
