@@ -1,5 +1,5 @@
 // Aixis Service Worker — network-first navigation, cache-first static assets
-const CACHE_NAME = 'aixis-static-v4';
+const CACHE_NAME = 'aixis-static-v5';
 const OFFLINE_URL = '/offline';
 const PRE_CACHE_URLS = [
   OFFLINE_URL,
@@ -7,7 +7,6 @@ const PRE_CACHE_URLS = [
   '/static/css/style.min.css',
   '/static/css/tailwind.min.css',
   '/static/js/aixis-common.min.js',
-  '/static/js/ga4-events.min.js',
   '/static/manifest.json',
   '/static/fonts/NotoSerifJP-Regular.woff2',
   '/static/fonts/NotoSerifJP-Medium.woff2',

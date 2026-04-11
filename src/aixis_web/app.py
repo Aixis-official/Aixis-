@@ -200,12 +200,12 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 (
                     f"script-src 'self' 'nonce-{nonce}' 'unsafe-hashes' "
                     f"{_PUBLIC_HANDLER_HASHES} "
-                    f"https://www.googletagmanager.com https://cdn.plot.ly{extra_script}"
+                    f"https://cdn.plot.ly{extra_script}"
                 ),
                 "style-src 'self' 'unsafe-inline'",
                 "font-src 'self'",
                 "img-src 'self' data: https:",
-                f"connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com{extra_connect}",
+                f"connect-src 'self'{extra_connect}",
                 "frame-ancestors 'none'",
                 "base-uri 'self'",
                 "form-action 'self'",

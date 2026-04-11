@@ -62,8 +62,9 @@ def _get_template_context(request: Request, user=None, **extra) -> dict:
         "lang": lang,
         "subscription": None,
         "csp_nonce": getattr(request.state, "csp_nonce", ""),
-        # Phase C-4: Umami self-host (opt-in via env). When both are set the
-        # template emits a privacy-first analytics snippet alongside GA4.
+        # Phase E: Umami self-host is now the sole analytics pipeline.
+        # GA4 was removed in favour of cookieless, privacy-first tracking.
+        # When both env vars are set the template emits the umami.js loader.
         "umami_url": settings.umami_url,
         "umami_website_id": settings.umami_website_id,
         # Phase D-4: Public status page (env-gated). When set, base.html
