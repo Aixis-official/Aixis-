@@ -95,6 +95,38 @@
         "@type": "Answer",
         "text": "AIツールのアップデートや市場環境の変化に応じて定期的に再監査を実施しています。スコアにはバージョン情報と公開日が記載されており、常に最新の評価をご確認いただけます。"
       }
+    },
+    {
+      "@type": "Question",
+      "name": "スコア算出方法そのものが変わったかどうかは確認できますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "はい。スコアリング方法論の改訂は専用のスコア改訂履歴ページで時系列に公開しています。Major / Minor / Patch の3区分で管理し、各リビジョンで何が変わり、どの範囲が再監査の対象になったかを明示しています。過去のスコアとの比較可能性を保つため、本ページは追記専用で運用されます。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "ベンダーが評価結果に異議を唱えた場合はどうなりますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "ベンダーからの訂正依頼は監査チームが個別に検証し、再評価が必要と判断された場合のみ臨時再監査を実施します。臨時再監査は通常30営業日以内に完了し、再評価中は現行スコアに「再評価中」ラベルが付与されます。検証の結果スコアが据え置かれた場合は、根拠と判断理由を内部ログに記録します。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "監査スコアを社内資料・提案書に引用してもよいですか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "はい、出典として「Aixis監査スコア」と明示し、該当ツール詳細ページのURLを併記いただければ、社内検討資料・選定提案書での引用は無償でご利用いただけます。広告・販促資料への引用や、引用範囲が大きい場合は、お問い合わせページからご相談ください。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Aixisが収集する個人情報はどのように扱われますか？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Aixisは日本の個人情報保護法に準拠した運用を行っています。問い合わせフォームで取得した情報は問い合わせ対応の目的のみに使用し、第三者提供は行いません。詳細はプライバシーポリシーをご確認ください。"
+      }
     }
   ]
 }
@@ -210,6 +242,46 @@
             </button>
             <div class="faq-content hidden px-6 pb-5">
                 <p class="text-slate-600 leading-relaxed">AIツールのアップデートや市場環境の変化に応じて定期的に再監査を実施しています。スコアにはバージョン情報と公開日が記載されており、常に最新の評価をご確認いただけます。</p>
+            </div>
+        </div>
+
+        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+            <button type="button" class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-slate-50 transition-colors" aria-expanded="false">
+                <span class="text-base font-semibold text-slate-900 pr-4">スコア算出方法そのものが変わったかどうかは確認できますか？</span>
+                <svg class="faq-icon w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content hidden px-6 pb-5">
+                <p class="text-slate-600 leading-relaxed">はい。スコアリング方法論の改訂は<a href="/score-changelog" class="text-indigo-600 hover:text-indigo-800 underline">スコア改訂履歴</a>で時系列に公開しています。Major / Minor / Patch の3区分で管理し、各リビジョンで何が変わり、どの範囲が再監査の対象になったかを明示しています。過去のスコアとの比較可能性を保つため、本ページは追記専用で運用されます。</p>
+            </div>
+        </div>
+
+        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+            <button type="button" class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-slate-50 transition-colors" aria-expanded="false">
+                <span class="text-base font-semibold text-slate-900 pr-4">ベンダーが評価結果に異議を唱えた場合はどうなりますか？</span>
+                <svg class="faq-icon w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content hidden px-6 pb-5">
+                <p class="text-slate-600 leading-relaxed">ベンダーからの訂正依頼は監査チームが個別に検証し、再評価が必要と判断された場合のみ臨時再監査を実施します。臨時再監査は通常30営業日以内に完了し、再評価中は現行スコアに「再評価中」ラベルが付与されます。検証の結果スコアが据え置かれた場合は、根拠と判断理由を内部ログに記録します。</p>
+            </div>
+        </div>
+
+        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+            <button type="button" class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-slate-50 transition-colors" aria-expanded="false">
+                <span class="text-base font-semibold text-slate-900 pr-4">監査スコアを社内資料・提案書に引用してもよいですか？</span>
+                <svg class="faq-icon w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content hidden px-6 pb-5">
+                <p class="text-slate-600 leading-relaxed">はい、出典として「Aixis監査スコア」と明示し、該当ツール詳細ページのURLを併記いただければ、社内検討資料・選定提案書での引用は無償でご利用いただけます。広告・販促資料への引用や、引用範囲が大きい場合は、<a href="/contact" class="text-indigo-600 hover:text-indigo-800 underline">お問い合わせ</a>からご相談ください。</p>
+            </div>
+        </div>
+
+        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+            <button type="button" class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-slate-50 transition-colors" aria-expanded="false">
+                <span class="text-base font-semibold text-slate-900 pr-4">Aixisが収集する個人情報はどのように扱われますか？</span>
+                <svg class="faq-icon w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="faq-content hidden px-6 pb-5">
+                <p class="text-slate-600 leading-relaxed">Aixisは日本の個人情報保護法に準拠した運用を行っています。問い合わせフォームで取得した情報は問い合わせ対応の目的のみに使用し、第三者提供は行いません。詳細は<a href="https://aixis.jp/privacy-policy" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-800 underline">プライバシーポリシー</a>をご確認ください。</p>
             </div>
         </div>
 
