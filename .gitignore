@@ -12,3 +12,4 @@ output/*
 .DS_Store
 *.yaml.bak
 src/aixis_web/static/screenshots/
+scripts/.build-cache/

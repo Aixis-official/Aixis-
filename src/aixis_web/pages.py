@@ -1026,6 +1026,17 @@ async def security_txt():
     )
 
 
+@page_router.get("/healthz")
+async def healthz():
+    """Lightweight liveness probe for external uptime monitors.
+
+    Intentionally does no database / cache / volume work — it simply confirms
+    that the ASGI app is up and serving. A deeper check lives under
+    ``/api/v1/health`` for authenticated dashboards.
+    """
+    return PlainTextResponse("ok", status_code=200, headers={"Cache-Control": "no-store"})
+
+
 @page_router.get("/robots.txt")
 async def robots_txt():
     """robots.txt for search engine crawlers."""
@@ -1042,6 +1053,7 @@ async def robots_txt():
         "Disallow: /portal\n"
         "Disallow: /mypage\n"
         "Disallow: /platform/\n"
+        "Disallow: /healthz\n"
         "\n"
         f"Sitemap: {SITE_ORIGIN}/sitemap.xml\n"
     )
