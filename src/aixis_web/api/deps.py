@@ -151,13 +151,22 @@ async def _validate_token(
                             await _asyncio.wait_for(db.commit(), timeout=3.0)
                         except _asyncio.TimeoutError:
                             logger.warning("Session tracking commit timed out (disk full?)")
-                            db.expire_all()
+                            try:
+                                await _asyncio.wait_for(db.rollback(), timeout=2.0)
+                            except Exception:
+                                db.expire_all()
+                        except Exception:
+                            logger.warning("Session tracking commit failed")
+                            try:
+                                await _asyncio.wait_for(db.rollback(), timeout=2.0)
+                            except Exception:
+                                db.expire_all()
             except Exception as _sess_err:
                 logger.warning("Session tracking failed: %s", _sess_err)
                 try:
                     await _asyncio.wait_for(db.rollback(), timeout=2.0)
                 except Exception:
-                    pass
+                    db.expire_all()
 
     except JWTError:
         return None

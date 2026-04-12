@@ -1622,64 +1622,8 @@ window.addEventListener('unhandledrejection', function(evt) {
         return div.innerHTML;
     }
 
-    // === DIAGNOSTIC MODE: bypass aixisAPI entirely, use raw fetch ===
-    var _diagUrl = '/api/v1/audits/' + encodeURIComponent(sessionId);
-    var _diagEl = document.getElementById('loading-state');
-    var _diagLog = [];
-    function _diagShow() {
-        if (_diagEl) _diagEl.innerHTML = '<div style="text-align:center;padding:40px;font-family:monospace;font-size:13px;line-height:2">' +
-            _diagLog.map(function(l) { return '<div>' + l + '</div>'; }).join('') + '</div>';
-    }
-    _diagLog.push('v:20260413b | sid: ' + sessionId.substring(0, 12) + '...');
-    _diagLog.push('1. Testing raw fetch to: ' + _diagUrl);
-    _diagShow();
-
-    // Step 1: try raw fetch (no aixisAPI, no AbortController, no auth headers)
-    fetch(_diagUrl, { credentials: 'same-origin' })
-        .then(function(r) {
-            _diagLog.push('2. Response: ' + r.status + ' ' + r.statusText);
-            _diagShow();
-            return r.text();
-        })
-        .then(function(t) {
-            _diagLog.push('3. Body length: ' + t.length);
-            try {
-                var data = JSON.parse(t);
-                _diagLog.push('4. JSON OK: status=' + data.status + ', tests=' + (data.test_results || []).length);
-                _diagLog.push('<span style="color:green">✓ API works! Rendering page...</span>');
-                _diagShow();
-                // API works — try the full load
-                setTimeout(function() {
-                    _diagEl.classList.add('hidden');
-                    document.getElementById('main-content').classList.remove('hidden');
-                    renderAudit(data);
-                }, 500);
-            } catch (jsonErr) {
-                _diagLog.push('4. JSON parse FAILED: ' + jsonErr.message);
-                _diagLog.push('Body start: ' + t.substring(0, 200));
-                _diagShow();
-            }
-        })
-        .catch(function(e) {
-            _diagLog.push('2. Fetch FAILED: ' + e.name + ': ' + e.message);
-            _diagShow();
-            // Fallback: try with auth header
-            var token = localStorage.getItem('aixis_token');
-            _diagLog.push('3. Retrying with Bearer token...');
-            _diagShow();
-            fetch(_diagUrl, {
-                credentials: 'same-origin',
-                headers: token ? { 'Authorization': 'Bearer ' + token } : {}
-            })
-            .then(function(r) {
-                _diagLog.push('4. Retry response: ' + r.status + ' ' + r.statusText);
-                _diagShow();
-            })
-            .catch(function(e2) {
-                _diagLog.push('4. Retry also FAILED: ' + e2.name + ': ' + e2.message);
-                _diagShow();
-            });
-        });
+    // Load audit data
+    loadAudit();
 })();
 </script>
 {% endblock %}
