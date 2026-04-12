@@ -225,11 +225,15 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             response.headers["Cache-Control"] = "public, max-age=2592000, immutable"  # 30 days
         elif path.startswith(("/screenshots/", "/uploads/")):
             response.headers["Cache-Control"] = "public, max-age=86400"  # 1 day
+        elif path.startswith(("/admin", "/dashboard", "/mypage")):
+            # Authenticated HTML pages — never cache to ensure fresh templates after deploys
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
         elif path.startswith("/api/") and not path.startswith("/api/public/"):
             # Prevent browser caching of authenticated API responses
             response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
             response.headers["Pragma"] = "no-cache"
-        elif not path.startswith(("/admin", "/dashboard", "/mypage", "/login", "/logout", "/reset-password", "/forgot-password", "/invite", "/api")):
+        elif not path.startswith(("/login", "/logout", "/reset-password", "/forgot-password", "/invite", "/api")):
             # Public HTML pages — short CDN cache with must-revalidate so Googlebot
             # always re-validates freshness on re-indexing requests, but human users
             # still benefit from 1-hour edge caching.
