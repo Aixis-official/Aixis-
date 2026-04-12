@@ -127,46 +127,21 @@ async def _validate_token(
             if revoked.scalar_one_or_none():
                 return None
 
-            # Verify session is still active (concurrent session enforcement)
-            # NOTE: The commit here can hang if PostgreSQL has disk issues
-            # (e.g. "No space left on device"). Use asyncio.wait_for to prevent
-            # blocking the entire request pipeline.
+            # Session tracking: verify session is still active.
+            # READ-ONLY — no writes here to avoid blocking the request
+            # pipeline when PostgreSQL has disk issues.
             try:
-                import asyncio as _asyncio
                 from ..db.models.user_session import UserSession
                 session_result = await db.execute(
                     select(UserSession).where(
                         UserSession.jti == jti, UserSession.is_active == True
                     )
                 )
-                session = session_result.scalar_one_or_none()
-                if session:
-                    now = datetime.now(timezone.utc)
-                    last_active = session.last_active_at
-                    if last_active and last_active.tzinfo is None:
-                        last_active = last_active.replace(tzinfo=timezone.utc)
-                    if not last_active or (now - last_active).total_seconds() > 300:
-                        session.last_active_at = now
-                        try:
-                            await _asyncio.wait_for(db.commit(), timeout=3.0)
-                        except _asyncio.TimeoutError:
-                            logger.warning("Session tracking commit timed out (disk full?)")
-                            try:
-                                await _asyncio.wait_for(db.rollback(), timeout=2.0)
-                            except Exception:
-                                db.expire_all()
-                        except Exception:
-                            logger.warning("Session tracking commit failed")
-                            try:
-                                await _asyncio.wait_for(db.rollback(), timeout=2.0)
-                            except Exception:
-                                db.expire_all()
+                if not session_result.scalar_one_or_none():
+                    # Session was revoked/deactivated
+                    pass  # Allow for now — strict enforcement can be added later
             except Exception as _sess_err:
-                logger.warning("Session tracking failed: %s", _sess_err)
-                try:
-                    await _asyncio.wait_for(db.rollback(), timeout=2.0)
-                except Exception:
-                    db.expire_all()
+                logger.warning("Session check failed: %s", _sess_err)
 
     except JWTError:
         return None
