@@ -442,7 +442,7 @@
         document.getElementById('edit-slug').value = slug;
         document.getElementById('f-slug').value = tool.slug;
         document.getElementById('f-slug').readOnly = true;
-        document.getElementById('f-slug').classList.add('bg-gray-100', '', 'cursor-not-allowed');
+        document.getElementById('f-slug').classList.add('bg-gray-100', 'cursor-not-allowed');
         document.getElementById('f-name').value = tool.name || '';
         document.getElementById('f-name-jp').value = tool.name_jp || '';
         document.getElementById('f-vendor').value = tool.vendor || '';
@@ -513,7 +513,7 @@
         document.getElementById('edit-slug').value = '';
         document.getElementById('f-slug').value = '';
         document.getElementById('f-slug').readOnly = false;
-        document.getElementById('f-slug').classList.remove('bg-gray-100', '', 'cursor-not-allowed');
+        document.getElementById('f-slug').classList.remove('bg-gray-100', 'cursor-not-allowed');
         ['f-name','f-name-jp','f-vendor','f-url','f-desc-jp','f-features','f-executive-summary','f-pros-jp','f-cons-jp','f-risks-jp','f-pricing-detail-jp','f-target-company-profile','f-target-departments','f-gov-certifications','f-gov-summary'].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) el.value = '';
