@@ -106,10 +106,17 @@ class RequestTimeoutMiddleware(BaseHTTPMiddleware):
     """Abort requests that exceed the timeout to prevent thread pool starvation."""
 
     async def dispatch(self, request: Request, call_next):
+        path = request.url.path
+        # Log API requests immediately on arrival (before handler runs)
+        if path.startswith("/api/"):
+            logger.info(">>> REQ ARRIVED: %s %s", request.method, path)
         try:
-            return await asyncio.wait_for(
+            response = await asyncio.wait_for(
                 call_next(request), timeout=_REQUEST_TIMEOUT
             )
+            if path.startswith("/api/"):
+                logger.info("<<< REQ DONE: %s %s -> %s", request.method, path, response.status_code)
+            return response
         except asyncio.TimeoutError:
             logger.warning("Request timeout (%ds): %s %s", _REQUEST_TIMEOUT, request.method, request.url.path)
             return JSONResponse(

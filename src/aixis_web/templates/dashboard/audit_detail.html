@@ -3,6 +3,28 @@
 {% block header_title %}監査セッション詳細{% endblock %}
 
 {% block content %}
+<!-- Inline diagnostic: no external JS dependency, fires immediately -->
+<div id="_diag" style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#1e1b4b;color:#a5f3fc;font-family:monospace;font-size:12px;padding:8px 16px;max-height:40vh;overflow:auto"></div>
+<script>
+(function(){
+    var d=document.getElementById('_diag'),sid='{{ session_id }}',log=[];
+    function w(m){log.push(new Date().toISOString().substr(11,12)+' '+m);d.innerHTML=log.join('<br>');}
+    w('diag v4 | sid='+sid.substring(0,12));
+    w('aixisAPI='+(typeof window.aixisAPI)+' | fetch='+(typeof window.fetch));
+    var url='/api/v1/audits/'+encodeURIComponent(sid);
+    w('fetching: '+url);
+    fetch(url,{credentials:'same-origin'}).then(function(r){
+        w('response: '+r.status+' '+r.statusText);
+        return r.text();
+    }).then(function(t){
+        w('body length: '+t.length);
+        try{var j=JSON.parse(t);w('JSON OK: status='+j.status+', tests='+(j.test_results||[]).length);}
+        catch(e){w('JSON FAIL: '+e.message+' | body start: '+t.substring(0,120));}
+    }).catch(function(e){
+        w('FETCH ERROR: '+e.name+': '+e.message);
+    });
+})();
+</script>
 <div class="max-w-6xl mx-auto">
 
     <!-- Breadcrumb -->
