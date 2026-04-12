@@ -50,11 +50,15 @@
     minutes_transcription: "書き起こし",
     minutes_japanese: "日本語品質",
     minutes_complex: "複合評価",
+    translation_accuracy: "翻訳正確性",
+    translation_japanese: "日本語品質",
+    translation_context: "文脈理解",
   };
 
   // Categories that use text-based input instead of screenshots
   const TEXT_INPUT_CATEGORIES = new Set([
     "minutes_transcription", "minutes_japanese", "minutes_complex",
+    "translation_accuracy", "translation_japanese", "translation_context",
   ]);
 
   const TEXT_OUTPUT_LABELS = {
@@ -85,6 +89,9 @@
     minutes_transcription: "#0891b2",
     minutes_japanese: "#d97706",
     minutes_complex: "#7c3aed",
+    translation_accuracy: "#2563eb",
+    translation_japanese: "#d97706",
+    translation_context: "#059669",
     freeform: "#64748b",
     protocol: "#475569",
   };

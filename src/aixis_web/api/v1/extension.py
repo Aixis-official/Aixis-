@@ -104,6 +104,7 @@ async def _create_session_impl(body, db, user):
     _SLUG_TO_PROFILE = {
         "slide-creation-ai": "slide_creation",
         "meeting-minutes-ai": "meeting_minutes",
+        "translation-ai": "translation",
     }
     tool_db_profile = tool_row[2] if tool_row[2] else ""
     tool_category_slug = tool_row[3] if tool_row[3] else ""
