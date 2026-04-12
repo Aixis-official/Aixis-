@@ -138,11 +138,20 @@ async def _validate_token(
                 session = session_result.scalar_one_or_none()
                 if session:
                     now = datetime.now(timezone.utc)
-                    if not session.last_active_at or (now - session.last_active_at).total_seconds() > 300:
+                    # Ensure last_active_at is timezone-aware for comparison
+                    last_active = session.last_active_at
+                    if last_active and last_active.tzinfo is None:
+                        last_active = last_active.replace(tzinfo=timezone.utc)
+                    if not last_active or (now - last_active).total_seconds() > 300:
                         session.last_active_at = now
                         await db.commit()
             except Exception as _sess_err:
                 logger.warning("Session tracking failed: %s", _sess_err)
+                # Rollback to prevent dirty session state from affecting subsequent queries
+                try:
+                    await db.rollback()
+                except Exception:
+                    pass
 
     except JWTError:
         return None

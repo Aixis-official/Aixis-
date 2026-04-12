@@ -252,30 +252,12 @@ async def get_audit(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="監査セッションが見つかりません",
                 )
+        logger.info("get_audit: fetching session %s", session_id)
         result = await _get_audit_impl(session_id, db)
-        # Use allow_nan=False to prevent invalid JSON (NaN/Infinity) from reaching the browser.
-        # Python's json.dumps defaults to allow_nan=True, which produces non-standard JSON
-        # that JavaScript's JSON.parse cannot handle, causing silent page load failures.
-        body = result.model_dump(mode="json")
-        return JSONResponse(content=_json.loads(_json.dumps(body, allow_nan=False, default=str)))
+        logger.info("get_audit: returning session %s (status=%s)", session_id, result.status)
+        return result
     except HTTPException:
         raise
-    except ValueError as e:
-        # Likely a NaN serialization error — sanitize and retry
-        if "nan" in str(e).lower() or "infinity" in str(e).lower():
-            logger.warning("NaN detected in audit response for %s, sanitizing: %s", session_id, e)
-            try:
-                result = await _get_audit_impl(session_id, db)
-                body_str = _json.dumps(result.model_dump(mode="json"), allow_nan=True, default=str)
-                import re
-                body_str = re.sub(r'\bNaN\b', 'null', body_str)
-                body_str = re.sub(r'-?Infinity', 'null', body_str)
-                return JSONResponse(content=_json.loads(body_str))
-            except Exception as e2:
-                logger.error("Sanitization retry failed for %s: %s", session_id, e2)
-                raise HTTPException(500, "内部エラーが発生しました")
-        logger.error("get_audit error for %s: %s\n%s", session_id, e, _tb.format_exc())
-        raise HTTPException(500, "内部エラーが発生しました")
     except Exception as e:
         logger.error("get_audit error for %s: %s\n%s", session_id, e, _tb.format_exc())
         raise HTTPException(500, "内部エラーが発生しました")
@@ -283,6 +265,7 @@ async def get_audit(
 
 async def _get_audit_impl(session_id: str, db: AsyncSession):
     """Internal implementation of get_audit."""
+    logger.info("_get_audit_impl: step 1 - fetch session %s", session_id)
     result = await db.execute(
         select(AuditSession).where(AuditSession.id == session_id, AuditSession.deleted_at.is_(None))
     )
@@ -293,6 +276,7 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
             detail="監査セッションが見つかりません",
         )
 
+    logger.info("_get_audit_impl: step 2 - fetch tool for %s", session_id)
     # Get tool name
     tool_name = None
     tool_result = await db.execute(select(Tool).where(Tool.id == session.tool_id))
@@ -300,6 +284,7 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
     if tool:
         tool_name = tool.name_jp or tool.name
 
+    logger.info("_get_audit_impl: step 3 - fetch test results for %s", session_id)
     # Get test results
     results_query = select(DBTestResult).where(
         DBTestResult.session_id == session_id
@@ -332,6 +317,7 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
             "metadata_json": _metadata,
         })
 
+    logger.info("_get_audit_impl: step 4 - fetch axis scores for %s", session_id)
     # Get axis scores
     scores_query = select(AxisScoreRecord).where(
         AxisScoreRecord.session_id == session_id
@@ -376,6 +362,7 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
     # Build score breakdown: auto / manual / final per axis
     # Always compute final scores LIVE from current auto + manual data using AXIS_MIX.
     # Never rely on stale ToolPublishedScore — it may have been computed with old data.
+    logger.info("_get_audit_impl: step 5 - compute score breakdown for %s", session_id)
     from ...services.score_service import get_auto_scores, get_manual_scores, AXIS_MIX
     from aixis_agent.core.enums import OverallGrade
 
@@ -466,6 +453,7 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
         except Exception:
             reliability = None
 
+    logger.info("_get_audit_impl: step 6 - generate score diff for %s", session_id)
     # Generate score diff against previous audit (best-effort)
     score_diff = None
     if session.status in ("completed", "awaiting_manual") and axis_scores:
@@ -475,6 +463,7 @@ async def _get_audit_impl(session_id: str, db: AsyncSession):
         except Exception as e:
             logger.warning("Failed to generate score diff for session %s: %s", session.id, e)
 
+    logger.info("_get_audit_impl: step 7 - building response for %s", session_id)
     return AuditDetailResponse(
         id=session.id,
         session_code=session.session_code,
