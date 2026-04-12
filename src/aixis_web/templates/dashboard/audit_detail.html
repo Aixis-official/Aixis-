@@ -1622,33 +1622,64 @@ window.addEventListener('unhandledrejection', function(evt) {
         return div.innerHTML;
     }
 
-    // Diagnostic: detect if loadAudit never resolves
-    var _loadStarted = Date.now();
-    var _loadFallback = setTimeout(function() {
-        var el = document.getElementById('loading-state');
-        if (el && !el.classList.contains('hidden')) {
-            el.innerHTML = '<div class="text-center py-12"><p class="text-red-600 font-jp mb-2">読み込みがタイムアウトしました</p>' +
-                '<p class="text-xs text-gray-500 font-jp mb-4" id="diag-info"></p>' +
-                '<button onclick="location.reload()" class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-lg font-jp">リロード</button></div>';
-            // Show diagnostic info
-            var diag = document.getElementById('diag-info');
-            if (diag) {
-                diag.textContent = 'aixisAPI: ' + (typeof aixisAPI) +
-                    ', fetch: ' + (typeof fetch) +
-                    ', sessionId: ' + (sessionId ? sessionId.substring(0, 8) + '...' : 'empty');
-            }
-        }
-    }, 10000);
+    // === DIAGNOSTIC MODE: bypass aixisAPI entirely, use raw fetch ===
+    var _diagUrl = '/api/v1/audits/' + encodeURIComponent(sessionId);
+    var _diagEl = document.getElementById('loading-state');
+    var _diagLog = [];
+    function _diagShow() {
+        if (_diagEl) _diagEl.innerHTML = '<div style="text-align:center;padding:40px;font-family:monospace;font-size:13px;line-height:2">' +
+            _diagLog.map(function(l) { return '<div>' + l + '</div>'; }).join('') + '</div>';
+    }
+    _diagLog.push('v:20260413b | sid: ' + sessionId.substring(0, 12) + '...');
+    _diagLog.push('1. Testing raw fetch to: ' + _diagUrl);
+    _diagShow();
 
-    loadAudit().then(function() {
-        clearTimeout(_loadFallback);
-    }).catch(function(e) {
-        clearTimeout(_loadFallback);
-        console.error('loadAudit uncaught:', e);
-        document.getElementById('loading-state').classList.add('hidden');
-        document.getElementById('error-state').classList.remove('hidden');
-        document.getElementById('error-message').textContent = 'loadAudit error: ' + (e.message || String(e));
-    });
+    // Step 1: try raw fetch (no aixisAPI, no AbortController, no auth headers)
+    fetch(_diagUrl, { credentials: 'same-origin' })
+        .then(function(r) {
+            _diagLog.push('2. Response: ' + r.status + ' ' + r.statusText);
+            _diagShow();
+            return r.text();
+        })
+        .then(function(t) {
+            _diagLog.push('3. Body length: ' + t.length);
+            try {
+                var data = JSON.parse(t);
+                _diagLog.push('4. JSON OK: status=' + data.status + ', tests=' + (data.test_results || []).length);
+                _diagLog.push('<span style="color:green">✓ API works! Rendering page...</span>');
+                _diagShow();
+                // API works — try the full load
+                setTimeout(function() {
+                    _diagEl.classList.add('hidden');
+                    document.getElementById('main-content').classList.remove('hidden');
+                    renderAudit(data);
+                }, 500);
+            } catch (jsonErr) {
+                _diagLog.push('4. JSON parse FAILED: ' + jsonErr.message);
+                _diagLog.push('Body start: ' + t.substring(0, 200));
+                _diagShow();
+            }
+        })
+        .catch(function(e) {
+            _diagLog.push('2. Fetch FAILED: ' + e.name + ': ' + e.message);
+            _diagShow();
+            // Fallback: try with auth header
+            var token = localStorage.getItem('aixis_token');
+            _diagLog.push('3. Retrying with Bearer token...');
+            _diagShow();
+            fetch(_diagUrl, {
+                credentials: 'same-origin',
+                headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+            })
+            .then(function(r) {
+                _diagLog.push('4. Retry response: ' + r.status + ' ' + r.statusText);
+                _diagShow();
+            })
+            .catch(function(e2) {
+                _diagLog.push('4. Retry also FAILED: ' + e2.name + ': ' + e2.message);
+                _diagShow();
+            });
+        });
 })();
 </script>
 {% endblock %}
