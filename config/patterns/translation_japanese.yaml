@@ -1,0 +1,64 @@
+category: translation_japanese
+display_name_jp: "翻訳 日本語品質テスト"
+display_name_en: "Translation Japanese Quality Test"
+description_jp: "英文プレスリリースの翻訳における日本語の自然さ、敬語の適切性、ビジネス慣習への適応を検証する"
+
+templates:
+  - id: "translation-japanese-press-release"
+    prompt: |
+      以下の英文プレスリリースを、日本の取引先・株主向けに適切な日本語に翻訳してください。日本のビジネス慣習に合った表現・敬語レベルにしてください。
+
+      【原文】
+      FOR IMMEDIATE RELEASE
+
+      GlobalSync Corporation Announces Strategic Partnership with Tanaka Manufacturing Co., Ltd.
+
+      SAN FRANCISCO, November 25, 2025 — GlobalSync Corporation (NASDAQ: GSYN), a leading provider of AI-powered supply chain solutions, today announced a comprehensive strategic partnership with Tanaka Manufacturing Co., Ltd. (TSE: 7234), one of Japan's premier automotive parts manufacturers.
+
+      Under the terms of the agreement, GlobalSync will implement its flagship SupplyAI™ platform across Tanaka Manufacturing's 23 production facilities in Japan and Southeast Asia, serving approximately 8,500 employees. The five-year deal, valued at approximately ¥3.2 billion, represents GlobalSync's largest single contract in the Asia Pacific region.
+
+      "We are thrilled to partner with Tanaka Manufacturing," said Jennifer Chen, CEO of GlobalSync. "Their commitment to operational excellence aligns perfectly with our mission to revolutionize supply chain management through artificial intelligence."
+
+      Kenji Tanaka, President and CEO of Tanaka Manufacturing, commented: "After an extensive 18-month evaluation process comparing seven vendors, we selected GlobalSync based on their superior Japanese language support and proven track record with automotive OEMs. We expect to achieve a 15-20% reduction in inventory carrying costs within the first two years."
+
+      Key highlights of the partnership include:
+      • Full deployment across all facilities by Q3 FY2027
+      • Dedicated Japan-based support team of 12 specialists
+      • Custom integration with Tanaka's existing SAP S/4HANA environment
+      • Joint R&D initiative for next-generation predictive maintenance
+
+      The implementation is expected to commence in January 2026, with the first phase covering Tanaka Manufacturing's six core facilities in the Kanto region.
+
+      About GlobalSync Corporation
+      Founded in 2018, GlobalSync provides AI-driven supply chain optimization solutions to over 200 enterprise clients worldwide. Revenue for FY2025 was USD 780 million. For more information, visit www.globalsync.com.
+
+      About Tanaka Manufacturing Co., Ltd.
+      Established in 1953, Tanaka Manufacturing is a leading Japanese automotive parts manufacturer with annual revenue of ¥128.5 billion and approximately 15,000 employees across 42 locations worldwide. Listed on the Tokyo Stock Exchange Prime Market (TSE: 7234).
+
+      Media Contacts:
+      GlobalSync: Sarah Mitchell, VP Communications — press@globalsync.com
+      Tanaka Manufacturing: Yuki Sato, Corporate Communications — pr@tanaka-mfg.co.jp
+
+      ###
+    expected_behaviors:
+      - "「FOR IMMEDIATE RELEASE」を「報道関係者各位」等、日本のプレスリリース慣習に従った形式に変換する"
+      - "発言引用の敬語処理が適切（チェンCEO「〜と述べました」等）"
+      - "「thrilled」「revolutionize」等の英語的大げさ表現を日本語ビジネス文書に適した表現に調整する"
+      - "数値を正確に保持する（23拠点、8,500名、32億円、5年、18ヶ月、7社、15-20%、12名、200社超、FY2025売上7.8億USD、1953年設立、1,285億円、15,000名、42拠点）"
+      - "NASDAQ/TSEの証券コードをそのまま保持する"
+      - "SupplyAI™の商標記号を保持する"
+      - "文体がです/ます調で統一されている"
+      - "「leading provider」「premier」等の修飾表現が日本語として自然に訳出されている"
+      - "会社概要セクションの形式が日本のプレスリリースに適している"
+      - "メディア連絡先の情報が正確に保持されている"
+    failure_indicators:
+      - "英語の直訳調が目立つ（「我々は〜にスリルを感じています」「〜を革命する」等）"
+      - "敬語レベルが不統一（です/ます調とだ/である調の混在）"
+      - "日本のプレスリリース形式に合わない構成"
+      - "数値の誤訳がある"
+      - "固有名詞や証券コードが脱落している"
+      - "過度に意訳して原文の情報が失われている"
+
+generation:
+  mode: cartesian
+  max_variants: 1

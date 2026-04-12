@@ -1,0 +1,75 @@
+category: translation_context
+display_name_jp: "翻訳 文脈理解テスト"
+display_name_en: "Translation Context Understanding Test"
+description_jp: "多義語・専門用語・文化的ニュアンスが混在する技術レポートの翻訳における文脈判断力を検証する"
+
+templates:
+  - id: "translation-context-security-report"
+    prompt: |
+      以下の英文社内レポートを日本語に翻訳してください。技術用語・ビジネス用語は文脈に応じて適切に訳し分けてください。
+
+      【原文】
+      QUARTERLY SECURITY INCIDENT REPORT — Q3 FY2025
+      Prepared by: Information Security Division
+
+      EXECUTIVE SUMMARY
+      During Q3, the security team addressed 142 incidents, a 23% decrease from Q2 (184 incidents). Critical incidents dropped from 8 to 3, reflecting the impact of our enhanced monitoring platform deployed in July.
+
+      SECTION 1: INCIDENT BREAKDOWN
+
+      1.1 Phishing Campaigns
+      We observed 67 phishing attempts targeting our organization. The most sophisticated campaign impersonated our CEO's executive assistant, using a domain registered just 48 hours prior (g1obalsync-corp.com — note the numeral "1" replacing the letter "l"). This social engineering attack was detected by our AI-based email filtering system before reaching any employee inboxes.
+
+      Of the 67 attempts, 12 bypassed initial spam filters but were caught by our secondary behavioral analysis layer. Zero employees clicked through to the malicious payload. Our click-through rate of 0.0% compares favorably to the industry average of 3.2% (source: Verizon DBIR 2025).
+
+      1.2 Vulnerability Management
+      Our quarterly scan identified 2,847 vulnerabilities across 1,200+ assets:
+      - Critical (CVSS 9.0-10.0): 14 findings → all patched within 48 hours
+      - High (CVSS 7.0-8.9): 89 findings → 94% remediated within 14 days
+      - Medium (CVSS 4.0-6.9): 512 findings → remediation in progress
+      - Low (CVSS 0.1-3.9): 2,232 findings → risk-accepted per policy
+
+      The most significant finding was CVE-2025-31337, a remote code execution vulnerability in our Apache Struts deployment (CVSS 9.8). The patch was applied within 6 hours of disclosure, well within our 48-hour SLA for critical vulnerabilities.
+
+      1.3 Access Control Review
+      Following the principle of least privilege, we completed our semi-annual access review. Key findings:
+      - 847 user accounts reviewed; 23 dormant accounts (>90 days inactive) were disabled
+      - 156 service accounts audited; 8 had excessive permissions that were reduced
+      - 3 cases of privilege escalation were detected and reversed within 24 hours — all traced to misconfigured role assignments during the July ERP migration, not malicious activity
+
+      SECTION 2: KEY METRICS
+
+      | Metric                        | Q2 FY2025 | Q3 FY2025 | Target  |
+      |-------------------------------|-----------|-----------|---------|
+      | Mean Time to Detect (MTTD)    | 4.2 hours | 2.8 hours | <4 hrs  |
+      | Mean Time to Respond (MTTR)   | 18.6 hours| 11.3 hours| <12 hrs |
+      | Patch compliance (Critical)   | 96%       | 100%      | 100%    |
+      | Employee security training    | 89%       | 94%       | 95%     |
+      | False positive rate           | 12%       | 8.5%      | <10%    |
+
+      SECTION 3: RECOMMENDATIONS
+      (a) Invest in deception technology (honeypots/honeytokens) — estimated ROI of 340% based on reduced MTTD in pilot environments
+      (b) Mandate hardware security keys for all privileged accounts by Q1 FY2026
+      (c) Address the training completion gap: 6% of staff have not completed annual security awareness training. Departments with lowest completion: Sales (82%), Creative (85%), and Legal (91%).
+    expected_behaviors:
+      - "セキュリティ専門用語を適切に訳出する（phishing→フィッシング、social engineering→ソーシャルエンジニアリング、honeypot→ハニーポット、vulnerability→脆弱性等）"
+      - "多義語を文脈で正しく訳し分ける（addressed→対処した、findings→検出結果、assets→IT資産、disclosure→公開、reversed→取り消し/無効化）"
+      - "CVSS、CVE、MTTD/MTTR等の略語を原語保持しつつ適切に扱う"
+      - "表形式の数値を完全に正確に翻訳する（4.2h、2.8h、18.6h、11.3h、96%、100%、89%、94%、12%、8.5%等）"
+      - "ドメイン偽装の技術的説明（g1obalsync-corp.comの数字「1」と文字「l」の置き換え）を正確に伝える"
+      - "「principle of least privilege」→「最小権限の原則」等、定訳のある用語は定訳を使用する"
+      - "全数値を正確に保持する（142件、23%減、67件、48時間、0.0%対3.2%、2,847件、1,200+資産、14件、89件、94%、512件、2,232件、CVSS 9.8、6時間、847アカウント、23件、90日、156件、8件、3件、24時間、340%、6%、82%、85%、91%）"
+      - "セクション構造（EXECUTIVE SUMMARY、SECTION 1-3、1.1-1.3）を保持する"
+      - "Verizon DBIR 2025、Apache Struts、SAP S/4HANA等の固有名詞を原語保持する"
+    failure_indicators:
+      - "専門用語の誤訳（例: vulnerabilityを「弱点」、patchを「修正パッチ」でなく不適切な訳等）"
+      - "多義語を文脈無視で一律翻訳している"
+      - "表の数値にズレがある"
+      - "CVE番号やCVSSスコアが脱落している"
+      - "ドメイン偽装の技術的説明が不正確または省略されている"
+      - "定訳のある用語（最小権限の原則等）に定訳が使われていない"
+      - "原文にない情報が追加されている（ハルシネーション）"
+
+generation:
+  mode: cartesian
+  max_variants: 1

@@ -152,6 +152,29 @@ async def _seed_default_categories():
                 "- minutes_japanese（日本語品質）\n"
                 "- minutes_complex（複合評価）\n",
         },
+        {
+            "slug": "translation-ai",
+            "name_jp": "翻訳AI",
+            "name_en": "Translation AI",
+            "description_jp": "英語から日本語への翻訳を自動で行うAIツール。ビジネス文書・契約書・技術文書など、専門分野に応じた正確で自然な日本語翻訳を評価する。",
+            "sort_order": 30,
+            "audit_method_notes": "## 監査方法: 原文との比較監査\n\n"
+                "プロファイル: `translation`\n\n"
+                "### 監査プロセス\n"
+                "英語原文を正解データとして保持するLLMが、\n"
+                "ツールの実際の翻訳出力画面（スクリーンショット）を確認し、\n"
+                "原文との乖離の有無や日本語品質を評価する。\n\n"
+                "### 評価軸\n"
+                "- **実務適性**: 原文忠実度・数値/固有名詞の保持・構造保持・用語統一\n"
+                "- **費用対効果**: 処理速度・手直し工数・価格に見合う価値\n"
+                "- **日本語能力**: 翻訳の自然さ・敬語/文体・ビジネス表現・文化的適応\n"
+                "- **信頼性・安全性**: ハルシネーション有無・訳抜け・数値正確性・意味の保全\n"
+                "- **革新性**: 専門分野適応・文脈理解・用語集/カスタマイズ・連携機能\n\n"
+                "### テストカテゴリ\n"
+                "- translation_accuracy（翻訳正確性）\n"
+                "- translation_japanese（日本語品質）\n"
+                "- translation_context（文脈理解）\n",
+        },
     ]
 
     async with async_session() as session:

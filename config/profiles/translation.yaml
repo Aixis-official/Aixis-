@@ -1,0 +1,47 @@
+id: "translation"
+name_jp: "翻訳AI"
+name_en: "Translation AI"
+category_jp: "用途特化"
+description_jp: "英語から日本語への翻訳を自動で行うAIツール。ビジネス文書・契約書・技術文書など、専門分野に応じた正確で自然な日本語翻訳を評価する。"
+examples:
+  - "DeepL"
+  - "Google翻訳"
+  - "みらい翻訳"
+  - "Bing Translator"
+  - "Papago"
+  - "ヤラクゼン"
+  - "Translated"
+  - "MateCat"
+aliases:
+  - "翻訳AI"
+  - "AI翻訳"
+  - "自動翻訳"
+  - "機械翻訳"
+  - "英日翻訳"
+  - "ビジネス翻訳AI"
+traits:
+  - "text_input"
+  - "text_output"
+  - "bilingual"
+  - "domain_adaptation"
+  - "glossary_support"
+
+primary_categories:
+  - translation_accuracy
+  - translation_japanese
+  - translation_context
+secondary_categories:
+  - ui_evaluation
+excluded_categories: []
+
+scoring_weights:
+  japanese_ability: 1.5
+  reliability: 1.5
+  practical: 1.0
+
+evaluation_focus:
+  - "原文の意味・数値・固有名詞が訳文で正確に再現されているか"
+  - "翻訳調でない自然な日本語ビジネス文書になっているか"
+  - "専門用語の文脈に応じた適切な訳し分けができているか"
+  - "敬語レベル・文体が文書の種類に適しているか"
+  - "訳抜け・ハルシネーション（原文にない情報の追加）がないか"

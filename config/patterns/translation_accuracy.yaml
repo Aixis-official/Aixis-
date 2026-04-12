@@ -1,0 +1,56 @@
+category: translation_accuracy
+display_name_jp: "翻訳 正確性テスト"
+display_name_en: "Translation Accuracy Test"
+description_jp: "英文ビジネス契約書の翻訳における数値・固有名詞・法的条件・文書構造の正確な再現を検証する"
+
+templates:
+  - id: "translation-accuracy-contract"
+    prompt: |
+      以下の英文ビジネス文書を日本語に翻訳してください。数値・固有名詞・法的条件の正確な翻訳を重視してください。
+
+      【原文】
+      MASTER SERVICE AGREEMENT
+
+      This Master Service Agreement ("Agreement") is entered into as of December 1, 2025, by and between TechVision Inc., a Delaware corporation ("Provider"), and Yamamoto Holdings Co., Ltd., a Japanese corporation ("Client").
+
+      1. SCOPE OF SERVICES
+      Provider shall deliver the following services:
+      (a) Cloud infrastructure migration of Client's legacy systems (approximately 47 servers, 12.8TB total data) to AWS Asia Pacific (Tokyo) region, to be completed within 180 calendar days.
+      (b) 24/7 managed monitoring with guaranteed 99.95% uptime SLA, with penalties of 2.5% monthly fee credit per 0.1% downtime below threshold.
+      (c) Quarterly security audits conforming to ISO 27001 and ISMAP standards.
+
+      2. COMPENSATION
+      (a) Initial migration fee: USD 850,000 (payable in 3 installments: 30% upon signing, 40% at midpoint milestone, 30% upon completion).
+      (b) Monthly managed service fee: USD 45,000, subject to annual CPI adjustment capped at 3.5%.
+      (c) Additional consulting: USD 350/hour for senior engineers, USD 250/hour for standard engineers, billed in 15-minute increments.
+
+      3. TERM AND TERMINATION
+      This Agreement shall have an initial term of 36 months commencing on the Effective Date. Either party may terminate with 90 days' written notice after the initial 12-month lock-in period. Early termination during the lock-in period requires payment of 65% of remaining fees.
+
+      4. LIMITATION OF LIABILITY
+      (a) Provider's aggregate liability shall not exceed the total fees paid by Client in the 12-month period immediately preceding the claim.
+      (b) Neither party shall be liable for indirect, incidental, consequential, or punitive damages, including but not limited to lost profits, lost data, or business interruption.
+      (c) The foregoing limitations shall not apply to: (i) breaches of confidentiality obligations, (ii) willful misconduct or gross negligence, or (iii) indemnification obligations under Section 7.
+
+      5. GOVERNING LAW AND DISPUTE RESOLUTION
+      This Agreement shall be governed by the laws of Japan. Any dispute arising under this Agreement shall be submitted to binding arbitration administered by the Japan Commercial Arbitration Association (JCAA) in Tokyo, conducted in both English and Japanese. The arbitral tribunal shall consist of three (3) arbitrators.
+    expected_behaviors:
+      - "契約当事者（TechVision Inc.＝デラウェア州法人、Yamamoto Holdings Co., Ltd.＝日本法人）を正確に訳出する"
+      - "全数値を正確に変換する（47サーバー、12.8TB、180暦日、99.95%、2.5%/0.1%、85万USD、30%/40%/30%、月額4.5万USD、CPI上限3.5%、350USD/h、250USD/h、15分単位、36ヶ月、90日、12ヶ月、65%）"
+      - "法律用語を適切に訳出する（Master Service Agreement、SLA、binding arbitration、aggregate liability、consequential damages等）"
+      - "ISO 27001、ISMAP、JCAA等の固有名詞を原語のまま保持する"
+      - "契約構造（条項番号1-5、(a)(b)(c)、(i)(ii)(iii)）を正確に保持する"
+      - "責任制限条項（Section 4）の法的ニュアンスを正確に伝える"
+      - "準拠法（日本法）・紛争解決（JCAA仲裁、東京、3名の仲裁人）を正確に訳出する"
+      - "文書全体でProvider/Clientの訳語が統一されている"
+    failure_indicators:
+      - "数値の誤訳（USD額、%、日数、期間等）がある"
+      - "法律用語の不適切な訳出（意味が変わる誤訳）がある"
+      - "固有名詞（ISO 27001、ISMAP、JCAA等）が脱落または改変されている"
+      - "条項構造（番号付け、階層）が崩壊している"
+      - "責任制限や免責事項の法的意味が変質している"
+      - "原文にない情報が追加されている（ハルシネーション）"
+
+generation:
+  mode: cartesian
+  max_variants: 1
