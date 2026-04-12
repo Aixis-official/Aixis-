@@ -295,20 +295,18 @@
 
     {% block scripts %}{% endblock %}
 
-    <!-- Safety net: detect stuck loading state on any dashboard page -->
+    <!-- Safety net: detect stuck loading state (skips if page-specific diagnostic is active) -->
     <script>
     (function() {
         var ls = document.getElementById('loading-state');
         if (!ls) return;
         setTimeout(function() {
-            if (ls.classList.contains('hidden')) return;
+            if (ls.classList.contains('hidden') || window.__aixisDiagActive) return;
             ls.innerHTML = '<div style="text-align:center;padding:60px;font-family:sans-serif">' +
-                '<p style="color:#dc2626;font-size:16px;margin-bottom:8px">ページの読み込みに失敗しました</p>' +
-                '<p style="color:#6b7280;font-size:12px;margin-bottom:4px">aixisAPI: ' + (typeof window.aixisAPI) + ' / fetch: ' + (typeof window.fetch) + '</p>' +
-                '<p style="color:#6b7280;font-size:12px;margin-bottom:16px">v:20260413a</p>' +
-                '<button onclick="location.reload(true)" style="padding:8px 24px;background:#4f46e5;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px">強制リロード</button>' +
+                '<p style="color:#dc2626;font-size:16px;margin-bottom:8px">読み込み失敗</p>' +
+                '<button onclick="location.reload()" style="padding:8px 24px;background:#4f46e5;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px">リロード</button>' +
                 '</div>';
-        }, 8000);
+        }, 15000);
     })();
     </script>
 </body>
