@@ -1341,7 +1341,7 @@ window.addEventListener('unhandledrejection', function(evt) {
                     '<span class="text-xs font-medium text-gray-500 font-jp">' + escapeHtml(s.axis_name_jp) + '</span>' +
                     sourceLabel(s.source, s.confidence) +
                 '</div>' +
-                '<div class="text-2xl font-bold tabular-nums ' + (needsManual ? 'text-gray-300 : 'text-gray-900 + '">' +
+                '<div class="text-2xl font-bold tabular-nums ' + (needsManual ? 'text-gray-300' : 'text-gray-900') + '">' +
                     (needsManual ? '--' : sc) +
                 '</div>' +
                 (needsManual
