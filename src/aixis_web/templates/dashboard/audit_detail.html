@@ -330,6 +330,23 @@
     @keyframes pulse-dot { 0%, 100% { box-shadow: 0 0 0 4px rgba(99,102,241,0.2); } 50% { box-shadow: 0 0 0 8px rgba(99,102,241,0.1); } }
 </style>
 <script>
+// Global error handler — catches errors that prevent the IIFE from running
+window.addEventListener('error', function(evt) {
+    var el = document.getElementById('loading-state');
+    if (el && !el.classList.contains('hidden')) {
+        el.innerHTML = '<div class="text-center py-12"><p class="text-red-600 font-jp mb-2">JSエラー</p>' +
+            '<p class="text-xs text-gray-500 mb-4">' + (evt.message || '') + ' (line ' + (evt.lineno || '?') + ')</p>' +
+            '<button onclick="location.reload()" class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-lg font-jp">リロード</button></div>';
+    }
+});
+window.addEventListener('unhandledrejection', function(evt) {
+    var el = document.getElementById('loading-state');
+    if (el && !el.classList.contains('hidden')) {
+        el.innerHTML = '<div class="text-center py-12"><p class="text-red-600 font-jp mb-2">非同期エラー</p>' +
+            '<p class="text-xs text-gray-500 mb-4">' + (evt.reason && evt.reason.message ? evt.reason.message : String(evt.reason)) + '</p>' +
+            '<button onclick="location.reload()" class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-lg font-jp">リロード</button></div>';
+    }
+});
 (function() {
     var sessionId = '{{ session_id }}';
     var pollingInterval = null;
@@ -1605,7 +1622,33 @@
         return div.innerHTML;
     }
 
-    loadAudit();
+    // Diagnostic: detect if loadAudit never resolves
+    var _loadStarted = Date.now();
+    var _loadFallback = setTimeout(function() {
+        var el = document.getElementById('loading-state');
+        if (el && !el.classList.contains('hidden')) {
+            el.innerHTML = '<div class="text-center py-12"><p class="text-red-600 font-jp mb-2">読み込みがタイムアウトしました</p>' +
+                '<p class="text-xs text-gray-500 font-jp mb-4" id="diag-info"></p>' +
+                '<button onclick="location.reload()" class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-lg font-jp">リロード</button></div>';
+            // Show diagnostic info
+            var diag = document.getElementById('diag-info');
+            if (diag) {
+                diag.textContent = 'aixisAPI: ' + (typeof aixisAPI) +
+                    ', fetch: ' + (typeof fetch) +
+                    ', sessionId: ' + (sessionId ? sessionId.substring(0, 8) + '...' : 'empty');
+            }
+        }
+    }, 10000);
+
+    loadAudit().then(function() {
+        clearTimeout(_loadFallback);
+    }).catch(function(e) {
+        clearTimeout(_loadFallback);
+        console.error('loadAudit uncaught:', e);
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('error-state').classList.remove('hidden');
+        document.getElementById('error-message').textContent = 'loadAudit error: ' + (e.message || String(e));
+    });
 })();
 </script>
 {% endblock %}
