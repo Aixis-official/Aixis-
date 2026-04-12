@@ -209,7 +209,20 @@ async function aixisAPI(path, options = {}) {
   }
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  let response = await fetch(`/api/v1${path}`, { ...options, headers, credentials: 'same-origin' });
+  // AbortController timeout: prevent fetch from hanging indefinitely
+  const timeoutMs = options.timeout || 30000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  let response;
+  try {
+    response = await fetch(`/api/v1${path}`, { ...options, headers, credentials: 'same-origin', signal: controller.signal });
+  } catch (e) {
+    clearTimeout(timeoutId);
+    if (e.name === 'AbortError') throw new Error('リクエストがタイムアウトしました');
+    throw e;
+  }
+  clearTimeout(timeoutId);
 
   // If Bearer token failed but we have a cookie session, retry without Bearer
   if (response.status === 401 && token) {
@@ -218,7 +231,16 @@ async function aixisAPI(path, options = {}) {
     if (method !== 'GET' && method !== 'HEAD') {
       retryHeaders['X-CSRF-Token'] = getCSRFToken();
     }
-    response = await fetch(`/api/v1${path}`, { ...options, headers: retryHeaders, credentials: 'same-origin' });
+    const retryController = new AbortController();
+    const retryTimeoutId = setTimeout(() => retryController.abort(), timeoutMs);
+    try {
+      response = await fetch(`/api/v1${path}`, { ...options, headers: retryHeaders, credentials: 'same-origin', signal: retryController.signal });
+    } catch (e) {
+      clearTimeout(retryTimeoutId);
+      if (e.name === 'AbortError') throw new Error('リクエストがタイムアウトしました');
+      throw e;
+    }
+    clearTimeout(retryTimeoutId);
   }
 
   if (response.status === 401) {
@@ -237,7 +259,19 @@ async function aixisAPI(path, options = {}) {
   // 204 No Content — no body to parse
   if (response.status === 204) return null;
 
-  return response.json();
+  // Parse JSON robustly — handle Python-style NaN/Infinity that break JSON.parse
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (_jsonErr) {
+    // Attempt to sanitize Python NaN/Infinity literals
+    const sanitized = text.replace(/\bNaN\b/g, 'null').replace(/\bInfinity\b/g, 'null').replace(/-Infinity\b/g, 'null');
+    try {
+      return JSON.parse(sanitized);
+    } catch (_e2) {
+      throw new Error('レスポンスの解析に失敗しました');
+    }
+  }
 }
 
 

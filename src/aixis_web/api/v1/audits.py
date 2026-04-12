@@ -252,9 +252,30 @@ async def get_audit(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="監査セッションが見つかりません",
                 )
-        return await _get_audit_impl(session_id, db)
+        result = await _get_audit_impl(session_id, db)
+        # Use allow_nan=False to prevent invalid JSON (NaN/Infinity) from reaching the browser.
+        # Python's json.dumps defaults to allow_nan=True, which produces non-standard JSON
+        # that JavaScript's JSON.parse cannot handle, causing silent page load failures.
+        body = result.model_dump(mode="json")
+        return JSONResponse(content=_json.loads(_json.dumps(body, allow_nan=False, default=str)))
     except HTTPException:
         raise
+    except ValueError as e:
+        # Likely a NaN serialization error — sanitize and retry
+        if "nan" in str(e).lower() or "infinity" in str(e).lower():
+            logger.warning("NaN detected in audit response for %s, sanitizing: %s", session_id, e)
+            try:
+                result = await _get_audit_impl(session_id, db)
+                body_str = _json.dumps(result.model_dump(mode="json"), allow_nan=True, default=str)
+                import re
+                body_str = re.sub(r'\bNaN\b', 'null', body_str)
+                body_str = re.sub(r'-?Infinity', 'null', body_str)
+                return JSONResponse(content=_json.loads(body_str))
+            except Exception as e2:
+                logger.error("Sanitization retry failed for %s: %s", session_id, e2)
+                raise HTTPException(500, "内部エラーが発生しました")
+        logger.error("get_audit error for %s: %s\n%s", session_id, e, _tb.format_exc())
+        raise HTTPException(500, "内部エラーが発生しました")
     except Exception as e:
         logger.error("get_audit error for %s: %s\n%s", session_id, e, _tb.format_exc())
         raise HTTPException(500, "内部エラーが発生しました")
