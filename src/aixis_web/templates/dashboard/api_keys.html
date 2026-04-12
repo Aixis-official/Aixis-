@@ -92,7 +92,9 @@
     </div>
 
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
 function escapeHtml(str) {
     if (!str) return '';
@@ -222,4 +224,4 @@ async function deactivateKey(keyId) {
 // Load on page ready
 document.addEventListener('DOMContentLoaded', loadKeys);
 </script>
-{% endblock %}
+{% endblock scripts %}
