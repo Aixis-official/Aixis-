@@ -1135,8 +1135,11 @@ class LLMScorer:
             # text output in response_text instead of text_outputs.
             response_raw = row[3] or ""
             if not text_outputs and response_raw.strip():
-                minutes_cats = {"minutes_transcription", "minutes_japanese", "minutes_complex"}
-                if category in minutes_cats:
+                _TEXT_BASED_CATS = {
+                    "minutes_transcription", "minutes_japanese", "minutes_complex",
+                    "translation_accuracy", "translation_japanese", "translation_context",
+                }
+                if category in _TEXT_BASED_CATS:
                     text_outputs = [{"label": "ツール出力", "content": response_raw.strip()}]
                     logger.info(
                         "Session %s: auto-populated text_outputs from response_raw "
@@ -1877,6 +1880,28 @@ class LLMScorer:
                 "secondary": ["minutes_transcription"],
             },
         },
+        "translation": {
+            "practicality": {
+                "primary": ["translation_accuracy", "translation_context"],
+                "secondary": ["translation_japanese", "ui_evaluation"],
+            },
+            "cost_performance": {
+                "primary": ["translation_accuracy", "ui_evaluation"],
+                "secondary": ["translation_context"],
+            },
+            "localization": {
+                "primary": ["translation_japanese", "translation_accuracy"],
+                "secondary": ["translation_context", "ui_evaluation"],
+            },
+            "safety": {
+                "primary": ["translation_accuracy", "translation_context"],
+                "secondary": ["translation_japanese"],
+            },
+            "uniqueness": {
+                "primary": ["translation_context", "ui_evaluation"],
+                "secondary": ["translation_accuracy"],
+            },
+        },
     }
     # Default fallback (slide_creation)
     AXIS_RELEVANT_CATEGORIES = AXIS_RELEVANT_CATEGORIES_BY_PROFILE["slide_creation"]
@@ -1916,12 +1941,29 @@ class LLMScorer:
 
         sections = []
         sections.append("## ツール出力テキスト（評価対象）\n")
-        sections.append(
-            "以下は議事録AIツールが出力したテキストです。元の録音内容（テストプロンプト）と比較して評価してください。\n"
-            "【重要】このテキストデータこそが議事録AIツールの実際の出力結果です。"
-            "添付画像がある場合、それはUI評価用のスクリーンショットであり、議事録の出力内容とは別物です。"
-            "議事録の品質評価にはこのテキストデータのみを使用してください。\n"
-        )
+
+        # Category-aware evidence header
+        pc = getattr(self, '_prompt_config', CATEGORY_PROMPT_CONFIG.get("slide_creation", {}))
+        category_label = pc.get("system_prompt_category", "出力")
+        _TEXT_EVIDENCE_HEADERS = {
+            "議事録の品質": (
+                "以下は議事録AIツールが出力したテキストです。元の録音内容（テストプロンプト）と比較して評価してください。\n"
+                "【重要】このテキストデータこそが議事録AIツールの実際の出力結果です。"
+                "添付画像がある場合、それはUI評価用のスクリーンショットであり、議事録の出力内容とは別物です。"
+                "議事録の品質評価にはこのテキストデータのみを使用してください。\n"
+            ),
+            "翻訳の品質": (
+                "以下は翻訳AIツールが出力した日本語訳文です。元の英語原文（テストプロンプト）と比較して評価してください。\n"
+                "【重要】このテキストデータこそが翻訳AIツールの実際の出力結果です。"
+                "添付画像がある場合、それはUI評価用のスクリーンショットであり、翻訳の出力内容とは別物です。"
+                "翻訳の品質評価にはこのテキストデータのみを使用してください。\n"
+            ),
+        }
+        sections.append(_TEXT_EVIDENCE_HEADERS.get(
+            category_label,
+            f"以下はAIツールが出力したテキストです。入力内容（テストプロンプト）と比較して評価してください。\n"
+            f"【重要】このテキストデータこそがAIツールの実際の出力結果です。\n"
+        ))
 
         total_chars = 0
         for i, obs in enumerate(observations):
@@ -2493,6 +2535,9 @@ class LLMScorer:
             "minutes_transcription": "【検証タイプ: 書き起こし正確性テスト（参加者1名の報告録音）】話者は1名のみ。話者識別は評価対象外。数値・固有名詞の正確性が焦点。",
             "minutes_japanese": "【検証タイプ: 日本語品質テスト（参加者2名の対話）】話し言葉→書き言葉変換の品質が焦点。元の発言は意図的にカジュアルな口語体。",
             "minutes_complex": "【検証タイプ: 複合評価テスト（参加者2名、複数議題）】複数議題の構造化・意見対立の客観記録・条件付き決定の整理が焦点。",
+            "translation_accuracy": "【検証タイプ: 翻訳正確性テスト（英文契約書）】法律用語・数値・固有名詞の正確な保持、条項構造の再現が焦点。",
+            "translation_japanese": "【検証タイプ: 日本語品質テスト（英文プレスリリース）】翻訳の自然さ、敬語レベル、日本のビジネス慣習への文化的適応が焦点。",
+            "translation_context": "【検証タイプ: 文脈理解テスト（技術レポート）】多義語の文脈に応じた訳し分け、専門用語の適切な訳出が焦点。",
             "ui_evaluation": "【検証タイプ: UI操作性テスト】ツールのユーザーインターフェースの操作性評価。",
         }
 
@@ -2506,8 +2551,11 @@ class LLMScorer:
                 entry += f"{cat_context}\n"
             # For meeting-minutes categories, the prompt IS the transcription text.
             # Show more of it so the LLM can compare input vs output.
-            minutes_cats = {"minutes_transcription", "minutes_japanese", "minutes_complex"}
-            prompt_limit = 3000 if cat in minutes_cats else 500
+            _TEXT_CATS = {
+                "minutes_transcription", "minutes_japanese", "minutes_complex",
+                "translation_accuracy", "translation_japanese", "translation_context",
+            }
+            prompt_limit = 3000 if cat in _TEXT_CATS else 500
             prompt_text_preview = obs['prompt'][:prompt_limit] if obs['prompt'] else '(指示なし)'
             if obs['prompt'] and len(obs['prompt']) > prompt_limit:
                 prompt_text_preview += f"\n... (以下省略、全 {len(obs['prompt'])} 文字)"
