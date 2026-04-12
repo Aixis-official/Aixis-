@@ -67,8 +67,30 @@
     timeline: "時系列要約",
     action_items: "アクションアイテム",
     decisions: "決定事項",
+    translation_output: "翻訳結果",
+    source_text: "原文（参考）",
+    terminology_notes: "用語メモ",
     custom: "その他",
   };
+
+  // Category-specific default fields and dropdown options
+  const TEXT_OUTPUT_PRESETS = {
+    translation: {
+      defaultField: "translation_output",
+      options: ["translation_output", "source_text", "terminology_notes", "custom"],
+    },
+    meeting_minutes: {
+      defaultField: "transcription",
+      options: ["transcription", "summary", "timeline", "action_items", "decisions", "custom"],
+    },
+  };
+
+  // Map test category → preset key
+  function _getTextPresetKey(testCategory) {
+    if (testCategory && testCategory.startsWith("translation_")) return "translation";
+    if (testCategory && testCategory.startsWith("minutes_")) return "meeting_minutes";
+    return "meeting_minutes"; // fallback
+  }
 
   const CATEGORY_COLORS = {
     slide_basic: "#4f46e5",
@@ -242,21 +264,14 @@
           <!-- Screenshot thumbnails -->
           <div class="screenshot-thumbs" id="screenshotThumbs"></div>
 
-          <!-- Text output fields (meeting-minutes mode) -->
+          <!-- Text output fields (text-based evaluation mode) -->
           <div id="textOutputSection" style="display:none;">
             <div class="text-output-fields" id="textOutputFields"></div>
             <div class="text-output-add">
-              <select id="textOutputSelect" class="text-output-select">
-                <option value="transcription">文字起こし</option>
-                <option value="summary">要約</option>
-                <option value="timeline">時系列要約</option>
-                <option value="action_items">アクションアイテム</option>
-                <option value="decisions">決定事項</option>
-                <option value="custom">その他（自由入力）</option>
-              </select>
+              <select id="textOutputSelect" class="text-output-select"></select>
               <button class="btn btn-screenshot" id="addTextFieldBtn">+ 追加</button>
             </div>
-            <div class="text-output-hint">ツールの出力テキストをコピー&ペーストしてください</div>
+            <div class="text-output-hint">ツールの出力をコピー&ペーストしてください</div>
           </div>
 
           <!-- Navigation -->
@@ -1837,7 +1852,7 @@
     if (screenshotThumbs) screenshotThumbs.style.display = isTextMode ? "none" : "";
     if (textOutputSection) {
       textOutputSection.style.display = isTextMode ? "block" : "none";
-      if (isTextMode) restoreOrInitTextOutputs(index);
+      if (isTextMode) restoreOrInitTextOutputs(index, test.category);
     }
 
     const expectedEl = shadow.getElementById("testExpected");
@@ -1865,16 +1880,35 @@
 
   let textOutputFieldCount = 0;
 
-  function initTextOutputFields() {
+  function initTextOutputFields(testCategory) {
     const container = shadow.getElementById("textOutputFields");
     if (!container) return;
     container.innerHTML = "";
     textOutputFieldCount = 0;
-    // Auto-add "文字起こし" as default field
-    addTextOutputField("transcription");
+    // Auto-add default field based on category
+    const presetKey = _getTextPresetKey(testCategory);
+    const preset = TEXT_OUTPUT_PRESETS[presetKey] || TEXT_OUTPUT_PRESETS.meeting_minutes;
+    addTextOutputField(preset.defaultField);
+    // Update dropdown options
+    _updateTextOutputSelect(presetKey);
   }
 
-  async function restoreOrInitTextOutputs(testIndex) {
+  function _updateTextOutputSelect(presetKey) {
+    const sel = shadow.getElementById("textOutputSelect");
+    if (!sel) return;
+    const preset = TEXT_OUTPUT_PRESETS[presetKey] || TEXT_OUTPUT_PRESETS.meeting_minutes;
+    sel.innerHTML = "";
+    for (const key of preset.options) {
+      const opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = key === "custom" ? "その他（自由入力）" : (TEXT_OUTPUT_LABELS[key] || key);
+      sel.appendChild(opt);
+    }
+  }
+
+  async function restoreOrInitTextOutputs(testIndex, testCategory) {
+    // Update dropdown for this category
+    _updateTextOutputSelect(_getTextPresetKey(testCategory));
     try {
       const result = await sendBg({ type: "GET_TEXT_OUTPUTS", testIndex });
       const saved = result.textOutputs || [];
@@ -1892,7 +1926,7 @@
       console.warn("Failed to restore text outputs:", err);
     }
     // No saved data — initialize with defaults
-    initTextOutputFields();
+    initTextOutputFields(testCategory);
   }
 
   function addTextOutputFieldWithContent(fieldType, labelText, content) {
