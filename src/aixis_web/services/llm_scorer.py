@@ -931,6 +931,12 @@ class LLMScorer:
         signal to enforce cross-axis penalties even if individual axis
         scoring is lenient.
         """
+        # Translation tools: English input is expected — always return "ja"
+        # because the tool's purpose is EN→JA translation.
+        _resolved_profile = getattr(self, '_active_axis_categories', None)
+        if _resolved_profile is self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE.get("translation"):
+            return "ja"
+
         # Text-based or mixed mode: detect language directly from text content (no API call needed)
         if getattr(self, '_is_text_based', False) or getattr(self, '_has_mixed_evidence', False):
             all_text = ""
@@ -1563,8 +1569,16 @@ class LLMScorer:
         #   1. language_output criterion score from localization axis scoring
         #   2. language pre-check result (self._detected_language)
         #   3. localization axis overall score
+        #
+        # IMPORTANT: Skip for translation tools. Translation tools take English
+        # input and produce Japanese output — the presence of English in
+        # text_outputs is expected (source text), NOT a sign of poor localization.
+        _resolved_profile = getattr(self, '_active_axis_categories', None)
+        _is_translation_tool = (
+            _resolved_profile is self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE.get("translation")
+        )
         loc_score_data = next((s for s in all_scores if s.get("axis") == "localization"), None)
-        if loc_score_data:
+        if loc_score_data and not _is_translation_tool:
             loc_score = loc_score_data.get("score", 5.0)
             # Signal 1: language_output criterion
             loc_details_raw = loc_score_data.get("details", [])
@@ -2952,8 +2966,13 @@ strengths と risks の記述も、**必ずその軸固有の観点から**記�
         language_detected = data.get("language_detected", None)
 
         # Post-parse validation: if this is localization axis and language is "en",
-        # enforce score cap even if LLM was too generous
-        if axis == "localization" and language_detected == "en":
+        # enforce score cap even if LLM was too generous.
+        # Skip for translation tools — English is the expected INPUT language.
+        _resolved_profile = getattr(self, '_active_axis_categories', None)
+        _is_translation = (
+            _resolved_profile is self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE.get("translation")
+        )
+        if axis == "localization" and language_detected == "en" and not _is_translation:
             if score > 1.5:
                 logger.warning(
                     "Localization axis: LLM returned score %.1f but language_detected='en' — capping to 1.0",
