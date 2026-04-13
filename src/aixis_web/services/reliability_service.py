@@ -91,7 +91,7 @@ def calculate_reliability(
     """
     depth_target = _get_depth_target(profile_id)
 
-    consistency = min(100, max(0, _calc_consistency(results)))
+    consistency = min(100, max(0, _calc_consistency(results, axis_scores_data)))
     comprehensiveness = min(100, max(0, _calc_comprehensiveness(
         results, cases, total_planned, total_executed, depth_target=depth_target,
     )))
@@ -149,7 +149,7 @@ def calculate_reliability(
         "profile_id": profile_id,
         "calculated_at": datetime.now(timezone.utc).isoformat(),
         "details": {
-            "consistency": _consistency_details(results),
+            "consistency": _consistency_details(results, axis_scores_data),
             "comprehensiveness": _comprehensiveness_details(
                 results, cases, total_planned, total_executed, depth_target=depth_target,
             ),
@@ -163,11 +163,71 @@ def calculate_reliability(
 
 
 # ---------------------------------------------------------------------------
-# Consistency — response-time stability & error-rate uniformity per category
+# Consistency — response-time stability, error-rate uniformity, internal coherence
 # ---------------------------------------------------------------------------
 
-def _calc_consistency(results: list) -> float:
-    """Score 0-100. Low variance in response times + low error rates = high consistency."""
+def _calc_internal_coherence(axis_scores_data: list[dict]) -> tuple[float, dict]:
+    """Zero-cost reproducibility check: are confidence/score values across axes coherent?
+
+    Returns (score 0-100, detail_dict).
+
+    Two checks:
+      (a) Confidence spread — low spread across axes is good (narrow = stable LLM grading).
+      (b) Outlier detection — any axis score > 2 stdev from the mean is suspicious.
+    """
+    if not axis_scores_data:
+        return 70.0, {"note": "no axis data — defaulting to 70"}
+
+    confidences = [s.get("confidence", 0) for s in axis_scores_data if s.get("confidence") is not None]
+    scores = [s.get("score", 0) for s in axis_scores_data if s.get("score") is not None]
+
+    # --- (a) Confidence spread ---
+    if len(confidences) >= 2:
+        conf_stdev = statistics.stdev(confidences)
+        # stdev < 0.05 = very tight = 100; stdev > 0.30 = very spread = 0
+        conf_spread_score = max(0.0, min(100.0, 100.0 - (conf_stdev / 0.30) * 100.0))
+    else:
+        conf_stdev = 0.0
+        conf_spread_score = 70.0  # Insufficient data — neutral
+
+    # --- (b) Score outlier detection ---
+    outlier_axes: list[str] = []
+    if len(scores) >= 3:
+        score_mean = statistics.mean(scores)
+        score_stdev = statistics.stdev(scores)
+        if score_stdev > 0:
+            for s in axis_scores_data:
+                sc = s.get("score", score_mean)
+                if abs(sc - score_mean) > 2 * score_stdev:
+                    outlier_axes.append(s.get("axis", "?"))
+        outlier_penalty = len(outlier_axes) * 15  # -15 per outlier axis
+        outlier_score = max(0.0, 100.0 - outlier_penalty)
+    else:
+        score_mean = statistics.mean(scores) if scores else 0.0
+        score_stdev = 0.0
+        outlier_score = 70.0  # Insufficient data — neutral
+
+    coherence_score = round(conf_spread_score * 0.6 + outlier_score * 0.4, 1)
+    detail = {
+        "confidence_stdev": round(conf_stdev, 4),
+        "confidence_spread_score": round(conf_spread_score, 1),
+        "score_mean": round(score_mean, 3) if scores else None,
+        "score_stdev": round(score_stdev, 4) if len(scores) >= 3 else None,
+        "outlier_axes": outlier_axes,
+        "outlier_score": round(outlier_score, 1),
+        "coherence_score": coherence_score,
+    }
+    return coherence_score, detail
+
+
+def _calc_consistency(results: list, axis_scores_data: list[dict] | None = None) -> float:
+    """Score 0-100.
+
+    Sub-metrics (new weights):
+      - CV of response times per category:  40%
+      - Error rate uniformity:              30%
+      - Internal coherence of axis scores:  30%
+    """
     if not results:
         return 0.0
 
@@ -217,10 +277,13 @@ def _calc_consistency(results: list) -> float:
     error_rate = total_errors / total_tests if total_tests > 0 else 0
     error_score = max(0, 100 - error_rate * 200)  # 50% errors = 0
 
-    return round((cv_score * 0.6 + error_score * 0.4), 1)
+    # Internal coherence (zero-cost, uses axis_scores_data already computed upstream)
+    coherence_score, _ = _calc_internal_coherence(axis_scores_data or [])
+
+    return round(cv_score * 0.40 + error_score * 0.30 + coherence_score * 0.30, 1)
 
 
-def _consistency_details(results: list) -> dict:
+def _consistency_details(results: list, axis_scores_data: list[dict] | None = None) -> dict:
     by_category: dict[str, list[float]] = {}
     errors = 0
     for r in results:
@@ -235,11 +298,15 @@ def _consistency_details(results: list) -> dict:
         if len(times) >= 2:
             mean = statistics.mean(times)
             cat_cvs[cat] = round(statistics.stdev(times) / mean, 3) if mean > 0 else 0
+
+    _, coherence_detail = _calc_internal_coherence(axis_scores_data or [])
+
     return {
         "category_cv": cat_cvs,
         "total_errors": errors,
         "total_tests": len(results),
         "error_rate": round(errors / len(results), 3) if results else 0,
+        "internal_coherence": coherence_detail,
     }
 
 
