@@ -1366,7 +1366,7 @@ class LLMScorer:
             # Translation sources are longer (contracts, manuals, legal docs).
             # Increase per-field budget to capture full translation outputs
             # while keeping total under ~4500 tokens per axis for cost control.
-            if _resolved_profile is self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE.get("translation"):
+            if getattr(self, '_active_axis_categories', None) is self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE.get("translation"):
                 self._text_chars_per_field = 3000   # 2000 → 3000 (~750 tokens)
                 self._text_chars_per_obs = 8000     # 6000 → 8000 (~2000 tokens)
                 self._text_chars_total = 18000      # 15000 → 18000 (~4500 tokens)
