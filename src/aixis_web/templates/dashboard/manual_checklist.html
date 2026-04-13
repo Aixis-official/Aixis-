@@ -146,7 +146,35 @@ const CHECKLISTS_MINUTES = {
     ],
 };
 
-const CHECKLISTS = (profileId === 'meeting_minutes') ? CHECKLISTS_MINUTES : CHECKLISTS_SLIDE;
+const CHECKLISTS_TRANSLATION = {
+    practicality: [
+        { id: 'PR-001', name_jp: '原文忠実度', weight: 1.5, scoring_guide: '0=意味が大きく変わる, 2=要点は伝わるが省略・歪曲あり, 3=概ね正確, 5=原文の意図・ニュアンスを完全再現' },
+        { id: 'PR-002', name_jp: '数値・固有名詞の正確性', weight: 1.5, scoring_guide: '0=数値や名称の誤り多発, 2=一部の数値・名称に誤り, 3=概ね正確, 5=金額・日付・社名・製品名すべて正確' },
+        { id: 'PR-003', name_jp: '文書構造の再現', weight: 1.0, scoring_guide: '0=構造が崩壊, 2=見出しや箇条書きが一部欠落, 3=主要な構造を維持, 5=原文の見出し・箇条書き・表を完全再現' },
+    ],
+    cost_performance: [
+        { id: 'CP-001', name_jp: '無料プラン充実度', weight: 1.0, scoring_guide: '0=無料プランなし, 2=文字数制限が厳しい, 3=日常的な翻訳に十分, 5=業務利用に耐える無料枠' },
+        { id: 'CP-002', name_jp: '有料プラン適正', weight: 1.0, scoring_guide: '0=非常に高額, 2=人手翻訳と大差ない費用, 3=市場相場並, 5=人手翻訳の1/5以下で高品質' },
+        { id: 'CP-003', name_jp: '手直し工数', weight: 1.5, scoring_guide: '0=全面やり直し必要, 2=大幅な修正が必要, 3=軽微な修正で使える, 5=修正なしでそのまま業務利用可能' },
+    ],
+    localization: [
+        { id: 'LC-001', name_jp: '日本語の自然さ', weight: 2.0, scoring_guide: '0=機械翻訳丸出し, 2=翻訳調が目立つ, 3=概ね自然だが一部不自然, 5=翻訳であることを感じさせない自然な日本語' },
+        { id: 'LC-002', name_jp: '敬語・ビジネス表現', weight: 1.0, scoring_guide: '0=敬語なし, 2=敬語が不自然, 3=基本的な敬語は適切, 5=文書種別に応じた適切な敬語レベル' },
+        { id: 'LC-003', name_jp: '日本のビジネス慣習への適応', weight: 1.0, scoring_guide: '0=英語文化のまま, 2=一部が日本式, 3=概ね日本のビジネス文書として通用, 5=完全に日本の慣習に適応した出力' },
+    ],
+    safety: [
+        { id: 'SF-001', name_jp: 'ハルシネーション（原文にない追加）', weight: 1.5, scoring_guide: '0=多数の捏造あり, 2=時々原文にない内容が追加, 3=極稀に補足が入る, 5=原文にない情報の追加ゼロ' },
+        { id: 'SF-002', name_jp: '訳抜け（原文情報の欠落）', weight: 1.5, scoring_guide: '0=大量の訳抜け, 2=段落単位の欠落, 3=細かい情報の一部欠落, 5=原文の全情報を網羅' },
+        { id: 'SF-003', name_jp: '意味の歪曲', weight: 1.0, scoring_guide: '0=意味が逆になる箇所あり, 2=ニュアンスが変わる箇所, 3=概ね原文の意味を保持, 5=法的文書でも通用する正確性' },
+    ],
+    uniqueness: [
+        { id: 'UQ-001', name_jp: '専門分野対応力', weight: 1.5, scoring_guide: '0=一般文のみ, 2=基本的な専門用語, 3=IT・法務・金融のいずれかに強い, 5=複数専門分野で高精度+用語集対応' },
+        { id: 'UQ-002', name_jp: '文脈理解力', weight: 1.0, scoring_guide: '0=文単位の逐語訳, 2=段落内の文脈を考慮, 3=文書全体の文脈を理解, 5=背景知識を活用した的確な訳出' },
+        { id: 'UQ-003', name_jp: '出力形式の柔軟性', weight: 1.0, scoring_guide: '0=テキストのみ, 2=コピペベース, 3=Word/PDF対応, 5=API+バッチ処理+書式保持+多形式出力' },
+    ],
+};
+
+const CHECKLISTS = (profileId === 'translation') ? CHECKLISTS_TRANSLATION : (profileId === 'meeting_minutes') ? CHECKLISTS_MINUTES : CHECKLISTS_SLIDE;
 
 document.addEventListener('DOMContentLoaded', async () => {
     renderChecklists();

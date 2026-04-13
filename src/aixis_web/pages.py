@@ -673,7 +673,7 @@ async def manual_checklist_page(
         if r:
             profile_id = r[0] or ""
             if not profile_id and r[1]:
-                _slug_map = {"meeting-minutes-ai": "meeting_minutes", "slide-creation-ai": "slide_creation"}
+                _slug_map = {"meeting-minutes-ai": "meeting_minutes", "slide-creation-ai": "slide_creation", "translation-ai": "translation"}
                 profile_id = _slug_map.get(r[1], "")
     except Exception:
         pass

@@ -987,14 +987,14 @@ window.addEventListener('unhandledrejection', function(evt) {
                 '<div class="flex items-center justify-between mb-2">' +
                     '<div>' +
                         '<span class="text-sm font-semibold text-gray-900 font-jp">' + dim.label + '</span>' +
-                        '<span class="text-[10px] text-gray-400 ml-1">' + dim.labelEn + '</span>' +
+                        '<span class="text-xs text-gray-400 ml-1">' + dim.labelEn + '</span>' +
                     '</div>' +
                     '<span class="text-lg font-bold tabular-nums text-gray-900">' + val.toFixed(1) + '</span>' +
                 '</div>' +
                 '<div class="w-full bg-gray-200 rounded-full h-2 mb-1.5">' +
                     '<div class="h-2 rounded-full transition-all duration-700" style="width:' + Math.min(100, val) + '%;background-color:' + dim.color + '"></div>' +
                 '</div>' +
-                '<div class="text-[10px] font-medium ' + ratingColor + ' font-jp">' + rating + '</div>' +
+                '<div class="text-xs font-medium ' + ratingColor + ' font-jp">' + rating + '</div>' +
             '</div>';
         }).join('');
 
@@ -1037,7 +1037,7 @@ window.addEventListener('unhandledrejection', function(evt) {
                     '<span class="text-lg font-bold tabular-nums text-gray-900">' + a.current.toFixed(1) + '</span>' +
                     '<span class="text-sm font-semibold tabular-nums ' + color + '">' + arrow + ' ' + deltaStr + '</span>' +
                 '</div>' +
-                '<div class="text-[10px] text-gray-400 tabular-nums mt-0.5">前回: ' + a.previous.toFixed(1) + '</div>' +
+                '<div class="text-xs text-gray-400 tabular-nums mt-0.5">前回: ' + a.previous.toFixed(1) + '</div>' +
             '</div>';
         }).join('');
 
@@ -1217,7 +1217,7 @@ window.addEventListener('unhandledrejection', function(evt) {
                                 '<div class="bg-amber-400" style="width:' + b.manual_ratio + '%"></div>' +
                             '</div>' +
                         '</div>' +
-                        '<div class="text-[9px] text-gray-400 mt-0.5 tabular-nums">' + b.auto_ratio + ':' + b.manual_ratio + '</div>' +
+                        '<div class="text-xs text-gray-400 mt-0.5 tabular-nums">' + b.auto_ratio + ':' + b.manual_ratio + '</div>' +
                     '</td>' +
                     // Final score
                     '<td class="py-3 px-2 text-center">' +
@@ -1233,12 +1233,12 @@ window.addEventListener('unhandledrejection', function(evt) {
 
         // === Source label helper ===
         function sourceLabel(source, confidence) {
-            if (source === 'error') return '<span class="text-red-500 text-[9px]">エラー</span>';
-            if (source === 'auto') return '<span class="text-emerald-600 text-[9px]">自動</span>';
-            if (source === 'llm') return '<span class="text-blue-600 text-[9px]">LLM自動</span>';
-            if (source === 'hybrid') return '<span class="text-indigo-600 text-[9px]">統合済み</span>';
-            if (source === 'manual_edit') return '<span class="text-amber-600 text-[9px]">手動編集</span>';
-            return '<span class="text-gray-500 text-[9px]">手動</span>';
+            if (source === 'error') return '<span class="text-red-500 text-xs">エラー</span>';
+            if (source === 'auto') return '<span class="text-emerald-600 text-xs">自動</span>';
+            if (source === 'llm') return '<span class="text-blue-600 text-xs">LLM自動</span>';
+            if (source === 'hybrid') return '<span class="text-indigo-600 text-xs">統合済み</span>';
+            if (source === 'manual_edit') return '<span class="text-amber-600 text-xs">手動編集</span>';
+            return '<span class="text-gray-500 text-xs">手動</span>';
         }
 
         // 4-dimensional confidence display
@@ -1261,11 +1261,11 @@ window.addEventListener('unhandledrejection', function(evt) {
                 var pct = hasVal ? Math.min(100, Math.max(0, Math.round(val * 100))) : 0;
                 var displayVal = hasVal ? pct + '%' : '---';
                 html += '<div class="flex items-center gap-1">' +
-                    '<span class="text-[9px] text-gray-400 font-jp w-8 shrink-0">' + dim.label + '</span>' +
+                    '<span class="text-xs text-gray-400 font-jp w-8 shrink-0">' + dim.label + '</span>' +
                     '<div class="flex-1 h-1 bg-gray-200 rounded-full">' +
                         (hasVal ? '<div class="h-1 rounded-full" style="width:' + pct + '%;background-color:' + dim.color + '"></div>' : '') +
                     '</div>' +
-                    '<span class="text-[9px] text-gray-400 tabular-nums w-7 text-right">' + displayVal + '</span>' +
+                    '<span class="text-xs text-gray-400 tabular-nums w-7 text-right">' + displayVal + '</span>' +
                 '</div>';
             });
             html += '</div>';
@@ -1281,19 +1281,19 @@ window.addEventListener('unhandledrejection', function(evt) {
                 details = details.rule_results;
             }
             if (!details || !Array.isArray(details) || details.length === 0) {
-                return '<div class="mt-2 pt-2 border-t border-gray-100 text-[10px] text-gray-400 font-jp italic">詳細スコアは次回の自動評価やり直しで生成されます</div>';
+                return '<div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400 font-jp italic">詳細スコアは次回の自動評価やり直しで生成されます</div>';
             }
-            var html = '<div class="mt-2 space-y-1.5 border-t border-gray-100 pt-2">';
+            var html = '<div class="mt-3 space-y-2.5 border-t border-gray-100 pt-3">';
             details.forEach(function(d) {
                 var dScore = (typeof d.score === 'number' && isFinite(d.score)) ? d.score : 0;
                 var dDisplay = dScore.toFixed(1);
                 var dColor = dScore >= 3.5 ? 'text-emerald-600' : (dScore >= 2.0 ? 'text-indigo-600' : 'text-red-500');
-                html += '<div class="text-[10px]">' +
+                html += '<div class="text-sm">' +
                     '<div class="flex items-center justify-between">' +
-                        '<span class="text-gray-500 font-jp">' + escapeHtml(d.rule_name_jp || d.rule_id || '') + '</span>' +
-                        '<span class="font-medium tabular-nums ' + dColor + '">' + dDisplay + ' / 5.0</span>' +
+                        '<span class="text-gray-600 font-jp font-medium">' + escapeHtml(d.rule_name_jp || d.rule_id || '') + '</span>' +
+                        '<span class="font-semibold tabular-nums ' + dColor + '">' + dDisplay + ' / 5.0</span>' +
                     '</div>' +
-                    (d.evidence ? '<div class="text-[9px] text-gray-400 font-jp mt-0.5">' + escapeHtml(d.evidence) + '</div>' : '') +
+                    (d.evidence ? '<div class="text-xs text-gray-500 font-jp mt-1 leading-relaxed">' + escapeHtml(d.evidence) + '</div>' : '') +
                 '</div>';
             });
             html += '</div>';
@@ -1310,14 +1310,14 @@ window.addEventListener('unhandledrejection', function(evt) {
             var needsManual = s.confidence === 0 && s.score === 0 && s.source === 'error';
             return '<div class="p-4 rounded-lg border border-gray-100 bg-gray-50/50">' +
                 '<div class="flex items-center justify-between mb-2">' +
-                    '<span class="text-xs font-medium text-gray-500 font-jp">' + escapeHtml(s.axis_name_jp) + '</span>' +
+                    '<span class="text-sm font-medium text-gray-500 font-jp">' + escapeHtml(s.axis_name_jp) + '</span>' +
                     sourceLabel(s.source, s.confidence) +
                 '</div>' +
                 '<div class="text-2xl font-bold tabular-nums ' + (needsManual ? 'text-gray-300' : 'text-gray-900') + '">' +
                     (needsManual ? '--' : sc) +
                 '</div>' +
                 (needsManual
-                    ? '<div class="text-[10px] text-amber-500 mt-1 font-jp">手動評価待ち</div>'
+                    ? '<div class="text-xs text-amber-500 mt-1 font-jp">手動評価待ち</div>'
                     : '<div class="mt-2"><div class="score-bar"><div class="score-bar-fill ' + level + '" style="width:' + barPct + '%"></div></div></div>'
                 ) +
                 confidenceBar(s.confidence, s.details) +
@@ -1326,7 +1326,7 @@ window.addEventListener('unhandledrejection', function(evt) {
                     if (typeof strs === 'string') { try { strs = JSON.parse(strs); } catch(e) { strs = strs ? [strs] : []; } }
                     if (!Array.isArray(strs)) strs = [];
                     return strs.length > 0
-                        ? '<div class="mt-2 space-y-0.5">' + strs.map(function(st) { return '<div class="text-[10px] text-emerald-600 font-jp flex items-start gap-1"><span class="shrink-0 mt-px">+</span><span>' + escapeHtml(st) + '</span></div>'; }).join('') + '</div>'
+                        ? '<div class="mt-2 space-y-0.5">' + strs.map(function(st) { return '<div class="text-sm text-emerald-600 font-jp flex items-start gap-1"><span class="shrink-0 mt-px">+</span><span>' + escapeHtml(st) + '</span></div>'; }).join('') + '</div>'
                         : '';
                 })() +
                 (function() {
@@ -1334,7 +1334,7 @@ window.addEventListener('unhandledrejection', function(evt) {
                     if (typeof rsks === 'string') { try { rsks = JSON.parse(rsks); } catch(e) { rsks = rsks ? [rsks] : []; } }
                     if (!Array.isArray(rsks)) rsks = [];
                     return rsks.length > 0
-                        ? '<div class="mt-1 space-y-0.5">' + rsks.map(function(rk) { return '<div class="text-[10px] text-red-500 font-jp flex items-start gap-1"><span class="shrink-0 mt-px">!</span><span>' + escapeHtml(rk) + '</span></div>'; }).join('') + '</div>'
+                        ? '<div class="mt-1 space-y-0.5">' + rsks.map(function(rk) { return '<div class="text-sm text-red-500 font-jp flex items-start gap-1"><span class="shrink-0 mt-px">!</span><span>' + escapeHtml(rk) + '</span></div>'; }).join('') + '</div>'
                         : '';
                 })() +
                 detailsHtml(s.details) +
@@ -1442,7 +1442,7 @@ window.addEventListener('unhandledrejection', function(evt) {
             if (screenshotCount > 0) {
                 screenshotLinks = relatedScreenshots.map(function(s) {
                     if (s.screenshot_path) {
-                        return '<a href="' + escapeHtml(s.screenshot_path) + '" target="_blank" class="inline-flex items-center gap-0.5 text-indigo-600 hover:underline text-[10px]">' +
+                        return '<a href="' + escapeHtml(s.screenshot_path) + '" target="_blank" class="inline-flex items-center gap-0.5 text-indigo-600 hover:underline text-xs">' +
                             '\ud83d\udcf7</a>';
                     }
                     return '';
@@ -1453,17 +1453,17 @@ window.addEventListener('unhandledrejection', function(evt) {
             var statusClass = hasError ? 'text-red-500' : (screenshotCount > 0 ? 'text-emerald-500' : 'text-amber-500');
 
             return '<tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">' +
-                '<td class="px-4 py-3 text-xs font-medium text-gray-600">' +
-                    '<span class="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-medium">' +
+                '<td class="px-4 py-3 text-sm font-medium text-gray-600">' +
+                    '<span class="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-medium">' +
                         (CATEGORY_NAMES[r.category] || r.category) +
                     '</span>' +
                 '</td>' +
-                '<td class="px-4 py-3 text-xs text-gray-700 max-w-xs truncate" title="' + escapeHtml(r.prompt_sent || '') + '">' + escapeHtml(r.prompt_sent || '') + '</td>' +
-                '<td class="px-4 py-3 text-xs text-gray-500">' +
+                '<td class="px-4 py-3 text-sm text-gray-700 max-w-xs truncate" title="' + escapeHtml(r.prompt_sent || '') + '">' + escapeHtml(r.prompt_sent || '') + '</td>' +
+                '<td class="px-4 py-3 text-sm text-gray-500">' +
                     (screenshotCount > 0 ? screenshotLinks : '<span class="text-gray-400">---</span>') +
                 '</td>' +
-                '<td class="px-4 py-3 text-xs text-gray-500 tabular-nums">' + timeStr + '</td>' +
-                '<td class="px-4 py-3 text-xs font-medium ' + statusClass + '">' + statusLabel + '</td>' +
+                '<td class="px-4 py-3 text-sm text-gray-500 tabular-nums">' + timeStr + '</td>' +
+                '<td class="px-4 py-3 text-sm font-medium ' + statusClass + '">' + statusLabel + '</td>' +
             '</tr>';
         }).join('');
 
@@ -1553,7 +1553,7 @@ window.addEventListener('unhandledrejection', function(evt) {
                     ? _currentBreakdown[axis].auto_score : 0;
                 html += '<div class="flex flex-col gap-1">' +
                     '<label class="text-xs font-medium text-gray-600 font-jp">' + label +
-                        '<span class="text-[9px] text-blue-500 ml-1">自動' + (mix.auto || '?') + '%</span>' +
+                        '<span class="text-xs text-blue-500 ml-1">自動' + (mix.auto || '?') + '%</span>' +
                     '</label>' +
                     '<input type="number" id="score-input-' + axis + '" ' +
                         'value="' + autoScore.toFixed(1) + '" ' +
