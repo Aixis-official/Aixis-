@@ -1,12 +1,13 @@
 """Reliability scoring service — BenchRisk-inspired meta-evaluation.
 
 Calculates how reliable an audit session's results are, across 4 dimensions:
-  - consistency:       Response-time variance & error-rate stability within categories
+  - consistency:        Response-time variance & error-rate stability within categories
   - comprehensiveness:  Category coverage & test plan completion
-  - correctness:       Auto-score confidence distribution & manual-auto alignment
-  - intelligibility:   Evidence quality — non-empty responses, structured data coverage
+  - correctness:        Auto-score confidence distribution & evidence-score alignment
+  - intelligibility:    Evidence quality — non-empty responses, structured data coverage
 
 Each dimension is scored 0-100 and stored as JSON in audit_sessions.reliability_scores.
+The overall score is a weighted average emphasising correctness and comprehensiveness.
 """
 
 from __future__ import annotations
@@ -37,8 +38,20 @@ def calculate_reliability(
     correctness = min(100, max(0, _calc_correctness(axis_scores_data, results)))
     intelligibility = min(100, max(0, _calc_intelligibility(results, axis_scores_data)))
 
+    # Weighted average — correctness and comprehensiveness matter most for
+    # audit credibility; consistency and intelligibility are supporting signals.
+    _weights = {
+        "correctness": 0.30,
+        "comprehensiveness": 0.30,
+        "consistency": 0.20,
+        "intelligibility": 0.20,
+    }
     overall = round(
-        (consistency + comprehensiveness + correctness + intelligibility) / 4, 1
+        correctness * _weights["correctness"]
+        + comprehensiveness * _weights["comprehensiveness"]
+        + consistency * _weights["consistency"]
+        + intelligibility * _weights["intelligibility"],
+        1,
     )
 
     return {
@@ -93,7 +106,18 @@ def _calc_consistency(results: list) -> float:
         avg_cv = statistics.mean(cvs)
         cv_score = max(0, min(100, 100 - (avg_cv / 1.5) * 100))
     else:
-        cv_score = 50.0  # Not enough data
+        # Single-test-per-category designs (e.g. many diverse categories):
+        # No intra-category variance is calculable — use cross-category CV instead.
+        all_times = [t for times in by_category.values() for t in times]
+        if len(all_times) >= 2:
+            mean = statistics.mean(all_times)
+            if mean > 0:
+                cross_cv = statistics.stdev(all_times) / mean
+                cv_score = max(0, min(100, 100 - (cross_cv / 2.0) * 100))
+            else:
+                cv_score = 70.0
+        else:
+            cv_score = 50.0  # Truly insufficient data
 
     # Error rate uniformity: lower overall error rate = better
     total_tests = len(results)
@@ -218,7 +242,7 @@ def _comprehensiveness_details(results: list, cases: list, total_planned: int, t
 # ---------------------------------------------------------------------------
 
 def _calc_correctness(axis_scores_data: list[dict], results: list) -> float:
-    """Score 0-100. High confidence across axes + reasonable score distribution."""
+    """Score 0-100. High confidence + reasonable distribution + evidence quality."""
     if not axis_scores_data:
         return 0.0
 
@@ -246,19 +270,33 @@ def _calc_correctness(axis_scores_data: list[dict], results: list) -> float:
     evidence_ratio = valid_results / len(results) if results else 0
     evidence_score = evidence_ratio * 100
 
-    return round(confidence_score * 0.4 + dist_score * 0.3 + evidence_score * 0.3, 1)
+    # Evidence richness: axes with both strengths AND risks listed are better grounded
+    grounded_axes = sum(1 for s in axis_scores_data if s.get("strengths") and s.get("risks"))
+    grounded_ratio = grounded_axes / len(axis_scores_data) if axis_scores_data else 0
+    grounded_score = grounded_ratio * 100
+
+    return round(
+        confidence_score * 0.30
+        + dist_score * 0.20
+        + evidence_score * 0.30
+        + grounded_score * 0.20,
+        1,
+    )
 
 
 def _correctness_details(axis_scores_data: list[dict], results: list) -> dict:
     confidences = {s.get("axis", "?"): s.get("confidence", 0) for s in axis_scores_data}
     scores = {s.get("axis", "?"): s.get("score", 0) for s in axis_scores_data}
     valid = sum(1 for r in results if not getattr(r, "error", None) and (getattr(r, "response_raw", None) or getattr(r, "screenshot_path", None)))
+    grounded = sum(1 for s in axis_scores_data if s.get("strengths") and s.get("risks"))
     return {
         "axis_confidences": confidences,
         "axis_scores": scores,
         "valid_results": valid,
         "total_results": len(results),
         "evidence_ratio": round(valid / len(results), 3) if results else 0,
+        "grounded_axes": grounded,
+        "total_axes": len(axis_scores_data),
     }
 
 
@@ -297,17 +335,19 @@ def _calc_intelligibility(results: list, axis_scores_data: list[dict]) -> float:
         if raw:
             response_lengths.append(len(str(raw)))
         elif getattr(r, "screenshot_path", None):
-            response_lengths.append(200)  # screenshots count as moderate evidence
+            response_lengths.append(500)  # screenshots = substantial visual evidence
     avg_length = statistics.mean(response_lengths) if response_lengths else 0
 
-    # Length score: 100+ chars = good, 500+ = excellent
-    length_score = min(100, (avg_length / 500) * 100)
+    # Length score: 200+ chars = good, 1500+ = excellent
+    length_score = min(100, (avg_length / 1500) * 100)
 
-    return round(response_ratio * 40 + detail_coverage * 40 + length_score * 0.2, 1)
+    # Weights: response_ratio (0-1)*35, detail_coverage (0-1)*35, length_score (0-100)*0.3
+    return round(response_ratio * 35 + detail_coverage * 35 + length_score * 0.3, 1)
 
 
 def _intelligibility_details(results: list, axis_scores_data: list[dict]) -> dict:
     has_response = sum(1 for r in results if (getattr(r, "response_raw", None) and len(str(r.response_raw).strip()) > 10) or getattr(r, "screenshot_path", None))
+    has_text = sum(1 for r in results if getattr(r, "response_raw", None) and len(str(r.response_raw).strip()) > 10)
     has_screenshot = sum(1 for r in results if getattr(r, "screenshot_path", None))
     response_lengths = []
     for r in results:
@@ -315,9 +355,10 @@ def _intelligibility_details(results: list, axis_scores_data: list[dict]) -> dic
         if raw:
             response_lengths.append(len(str(raw)))
         elif getattr(r, "screenshot_path", None):
-            response_lengths.append(200)
+            response_lengths.append(500)
     return {
         "responses_with_content": has_response,
+        "responses_with_text": has_text,
         "responses_with_screenshot": has_screenshot,
         "total_results": len(results),
         "avg_response_length": round(statistics.mean(response_lengths)) if response_lengths else 0,
