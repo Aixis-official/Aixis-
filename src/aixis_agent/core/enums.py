@@ -19,6 +19,10 @@ class TestCategory(str, Enum):
     TRANSLATION_ACCURACY = "translation_accuracy"
     TRANSLATION_JAPANESE = "translation_japanese"
     TRANSLATION_CONTEXT = "translation_context"
+    TRANSLATION_FINANCIAL = "translation_financial"
+    TRANSLATION_MANUAL = "translation_manual"
+    TRANSLATION_MARKETING = "translation_marketing"
+    TRANSLATION_LEGAL = "translation_legal"
     # UI evaluation category (shared across categories)
     UI_EVALUATION = "ui_evaluation"
     # Legacy categories (kept for backward compatibility)
