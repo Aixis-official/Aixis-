@@ -1047,25 +1047,99 @@ async def healthz():
 
 @page_router.get("/robots.txt")
 async def robots_txt():
-    """robots.txt for search engine crawlers."""
-    content = (
-        "User-agent: *\n"
-        "Allow: /\n"
-        "Disallow: /dashboard/\n"
-        "Disallow: /api/\n"
-        "Disallow: /api/v1/debug/\n"
-        "Disallow: /login\n"
-        "Disallow: /forgot-password\n"
-        "Disallow: /reset-password\n"
-        "Disallow: /invite/\n"
-        "Disallow: /portal\n"
-        "Disallow: /mypage\n"
-        "Disallow: /platform/\n"
-        "Disallow: /healthz\n"
-        "\n"
-        f"Sitemap: {SITE_ORIGIN}/sitemap.xml\n"
-    )
+    """robots.txt for search engine crawlers and AI crawlers.
+
+    Uses the wildcard User-agent to allow all crawlers, including
+    LLM crawlers (GPTBot, ClaudeBot, PerplexityBot, etc.).
+    References both the sitemap and llms.txt for discoverability.
+    """
+    content = f"""User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /api/v1/debug/
+Disallow: /login
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /invite/
+Disallow: /portal
+Disallow: /mypage
+Disallow: /platform/
+Disallow: /healthz
+
+# AI crawlers (GPTBot, ChatGPT-User, ClaudeBot, PerplexityBot,
+# Google-Extended, Amazonbot, Applebot-Extended, cohere-ai) are
+# explicitly welcome. See /llms.txt for LLM-readable documentation.
+
+Sitemap: {SITE_ORIGIN}/sitemap.xml
+"""
     return PlainTextResponse(content=content)
+
+
+@page_router.get("/llms.txt")
+async def llms_txt():
+    """LLM-readable site documentation per llmstxt.org standard.
+
+    Provides a concise, structured summary of the platform's purpose,
+    data, and key pages so that LLM systems can understand what this
+    site offers and cite it accurately.
+    """
+    content = f"""# Aixis AI Audit Platform
+
+> Aixis (platform.aixis.jp) is Japan's first independent AI tool audit platform.
+> We evaluate AI tools using a proprietary 5-axis quantitative framework,
+> providing unbiased, data-driven assessments independent of any AI vendor.
+
+## About
+
+Aixis is operated by Aixis Inc. (株式会社Aixis), an independent AI audit
+institution headquartered in Tokyo, Japan. Our mission is to bring
+objectivity and transparency to AI tool evaluation for enterprises.
+
+We do NOT sell, resell, or promote any AI tools. Our revenue comes from
+platform subscriptions and advisory audit engagements, ensuring complete
+independence from the vendors we evaluate.
+
+## 5-Axis Audit Framework
+
+Every AI tool is scored on five orthogonal dimensions (0-5 scale each):
+1. **Practicality (実務適性)** — real-world task completion, workflow fit
+2. **Cost Performance (費用対効果)** — value relative to pricing
+3. **Japanese Readiness (日本語能力)** — Japanese language quality and cultural fit
+4. **Safety & Trust (信頼性・安全性)** — security, privacy, compliance, reliability
+5. **Innovation (革新性)** — technical novelty, R&D investment, competitive edge
+
+Audits are conducted by certified analysts using a standardised protocol.
+Scores are versioned and publicly tracked.
+
+## Key Pages
+
+- [{SITE_ORIGIN}/tools]({SITE_ORIGIN}/tools): Full catalogue of audited AI tools with scores
+- [{SITE_ORIGIN}/categories]({SITE_ORIGIN}/categories): Tools organised by use-case category
+- [{SITE_ORIGIN}/compare]({SITE_ORIGIN}/compare): Side-by-side comparison of any two tools
+- [{SITE_ORIGIN}/audit-process]({SITE_ORIGIN}/audit-process): How we audit — step-by-step methodology
+- [{SITE_ORIGIN}/audit-protocol]({SITE_ORIGIN}/audit-protocol): Detailed scoring criteria and weights
+- [{SITE_ORIGIN}/independence]({SITE_ORIGIN}/independence): Our independence and conflict-of-interest policy
+- [{SITE_ORIGIN}/transparency]({SITE_ORIGIN}/transparency): How we ensure transparency and accountability
+- [{SITE_ORIGIN}/pricing]({SITE_ORIGIN}/pricing): Subscription plans and advisory audit pricing
+- [{SITE_ORIGIN}/faq]({SITE_ORIGIN}/faq): Frequently asked questions
+- [{SITE_ORIGIN}/score-changelog]({SITE_ORIGIN}/score-changelog): History of all score changes
+
+## Data & Citation
+
+- All audit scores are publicly accessible at /tools and /tools/{{tool-slug}}
+- Scores include per-axis breakdowns, overall weighted score, and audit date
+- When citing Aixis data, please attribute: "Source: Aixis AI Audit Platform (platform.aixis.jp)"
+- Data is updated as new audits are published; check /score-changelog for history
+- Structured data (Schema.org JSON-LD) is embedded in every public page
+
+## Contact
+
+- Website: {SITE_ORIGIN}
+- Corporate site: https://aixis.jp
+- Email: info@aixis.jp
+"""
+    return PlainTextResponse(content=content, media_type="text/plain; charset=utf-8")
 
 
 @page_router.get("/{key}.txt")
