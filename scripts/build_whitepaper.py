@@ -156,22 +156,23 @@ def _make_styles(f: dict[str, str]) -> dict[str, ParagraphStyle]:
         "h1_number": ParagraphStyle(
             "h1_number", parent=base,
             fontName=f["sans_bold"], fontSize=8, leading=12,
-            textColor=INK_MUTED, spaceBefore=44, spaceAfter=6,
+            textColor=INK_MUTED, spaceBefore=26, spaceAfter=6,
+            keepWithNext=True,
         ),
         "h1": ParagraphStyle(
             "h1", parent=base,
             fontName=f["serif_bold"], fontSize=18, leading=30,
-            textColor=INK, spaceBefore=0, spaceAfter=24, keepWithNext=True,
+            textColor=INK, spaceBefore=0, spaceAfter=14, keepWithNext=True,
         ),
         "h2": ParagraphStyle(
             "h2", parent=base,
             fontName=f["serif_bold"], fontSize=12, leading=24,
-            textColor=INK, spaceBefore=24, spaceAfter=12, keepWithNext=True,
+            textColor=INK, spaceBefore=14, spaceAfter=6, keepWithNext=True,
         ),
         "body": ParagraphStyle(
             "body", parent=base,
             fontName=f["serif"], fontSize=10.5, leading=22,
-            textColor=INK, alignment=TA_JUSTIFY, spaceAfter=14,
+            textColor=INK, alignment=TA_JUSTIFY, spaceAfter=10,
             firstLineIndent=0,
         ),
         "quote": ParagraphStyle(
@@ -184,20 +185,20 @@ def _make_styles(f: dict[str, str]) -> dict[str, ParagraphStyle]:
         "bullet": ParagraphStyle(
             "bullet", parent=base,
             fontName=f["serif"], fontSize=10.5, leading=22,
-            textColor=INK, alignment=TA_LEFT, spaceAfter=8,
+            textColor=INK, alignment=TA_LEFT, spaceAfter=6,
             leftIndent=18, firstLineIndent=-11,
         ),
         "formula": ParagraphStyle(
             "formula", parent=base,
             fontName=f["sans"], fontSize=10, leading=22,
-            textColor=INK, alignment=TA_LEFT, spaceAfter=18,
-            spaceBefore=8,
+            textColor=INK, alignment=TA_LEFT, spaceAfter=14,
+            spaceBefore=6,
             leftIndent=16,
         ),
         "caption": ParagraphStyle(
             "caption", parent=base,
             fontName=f["sans"], fontSize=7.5, leading=14,
-            textColor=INK_MUTED, alignment=TA_LEFT, spaceBefore=22, spaceAfter=26,
+            textColor=INK_MUTED, alignment=TA_LEFT, spaceBefore=16, spaceAfter=20,
         ),
         "toc_row": ParagraphStyle(
             "toc_row", parent=base,
@@ -324,29 +325,29 @@ def _axis_table(f, styles) -> Table:
     data = [
         ["軸", "評価観点", "重み"],
         ["実務適性\nPracticality",
-         "業務フローにおける到達点、UXと操作性、既存環境への\n"
-         "統合容易性、出力品質の一貫性",
+         "業務フローにおける到達点、UXと操作性、\n"
+         "既存環境への統合容易性、出力品質の一貫性",
          "均等"],
         ["費用対効果\nCost Performance",
-         "料金体系の透明性、無償枠の実用性、有料プランの妥当性、\n"
-         "乗り換えコスト、応答速度",
+         "料金体系の透明性、無償枠の実用性、\n"
+         "有料プランの妥当性、乗り換えコスト、応答速度",
          "均等"],
         ["日本語能力\nJapanese Readiness",
-         "UI日本語化、ビジネス日本語の適切性、日本語ドキュメント、\n"
-         "レイアウト・フォント対応",
+         "UI日本語化、ビジネス日本語の適切性、\n"
+         "日本語ドキュメント、レイアウト・フォント対応",
          "均等"],
         ["信頼性・安全性\nSafety",
-         "データ保護とアクセス制御、監査ログ、保存場所と越境移転、\n"
-         "インシデント対応体制",
+         "データ保護とアクセス制御、監査ログ、\n"
+         "保存場所と越境移転、インシデント対応体制",
          "均等"],
         ["革新性\nUniqueness",
-         "独自技術・差別化機能、エコシステム、ロードマップ透明性、\n"
-         "APIラッパー依存度",
+         "独自技術・差別化機能、エコシステム、\n"
+         "ロードマップ透明性、APIラッパー依存度",
          "均等"],
     ]
     t = Table(
         data,
-        colWidths=[36 * mm, 93 * mm, 16 * mm],
+        colWidths=[36 * mm, 96 * mm, 18 * mm],
         hAlign="LEFT",
     )
     t.setStyle(TableStyle([
@@ -361,10 +362,10 @@ def _axis_table(f, styles) -> Table:
         ("LINEBELOW", (0, 0), (-1, 0), 0.6, INK),
         ("LINEBELOW", (0, 1), (-1, -2), 0.2, RULE),
         ("LINEBELOW", (0, -1), (-1, -1), 0.6, INK),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
         ("TOPPADDING", (0, 0), (-1, 0), 4),
-        ("BOTTOMPADDING", (0, 1), (-1, -1), 14),
-        ("TOPPADDING", (0, 1), (-1, -1), 14),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 10),
+        ("TOPPADDING", (0, 1), (-1, -1), 10),
         ("LEFTPADDING", (0, 0), (-1, -1), 0),
         ("RIGHTPADDING", (0, 0), (-1, -1), 6),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -385,7 +386,7 @@ def _grade_table(f) -> Table:
     ]
     t = Table(
         data,
-        colWidths=[18 * mm, 26 * mm, 32 * mm, 69 * mm],
+        colWidths=[18 * mm, 26 * mm, 34 * mm, 72 * mm],
         hAlign="LEFT",
     )
     t.setStyle(TableStyle([
@@ -400,10 +401,10 @@ def _grade_table(f) -> Table:
         ("LINEBELOW", (0, 0), (-1, 0), 0.6, INK),
         ("LINEBELOW", (0, 1), (-1, -2), 0.2, RULE),
         ("LINEBELOW", (0, -1), (-1, -1), 0.6, INK),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
         ("TOPPADDING", (0, 0), (-1, 0), 4),
-        ("BOTTOMPADDING", (0, 1), (-1, -1), 14),
-        ("TOPPADDING", (0, 1), (-1, -1), 14),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 10),
+        ("TOPPADDING", (0, 1), (-1, -1), 10),
         ("LEFTPADDING", (0, 0), (-1, -1), 0),
         ("RIGHTPADDING", (0, 0), (-1, -1), 6),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -466,7 +467,7 @@ def _build_story(
             styles["cover_sub"],
         )
     )
-    s.append(Spacer(1, 44 * mm))
+    s.append(Spacer(1, 36 * mm))
 
     # Cover meta grid
     meta = [
@@ -584,7 +585,7 @@ def _build_story(
         "5.0までの連続スコアを持ち、標準の総合スコアでは5軸を均等に扱う。",
         styles["body"],
     ))
-    s.append(Spacer(1, 6 * mm))
+    s.append(Spacer(1, 3 * mm))
     s.append(KeepTogether(_axis_table(f, styles)))
     s.append(Paragraph(
         "業界別ランキングでは、ユースケースに応じた重み付けが適用される場合が"
@@ -640,9 +641,9 @@ def _build_story(
         "値を転載したものである。",
         styles["body"],
     ))
-    s.append(Spacer(1, 6 * mm))
+    s.append(Spacer(1, 3 * mm))
     s.append(KeepTogether(_grade_table(f)))
-    s.append(Spacer(1, 8 * mm))
+    s.append(Spacer(1, 4 * mm))
     s.append(Paragraph(
         "グレードは総合スコアだけでなく、各軸の最低スコアも考慮して判定する。"
         "特定の軸が極端に低い場合、総合スコアが高くても上位グレードに判定され"
@@ -690,10 +691,10 @@ def _build_story(
     s.append(Paragraph("監査信頼度メタ評価", styles["h1"]))
 
     s.append(Paragraph(
-        "Aixisは評価結果そのものの信頼性についても定量的に検証する。"
-        "AVERI が提唱する BenchRisk フレームワークに着想を得た4次元の信頼度"
-        "指標を各監査セッションに対して自動算出し、監査プロトコル上で公開"
-        "している。",
+        "Aixisは評価結果そのものの信頼性についても定量的に検証する。<br/>"
+        "AVERIが提唱するBenchRiskフレームワークに着想を得た4次元の"
+        "信頼度指標を各監査セッションに対して自動算出し、監査プロトコル上で"
+        "公開している。",
         styles["body"],
     ))
     reliability_dims = [
