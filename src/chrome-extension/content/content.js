@@ -53,12 +53,18 @@
     translation_accuracy: "翻訳正確性",
     translation_japanese: "日本語品質",
     translation_context: "文脈理解",
+    translation_financial: "財務報告",
+    translation_manual: "製品マニュアル",
+    translation_marketing: "マーケティング",
+    translation_legal: "法規制文書",
   };
 
   // Categories that use text-based input instead of screenshots
   const TEXT_INPUT_CATEGORIES = new Set([
     "minutes_transcription", "minutes_japanese", "minutes_complex",
     "translation_accuracy", "translation_japanese", "translation_context",
+    "translation_financial", "translation_manual",
+    "translation_marketing", "translation_legal",
   ]);
 
   const TEXT_OUTPUT_LABELS = {
@@ -114,6 +120,10 @@
     translation_accuracy: "#2563eb",
     translation_japanese: "#d97706",
     translation_context: "#059669",
+    translation_financial: "#0d9488",
+    translation_manual: "#6366f1",
+    translation_marketing: "#ec4899",
+    translation_legal: "#78716c",
     freeform: "#64748b",
     protocol: "#475569",
   };

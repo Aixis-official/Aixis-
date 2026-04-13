@@ -1147,6 +1147,8 @@ class LLMScorer:
                 _TEXT_BASED_CATS = {
                     "minutes_transcription", "minutes_japanese", "minutes_complex",
                     "translation_accuracy", "translation_japanese", "translation_context",
+                    "translation_financial", "translation_manual",
+                    "translation_marketing", "translation_legal",
                 }
                 if category in _TEXT_BASED_CATS:
                     text_outputs = [{"label": "ツール出力", "content": response_raw.strip()}]
@@ -1361,17 +1363,9 @@ class LLMScorer:
         has_screenshots = any(obs.get("screenshots") for obs in observations)
         self._is_text_based = has_text_outputs and not has_screenshots
         self._has_mixed_evidence = has_text_outputs and has_screenshots
+        _is_translation = getattr(self, '_active_axis_categories', None) is self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE.get("translation")
         if self._is_text_based:
             logger.info("Session %s: text-based evaluation mode", session_id)
-            # Translation sources are longer (contracts, manuals, legal docs).
-            # Increase per-field budget to capture full translation outputs
-            # while keeping total under ~4500 tokens per axis for cost control.
-            if getattr(self, '_active_axis_categories', None) is self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE.get("translation"):
-                self._text_chars_per_field = 3000   # 2000 → 3000 (~750 tokens)
-                self._text_chars_per_obs = 8000     # 6000 → 8000 (~2000 tokens)
-                self._text_chars_total = 18000      # 15000 → 18000 (~4500 tokens)
-                logger.info("Session %s: translation text budget (field=%d obs=%d total=%d)",
-                            session_id, self._text_chars_per_field, self._text_chars_per_obs, self._text_chars_total)
         elif self._has_mixed_evidence:
             logger.info(
                 "Session %s: MIXED evaluation mode — %d text obs + %d screenshot obs",
@@ -1379,6 +1373,16 @@ class LLMScorer:
                 sum(1 for o in observations if o.get("text_outputs")),
                 sum(1 for o in observations if o.get("screenshots")),
             )
+
+        # Translation sources are longer (contracts, manuals, legal docs).
+        # Increase per-field budget to capture full translation outputs.
+        # Applies to both text-only and mixed-evidence modes.
+        if _is_translation and (self._is_text_based or self._has_mixed_evidence):
+            self._text_chars_per_field = 3000   # 2000 → 3000 (~750 tokens)
+            self._text_chars_per_obs = 8000     # 6000 → 8000 (~2000 tokens)
+            self._text_chars_total = 18000      # 15000 → 18000 (~4500 tokens)
+            logger.info("Session %s: translation text budget (field=%d obs=%d total=%d)",
+                        session_id, self._text_chars_per_field, self._text_chars_per_obs, self._text_chars_total)
 
         # 1b. Language pre-check: detect output language from a sample of screenshots
         # This runs BEFORE full scoring to establish an authoritative language verdict
@@ -2589,6 +2593,8 @@ class LLMScorer:
             _TEXT_CATS = {
                 "minutes_transcription", "minutes_japanese", "minutes_complex",
                 "translation_accuracy", "translation_japanese", "translation_context",
+                "translation_financial", "translation_manual",
+                "translation_marketing", "translation_legal",
             }
             prompt_limit = 3000 if cat in _TEXT_CATS else 500
             prompt_text_preview = obs['prompt'][:prompt_limit] if obs['prompt'] else '(指示なし)'

@@ -173,7 +173,11 @@ async def _seed_default_categories():
                 "### テストカテゴリ\n"
                 "- translation_accuracy（翻訳正確性）\n"
                 "- translation_japanese（日本語品質）\n"
-                "- translation_context（文脈理解）\n",
+                "- translation_context（文脈理解）\n"
+                "- translation_financial（財務報告）\n"
+                "- translation_manual（製品マニュアル）\n"
+                "- translation_marketing（マーケティング）\n"
+                "- translation_legal（法規制文書）\n",
         },
     ]
 
