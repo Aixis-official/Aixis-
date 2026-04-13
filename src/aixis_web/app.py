@@ -167,9 +167,12 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             "xr-spatial-tracking=()"
         )
         response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        response.headers["X-DNS-Prefetch-Control"] = "off"
         if not settings.debug:
             response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains; preload"
+                "max-age=63072000; includeSubDomains; preload"
             )
         # --- CSP: relax for admin pages (Tailwind Play CDN needs unsafe-eval) ---
         admin_path = request.url.path.startswith("/admin") or request.url.path.startswith("/dashboard")
@@ -222,7 +225,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
         # --- Cache-Control ---
         if path.startswith("/static/"):
-            response.headers["Cache-Control"] = "public, max-age=2592000, immutable"  # 30 days
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"  # 1 year (fingerprinted via ?v=)
         elif path.startswith(("/screenshots/", "/uploads/")):
             response.headers["Cache-Control"] = "public, max-age=86400"  # 1 day
         elif path.startswith(("/admin", "/dashboard", "/mypage")):
