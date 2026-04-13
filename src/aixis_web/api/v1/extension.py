@@ -919,11 +919,13 @@ async def _run_llm_scoring_inner(session_id: str, tool_id: str) -> None:
                 cases_rows = cases_q.fetchall()
 
                 session_q = await db.execute(text(
-                    "SELECT total_planned, total_executed FROM audit_sessions WHERE id = :sid"
+                    "SELECT total_planned, total_executed, profile_id, tool_id FROM audit_sessions WHERE id = :sid"
                 ), {"sid": session_id})
                 session_row = session_q.fetchone()
                 total_planned = session_row[0] if session_row and session_row[0] else len(cases_rows)
                 total_executed = session_row[1] if session_row and session_row[1] else len(results_rows)
+                _profile_id = session_row[2] if session_row else None
+                _tool_id = session_row[3] if session_row else tool_id
 
                 # Build axis_scores_data from the LLM scoring results
                 axis_scores_data = []
@@ -937,9 +939,29 @@ async def _run_llm_scoring_inner(session_id: str, tool_id: str) -> None:
                         "risks": s.get("risks"),
                     })
 
+                # Fetch historical scores for temporal stability
+                historical_scores = []
+                try:
+                    hist_q = await db.execute(text(
+                        "SELECT reliability_scores FROM audit_sessions "
+                        "WHERE tool_id = :tid AND status = 'completed' AND id != :sid "
+                        "AND reliability_scores IS NOT NULL "
+                        "ORDER BY completed_at DESC LIMIT 5"
+                    ), {"tid": _tool_id, "sid": session_id})
+                    import json as _json
+                    for row in hist_q.fetchall():
+                        try:
+                            historical_scores.append(_json.loads(row[0]))
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+
                 reliability = calculate_reliability(
                     results_rows, cases_rows, axis_scores_data,
                     total_planned, total_executed,
+                    profile_id=_profile_id,
+                    historical_scores=historical_scores,
                 )
 
                 import json

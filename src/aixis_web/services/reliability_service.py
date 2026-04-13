@@ -3,7 +3,7 @@
 Calculates how reliable an audit session's results are, across 4 dimensions:
   - consistency:        Response-time variance & error-rate stability within categories
   - comprehensiveness:  Category coverage & test plan completion
-  - correctness:        Auto-score confidence distribution & evidence-score alignment
+  - correctness:        Auto-score confidence, evidence-score alignment, grounding
   - intelligibility:    Evidence quality — non-empty responses, structured data coverage
 
 Each dimension is scored 0-100 and stored as JSON in audit_sessions.reliability_scores.
@@ -12,13 +12,56 @@ The overall score is a weighted average emphasising correctness and comprehensiv
 
 from __future__ import annotations
 
-import json
 import logging
 import statistics
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# Depth targets per profile — how many tests/category is considered "thorough".
+# Profiles with many narrow categories (e.g. translation: 7 cats, 1 test each)
+# need a lower per-category target than profiles with fewer broad categories.
+_DEPTH_TARGETS: dict[str, int] = {}  # populated lazily from YAML
+
+
+def _get_depth_target(profile_id: str | None) -> int:
+    """Return the ideal tests-per-category for a profile.
+
+    Falls back to 8 (the universal default) if no profile-specific config exists.
+    """
+    if not profile_id:
+        return 8
+
+    if profile_id in _DEPTH_TARGETS:
+        return _DEPTH_TARGETS[profile_id]
+
+    # Try to read from profile YAML
+    try:
+        import yaml
+        profile_path = Path(__file__).resolve().parent.parent.parent.parent / "config" / "profiles" / f"{profile_id}.yaml"
+        if profile_path.exists():
+            with open(profile_path) as f:
+                data = yaml.safe_load(f) or {}
+            num_cats = len(data.get("primary_categories", []))
+            # Heuristic: if many categories, each only needs 1-2 tests;
+            # if few categories, each needs deeper coverage.
+            if num_cats >= 6:
+                target = 2
+            elif num_cats >= 4:
+                target = 3
+            elif num_cats >= 2:
+                target = 5
+            else:
+                target = 8
+            _DEPTH_TARGETS[profile_id] = target
+            return target
+    except Exception:
+        pass
+
+    _DEPTH_TARGETS[profile_id] = 8
+    return 8
 
 
 def calculate_reliability(
@@ -27,14 +70,31 @@ def calculate_reliability(
     axis_scores_data: list[dict],
     total_planned: int,
     total_executed: int,
+    *,
+    profile_id: str | None = None,
+    historical_scores: list[dict] | None = None,
 ) -> dict[str, Any]:
     """Calculate 4-dimensional reliability scores from audit data.
+
+    Args:
+        results: Test result rows from db_test_results.
+        cases: Test case rows from db_test_cases.
+        axis_scores_data: Per-axis score dicts with confidence/strengths/risks.
+        total_planned: Number of tests planned.
+        total_executed: Number of tests executed.
+        profile_id: Optional profile name for adaptive depth targets.
+        historical_scores: Optional list of previous session overall scores
+            for the same tool, used for temporal stability bonus.
 
     Returns dict with keys: consistency, comprehensiveness, correctness,
     intelligibility, overall, details.
     """
+    depth_target = _get_depth_target(profile_id)
+
     consistency = min(100, max(0, _calc_consistency(results)))
-    comprehensiveness = min(100, max(0, _calc_comprehensiveness(results, cases, total_planned, total_executed)))
+    comprehensiveness = min(100, max(0, _calc_comprehensiveness(
+        results, cases, total_planned, total_executed, depth_target=depth_target,
+    )))
     correctness = min(100, max(0, _calc_correctness(axis_scores_data, results)))
     intelligibility = min(100, max(0, _calc_intelligibility(results, axis_scores_data)))
 
@@ -54,20 +114,52 @@ def calculate_reliability(
         1,
     )
 
-    return {
+    # Temporal stability bonus: if historical data shows consistent scores,
+    # boost overall slightly (max +5 points). Large swings penalise.
+    temporal_detail = {}
+    if historical_scores and len(historical_scores) >= 2:
+        hist_values = [h.get("overall_score", h.get("overall", 0)) for h in historical_scores if h]
+        hist_values = [v for v in hist_values if v is not None and v > 0]
+        if len(hist_values) >= 2:
+            hist_stdev = statistics.stdev(hist_values)
+            # Low stdev (< 0.3) = very stable = +5 bonus
+            # High stdev (> 1.5) = unstable = -5 penalty
+            if hist_stdev < 0.3:
+                temporal_adj = 5
+            elif hist_stdev < 0.8:
+                temporal_adj = 2
+            elif hist_stdev > 1.5:
+                temporal_adj = -5
+            else:
+                temporal_adj = 0
+            overall = round(min(100, max(0, overall + temporal_adj)), 1)
+            temporal_detail = {
+                "sessions_compared": len(hist_values),
+                "score_stdev": round(hist_stdev, 3),
+                "adjustment": temporal_adj,
+            }
+
+    result = {
         "consistency": round(consistency, 1),
         "comprehensiveness": round(comprehensiveness, 1),
         "correctness": round(correctness, 1),
         "intelligibility": round(intelligibility, 1),
         "overall": overall,
+        "depth_target": depth_target,
+        "profile_id": profile_id,
         "calculated_at": datetime.now(timezone.utc).isoformat(),
         "details": {
             "consistency": _consistency_details(results),
-            "comprehensiveness": _comprehensiveness_details(results, cases, total_planned, total_executed),
+            "comprehensiveness": _comprehensiveness_details(
+                results, cases, total_planned, total_executed, depth_target=depth_target,
+            ),
             "correctness": _correctness_details(axis_scores_data, results),
             "intelligibility": _intelligibility_details(results, axis_scores_data),
         },
     }
+    if temporal_detail:
+        result["details"]["temporal_stability"] = temporal_detail
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -155,7 +247,11 @@ def _consistency_details(results: list) -> dict:
 # Comprehensiveness — test plan completion + category coverage
 # ---------------------------------------------------------------------------
 
-def _calc_comprehensiveness(results: list, cases: list, total_planned: int, total_executed: int) -> float:
+def _calc_comprehensiveness(
+    results: list, cases: list,
+    total_planned: int, total_executed: int,
+    *, depth_target: int = 8,
+) -> float:
     """Score 0-100. Test plan completion + category coverage + depth.
 
     All sub-scores are capped at 100 before weighting.
@@ -170,8 +266,6 @@ def _calc_comprehensiveness(results: list, cases: list, total_planned: int, tota
         completion = 0.0
 
     # --- Category coverage ---
-    # Compare executed categories against planned categories.
-    # Always cap at 100 — executing MORE categories than planned is not "better than perfect".
     executed_cats = set()
     for r in results:
         cat = r.category.value if hasattr(r.category, "value") else str(r.category)
@@ -186,14 +280,11 @@ def _calc_comprehensiveness(results: list, cases: list, total_planned: int, tota
     num_planned_cats = len(planned_cats)
 
     if num_planned_cats >= 2:
-        # Meaningful test plan with multiple categories
         cat_coverage = min(100, num_executed_cats / num_planned_cats * 100)
     else:
-        # Only 0-1 planned category — use absolute scale instead of ratio
-        # Target: 5+ distinct categories for full score
         cat_coverage = min(100, num_executed_cats / 5 * 100)
 
-    # --- Depth: tests per category ---
+    # --- Depth: tests per category (adaptive target) ---
     tests_per_cat = {}
     for r in results:
         cat = r.category.value if hasattr(r.category, "value") else str(r.category)
@@ -202,12 +293,15 @@ def _calc_comprehensiveness(results: list, cases: list, total_planned: int, tota
     if tests_per_cat:
         avg_tests = sum(tests_per_cat.values()) / len(tests_per_cat)
         min_tests = min(tests_per_cat.values())
-        # Target: avg 8+ tests/category, min 3+ tests in weakest category
-        depth_score = min(100, (avg_tests / 8) * 70 + (min(min_tests, 3) / 3) * 30)
+        # Adaptive: use profile-specific depth_target instead of fixed 8
+        min_target = max(1, depth_target // 3)  # minimum tests in weakest category
+        depth_score = min(100,
+            (avg_tests / depth_target) * 70
+            + (min(min_tests, min_target) / min_target) * 30
+        )
     else:
         depth_score = 0.0
 
-    # Final score: all sub-scores guaranteed 0-100
     return round(
         min(100, completion) * 0.5
         + min(100, cat_coverage) * 0.3
@@ -216,7 +310,11 @@ def _calc_comprehensiveness(results: list, cases: list, total_planned: int, tota
     )
 
 
-def _comprehensiveness_details(results: list, cases: list, total_planned: int, total_executed: int) -> dict:
+def _comprehensiveness_details(
+    results: list, cases: list,
+    total_planned: int, total_executed: int,
+    *, depth_target: int = 8,
+) -> dict:
     planned_cats = set()
     for c in cases:
         cat = c.category.value if hasattr(c.category, "value") else str(c.category)
@@ -234,6 +332,7 @@ def _comprehensiveness_details(results: list, cases: list, total_planned: int, t
         "planned_categories": sorted(planned_cats),
         "executed_categories": sorted(executed_cats),
         "tests_per_category": tests_per_cat,
+        "depth_target": depth_target,
     }
 
 
@@ -255,7 +354,6 @@ def _calc_correctness(axis_scores_data: list[dict], results: list) -> float:
     scores = [s.get("score", 0) for s in axis_scores_data]
     if len(scores) >= 2:
         score_stdev = statistics.stdev(scores)
-        # Some variance is good (0.5-1.5 optimal), none or too much is bad
         if score_stdev < 0.1:
             dist_score = 30  # All same = suspicious
         elif score_stdev > 2.5:
@@ -275,11 +373,32 @@ def _calc_correctness(axis_scores_data: list[dict], results: list) -> float:
     grounded_ratio = grounded_axes / len(axis_scores_data) if axis_scores_data else 0
     grounded_score = grounded_ratio * 100
 
+    # Evidence-score alignment: high-scoring axes should have more strengths than risks,
+    # and low-scoring axes should have more risks than strengths.
+    alignment_checks = 0
+    aligned = 0
+    for s in axis_scores_data:
+        score = s.get("score", 0)
+        n_strengths = len(s.get("strengths", []) or [])
+        n_risks = len(s.get("risks", []) or [])
+        if n_strengths == 0 and n_risks == 0:
+            continue
+        alignment_checks += 1
+        if score >= 3.5 and n_strengths >= n_risks:
+            aligned += 1
+        elif score < 3.5 and n_risks >= n_strengths:
+            aligned += 1
+        elif abs(n_strengths - n_risks) <= 1:
+            aligned += 1  # Close enough — borderline scores can go either way
+
+    alignment_score = (aligned / alignment_checks * 100) if alignment_checks > 0 else 70
+
     return round(
-        confidence_score * 0.30
-        + dist_score * 0.20
-        + evidence_score * 0.30
-        + grounded_score * 0.20,
+        confidence_score * 0.25
+        + dist_score * 0.15
+        + evidence_score * 0.25
+        + grounded_score * 0.15
+        + alignment_score * 0.20,
         1,
     )
 
@@ -289,6 +408,19 @@ def _correctness_details(axis_scores_data: list[dict], results: list) -> dict:
     scores = {s.get("axis", "?"): s.get("score", 0) for s in axis_scores_data}
     valid = sum(1 for r in results if not getattr(r, "error", None) and (getattr(r, "response_raw", None) or getattr(r, "screenshot_path", None)))
     grounded = sum(1 for s in axis_scores_data if s.get("strengths") and s.get("risks"))
+
+    # Per-axis alignment
+    alignment = {}
+    for s in axis_scores_data:
+        axis = s.get("axis", "?")
+        n_s = len(s.get("strengths", []) or [])
+        n_r = len(s.get("risks", []) or [])
+        sc = s.get("score", 0)
+        if n_s > 0 or n_r > 0:
+            expected = "strengths >= risks" if sc >= 3.5 else "risks >= strengths"
+            actual = f"strengths={n_s}, risks={n_r}"
+            alignment[axis] = {"score": sc, "expected": expected, "actual": actual}
+
     return {
         "axis_confidences": confidences,
         "axis_scores": scores,
@@ -297,6 +429,7 @@ def _correctness_details(axis_scores_data: list[dict], results: list) -> dict:
         "evidence_ratio": round(valid / len(results), 3) if results else 0,
         "grounded_axes": grounded,
         "total_axes": len(axis_scores_data),
+        "evidence_score_alignment": alignment,
     }
 
 

@@ -271,9 +271,34 @@ async def get_tool_analysis(
             session.id, len(results_rows), len(cases_rows), total_planned, total_executed, len(axis_scores_data), has_explicit_plan,
         )
 
+        # Fetch historical scores for temporal stability
+        _historical = []
+        try:
+            _hist_q = await db.execute(
+                select(AuditSession.reliability_scores)
+                .where(
+                    AuditSession.tool_id == tool.id,
+                    AuditSession.status == "completed",
+                    AuditSession.id != session.id,
+                    AuditSession.reliability_scores.isnot(None),
+                )
+                .order_by(AuditSession.completed_at.desc())
+                .limit(5)
+            )
+            for (_rel_json,) in _hist_q.all():
+                if _rel_json:
+                    try:
+                        _historical.append(json.loads(_rel_json) if isinstance(_rel_json, str) else _rel_json)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
         reliability = calculate_reliability(
             results_rows, cases_rows, axis_scores_data,
             total_planned, total_executed,
+            profile_id=getattr(session, "profile_id", None),
+            historical_scores=_historical,
         )
 
         _reliability_debug["calc_result"] = {k: v for k, v in reliability.items() if k != "details"}
