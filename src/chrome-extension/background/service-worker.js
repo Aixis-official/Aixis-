@@ -726,24 +726,26 @@ async function captureFullScreenshot() {
     },
   };
 
-  // Upload with retry (once) for transient network issues
+  // Upload with retry (3 attempts, exponential backoff) for transient issues
+  // Covers deployment restarts, network blips, and temporary server outages
+  const MAX_RETRIES = 3;
   let result = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       result = await AixisAPI.uploadObservation(state.currentSession.id, obsData);
       // Verify server actually saved the screenshot
       if (result && result.screenshot_saved === false) {
-        console.warn(`Server did NOT save screenshot (attempt ${attempt + 1}). Retrying...`);
-        if (attempt < 1) {
-          await new Promise(r => setTimeout(r, 500));
+        console.warn(`Server did NOT save screenshot (attempt ${attempt + 1}/${MAX_RETRIES}). Retrying...`);
+        if (attempt < MAX_RETRIES - 1) {
+          await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
           continue;
         }
       }
       break;
     } catch (err) {
-      console.error(`Screenshot upload failed (attempt ${attempt + 1}):`, err);
-      if (attempt < 1) {
-        await new Promise(r => setTimeout(r, 1000));
+      console.error(`Screenshot upload failed (attempt ${attempt + 1}/${MAX_RETRIES}):`, err);
+      if (attempt < MAX_RETRIES - 1) {
+        await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
         continue;
       }
       return { error: err.message };
@@ -751,7 +753,7 @@ async function captureFullScreenshot() {
   }
 
   if (!result) {
-    return { error: "スクリーンショットのアップロードに失敗しました（2回リトライ済み）" };
+    return { error: "スクリーンショットのアップロードに失敗しました（3回リトライ済み）" };
   }
 
   state.captureCount++;
