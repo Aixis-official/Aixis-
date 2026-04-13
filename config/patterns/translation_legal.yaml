@@ -1,0 +1,46 @@
+category: translation_legal
+display_name_jp: "翻訳 法規制文書テスト"
+display_name_en: "Translation Regulatory Filing Test"
+description_jp: "英文法規制文書の翻訳における法律用語・条項参照・義務表現の正確な再現を検証する"
+
+templates:
+  - id: "translation-legal-privacy-policy"
+    prompt: |
+      以下の英文プライバシーポリシー抜粋を日本語に翻訳してください。法律用語・条項参照・義務表現の正確さを重視してください。
+
+      【原文】
+      DATA PROCESSING AGREEMENT — Appendix B: Cross-Border Data Transfers
+
+      Pursuant to Article 46(2)(c) of the EU General Data Protection Regulation (GDPR), the parties agree to the following Standard Contractual Clauses (SCCs) for the transfer of personal data to third countries.
+
+      Section 1: Definitions
+      (a) "Data Controller" means the entity that determines the purposes and means of Processing Personal Data.
+      (b) "Data Processor" means the entity that Processes Personal Data on behalf of the Data Controller.
+      (c) "Sub-processor" means any third party engaged by the Data Processor to carry out specific Processing activities.
+
+      Section 2: Obligations of the Data Processor
+      2.1 The Data Processor shall:
+        (i) Process Personal Data only on documented instructions from the Data Controller, including transfers to a third country, unless required by Union or Member State law;
+        (ii) ensure that persons authorized to Process Personal Data have committed themselves to confidentiality or are under an appropriate statutory obligation of confidentiality;
+        (iii) implement appropriate technical and organizational measures as required under Article 32 of the GDPR.
+
+      2.2 Notwithstanding Section 2.1(i), the Data Processor may Process Personal Data where required by applicable law, provided that the Data Processor informs the Data Controller of such legal requirement before Processing, unless the law prohibits such disclosure on grounds of public interest.
+
+      Section 3: Liability and Indemnification
+      Each party's aggregate liability under this Agreement shall not exceed the greater of (a) €500,000 or (b) 200% of the total fees paid in the 12 months preceding the claim. This limitation shall not apply to breaches of Section 2.1(ii) (confidentiality) or claims arising from willful misconduct.
+    expected_behaviors:
+      - "法律用語を正確に訳出する（Data Controller→データ管理者、Data Processor→データ処理者、Sub-processor→復処理者等）"
+      - "条項参照を正確に保持する（Article 46(2)(c)、Section 2.1(i)、Article 32等）"
+      - "義務表現（shall/may/unless）を法的ニュアンスを保って訳出する（shall→しなければならない、may→することができる等）"
+      - "金額・数値を正確に保持する（€500,000、200%、12ヶ月）"
+      - "GDPRやSCCなどの法規制略語を適切に処理する"
+      - "定義条項の(a)(b)(c)/(i)(ii)(iii)の階層構造を正確に再現する"
+    failure_indicators:
+      - "法律用語の訳語が文書内で不統一"
+      - "義務表現の法的強度が変化（shallとmayの混同等）"
+      - "条項参照番号の脱落や誤記"
+      - "免責条項の範囲が原文と異なる解釈になっている"
+
+generation:
+  mode: cartesian
+  max_variants: 1

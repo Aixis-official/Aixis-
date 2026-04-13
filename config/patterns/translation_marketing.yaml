@@ -1,0 +1,48 @@
+category: translation_marketing
+display_name_jp: "翻訳 マーケティングコピーテスト"
+display_name_en: "Translation Marketing Copy Test"
+description_jp: "英文マーケティングコピーの翻訳における訴求力・ブランドトーン・CTA表現の日本市場適応を検証する"
+
+templates:
+  - id: "translation-marketing-saas-launch"
+    prompt: |
+      以下の英文マーケティングコピーを日本語に翻訳してください。訴求力・ブランドトーンの維持・日本市場への文化的適応を重視してください。
+
+      【原文】
+      Introducing Nexora AI — Your Intelligent Workflow Partner
+
+      Tired of drowning in repetitive tasks? Nexora AI automates your busywork so you can focus on what truly matters.
+
+      🚀 What Makes Nexora Different:
+      • Smart Automation: Set up workflows in under 3 minutes — no coding required
+      • Context-Aware AI: Learns your preferences and adapts over 30+ integrations including Slack, Salesforce, and Google Workspace
+      • Enterprise-Grade Security: SOC 2 Type II certified, end-to-end encryption, 99.99% uptime SLA
+
+      💡 Real Results from Real Teams:
+      "We reduced manual data entry by 73% in the first month." — Head of Operations, Rakuten Mobile
+      "Nexora saved our team 12 hours per week. That's 624 hours a year we reinvested in strategic work." — VP of Marketing, Mercari
+
+      🎯 Pricing That Scales With You:
+      Starter: Free for up to 5 users (100 automations/month)
+      Professional: ¥1,980/user/month (unlimited automations, priority support)
+      Enterprise: Custom pricing — includes dedicated CSM, SSO, and audit logs
+
+      📣 Limited-Time Offer: Get 3 months free on annual Professional plans. Use code NEXORA2026 at checkout.
+
+      Ready to transform your workflow? Start your free trial → nexora.ai/start
+    expected_behaviors:
+      - "ブランド名（Nexora AI）を原語保持する"
+      - "顧客引用文を自然な日本語に翻訳しつつ、話者情報（役職・企業名）を正確に保持する"
+      - "数値（73%、12時間、624時間、3分、100回、¥1,980、99.99%）を正確に保持する"
+      - "CTA表現を日本市場に適した訴求力のある表現に翻訳する（Start your free trial→無料トライアルを始める等）"
+      - "プランの階層構造（Starter/Professional/Enterprise）と各プラン内容を正確に訳出する"
+      - "プロモーションコード（NEXORA2026）とURL（nexora.ai/start）を原語保持する"
+    failure_indicators:
+      - "ブランドトーンが過度にフォーマルまたはカジュアルに変化"
+      - "顧客の声の引用における話者属性の欠落"
+      - "CTA（行動喚起）の訴求力が著しく低下"
+      - "価格情報の数値または通貨単位の誤り"
+
+generation:
+  mode: cartesian
+  max_variants: 1

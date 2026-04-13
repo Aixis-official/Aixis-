@@ -1,0 +1,63 @@
+category: translation_manual
+display_name_jp: "翻訳 製品マニュアルテスト"
+display_name_en: "Translation Product Manual Test"
+description_jp: "英文製品マニュアルの翻訳における手順説明・UI用語・警告文の正確な再現を検証する"
+
+templates:
+  - id: "translation-manual-setup-guide"
+    prompt: |
+      以下の英文セットアップガイドを日本語に翻訳してください。手順番号・UI用語・警告文の正確な翻訳を重視してください。
+
+      【原文】
+      CloudGuard Pro — Initial Setup Guide (v3.2)
+
+      ⚠️ WARNING: Do not proceed without administrator privileges. Incorrect configuration may expose your network to unauthorized access.
+
+      Prerequisites:
+      • Windows 11 (22H2+) or macOS 14 Sonoma or later
+      • Minimum 8GB RAM, 2GB free disk space
+      • Active internet connection (port 443 outbound)
+      • Organization Admin API key (obtainable from Settings > API Keys > Generate New)
+
+      Step 1: Install the Agent
+      Download the installer from https://cloudguard.example.com/downloads. Run the .msi (Windows) or .pkg (macOS) file. If prompted by Windows Defender SmartScreen, click "More info" → "Run anyway."
+
+      Step 2: Configure the Connection
+      1. Open CloudGuard Pro from the system tray (Windows) or menu bar (macOS).
+      2. Navigate to Settings → Connection → Server Configuration.
+      3. Enter your Organization ID (format: ORG-XXXX-XXXX) and paste the API key.
+      4. Select the appropriate data region:
+         - Asia Pacific (Tokyo) — recommended for Japan-based organizations
+         - US East (Virginia) — default
+         - EU West (Frankfurt) — required for GDPR-regulated entities
+      5. Click "Test Connection." A green checkmark ✓ indicates success.
+
+      Step 3: Enable Real-time Protection
+      Toggle ON the following features under Security → Real-time Protection:
+      □ File scanning (recommended: "Balanced" mode for <5% CPU overhead)
+      □ Network traffic monitoring
+      □ Email attachment inspection
+      ☑ Automatic threat quarantine (enabled by default)
+
+      NOTE: The "Aggressive" scanning mode provides maximum protection but may increase CPU usage by 15-25%. Not recommended for machines with less than 16GB RAM.
+
+      Troubleshooting:
+      - Error 4001: "Connection refused" → Verify port 443 is not blocked by your firewall
+      - Error 4003: "Invalid API key" → Regenerate the key from Settings > API Keys
+      - Error 5002: "Agent conflict detected" → Uninstall competing security software first
+    expected_behaviors:
+      - "手順番号（Step 1-3、1-5）とチェックボックス記号を保持する"
+      - "UI用語を正確に訳出する（system tray→システムトレイ、menu bar→メニューバー、Toggle ON→有効にする等）"
+      - "警告文（WARNING/NOTE）の重要度を維持する"
+      - "技術数値を正確に保持する（8GB、2GB、443、5%、15-25%、16GB等）"
+      - "エラーコードとメッセージを原語保持する（Error 4001等）"
+      - "メニューパス（Settings → Connection → Server Configuration）の矢印表記を保持する"
+    failure_indicators:
+      - "手順の順番が入れ替わっている"
+      - "UI用語の不統一（同じ用語に異なる訳を使用）"
+      - "警告文の重要度が低下している"
+      - "エラーコードが脱落している"
+
+generation:
+  mode: cartesian
+  max_variants: 1

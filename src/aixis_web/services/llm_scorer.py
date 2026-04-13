@@ -1362,7 +1362,16 @@ class LLMScorer:
         self._is_text_based = has_text_outputs and not has_screenshots
         self._has_mixed_evidence = has_text_outputs and has_screenshots
         if self._is_text_based:
-            logger.info("Session %s: text-based evaluation mode (meeting-minutes)", session_id)
+            logger.info("Session %s: text-based evaluation mode", session_id)
+            # Translation sources are longer (contracts, manuals, legal docs).
+            # Increase per-field budget to capture full translation outputs
+            # while keeping total under ~4500 tokens per axis for cost control.
+            if _resolved_profile is self.AXIS_RELEVANT_CATEGORIES_BY_PROFILE.get("translation"):
+                self._text_chars_per_field = 3000   # 2000 → 3000 (~750 tokens)
+                self._text_chars_per_obs = 8000     # 6000 → 8000 (~2000 tokens)
+                self._text_chars_total = 18000      # 15000 → 18000 (~4500 tokens)
+                logger.info("Session %s: translation text budget (field=%d obs=%d total=%d)",
+                            session_id, self._text_chars_per_field, self._text_chars_per_obs, self._text_chars_total)
         elif self._has_mixed_evidence:
             logger.info(
                 "Session %s: MIXED evaluation mode — %d text obs + %d screenshot obs",
@@ -1899,24 +1908,24 @@ class LLMScorer:
         },
         "translation": {
             "practicality": {
-                "primary": ["translation_accuracy", "translation_context"],
-                "secondary": ["translation_japanese", "ui_evaluation"],
+                "primary": ["translation_accuracy", "translation_manual", "translation_financial"],
+                "secondary": ["translation_context", "translation_marketing", "translation_legal", "ui_evaluation"],
             },
             "cost_performance": {
-                "primary": ["translation_accuracy", "ui_evaluation"],
-                "secondary": ["translation_context"],
+                "primary": ["translation_accuracy", "translation_manual", "ui_evaluation"],
+                "secondary": ["translation_financial", "translation_marketing"],
             },
             "localization": {
-                "primary": ["translation_japanese", "translation_accuracy"],
-                "secondary": ["translation_context", "ui_evaluation"],
+                "primary": ["translation_japanese", "translation_marketing", "translation_accuracy"],
+                "secondary": ["translation_financial", "translation_manual", "translation_legal", "translation_context", "ui_evaluation"],
             },
             "safety": {
-                "primary": ["translation_accuracy", "translation_context"],
-                "secondary": ["translation_japanese"],
+                "primary": ["translation_accuracy", "translation_legal", "translation_financial"],
+                "secondary": ["translation_context", "translation_manual", "translation_marketing"],
             },
             "uniqueness": {
-                "primary": ["translation_context", "ui_evaluation"],
-                "secondary": ["translation_accuracy"],
+                "primary": ["translation_context", "translation_legal", "translation_marketing"],
+                "secondary": ["translation_accuracy", "translation_financial", "translation_manual", "ui_evaluation"],
             },
         },
     }
@@ -1982,9 +1991,14 @@ class LLMScorer:
             f"【重要】このテキストデータこそがAIツールの実際の出力結果です。\n"
         ))
 
+        # Use instance-level overrides if set (e.g. translation gets higher budgets)
+        _chars_per_field = getattr(self, '_text_chars_per_field', self.TEXT_CHARS_PER_FIELD)
+        _chars_per_obs = getattr(self, '_text_chars_per_obs', self.TEXT_CHARS_PER_OBS)
+        _chars_total = getattr(self, '_text_chars_total', self.TEXT_CHARS_TOTAL)
+
         total_chars = 0
         for i, obs in enumerate(observations):
-            if total_chars >= self.TEXT_CHARS_TOTAL:
+            if total_chars >= _chars_total:
                 sections.append(f"\n（トークン予算により以降の検証データは省略）")
                 break
 
@@ -2004,7 +2018,7 @@ class LLMScorer:
             sections.append(f"\n### 検証 {i+1}: {cat}")
             obs_chars = 0
             for to in text_outputs:
-                if obs_chars >= self.TEXT_CHARS_PER_OBS:
+                if obs_chars >= _chars_per_obs:
                     sections.append("\n（この検証の残りの出力項目は省略）")
                     break
 
@@ -2012,8 +2026,8 @@ class LLMScorer:
                 content = to.get("content", "")
                 original_len = len(content)
                 # Per-field truncation
-                if len(content) > self.TEXT_CHARS_PER_FIELD:
-                    content = content[:self.TEXT_CHARS_PER_FIELD] + f"\n... (以下省略、全 {original_len} 文字)"
+                if len(content) > _chars_per_field:
+                    content = content[:_chars_per_field] + f"\n... (以下省略、全 {original_len} 文字)"
                 sections.append(f"\n**【{label}】**\n{content}")
                 obs_chars += len(content)
                 total_chars += len(content)
@@ -2547,7 +2561,7 @@ class LLMScorer:
             "observation_screenshot_note",
             "（この検証の添付画像: {count} 枚）",
         )
-        # Category context mapping for meeting-minutes tests
+        # Category context mapping for test types
         CATEGORY_CONTEXT = {
             "minutes_transcription": "【検証タイプ: 書き起こし正確性テスト（参加者1名の報告録音）】話者は1名のみ。話者識別は評価対象外。数値・固有名詞の正確性が焦点。",
             "minutes_japanese": "【検証タイプ: 日本語品質テスト（参加者2名の対話）】話し言葉→書き言葉変換の品質が焦点。元の発言は意図的にカジュアルな口語体。",
@@ -2555,6 +2569,10 @@ class LLMScorer:
             "translation_accuracy": "【検証タイプ: 翻訳正確性テスト（英文契約書）】法律用語・数値・固有名詞の正確な保持、条項構造の再現が焦点。",
             "translation_japanese": "【検証タイプ: 日本語品質テスト（英文プレスリリース）】翻訳の自然さ、敬語レベル、日本のビジネス慣習への文化的適応が焦点。",
             "translation_context": "【検証タイプ: 文脈理解テスト（技術レポート）】多義語の文脈に応じた訳し分け、専門用語の適切な訳出が焦点。",
+            "translation_financial": "【検証タイプ: 財務報告翻訳テスト（英文決算短信）】財務数値・通貨単位・会計用語（営業利益率、ROE、配当性向等）の正確な訳出が焦点。",
+            "translation_manual": "【検証タイプ: 製品マニュアル翻訳テスト（セットアップガイド）】手順番号・UI用語・警告文・エラーコードの正確な再現が焦点。",
+            "translation_marketing": "【検証タイプ: マーケティングコピー翻訳テスト（SaaS製品LP）】訴求力・ブランドトーンの維持・CTA表現の日本市場適応が焦点。",
+            "translation_legal": "【検証タイプ: 法規制文書翻訳テスト（プライバシーポリシー）】法律用語・条項参照・義務表現（shall/may）の正確な訳出が焦点。",
             "ui_evaluation": "【検証タイプ: UI操作性テスト】ツールのユーザーインターフェースの操作性評価。",
         }
 

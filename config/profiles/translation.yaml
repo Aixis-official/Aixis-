@@ -30,14 +30,20 @@ primary_categories:
   - translation_accuracy
   - translation_japanese
   - translation_context
+  - translation_financial
+  - translation_manual
+  - translation_marketing
+  - translation_legal
 secondary_categories:
   - ui_evaluation
 excluded_categories: []
 
 scoring_weights:
-  japanese_ability: 1.5
-  reliability: 1.5
-  practical: 1.0
+  localization: 1.5
+  safety: 1.5
+  practicality: 1.0
+  cost_performance: 1.0
+  uniqueness: 1.0
 
 evaluation_focus:
   - "原文の意味・数値・固有名詞が訳文で正確に再現されているか"

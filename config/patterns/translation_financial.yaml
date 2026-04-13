@@ -1,0 +1,46 @@
+category: translation_financial
+display_name_jp: "翻訳 財務報告テスト"
+display_name_en: "Translation Financial Report Test"
+description_jp: "英文決算短信の翻訳における財務数値・通貨・会計用語の正確な再現を検証する"
+
+templates:
+  - id: "translation-financial-earnings"
+    prompt: |
+      以下の英文決算短信を日本語に翻訳してください。財務数値・通貨単位・会計用語の正確性を重視してください。
+
+      【原文】
+      CONSOLIDATED FINANCIAL RESULTS FOR THE FISCAL YEAR ENDED MARCH 31, 2026
+
+      NexTech Solutions, Inc. (TSE Prime: 4523)
+
+      1. Consolidated Financial Highlights (IFRS)
+                                FY2025          FY2026        YoY Change
+      Revenue              ¥234.8 billion  ¥267.5 billion    +13.9%
+      Operating profit      ¥28.3 billion   ¥35.7 billion    +26.1%
+      Operating margin          12.0%           13.3%        +1.3pp
+      Net income            ¥19.2 billion   ¥24.8 billion    +29.2%
+      EPS                       ¥156.40         ¥201.90      +29.1%
+      ROE                        11.8%           14.2%        +2.4pp
+
+      Revenue exceeded ¥250 billion for the first time, driven primarily by a 23% increase in our Enterprise SaaS segment (¥142.3 billion, representing 53.2% of total revenue). The Professional Services segment contributed ¥78.6 billion (+8.4%), while Hardware Solutions declined to ¥46.6 billion (-3.1%) reflecting the ongoing industry shift to cloud-based infrastructure.
+
+      2. Dividend Information
+      Annual dividend per share: ¥62.00 (interim: ¥28.00, year-end: ¥34.00), an increase of ¥8.00 from the prior year. Payout ratio: 30.7%.
+
+      3. FY2027 Forecast
+      Revenue: ¥295.0-305.0 billion, Operating profit: ¥39.0-42.0 billion. These projections assume a USD/JPY rate of ¥145 and incorporate the anticipated impact of the EU AI Act compliance requirements on our European operations.
+    expected_behaviors:
+      - "全財務数値を正確に保持する（2,348億円、2,675億円、+13.9%、283億円、357億円、+26.1%等）"
+      - "ppの単位を正しく処理する（+1.3pp→+1.3ポイント等）"
+      - "EPSの金額を正確に訳出する（¥156.40、¥201.90）"
+      - "会計用語を正確に訳出する（Operating margin→営業利益率、ROE→自己資本利益率、Payout ratio→配当性向等）"
+      - "IFRS、TSE、SaaSなどの略語を適切に処理する"
+      - "為替レート前提（USD/JPY ¥145）を正確に記載する"
+    failure_indicators:
+      - "財務数値の桁数や単位の誤り"
+      - "会計用語の不適切な訳出"
+      - "前年比変動率の計算が不一致"
+
+generation:
+  mode: cartesian
+  max_variants: 1

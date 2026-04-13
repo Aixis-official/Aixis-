@@ -154,9 +154,27 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
 
         final[axis] = max(0.0, min(5.0, round(final[axis], 1)))
 
-    # Overall score: always average across all 5 axes (even if some are 0)
-    all_axis_count = len(AXIS_MIX)  # Always 5
-    overall = round(sum(final.get(a, 0.0) for a in AXIS_MIX) / all_axis_count, 1)
+    # Overall score: weighted average across all 5 axes.
+    # Profile-specific scoring_weights (e.g. translation: localization 1.5x, safety 1.5x)
+    # amplify axes most critical for that tool category.
+    scoring_weights = {}
+    try:
+        session_obj_for_profile = await db.execute(
+            select(AuditSession.profile_id).where(AuditSession.id == session_id)
+        )
+        _profile_id = session_obj_for_profile.scalar_one_or_none()
+        if _profile_id:
+            _profile_path = Path(__file__).resolve().parent.parent.parent.parent / "config" / "profiles" / f"{_profile_id}.yaml"
+            if _profile_path.exists():
+                with open(_profile_path) as f:
+                    _profile_data = yaml.safe_load(f)
+                scoring_weights = _profile_data.get("scoring_weights", {})
+    except Exception as e:
+        logger.warning("Failed to load scoring_weights for session %s: %s", session_id, e)
+
+    _weighted_sum = sum(final.get(a, 0.0) * scoring_weights.get(a, 1.0) for a in AXIS_MIX)
+    _total_weight = sum(scoring_weights.get(a, 1.0) for a in AXIS_MIX)
+    overall = round(_weighted_sum / _total_weight, 1) if _total_weight > 0 else 0.0
 
     # Check completion rate — apply grade cap if insufficient
     session_obj_q = await db.execute(select(AuditSession).where(AuditSession.id == session_id))
