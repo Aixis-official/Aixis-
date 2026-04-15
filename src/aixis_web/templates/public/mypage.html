@@ -73,11 +73,53 @@
                 <span class="text-sm font-medium text-gray-900">{{ user.email }}</span>
             </div>
             <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                <span class="text-sm text-gray-500">会社名</span>
+                <span class="text-sm font-medium text-gray-900">{{ user.company_name or '--' }}</span>
+            </div>
+            <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                <span class="text-sm text-gray-500">役職</span>
+                <span class="text-sm font-medium text-gray-900">{{ user.job_title or '--' }}</span>
+            </div>
+            <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                <span class="text-sm text-gray-500">業種</span>
+                <span class="text-sm font-medium text-gray-900">{{ user.industry or '--' }}</span>
+            </div>
+            <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                <span class="text-sm text-gray-500">電話番号</span>
+                <span class="text-sm font-medium text-gray-900">{{ user.phone or '--' }}</span>
+            </div>
+            <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                 <span class="text-sm text-gray-500">登録日</span>
                 <span class="text-sm font-medium text-gray-900">
                     {% if user.created_at %}{{ user.created_at.strftime('%Y年%m月%d日') }}{% else %}--{% endif %}
                 </span>
             </div>
+        </div>
+    </section>
+
+    <!-- Marketing preferences -->
+    <section>
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5a8.25 8.25 0 018.25-8.25.75.75 0 01.75.75v6.75H18a.75.75 0 01.75.75 8.25 8.25 0 01-16.5 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12.75 3a.75.75 0 01.75-.75 8.25 8.25 0 018.25 8.25.75.75 0 01-.75.75h-7.5a.75.75 0 01-.75-.75V3z"/></svg>
+            メール配信設定
+        </h2>
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm font-medium text-gray-900">マーケティングメールの受信</p>
+                    <p class="mt-1 text-xs text-gray-500 leading-relaxed">
+                        業種別おすすめツール・アドバイザリー監査のご紹介・活用事例などをお届けします。<br>
+                        ※ セキュリティ通知やアカウント関連の重要通知は、この設定に関わらず送信されます。
+                    </p>
+                </div>
+                <button type="button" id="marketing-toggle"
+                        data-opted-in="{{ '1' if user.marketing_opt_in else '0' }}"
+                        class="shrink-0 inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors
+                               {% if user.marketing_opt_in %}text-red-600 border border-red-200 hover:bg-red-50{% else %}text-white bg-gray-900 hover:bg-gray-800{% endif %}">
+                    {% if user.marketing_opt_in %}配信停止{% else %}配信を有効化{% endif %}
+                </button>
+            </div>
+            <div id="marketing-msg" class="hidden mt-3 text-xs rounded-lg px-4 py-2.5"></div>
         </div>
     </section>
 
@@ -111,6 +153,75 @@
                     パスワードを変更
                 </button>
             </form>
+        </div>
+    </section>
+
+    <!-- Data Export (APPI Article 28) -->
+    <section>
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+            データのエクスポート
+        </h2>
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+            <div class="flex items-start justify-between gap-4 flex-col sm:flex-row">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900">個人データのダウンロード（JSON形式）</p>
+                    <p class="mt-1 text-xs text-gray-500 leading-relaxed">
+                        Aixisが保有する、あなたの登録情報・閲覧履歴・関心設定・メール配信状況を、<br>
+                        機械可読なJSON形式でダウンロードできます（個人情報保護法第28条に基づく開示請求）。
+                    </p>
+                </div>
+                <button type="button" id="export-btn"
+                        class="shrink-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                    JSONをダウンロード
+                </button>
+            </div>
+            <div id="export-msg" class="hidden mt-3 text-xs rounded-lg px-4 py-2.5"></div>
+        </div>
+    </section>
+
+    <!-- Account Deletion (APPI Article 30) -->
+    <section>
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+            アカウントの削除
+        </h2>
+        <div class="bg-gray-50 border border-red-200 rounded-lg p-6">
+            <p class="text-sm font-medium text-gray-900">アカウントを完全に削除する</p>
+            <p class="mt-1 text-xs text-gray-500 leading-relaxed">
+                削除リクエストを行うと、登録情報・閲覧履歴・メール配信設定を含むすべての個人データが<strong class="text-gray-900">30日以内にバックアップを含めて</strong>完全に消去されます。<br>
+                削除後は、同じメールアドレスで再度ご登録いただけます。
+            </p>
+            <p class="mt-2 text-xs text-red-600">
+                この操作は取り消せません。削除後、現在のアカウントにはアクセスできなくなります。
+            </p>
+
+            <div id="delete-confirm" class="hidden mt-4 pt-4 border-t border-red-200">
+                <label for="delete_password" class="block text-sm font-medium text-gray-700 mb-1">本人確認のため、現在のパスワードを入力してください</label>
+                <input type="password" id="delete_password" autocomplete="current-password" placeholder="パスワード"
+                       class="w-full sm:w-80 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none">
+                <div class="mt-3 flex items-center gap-3">
+                    <button type="button" id="delete-confirm-btn"
+                            class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        削除を確定する
+                    </button>
+                    <button type="button" id="delete-cancel-btn"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+                        キャンセル
+                    </button>
+                </div>
+            </div>
+
+            <div id="delete-msg" class="hidden mt-3 text-xs rounded-lg px-4 py-2.5"></div>
+
+            <div id="delete-init-wrap" class="mt-4">
+                <button type="button" id="delete-init-btn"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                    アカウントを削除する
+                </button>
+            </div>
         </div>
     </section>
 
@@ -152,14 +263,28 @@
 
 {% endblock %}
 
-{% block extra_js %}
+{% block scripts %}
 <script nonce="{{ csp_nonce }}">
 (function() {
+    function getCsrf() {
+        return (typeof getCSRFToken === 'function') ? getCSRFToken() : '';
+    }
+
+    function showStatus(el, text, isError) {
+        el.textContent = text;
+        el.className = 'mt-3 text-xs rounded-lg px-4 py-2.5 ' + (isError
+            ? 'bg-red-50 text-red-700 border border-red-200'
+            : 'bg-green-50 text-green-700 border border-green-200');
+    }
+
+    // -----------------------------------------------------------------
+    // Password change
+    // -----------------------------------------------------------------
     var form = document.getElementById('password-change-form');
     var msgEl = document.getElementById('pw-change-msg');
     var btn = document.getElementById('pw-change-btn');
 
-    function showMsg(text, isError) {
+    function showPwMsg(text, isError) {
         msgEl.textContent = text;
         msgEl.className = 'text-sm rounded-lg px-4 py-2.5 ' + (isError
             ? 'bg-red-50 text-red-700 border border-red-200'
@@ -173,7 +298,7 @@
         var confirm = document.getElementById('new_password_confirm').value;
 
         if (newPw !== confirm) {
-            showMsg('新しいパスワードが一致しません。', true);
+            showPwMsg('新しいパスワードが一致しません。', true);
             return;
         }
 
@@ -181,13 +306,11 @@
         btn.textContent = '変更中...';
 
         try {
-            var csrfToken = (typeof getCSRFToken === 'function') ? getCSRFToken() : '';
-
             var resp = await fetch('/api/v1/auth/change-password', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-Token': csrfToken,
+                    'X-CSRF-Token': getCsrf(),
                 },
                 credentials: 'same-origin',
                 body: JSON.stringify({
@@ -200,18 +323,186 @@
             var data = await resp.json().catch(function() { return {}; });
 
             if (resp.ok) {
-                showMsg('パスワードを変更しました。', false);
+                showPwMsg('パスワードを変更しました。', false);
                 form.reset();
             } else {
-                showMsg(data.detail || 'パスワードの変更に失敗しました。', true);
+                showPwMsg(data.detail || 'パスワードの変更に失敗しました。', true);
             }
         } catch (err) {
-            showMsg('通信エラーが発生しました。', true);
+            showPwMsg('通信エラーが発生しました。', true);
         } finally {
             btn.disabled = false;
             btn.textContent = 'パスワードを変更';
         }
     });
+
+    // -----------------------------------------------------------------
+    // Marketing preferences toggle
+    // -----------------------------------------------------------------
+    var mktBtn = document.getElementById('marketing-toggle');
+    var mktMsg = document.getElementById('marketing-msg');
+
+    if (mktBtn) {
+        mktBtn.addEventListener('click', async function() {
+            var wasOptedIn = mktBtn.getAttribute('data-opted-in') === '1';
+            var desired = !wasOptedIn;
+            mktBtn.disabled = true;
+            mktBtn.textContent = '更新中...';
+            try {
+                var resp = await fetch('/api/v1/auth/update-marketing-pref', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': getCsrf(),
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ marketing_opt_in: desired }),
+                });
+                var data = await resp.json().catch(function() { return {}; });
+                if (resp.ok) {
+                    mktBtn.setAttribute('data-opted-in', desired ? '1' : '0');
+                    mktBtn.textContent = desired ? '配信停止' : '配信を有効化';
+                    mktBtn.className = 'shrink-0 inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ' + (desired
+                        ? 'text-red-600 border border-red-200 hover:bg-red-50'
+                        : 'text-white bg-gray-900 hover:bg-gray-800');
+                    mktMsg.classList.remove('hidden');
+                    showStatus(mktMsg, desired
+                        ? 'マーケティングメールの受信を有効化しました。'
+                        : 'マーケティングメールの配信を停止しました。アカウント関連の重要通知は引き続き送信されます。',
+                        false);
+                } else {
+                    mktBtn.textContent = wasOptedIn ? '配信停止' : '配信を有効化';
+                    mktMsg.classList.remove('hidden');
+                    showStatus(mktMsg, data.detail || '設定の更新に失敗しました。', true);
+                }
+            } catch (err) {
+                mktBtn.textContent = wasOptedIn ? '配信停止' : '配信を有効化';
+                mktMsg.classList.remove('hidden');
+                showStatus(mktMsg, '通信エラーが発生しました。', true);
+            } finally {
+                mktBtn.disabled = false;
+            }
+        });
+    }
+
+    // -----------------------------------------------------------------
+    // Data export (JSON download)
+    // -----------------------------------------------------------------
+    var exportBtn = document.getElementById('export-btn');
+    var exportMsg = document.getElementById('export-msg');
+
+    if (exportBtn) {
+        exportBtn.addEventListener('click', async function() {
+            exportBtn.disabled = true;
+            var original = exportBtn.innerHTML;
+            exportBtn.textContent = '準備中...';
+            try {
+                var resp = await fetch('/api/v1/auth/export-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': getCsrf(),
+                    },
+                    credentials: 'same-origin',
+                });
+                if (!resp.ok) {
+                    var data = await resp.json().catch(function() { return {}; });
+                    exportMsg.classList.remove('hidden');
+                    showStatus(exportMsg, data.detail || 'エクスポートに失敗しました。', true);
+                    return;
+                }
+                var blob = await resp.blob();
+                var url = window.URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                var ts = new Date().toISOString().slice(0, 10);
+                a.download = 'aixis-personal-data-' + ts + '.json';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                exportMsg.classList.remove('hidden');
+                showStatus(exportMsg, 'ダウンロードを開始しました。', false);
+            } catch (err) {
+                exportMsg.classList.remove('hidden');
+                showStatus(exportMsg, '通信エラーが発生しました。', true);
+            } finally {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = original;
+            }
+        });
+    }
+
+    // -----------------------------------------------------------------
+    // Account deletion
+    // -----------------------------------------------------------------
+    var delInitBtn = document.getElementById('delete-init-btn');
+    var delInitWrap = document.getElementById('delete-init-wrap');
+    var delConfirm = document.getElementById('delete-confirm');
+    var delConfirmBtn = document.getElementById('delete-confirm-btn');
+    var delCancelBtn = document.getElementById('delete-cancel-btn');
+    var delPw = document.getElementById('delete_password');
+    var delMsg = document.getElementById('delete-msg');
+
+    if (delInitBtn) {
+        delInitBtn.addEventListener('click', function() {
+            delInitWrap.classList.add('hidden');
+            delConfirm.classList.remove('hidden');
+            delMsg.classList.add('hidden');
+            delPw.focus();
+        });
+    }
+
+    if (delCancelBtn) {
+        delCancelBtn.addEventListener('click', function() {
+            delConfirm.classList.add('hidden');
+            delInitWrap.classList.remove('hidden');
+            delPw.value = '';
+            delMsg.classList.add('hidden');
+        });
+    }
+
+    if (delConfirmBtn) {
+        delConfirmBtn.addEventListener('click', async function() {
+            var password = delPw.value;
+            if (!password) {
+                delMsg.classList.remove('hidden');
+                showStatus(delMsg, 'パスワードを入力してください。', true);
+                return;
+            }
+            delConfirmBtn.disabled = true;
+            delConfirmBtn.textContent = '削除中...';
+            try {
+                var resp = await fetch('/api/v1/auth/delete-account', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': getCsrf(),
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ password: password }),
+                });
+                var data = await resp.json().catch(function() { return {}; });
+                if (resp.ok) {
+                    delMsg.classList.remove('hidden');
+                    showStatus(delMsg, 'アカウントを削除しました。まもなくログアウトします。', false);
+                    setTimeout(function() {
+                        window.location.href = '/';
+                    }, 1800);
+                } else {
+                    delMsg.classList.remove('hidden');
+                    showStatus(delMsg, data.detail || 'アカウントの削除に失敗しました。', true);
+                    delConfirmBtn.disabled = false;
+                    delConfirmBtn.textContent = '削除を確定する';
+                }
+            } catch (err) {
+                delMsg.classList.remove('hidden');
+                showStatus(delMsg, '通信エラーが発生しました。', true);
+                delConfirmBtn.disabled = false;
+                delConfirmBtn.textContent = '削除を確定する';
+            }
+        });
+    }
 })();
 </script>
 {% endblock %}

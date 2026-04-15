@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block meta_robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block page_title_tag %}<title>配信停止 - Aixis</title>{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-4rem)] bg-white flex items-center justify-center px-4 py-16">
+  <div class="w-full max-w-lg">
+
+    {% if token_ok %}
+    <div id="unsub-initial" class="bg-white border border-gray-200 p-8 sm:p-10 text-center">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
+            <svg class="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 9v.906a2.25 2.25 0 01-1.183 1.981l-6.478 3.488M2.25 9v.906a2.25 2.25 0 001.183 1.981l6.478 3.488m8.839 2.51l-4.66-2.51m0 0l-1.023-.55a2.25 2.25 0 00-2.134 0l-1.022.55m0 0l-4.661 2.51m16.5 1.615a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V8.844a2.25 2.25 0 011.183-1.981l7.5-4.039a2.25 2.25 0 012.134 0l7.5 4.039a2.25 2.25 0 011.183 1.98V19.5z"/>
+            </svg>
+        </div>
+        <h1 class="text-xl font-semibold text-gray-900 mb-2">マーケティングメールの配信停止</h1>
+        <p class="text-sm text-gray-500 leading-relaxed mb-8">
+            下のボタンをクリックすると、業種別おすすめツール・アドバイザリー監査のご紹介・活用事例などのマーケティングメールの配信を停止します。<br>
+            <span class="text-xs text-gray-400 block mt-2">※ セキュリティ通知やアカウント関連の重要通知は引き続き送信されます。</span>
+        </p>
+        <button type="button" id="unsub-btn"
+                class="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            配信を停止する
+        </button>
+        <div id="unsub-error" class="hidden mt-4 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5"></div>
+    </div>
+
+    <div id="unsub-success" class="hidden bg-white border border-gray-200 p-8 sm:p-10 text-center">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-4">
+            <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+            </svg>
+        </div>
+        <h1 class="text-xl font-semibold text-gray-900 mb-2">配信停止を受け付けました</h1>
+        <p class="text-sm text-gray-500 leading-relaxed mb-6">
+            マーケティングメールの配信を停止しました。<br>
+            これまでご利用いただきありがとうございました。
+        </p>
+        <p class="text-xs text-gray-400 mb-6">
+            設定はマイページからいつでも再度有効化できます。
+        </p>
+        <a href="/" class="inline-flex items-center text-xs text-gray-600 hover:text-gray-900 underline">
+            Aixisトップへ戻る
+        </a>
+    </div>
+    {% else %}
+    <div class="bg-white border border-gray-200 p-8 sm:p-10 text-center">
+        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mb-4">
+            <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+            </svg>
+        </div>
+        <h1 class="text-xl font-semibold text-gray-900 mb-2">リンクが無効です</h1>
+        <p class="text-sm text-gray-500 leading-relaxed mb-6">
+            配信停止リンクが不正か、リンクが途中で切れている可能性があります。<br>
+            マイページから手動で配信停止を行うこともできます。
+        </p>
+        <a href="/mypage" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors">
+            マイページを開く
+        </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if token_ok %}
+<script nonce="{{ csp_nonce }}">
+(function() {
+    var btn = document.getElementById('unsub-btn');
+    var errEl = document.getElementById('unsub-error');
+    var initial = document.getElementById('unsub-initial');
+    var success = document.getElementById('unsub-success');
+    var token = {{ token | tojson }};
+
+    btn.addEventListener('click', async function() {
+        btn.disabled = true;
+        btn.textContent = '処理中...';
+        errEl.classList.add('hidden');
+        try {
+            var resp = await fetch('/api/v1/auth/unsubscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: token }),
+            });
+            if (resp.ok) {
+                initial.classList.add('hidden');
+                success.classList.remove('hidden');
+            } else {
+                var data = await resp.json().catch(function() { return {}; });
+                errEl.textContent = data.detail || '配信停止に失敗しました。';
+                errEl.classList.remove('hidden');
+                btn.disabled = false;
+                btn.textContent = '配信を停止する';
+            }
+        } catch (err) {
+            errEl.textContent = '通信エラーが発生しました。';
+            errEl.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = '配信を停止する';
+        }
+    });
+})();
+</script>
+{% endif %}
+{{ super() }}
+{% endblock %}

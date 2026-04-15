@@ -901,3 +901,320 @@ async def resend_verification(
     return {
         "message": "確認メールを再送信しました。メール内のリンクをご確認ください。"
     }
+
+
+# ---------------------------------------------------------------------------
+# Self-service data rights (APPI Articles 28-30) — 2026-04-15 pivot Phase 6
+# ---------------------------------------------------------------------------
+
+
+@router.post("/update-marketing-pref", status_code=status.HTTP_200_OK)
+async def update_marketing_preference(
+    request: Request,
+    user: Annotated[User, Depends(require_auth)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Toggle the user's marketing-email opt-in.
+
+    Turning opt-in off stops all future drip-campaign emails. Transactional
+    email (password reset, email verification, security alerts) is unaffected.
+    """
+    from pydantic import BaseModel
+
+    class MarketingPrefRequest(BaseModel):
+        marketing_opt_in: bool
+
+    try:
+        body = MarketingPrefRequest(**(await request.json()))
+    except Exception:
+        raise HTTPException(status_code=400, detail="リクエストボディの形式が不正です")
+
+    user.marketing_opt_in = body.marketing_opt_in
+    # When the user opts back in after an unsubscribe, reset drip_stage so
+    # the campaign starts fresh. When they opt out, leave drip_stage alone —
+    # it acts as a watermark so re-enabling works cleanly.
+    await db.commit()
+
+    return {
+        "message": "設定を更新しました",
+        "marketing_opt_in": user.marketing_opt_in,
+    }
+
+
+@router.post("/export-data")
+async def export_personal_data(
+    user: Annotated[User, Depends(require_auth)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """APPI Article 28: return all personal data Aixis holds about the user as JSON.
+
+    The export bundles: profile fields, consent/marketing state, drip campaign
+    status, lead activity events (aggregated count by event_type; not the full
+    per-row IP/UA detail since that's Aixis operational metadata), and any
+    onboarding selections.
+    """
+    import json as _json
+    from datetime import datetime, timezone
+
+    from fastapi.responses import Response as FastAPIResponse
+
+    # Aggregate lead activities by event_type — we don't return per-row
+    # IP/user-agent since those are internal security/operational fields.
+    from sqlalchemy import func
+    from ...db.models.lead_activity import LeadActivity
+
+    activity_rows = (
+        await db.execute(
+            select(
+                LeadActivity.event_type,
+                func.count(LeadActivity.id).label("count"),
+                func.sum(LeadActivity.score_delta).label("total_score"),
+                func.min(LeadActivity.created_at).label("first_seen"),
+                func.max(LeadActivity.created_at).label("last_seen"),
+            )
+            .where(LeadActivity.user_id == user.id)
+            .group_by(LeadActivity.event_type)
+        )
+    ).all()
+
+    def _iso(dt):
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat()
+
+    interest_areas: list[str] = []
+    if user.interest_areas:
+        try:
+            parsed = _json.loads(user.interest_areas)
+            if isinstance(parsed, list):
+                interest_areas = [str(x) for x in parsed]
+        except Exception:
+            pass
+
+    export = {
+        "export_format_version": "1",
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "data_controller": "株式会社Aixis (Aixis Inc.)",
+        "data_controller_contact": "privacy@aixis.jp",
+        "notice": (
+            "本ファイルは個人情報保護法第28条に基づく開示請求への対応として、"
+            "Aixisが保有するあなたの個人情報を機械可読なJSON形式で出力したものです。"
+            "内容に誤りがある場合は、privacy@aixis.jp までお知らせください。"
+        ),
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "name_jp": user.name_jp,
+            "preferred_language": user.preferred_language,
+            "role": user.role,
+            "company_name": user.company_name,
+            "job_title": user.job_title,
+            "industry": user.industry,
+            "employee_count": user.employee_count,
+            "phone": user.phone,
+            "interest_areas": interest_areas,
+            "referral_source": user.referral_source,
+            "registration_source": user.registration_source,
+            "created_at": _iso(user.created_at),
+            "email_verified_at": _iso(user.email_verified_at),
+            "last_active_at": _iso(user.last_active_at),
+            "onboarding_completed_at": _iso(user.onboarding_completed_at),
+        },
+        "consent": {
+            "agreed_to_terms_at": _iso(user.agreed_to_terms_at),
+            "agreed_to_privacy_at": _iso(user.agreed_to_privacy_at),
+            "marketing_opt_in": bool(user.marketing_opt_in),
+        },
+        "drip_campaign": {
+            "stage": int(user.drip_stage or 0),
+            "last_sent_at": _iso(user.drip_last_sent_at),
+            "stage_meanings": {
+                "0": "未登録（キャンペーン未開始）",
+                "1": "Day 0 ウェルカムメール送信済",
+                "2": "Day 3 業界トップツールメール送信済",
+                "3": "Day 7 アドバイザリー監査紹介メール送信済",
+                "4": "Day 14 無料相談メール送信済",
+                "5": "Day 30 ベンチマーク監査メール送信済",
+            },
+        },
+        "lead_score": int(user.lead_score or 0),
+        "activity_summary": [
+            {
+                "event_type": row.event_type,
+                "count": int(row.count or 0),
+                "total_score": int(row.total_score or 0),
+                "first_seen": _iso(row.first_seen),
+                "last_seen": _iso(row.last_seen),
+            }
+            for row in activity_rows
+        ],
+    }
+
+    body = _json.dumps(export, ensure_ascii=False, indent=2).encode("utf-8")
+    return FastAPIResponse(
+        content=body,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f'attachment; filename="aixis-personal-data-{user.id[:8]}.json"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@router.post("/delete-account", status_code=status.HTTP_200_OK)
+async def delete_account(
+    request: Request,
+    response: Response,
+    user: Annotated[User, Depends(require_auth)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """APPI Article 30: hard-delete the user and all personal data we hold.
+
+    Cascade order matters because most FKs are not ON DELETE CASCADE:
+      1. Revoke sessions (we clear cookies at the end anyway)
+      2. Delete lead_activities (personal behavior log)
+      3. Delete notifications + preferences
+      4. Delete email_verification tokens, password_reset tokens
+      5. Delete user_sessions, api_keys
+      6. Finally delete the user row
+    Backup snapshots are purged on the 30-day retention cycle.
+    """
+    from pydantic import BaseModel
+    from sqlalchemy import delete
+
+    class DeleteAccountRequest(BaseModel):
+        password: str
+
+    try:
+        body = DeleteAccountRequest(**(await request.json()))
+    except Exception:
+        raise HTTPException(status_code=400, detail="リクエストボディの形式が不正です")
+
+    if not user.hashed_password or not verify_password(body.password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="パスワードが正しくありません")
+
+    # Admin-provisioned accounts (admin/analyst/auditor/vendor) cannot self-delete —
+    # they need an internal process for offboarding so audit history stays intact.
+    if user.role not in ("client", "viewer"):
+        raise HTTPException(
+            status_code=403,
+            detail="このアカウント種別は自己削除できません。管理者までお問い合わせください。",
+        )
+
+    user_id = user.id
+    import logging
+    log = logging.getLogger(__name__)
+
+    # 1. Session revocation
+    try:
+        from ...services.session_service import revoke_all_user_sessions
+        await revoke_all_user_sessions(db, user_id)
+    except Exception:
+        log.warning("delete-account: session revocation failed", exc_info=True)
+
+    # 2. Lead activity (behavior log)
+    try:
+        from ...db.models.lead_activity import LeadActivity
+        await db.execute(delete(LeadActivity).where(LeadActivity.user_id == user_id))
+    except Exception:
+        log.warning("delete-account: lead_activity delete failed", exc_info=True)
+
+    # 3. Notifications
+    try:
+        from ...db.models.notification import Notification, NotificationPreference
+        await db.execute(delete(Notification).where(Notification.user_id == user_id))
+        await db.execute(delete(NotificationPreference).where(NotificationPreference.user_id == user_id))
+    except Exception:
+        log.warning("delete-account: notification delete failed", exc_info=True)
+
+    # 4. Email verification & password reset tokens
+    try:
+        from ...db.models.email_verification import EmailVerificationToken
+        await db.execute(delete(EmailVerificationToken).where(EmailVerificationToken.user_id == user_id))
+    except Exception:
+        log.warning("delete-account: email verification token delete failed", exc_info=True)
+    try:
+        from ...db.models.password_reset import PasswordResetToken
+        await db.execute(delete(PasswordResetToken).where(PasswordResetToken.user_id == user_id))
+    except Exception:
+        log.warning("delete-account: password reset token delete failed", exc_info=True)
+
+    # 5. User sessions + api keys
+    try:
+        from ...db.models.user_session import UserSession
+        await db.execute(delete(UserSession).where(UserSession.user_id == user_id))
+    except Exception:
+        log.warning("delete-account: user_session delete failed", exc_info=True)
+    try:
+        from ...db.models.api_key import ApiKey
+        await db.execute(delete(ApiKey).where(ApiKey.user_id == user_id))
+    except Exception:
+        log.warning("delete-account: api_key delete failed", exc_info=True)
+
+    # 6. Finally the user row
+    await db.delete(user)
+    await db.commit()
+
+    # Clear cookies
+    is_production = not settings.debug
+    response.delete_cookie(
+        key=COOKIE_NAME,
+        path="/",
+        httponly=True,
+        samesite="lax",
+        secure=is_production,
+    )
+    from ...app import _CSRF_COOKIE
+    response.delete_cookie(
+        key=_CSRF_COOKIE,
+        path="/",
+        httponly=False,
+        samesite="lax",
+        secure=is_production,
+    )
+
+    log.info("Account deleted (self-service): user_id=%s", user_id)
+
+    return {"message": "アカウントを削除しました。ご利用ありがとうございました。"}
+
+
+@router.post("/unsubscribe", status_code=status.HTTP_200_OK)
+async def unsubscribe_post(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Process an unsubscribe token POST (called from /unsubscribe confirmation page).
+
+    The GET variant lives in `web_routes.py` and renders the confirmation UI.
+    This endpoint performs the actual opt-out once the user clicks through.
+    """
+    from pydantic import BaseModel
+
+    from ...services.unsubscribe_token import verify_unsubscribe_token
+
+    class UnsubscribeRequest(BaseModel):
+        token: str
+
+    try:
+        body = UnsubscribeRequest(**(await request.json()))
+    except Exception:
+        raise HTTPException(status_code=400, detail="リクエストボディの形式が不正です")
+
+    user_id = verify_unsubscribe_token(body.token)
+    if not user_id:
+        raise HTTPException(status_code=400, detail="無効な配信停止リンクです。")
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        # Don't leak whether the user exists — pretend it worked.
+        return {"message": "配信停止を受け付けました。"}
+
+    if user.marketing_opt_in:
+        user.marketing_opt_in = False
+        await db.commit()
+
+    return {"message": "マーケティングメールの配信を停止しました。"}

@@ -673,19 +673,25 @@ https://platform.aixis.jp/dashboard/leads
 # mypage — when we add an opt-out endpoint in Phase 6 it will link here.
 
 
-def _drip_footer_text() -> str:
+def _drip_footer_text(unsubscribe_url: str | None = None) -> str:
+    unsub = unsubscribe_url or "https://platform.aixis.jp/mypage"
     return (
         "\n\n--\n"
         "Aixis | 独立系AI調査・監査機関\n"
-        "配信停止・設定変更: https://platform.aixis.jp/mypage"
+        f"ワンクリック配信停止: {unsub}\n"
+        "その他の設定変更: https://platform.aixis.jp/mypage"
     )
 
 
-def _drip_footer_html() -> str:
+def _drip_footer_html(unsubscribe_url: str | None = None) -> str:
+    unsub = unsubscribe_url or "https://platform.aixis.jp/mypage"
     return (
         '<p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #e5e7eb;'
         'font-size:11px;color:#94a3b8;line-height:1.6;">'
-        '配信停止や設定変更は '
+        'このメールの配信を停止するには '
+        f'<a href="{unsub}" style="color:#94a3b8;text-decoration:underline;">'
+        'こちら（ワンクリック）</a>。'
+        'その他の設定変更は '
         '<a href="https://platform.aixis.jp/mypage" style="color:#94a3b8;">'
         'マイページ</a> からお手続きいただけます。</p>'
     )
@@ -696,6 +702,7 @@ def send_drip_industry_top5(
     user_email: str,
     industry_label_jp: str | None,
     top_tools: list[dict] | None = None,
+    unsubscribe_url: str | None = None,
 ) -> None:
     """Day 3: industry-specific top-tools digest.
 
@@ -742,7 +749,7 @@ Aixisへのご登録ありがとうございます。
 各ツールの詳細ページでは、実務適性・費用対効果・ローカライゼーション・安全性・革新性の5軸評価と、リスクガバナンス情報をご確認いただけます。
 
 業務要件に合わせた個別評価をご希望の方は、アドバイザリー監査もご検討ください:
-https://aixis.jp/contact?subject=advisory{_drip_footer_text()}"""
+https://aixis.jp/contact?subject=advisory{_drip_footer_text(unsubscribe_url)}"""
 
     html_content = f"""
 <h2 style="font-size:18px;margin:0 0 16px;color:#0f172a;">{scope}で注目のAIツール</h2>
@@ -761,14 +768,18 @@ https://aixis.jp/contact?subject=advisory{_drip_footer_text()}"""
   <a href="https://aixis.jp/contact?subject=advisory" style="color:#0ea5e9;">
   業務要件に合わせた個別評価はアドバイザリー監査へ →</a>
 </p>
-{_drip_footer_html()}
+{_drip_footer_html(unsubscribe_url)}
 """
 
     send_email(user_email, subject, body_text, _wrap_html(html_content))
     logger.info("Drip day-3 (industry top 5) sent to %s", user_email)
 
 
-def send_drip_advisory_intro(user_name: str, user_email: str) -> None:
+def send_drip_advisory_intro(
+    user_name: str,
+    user_email: str,
+    unsubscribe_url: str | None = None,
+) -> None:
     """Day 7: introduce the advisory-audit service in more depth."""
     subject = "[Aixis] アドバイザリー監査 — 貴社固有の判断のために"
 
@@ -796,7 +807,7 @@ Aixisは特定のAIベンダーと資本・業務提携関係を持たない独�
 評価結果は中立性を担保したうえでご報告いたします。
 
 お問い合わせ:
-https://aixis.jp/contact?subject=advisory{_drip_footer_text()}"""
+https://aixis.jp/contact?subject=advisory{_drip_footer_text(unsubscribe_url)}"""
 
     html_content = f"""
 <h2 style="font-size:18px;margin:0 0 16px;color:#0f172a;">貴社固有の判断のために</h2>
@@ -832,14 +843,18 @@ Aixisは特定のAIベンダーと資本・業務提携関係を持たない独�
     アドバイザリー監査のご相談 →
   </a>
 </p>
-{_drip_footer_html()}
+{_drip_footer_html(unsubscribe_url)}
 """
 
     send_email(user_email, subject, body_text, _wrap_html(html_content))
     logger.info("Drip day-7 (advisory intro) sent to %s", user_email)
 
 
-def send_drip_free_consult(user_name: str, user_email: str) -> None:
+def send_drip_free_consult(
+    user_name: str,
+    user_email: str,
+    unsubscribe_url: str | None = None,
+) -> None:
     """Day 14: offer a free 30-minute consultation."""
     subject = "[Aixis] 30分無料相談 — AI導入の優先順位を整理しませんか"
 
@@ -862,7 +877,7 @@ Aixisのご登録から2週間が経過しました。AIツールの比較はお
 ご希望の日時でご予約いただけます。
 
 お申し込み:
-https://aixis.jp/contact?subject=advisory{_drip_footer_text()}"""
+https://aixis.jp/contact?subject=advisory{_drip_footer_text(unsubscribe_url)}"""
 
     html_content = f"""
 <h2 style="font-size:18px;margin:0 0 16px;color:#0f172a;">30分無料相談のご案内</h2>
@@ -892,14 +907,18 @@ Aixisのご登録から2週間が経過しました。AIツールの比較はお
     無料相談を予約する →
   </a>
 </p>
-{_drip_footer_html()}
+{_drip_footer_html(unsubscribe_url)}
 """
 
     send_email(user_email, subject, body_text, _wrap_html(html_content))
     logger.info("Drip day-14 (free consult) sent to %s", user_email)
 
 
-def send_drip_benchmark_pitch(user_name: str, user_email: str) -> None:
+def send_drip_benchmark_pitch(
+    user_name: str,
+    user_email: str,
+    unsubscribe_url: str | None = None,
+) -> None:
     """Day 30: benchmark-audit case-study pitch."""
     subject = "[Aixis] ベンチマーク監査 — 社内選定の納得感を定量化する"
 
@@ -929,7 +948,7 @@ Aixisの「ベンチマーク監査（¥98,000 / 3〜5ツール）」は、こ�
 2週間程度で納品いたします。
 
 お問い合わせ:
-https://aixis.jp/contact?subject=advisory{_drip_footer_text()}"""
+https://aixis.jp/contact?subject=advisory{_drip_footer_text(unsubscribe_url)}"""
 
     html_content = f"""
 <h2 style="font-size:18px;margin:0 0 16px;color:#0f172a;">社内選定の納得感を定量化する</h2>
@@ -966,7 +985,7 @@ Aixisの<strong>ベンチマーク監査（¥98,000 / 3〜5ツール）</strong>
     ベンチマーク監査のご相談 →
   </a>
 </p>
-{_drip_footer_html()}
+{_drip_footer_html(unsubscribe_url)}
 """
 
     send_email(user_email, subject, body_text, _wrap_html(html_content))

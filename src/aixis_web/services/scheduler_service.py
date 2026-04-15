@@ -138,6 +138,7 @@ def _check_due_drip_emails():
         send_drip_free_consult,
         send_drip_benchmark_pitch,
     )
+    from .unsubscribe_token import build_unsubscribe_url
 
     sync_url = settings.database_url.replace(
         "sqlite+aiosqlite", "sqlite"
@@ -177,12 +178,14 @@ def _check_due_drip_emails():
 
             for row in rows:
                 user_id, email, name, industry = row
+                unsubscribe_url = build_unsubscribe_url(user_id)
                 # Stage dispatch may run a read query (day-3 top-5 lookup),
                 # so give it its own short-lived tx.
                 try:
                     with engine.begin() as lookup_conn:
                         _send_drip_for_stage(
                             next_stage, name or "", email, industry,
+                            unsubscribe_url=unsubscribe_url,
                             send_drip_industry_top5=send_drip_industry_top5,
                             send_drip_advisory_intro=send_drip_advisory_intro,
                             send_drip_free_consult=send_drip_free_consult,
@@ -232,6 +235,7 @@ def _send_drip_for_stage(
     user_email: str,
     industry_slug: str | None,
     *,
+    unsubscribe_url: str | None = None,
     send_drip_industry_top5,
     send_drip_advisory_intro,
     send_drip_free_consult,
@@ -311,13 +315,16 @@ def _send_drip_for_stage(
                         ]
                 except Exception:
                     logger.warning("Drip day-3 fallback lookup also failed", exc_info=True)
-        send_drip_industry_top5(user_name, user_email, industry_label, top_tools)
+        send_drip_industry_top5(
+            user_name, user_email, industry_label, top_tools,
+            unsubscribe_url=unsubscribe_url,
+        )
     elif stage == 3:
-        send_drip_advisory_intro(user_name, user_email)
+        send_drip_advisory_intro(user_name, user_email, unsubscribe_url=unsubscribe_url)
     elif stage == 4:
-        send_drip_free_consult(user_name, user_email)
+        send_drip_free_consult(user_name, user_email, unsubscribe_url=unsubscribe_url)
     elif stage == 5:
-        send_drip_benchmark_pitch(user_name, user_email)
+        send_drip_benchmark_pitch(user_name, user_email, unsubscribe_url=unsubscribe_url)
     else:
         raise ValueError(f"Unknown drip stage: {stage}")
 

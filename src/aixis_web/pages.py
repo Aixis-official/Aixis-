@@ -266,6 +266,68 @@ async def categories_index(request: Request, user: _OptionalUser = None):
     return _render("public/categories.html", ctx)
 
 
+@page_router.get("/tools/{slug}/report.pdf")
+async def tool_report_pdf(
+    request: Request,
+    slug: str,
+    user: _OptionalUser = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Per-tool audit report PDF download (registered users only).
+
+    Returns a WeasyPrint-rendered PDF bundling the same public data as the
+    tool detail page (5-axis scores, summary, risk-governance) plus a
+    standardized Aixis cover / footer. Non-registered visitors get
+    redirected to /register with a `next` back-pointer so they can come
+    back to the PDF after signup.
+    """
+    from fastapi.responses import Response as FastAPIResponse
+
+    from .services.tool_report_service import generate_tool_report_pdf
+
+    if not user:
+        return RedirectResponse(
+            url=f"/register?next=/tools/{slug}/report.pdf",
+            status_code=302,
+        )
+    if not user.is_active:
+        return RedirectResponse(url="/mypage", status_code=302)
+
+    # Track as a lead-scoring event — PDF download is a strong signal.
+    try:
+        from .services.lead_service import EVENT_PDF_DOWNLOAD, track_activity
+
+        await track_activity(
+            db,
+            event_type=EVENT_PDF_DOWNLOAD,
+            user_id=user.id,
+            session_id=getattr(request.state, "session_id", None),
+            tool_slug=slug,
+            page_path=request.url.path,
+            ip=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+        )
+        await db.commit()
+    except Exception:
+        _page_logger.exception("track_activity(pdf_download) failed")
+        await db.rollback()
+
+    result = await generate_tool_report_pdf(db, slug)
+    if result is None:
+        return RedirectResponse(url=f"/tools/{slug}", status_code=302)
+
+    pdf_bytes, filename = result
+    return FastAPIResponse(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
 @page_router.get("/tools/{slug}")
 async def tool_detail_page(request: Request, slug: str, user: _OptionalUser = None, db: AsyncSession = Depends(get_db)):
     """Tool detail page with full SSR for SEO (Googlebot sees real content)."""
@@ -1140,6 +1202,32 @@ async def mypage(
         return RedirectResponse(url="/login", status_code=302)
     ctx = _get_template_context(request, user=user, title="マイページ", active_page="mypage")
     return _render("public/mypage.html", ctx)
+
+
+@page_router.get("/unsubscribe")
+async def unsubscribe_page(
+    request: Request,
+    t: str | None = None,
+):
+    """One-click unsubscribe confirmation page.
+
+    The drip-campaign emails embed `?t=<hmac-token>` in their unsubscribe
+    link. Landing here verifies the token's signature (without DB lookup)
+    and shows a one-button confirmation UI. The button POSTs to
+    /api/v1/auth/unsubscribe to actually flip marketing_opt_in=False.
+    """
+    from .services.unsubscribe_token import verify_unsubscribe_token
+
+    token_ok = bool(t) and verify_unsubscribe_token(t) is not None
+    ctx = _get_template_context(
+        request,
+        user=None,
+        title="配信停止",
+        active_page="unsubscribe",
+    )
+    ctx["token"] = t or ""
+    ctx["token_ok"] = token_ok
+    return _render("public/unsubscribe.html", ctx)
 
 
 # ──────────── Scheduled Re-audits ────────────

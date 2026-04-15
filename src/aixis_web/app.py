@@ -92,6 +92,7 @@ _CSRF_EXEMPT_PREFIXES = (
     "/api/v1/auth/resend-verification",   # re-send verification email (no session yet)
     "/api/v1/auth/forgot-password",
     "/api/v1/auth/reset-password",
+    "/api/v1/auth/unsubscribe",           # one-click unsubscribe from email link (HMAC-signed token)
     "/api/v1/clients/invite/",  # Public invite completion (no session to hijack)
     "/api/v1/extension/",  # Chrome extension uses API key auth, no CSRF needed
     # Note: logout requires CSRF token (state-changing operation)
