@@ -931,6 +931,154 @@ class LLMScorer:
             logger.warning("Tool research failed for %s: %s", tool_id, e)
             return ""
 
+    async def _fetch_risk_governance(self, tool_id: str, db: AsyncSession) -> str:
+        """Fetch the latest ToolRiskGovernance record and format it as safety-axis evidence.
+
+        Returns a pre-formatted Japanese markdown block intended to be injected into
+        the safety axis prompt as AUTHORITATIVE evidence (not background context).
+        Returns an empty string if no governance record exists for the tool.
+        """
+        try:
+            result = await db.execute(
+                text(
+                    """
+                    SELECT risk_level, risk_level_rationale_jp,
+                           data_transparency_score, data_retention_policy,
+                           data_deletion_available, training_data_optout,
+                           data_residency_japan, data_handling_notes_jp,
+                           ai_business_guideline_status, ai_business_guideline_notes_jp,
+                           appi_status, appi_notes_jp,
+                           gdpr_status, gdpr_notes_jp,
+                           industry_compliance, certifications,
+                           governance_score, governance_grade, governance_summary_jp
+                    FROM tool_risk_governance
+                    WHERE tool_id = :tid
+                    ORDER BY version DESC
+                    LIMIT 1
+                    """
+                ),
+                {"tid": tool_id},
+            )
+            row = result.fetchone()
+        except Exception as e:
+            logger.warning("Risk/governance fetch failed for tool %s: %s", tool_id, e)
+            try:
+                await db.rollback()
+            except Exception:
+                pass
+            return ""
+
+        if not row:
+            return ""
+
+        (
+            risk_level, risk_rationale,
+            transparency_score, retention_policy,
+            deletion_available, training_optout,
+            residency_japan, handling_notes,
+            aibg_status, aibg_notes,
+            appi_status, appi_notes,
+            gdpr_status, gdpr_notes,
+            industry_compliance, certifications,
+            gov_score, gov_grade, gov_summary,
+        ) = row
+
+        def _fmt_status(label: str, status: str | None, notes: str | None) -> str | None:
+            if not status:
+                return None
+            line = f"- **{label}**: {status}"
+            if notes:
+                # Keep the note concise — cap at 400 chars to avoid prompt bloat
+                snippet = str(notes).strip().replace("\n", " ")[:400]
+                line += f" — {snippet}"
+            return line
+
+        def _fmt_bool(label: str, value) -> str | None:
+            if value is None:
+                return None
+            return f"- **{label}**: {'はい' if value else 'いいえ'}"
+
+        lines: list[str] = []
+
+        if risk_level:
+            line = f"- **リスク総合レベル**: {risk_level}"
+            if risk_rationale:
+                line += f" — {str(risk_rationale).strip().replace(chr(10), ' ')[:400]}"
+            lines.append(line)
+
+        if gov_grade or gov_score is not None:
+            parts = []
+            if gov_grade:
+                parts.append(f"グレード {gov_grade}")
+            if gov_score is not None:
+                parts.append(f"スコア {float(gov_score):.2f}/5.0")
+            lines.append(f"- **ガバナンス総合評価**: {' / '.join(parts)}")
+
+        if transparency_score is not None:
+            lines.append(f"- **データ取扱い透明性スコア**: {float(transparency_score):.2f}/5.0")
+
+        if retention_policy:
+            lines.append(f"- **データ保持ポリシー**: {retention_policy}")
+
+        for label, value in (
+            ("学習データからのオプトアウト可否", training_optout),
+            ("ユーザーによるデータ削除可否", deletion_available),
+            ("日本国内データ保管", residency_japan),
+        ):
+            formatted = _fmt_bool(label, value)
+            if formatted:
+                lines.append(formatted)
+
+        if handling_notes:
+            snippet = str(handling_notes).strip().replace("\n", " ")[:500]
+            lines.append(f"- **データ取扱い備考**: {snippet}")
+
+        for label, status, notes in (
+            ("AI事業者ガイドライン", aibg_status, aibg_notes),
+            ("個人情報保護法 (APPI)", appi_status, appi_notes),
+            ("GDPR", gdpr_status, gdpr_notes),
+        ):
+            formatted = _fmt_status(label, status, notes)
+            if formatted:
+                lines.append(formatted)
+
+        if certifications:
+            try:
+                cert_list = certifications if isinstance(certifications, list) else json.loads(certifications)
+                if cert_list:
+                    lines.append(f"- **取得済み認証**: {', '.join(str(c) for c in cert_list)}")
+            except Exception:
+                pass
+
+        if industry_compliance:
+            try:
+                items = industry_compliance if isinstance(industry_compliance, list) else json.loads(industry_compliance)
+                for item in items or []:
+                    if not isinstance(item, dict):
+                        continue
+                    reg = item.get("regulation") or item.get("name")
+                    st = item.get("status")
+                    nt = item.get("notes")
+                    formatted = _fmt_status(f"業界規制: {reg}", st, nt) if reg else None
+                    if formatted:
+                        lines.append(formatted)
+            except Exception:
+                pass
+
+        if gov_summary:
+            summary_snippet = str(gov_summary).strip()
+            # Preserve more of the summary — it's the richest narrative field
+            if len(summary_snippet) > 1500:
+                summary_snippet = summary_snippet[:1500] + "…"
+            lines.append("")
+            lines.append("**ガバナンス総評（管理者確認済み）**:")
+            lines.append(summary_snippet)
+
+        if not lines:
+            return ""
+
+        return "\n".join(lines)
+
     async def _precheck_language(self, observations: list[dict]) -> str:
         """Quick language detection pass using sample screenshots or text outputs.
 
@@ -1396,6 +1544,17 @@ class LLMScorer:
         # 1c. Research tool's official information for scoring context
         tool_info = await self._research_tool_info(tool_id, db)
 
+        # 1c-2. Fetch administrator-curated risk/governance data.
+        # This is injected ONLY into the safety axis prompt as authoritative
+        # evidence (unlike tool_info which is background-only). Empty string
+        # if no governance record exists for this tool.
+        risk_governance_evidence = await self._fetch_risk_governance(tool_id, db)
+        if risk_governance_evidence:
+            logger.info(
+                "Session %s: risk/governance evidence loaded (%d chars) — will be injected into safety axis prompt",
+                session_id, len(risk_governance_evidence),
+            )
+
         # 1d. Fetch total_planned from session for confidence/prompt calculations
         tp_result = await db.execute(text(
             "SELECT total_planned FROM audit_sessions WHERE id = :sid"
@@ -1434,7 +1593,7 @@ class LLMScorer:
                 # Always call LLM scoring — never skip based on auto_ratio
                 logger.info("Scoring axis %s (auto_ratio=%.0f%%) — LLM analysis always performed",
                             axis, AXIS_MIX.get(axis, {}).get("auto", 0.6) * 100)
-                score_data = await self._score_axis(axis, rubric, observations, tool_info=tool_info, total_planned=session_total_planned)
+                score_data = await self._score_axis(axis, rubric, observations, tool_info=tool_info, total_planned=session_total_planned, risk_governance_evidence=risk_governance_evidence)
 
                 # Retry once if LLM returned no details (likely truncation)
                 expected_count = len(rubric.get("criteria", []))
@@ -1444,7 +1603,7 @@ class LLMScorer:
                         "Axis %s: 0/%d details returned, retrying with higher token budget",
                         axis, expected_count,
                     )
-                    score_data = await self._score_axis(axis, rubric, observations, tool_info=tool_info, total_planned=session_total_planned)
+                    score_data = await self._score_axis(axis, rubric, observations, tool_info=tool_info, total_planned=session_total_planned, risk_governance_evidence=risk_governance_evidence)
                     retry_count = len(score_data.get("details", []))
                     logger.info("Axis %s retry: %d/%d details returned", axis, retry_count, expected_count)
 
@@ -2146,6 +2305,7 @@ class LLMScorer:
         observations: list[dict],
         tool_info: str = "",
         total_planned: int | None = None,
+        risk_governance_evidence: str = "",
     ) -> dict:
         """Score a single axis using Claude with multimodal (text + screenshots).
 
@@ -2154,6 +2314,30 @@ class LLMScorer:
         within Claude API's 20-image-per-message limit.
         """
         prompt_text = self._build_rubric_prompt(axis, rubric, observations, total_planned=total_planned)
+
+        # Safety axis ONLY: inject administrator-curated risk/governance data
+        # as AUTHORITATIVE evidence. This is distinct from tool_info (background
+        # only) — the governance record is treated as verified compliance facts
+        # that must be reflected in strengths/risks and the rule-level evidence.
+        if axis == "safety" and risk_governance_evidence:
+            prompt_text = (
+                "## コンプライアンス・ガバナンス根拠資料（信頼性・安全性軸の評価対象エビデンス）\n"
+                "以下はAixis管理者が一次情報（ベンダー公式ドキュメント、監査報告書、認証機関の公開情報等）に基づき\n"
+                "検証して登録した、このツールのガバナンス記録である。**これは推測ではなく確認済みの事実として扱うこと。**\n"
+                "\n"
+                "【この資料の使い方】\n"
+                "- 信頼性・安全性軸の採点根拠として、テスト観測データと同等以上の重みで参照すること。\n"
+                "- strengths には、登録されている認証（例: ISO27001, SOC2, ISMAP）や準拠状況（AI事業者ガイドライン、APPI、GDPR）を\n"
+                "  **具体的な名称とともに引用し、それがユーザー企業にとって何を意味するか**（例: 法的リスク低減、\n"
+                "  社内稟議の通しやすさ、国外転送の制約クリア等）を2〜3文で必ず説明すること。\n"
+                "- risks には、非準拠・未取得・不明瞭な項目（例: data_retention_policy=unclear、training_data_optout=いいえ等）を\n"
+                "  具体的に指摘し、それが実務上どのような懸念を生むかを2〜3文で説明すること。\n"
+                "- ガバナンス総評（管理者確認済み）が含まれている場合は、その内容を strengths/risks/details の\n"
+                "  根拠として積極的に引用すること。ただしそのまま丸写しせず、評価観点で再構成すること。\n"
+                "- 本資料に記載のない項目を「不明だから減点」とはしないこと。観測データで裏付けできる事項のみ評価する。\n"
+                "\n"
+                f"{risk_governance_evidence}\n\n"
+            ) + prompt_text
 
         # Prepend tool's official info as BACKGROUND CONTEXT ONLY
         # Evaluation criteria are IDENTICAL for all tools — tool info is for reference
@@ -3119,12 +3303,16 @@ strengths と risks の記述も、**必ずその軸固有の観点から**記�
                             "strengths" if is_strength else "risks", text[:80])
                 continue
 
-            # Detect misclassified strengths (negative content in strengths list)
+            # Detect misclassified strengths (negative content in strengths list).
+            # BUT: don't reclassify if the item ALSO contains a positive marker —
+            # legitimate strengths like "法的リスクを低減できる" or "ハルシネーション率が低い"
+            # contain negative substrings but are genuinely positive statements.
             if is_strength and any(neg in text for neg in cls._NEGATIVE_MARKERS):
-                logger.info("Reclassified negative item from strengths→risks: %s", text[:100])
-                if reclassified is not None:
-                    reclassified.append(text)
-                continue
+                if not any(pos in text for pos in cls._POSITIVE_MARKERS):
+                    logger.info("Reclassified negative item from strengths→risks: %s", text[:100])
+                    if reclassified is not None:
+                        reclassified.append(text)
+                    continue
 
             # Detect misclassified risks (positive content in risks list)
             if not is_strength and any(pos in text for pos in cls._POSITIVE_MARKERS):
