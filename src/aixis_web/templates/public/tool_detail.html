@@ -1155,4 +1155,35 @@
 {% block scripts %}
 <script nonce="{{ csp_nonce }}">window.__AIXIS_PAGE = { slug: '{{ slug }}', isLoggedIn: {{ 'true' if user else 'false' }} };</script>
 <script defer src="/static/js/tool-detail-page.min.js?v=20260411c"></script>
+{% if user %}
+<!-- Lead activity: fire safety_axis_view and governance_view once when
+     the corresponding sections scroll into the viewport. Only emitted for
+     registered users since anonymous visitors see blurred paywalls and
+     cannot meaningfully "view" the axis. -->
+<script nonce="{{ csp_nonce }}">
+    (function() {
+        if (!window.aixisTrack || !('IntersectionObserver' in window)) return;
+        var slug = {{ slug | tojson }};
+        var pending = {
+            'score-dashboard': 'safety_axis_view',
+            'governance-section': 'governance_view'
+        };
+        var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (!entry.isIntersecting) return;
+                var id = entry.target.id;
+                var ev = pending[id];
+                if (!ev) return;
+                window.aixisTrack(ev, { tool_slug: slug, passive: true });
+                delete pending[id];
+                observer.unobserve(entry.target);
+            });
+        }, { threshold: 0.35 });
+        Object.keys(pending).forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) observer.observe(el);
+        });
+    })();
+</script>
+{% endif %}
 {% endblock %}

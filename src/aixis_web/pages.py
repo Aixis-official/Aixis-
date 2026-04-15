@@ -241,6 +241,26 @@ async def tool_detail_page(request: Request, slug: str, user: _OptionalUser = No
     )
     tool = result.scalar_one_or_none()
 
+    # Lead tracking — record a tool_view event (debounced inside the service)
+    if tool is not None:
+        try:
+            from .services.lead_service import EVENT_TOOL_VIEW, track_activity
+
+            await track_activity(
+                db,
+                event_type=EVENT_TOOL_VIEW,
+                user_id=user.id if user else None,
+                session_id=getattr(request.state, "session_id", None),
+                tool_slug=slug,
+                page_path=request.url.path,
+                ip=request.client.host if request.client else None,
+                user_agent=request.headers.get("user-agent"),
+            )
+            await db.commit()
+        except Exception:
+            _page_logger.exception("track_activity(tool_view) failed")
+            await db.rollback()
+
     if tool:
         seo_title = tool.seo_title_jp or f"{tool.name_jp or tool.name} レビュー・評価"
         seo_desc = tool.seo_description_jp or tool.description_jp or f"{tool.name_jp or tool.name}の実務適性・費用対効果・日本語能力・安全性・革新性を独立監査で5軸評価。"
@@ -308,7 +328,11 @@ async def tool_detail_page(request: Request, slug: str, user: _OptionalUser = No
 
 
 @page_router.get("/compare")
-async def compare_page(request: Request, user: _OptionalUser = None):
+async def compare_page(
+    request: Request,
+    user: _OptionalUser = None,
+    db: AsyncSession = Depends(get_db),
+):
     """Comparison view page.
 
     After the 2026-04-15 free-registration pivot, anonymous visitors can
@@ -322,6 +346,32 @@ async def compare_page(request: Request, user: _OptionalUser = None):
     )
     max_tools = max_comparison_tools(user)
     is_registered = bool(user and user.is_active)
+
+    # Lead tracking — only when the visitor actually landed on a comparison
+    # (via a shared link with ?tools=slug1,slug2). Loading /compare blank is
+    # a mere page-view and not interesting for lead scoring.
+    tools_param = request.query_params.get("tools", "").strip()
+    if tools_param:
+        slugs = [s.strip() for s in tools_param.split(",") if s.strip()][:10]
+        if len(slugs) >= 2:
+            try:
+                from .services.lead_service import EVENT_TOOL_COMPARE, track_activity
+
+                await track_activity(
+                    db,
+                    event_type=EVENT_TOOL_COMPARE,
+                    user_id=user.id if user else None,
+                    session_id=getattr(request.state, "session_id", None),
+                    page_path=request.url.path,
+                    metadata={"slugs": slugs},
+                    ip=request.client.host if request.client else None,
+                    user_agent=request.headers.get("user-agent"),
+                )
+                await db.commit()
+            except Exception:
+                _page_logger.exception("track_activity(tool_compare) failed")
+                await db.rollback()
+
     ctx = _get_template_context(
         request,
         user=user,
@@ -371,8 +421,30 @@ async def accessibility_page(request: Request, user: _OptionalUser = None):
 
 
 @page_router.get("/pricing")
-async def pricing_page(request: Request, user: _OptionalUser = None):
+async def pricing_page(
+    request: Request,
+    user: _OptionalUser = None,
+    db: AsyncSession = Depends(get_db),
+):
     """Pricing plans page."""
+    # Lead tracking — pricing page views are a strong buying-intent signal
+    try:
+        from .services.lead_service import EVENT_PRICING_VIEW, track_activity
+
+        await track_activity(
+            db,
+            event_type=EVENT_PRICING_VIEW,
+            user_id=user.id if user else None,
+            session_id=getattr(request.state, "session_id", None),
+            page_path=request.url.path,
+            ip=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+        )
+        await db.commit()
+    except Exception:
+        _page_logger.exception("track_activity(pricing_view) failed")
+        await db.rollback()
+
     ctx = _get_template_context(request, user=user, title="料金プラン | Aixis AI監査サービス", active_page="pricing")
     # English localization temporarily disabled — switcher hidden, backend route /en/pricing kept.
     # ctx["en_alternate"] = "/en/pricing"
@@ -453,8 +525,29 @@ async def en_audit_process_page(request: Request, user: _OptionalUser = None):
 
 
 @page_router.get("/en/pricing")
-async def en_pricing_page(request: Request, user: _OptionalUser = None):
+async def en_pricing_page(
+    request: Request,
+    user: _OptionalUser = None,
+    db: AsyncSession = Depends(get_db),
+):
     """Phase D-1: English pricing page."""
+    try:
+        from .services.lead_service import EVENT_PRICING_VIEW, track_activity
+
+        await track_activity(
+            db,
+            event_type=EVENT_PRICING_VIEW,
+            user_id=user.id if user else None,
+            session_id=getattr(request.state, "session_id", None),
+            page_path=request.url.path,
+            ip=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+        )
+        await db.commit()
+    except Exception:
+        _page_logger.exception("track_activity(pricing_view en) failed")
+        await db.rollback()
+
     ctx = _get_template_context(
         request,
         user=user,
@@ -703,6 +796,27 @@ async def clients_management_page(
         return redirect
     ctx = _get_template_context(request, user=user, title="クライアント管理", active_page="clients")
     return _render("dashboard/clients.html", ctx)
+
+
+@page_router.get("/dashboard/leads")
+async def leads_dashboard_page(
+    request: Request,
+    user: Annotated[User | None, Depends(get_current_user)] = None,
+):
+    """Leads Dashboard — list free-registered users with behavior-based scoring.
+
+    Data is populated client-side via ``/api/v1/leads`` so staff can filter /
+    sort / export without round-trip reloads.
+    """
+    if redirect := _check_dashboard_access(user):
+        return redirect
+    ctx = _get_template_context(
+        request,
+        user=user,
+        title="リード管理",
+        active_page="leads",
+    )
+    return _render("dashboard/leads.html", ctx)
 
 
 @page_router.get("/dashboard/audits/new")

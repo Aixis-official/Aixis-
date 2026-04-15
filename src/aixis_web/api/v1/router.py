@@ -23,6 +23,8 @@ from .stats import router as stats_router
 from .clients import router as clients_router
 from .agent import router as agent_router
 from .extension import router as extension_router
+from .track import router as track_router
+from .leads import router as leads_router
 
 api_router = APIRouter()
 
@@ -86,3 +88,5 @@ api_router.include_router(stats_router, prefix="/stats", tags=["stats"])
 api_router.include_router(clients_router, prefix="/clients", tags=["クライアント管理"])
 api_router.include_router(agent_router, prefix="/agent", tags=["監査エージェント"])
 api_router.include_router(extension_router, prefix="/extension", tags=["Chrome拡張"])
+api_router.include_router(track_router, prefix="/track", tags=["リード活動トラッキング"])
+api_router.include_router(leads_router, prefix="/leads", tags=["リード管理"])

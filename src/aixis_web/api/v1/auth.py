@@ -644,6 +644,24 @@ async def register(
             detail=str(exc),
         )
 
+    # 5b. Reattach anonymous lead activity recorded against this session
+    # cookie to the newly-created user. Running score is recomputed so the
+    # new user starts with credit for whatever they browsed pre-register.
+    try:
+        from ...services.lead_service import reattach_anonymous_activities
+
+        session_id = getattr(request.state, "session_id", None)
+        if session_id:
+            await reattach_anonymous_activities(
+                db, user_id=user.id, session_id=session_id
+            )
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning(
+            "Failed to reattach anonymous lead activity for user %s",
+            user.email,
+        )
+
     await db.commit()
 
     # 6. Send verification email + admin notification (best-effort)

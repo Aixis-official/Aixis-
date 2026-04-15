@@ -489,6 +489,71 @@
     <!-- Shared utilities -->
     <script src="/static/js/aixis-common.min.js?v=20260411c"></script>
 
+    <!-- Lead activity beacon -->
+    <script nonce="{{ csp_nonce }}">
+        // Fire-and-forget activity tracker. Used by public pages to record
+        // buying-intent signals (safety-axis viewed, governance section
+        // expanded, advisory CTA clicked, etc). Server-side events like
+        // tool_view / tool_compare / pricing_view are already recorded by
+        // page handlers and MUST NOT be posted from the client.
+        (function() {
+            var ALLOWED = [
+                'safety_axis_view',
+                'governance_view',
+                'advisory_cta_click',
+                'pdf_download',
+                'onboarding_done'
+            ];
+            var sentOnce = {}; // dedupe passive events within the same page-view
+
+            function readCsrf() {
+                var m = document.cookie.match(/(?:^|;\s*)(?:__Host-)?aixis_csrf=([^;]+)/);
+                return m ? decodeURIComponent(m[1]) : '';
+            }
+
+            window.aixisTrack = function(eventType, opts) {
+                if (ALLOWED.indexOf(eventType) === -1) return;
+                opts = opts || {};
+                // Dedupe passive events so a viewport-entry observer
+                // can fire repeatedly without flooding the beacon.
+                var dedupeKey = eventType + '|' + (opts.tool_slug || '');
+                if (opts.passive && sentOnce[dedupeKey]) return;
+                sentOnce[dedupeKey] = true;
+
+                try {
+                    fetch('/api/v1/track', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': readCsrf()
+                        },
+                        body: JSON.stringify({
+                            event_type: eventType,
+                            tool_slug: opts.tool_slug || null,
+                            page_path: window.location.pathname,
+                            metadata: opts.metadata || null
+                        }),
+                        keepalive: true
+                    }).catch(function() { /* best-effort */ });
+                } catch (e) { /* ignore */ }
+            };
+
+            // Auto-wire: any element with data-track="<event>" dispatches
+            // the event on click. Handy for advisory-audit CTAs.
+            document.addEventListener('click', function(e) {
+                var el = e.target.closest ? e.target.closest('[data-track]') : null;
+                if (!el) return;
+                var ev = el.getAttribute('data-track');
+                if (!ev) return;
+                window.aixisTrack(ev, {
+                    tool_slug: el.getAttribute('data-track-tool') || null,
+                    metadata: { href: el.getAttribute('href') || '' }
+                });
+            }, { passive: true });
+        })();
+    </script>
+
     <!-- Logout helper -->
     <script nonce="{{ csp_nonce }}">
         function aixisLogout() {

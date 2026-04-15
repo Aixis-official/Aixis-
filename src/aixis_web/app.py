@@ -135,6 +135,19 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         # matching the eventual Content-Security-Policy header) ---
         request.state.csp_nonce = secrets.token_urlsafe(16)
 
+        # --- Anonymous session ID (Phase 3 lead-gen) ---
+        # Visitors get a long-lived `aixis_sid` cookie so anonymous browsing
+        # activity can be reattached to a user_id at registration time. Routes
+        # read `request.state.session_id`; the cookie is (re)issued below on
+        # the response.
+        existing_sid = request.cookies.get("aixis_sid")
+        if existing_sid and 16 <= len(existing_sid) <= 128:
+            request.state.session_id = existing_sid
+            request.state.session_id_is_new = False
+        else:
+            request.state.session_id = secrets.token_urlsafe(32)
+            request.state.session_id_is_new = True
+
         # --- CSRF check (before calling route) ---
         if request.method not in _CSRF_SAFE_METHODS:
             path = request.url.path
@@ -275,6 +288,28 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 samesite="lax",
                 secure=not settings.debug,
             )
+
+        # --- Anonymous session cookie (aixis_sid) ---
+        # 90-day TTL is long enough to span a typical research cycle. HttpOnly
+        # so page scripts cannot read it; same-site=lax keeps it flowing on
+        # normal cross-site navigation while blocking CSRF use.
+        if getattr(request.state, "session_id_is_new", False):
+            response.set_cookie(
+                key="aixis_sid",
+                value=request.state.session_id,
+                max_age=90 * 86400,
+                path="/",
+                httponly=True,
+                samesite="lax",
+                secure=not settings.debug,
+            )
+            # A response that mints a fresh session ID must not be
+            # served from a shared cache — otherwise the next visitor
+            # inherits the cookie and we cross-contaminate anonymous
+            # activity. Subsequent visits (with the cookie already set)
+            # fall through to the normal public cache policy.
+            response.headers["Cache-Control"] = "private, no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
 
         return response
 
