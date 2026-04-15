@@ -2,7 +2,7 @@
 {% set active_page = 'pricing' %}
 
 {% block meta_description %}
-<meta name="description" content="Aixis pricing — Free public scores, Standard subscription with full audit reports, and Enterprise plans for multi-team AI governance. 14-day trial available after consultation.">
+<meta name="description" content="Aixis pricing — the audit database is free with registration (no credit card required). Advisory Audits are paid, individually-designed engagements for business-specific evaluation needs.">
 {% endblock %}
 
 {% block canonical %}
@@ -23,95 +23,64 @@
         <span class="text-xs font-bold text-gray-400 uppercase tracking-widest font-serif">Pricing</span>
         <h1 class="mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 tracking-tight">Pricing</h1>
         <p class="mt-4 text-base sm:text-lg text-gray-600 max-w-2xl">
-            Public audit scores are free. Paid plans unlock the full five-axis breakdown, comparison tools, and trend reports. A 14-day trial is available after an initial consultation.
+            The audit database is <strong class="text-gray-900">free with registration</strong>. For organizations that need a business-specific evaluation, we offer <strong class="text-gray-900">Advisory Audits</strong> — paid, individually-designed engagements.
         </p>
         <hr class="divider-thin">
     </div>
 </section>
 
-<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+<section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
 
-        <!-- Free -->
-        <div class="bg-white border border-gray-200 p-8 flex flex-col">
-            <h3 class="text-lg font-bold text-gray-900">Free</h3>
-            <p class="mt-1 text-sm text-gray-500">Public scores & basic comparison</p>
-            <div class="mt-6 flex items-baseline gap-1">
-                <span class="text-4xl font-bold text-gray-900">¥0</span>
-                <span class="text-sm text-gray-500">/ month</span>
-            </div>
-            <ul class="mt-8 space-y-3 flex-1 text-sm text-gray-600">
-                <li>— Audit database (summary view)</li>
-                <li>— Category rankings</li>
-                <li>— Tool comparison (up to 2)</li>
-            </ul>
-            <a href="/tools" class="mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-md text-sm font-bold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
-                Browse Database
-            </a>
-        </div>
-
-        <!-- Standard -->
-        <div class="relative bg-white border-2 border-blue-500 p-8 flex flex-col">
+        <!-- Free Platform -->
+        <div class="relative bg-white border-2 border-aixis-500 p-8 flex flex-col">
             <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500 text-white">Recommended</span>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-aixis-500 text-white">Free</span>
             </div>
-            <h3 class="text-lg font-bold text-gray-900">Standard</h3>
-            <p class="mt-1 text-sm text-gray-500">For serious AI tool selection</p>
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-serif">Audit Database</span>
+            <h3 class="mt-2 text-lg font-bold text-gray-900">Audit Database</h3>
+            <p class="mt-1 text-sm text-gray-500">Industry-wide universal audit data</p>
             <div class="mt-6 flex items-baseline gap-1">
-                <span class="text-4xl font-bold text-gray-900">¥29,800</span>
-                <span class="text-sm text-gray-500">/ mo (excl. tax)</span>
+                <span class="text-4xl sm:text-5xl font-bold text-gray-900">¥0</span>
+                <span class="text-sm text-gray-500 ml-1">/ free registration</span>
             </div>
-            <p class="mt-2 text-xs text-blue-600 font-medium">14-day trial after consultation</p>
+            <p class="mt-2 text-xs text-aixis-600 font-medium">60 seconds to sign up · no credit card required</p>
             <ul class="mt-8 space-y-3 flex-1 text-sm text-gray-600">
                 <li>— Full audit database access</li>
-                <li>— Five-axis detailed reports</li>
-                <li>— Unlimited tool comparison</li>
-                <li>— Monthly trend reports</li>
-                <li>— API access</li>
+                <li>— Five-axis detailed scores &amp; reports</li>
+                <li>— Tool comparison (up to 10 tools)</li>
+                <li>— PDF report export</li>
+                <li>— Score history &amp; update logs</li>
             </ul>
-            <a href="/contact?type=database" class="mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-md text-sm font-bold bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-sm">
-                Contact Sales
+            {% if user %}
+            <a href="/tools" class="mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-md text-sm font-bold bg-aixis-500 text-white hover:bg-aixis-600 transition-colors shadow-sm">
+                Browse Database
             </a>
+            {% else %}
+            <a href="/register?ref=pricing_en_platform" class="mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-md text-sm font-bold bg-aixis-500 text-white hover:bg-aixis-600 transition-colors shadow-sm">
+                Sign Up Free
+            </a>
+            {% endif %}
         </div>
 
-        <!-- Enterprise -->
+        <!-- Advisory Audit -->
         <div class="bg-white border border-gray-200 p-8 flex flex-col">
-            <h3 class="text-lg font-bold text-gray-900">Enterprise</h3>
-            <p class="mt-1 text-sm text-gray-500">Multi-team AI governance</p>
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider font-serif">Advisory Audit</span>
+            <h3 class="mt-2 text-lg font-bold text-gray-900">Advisory Audit</h3>
+            <p class="mt-1 text-sm text-gray-500">Individually-designed engagements</p>
             <div class="mt-6 flex items-baseline gap-1">
-                <span class="text-3xl sm:text-4xl font-bold text-gray-900">Custom</span>
+                <span class="text-4xl sm:text-5xl font-bold text-gray-900">¥29,800</span>
+                <span class="text-sm text-gray-500 ml-1">~ / engagement (excl. tax)</span>
             </div>
-            <p class="mt-2 text-xs text-gray-400">Tailored to your organization size and requirements</p>
+            <p class="mt-2 text-xs text-gray-600 font-medium">Designed by our audit team</p>
             <ul class="mt-8 space-y-3 flex-1 text-sm text-gray-600">
-                <li>— Everything in Standard</li>
-                <li>— Custom audit criteria</li>
-                <li>— Dedicated consultant</li>
-                <li>— SLA & priority support</li>
-                <li>— SSO / audit log integration</li>
+                <li>— <strong class="text-gray-800">Spot Audit</strong> (¥29,800~) — single-tool evaluation against your business requirements</li>
+                <li>— <strong class="text-gray-800">Benchmark Audit</strong> (¥98,000~) — 3–5 tool side-by-side comparison</li>
+                <li>— <strong class="text-gray-800">Governance Audit</strong> (¥198,000~) — organization-wide AI risk assessment</li>
+                <li>— Internal-approval PDF included</li>
             </ul>
-            <a href="/contact" class="mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-md text-sm font-bold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
-                Contact Sales
-            </a>
-        </div>
-    </div>
-</section>
-
-<!-- One-shot diagnosis -->
-<section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
-    <div class="border border-gray-200 p-6 sm:p-8">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider font-serif">Quick Diagnosis</p>
-                <p class="mt-1 text-base font-bold text-gray-900">Three-tool side-by-side audit</p>
-                <div class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500">
-                    <span>From ¥50,000 (excl. tax)</span>
-                    <span>3 business days</span>
-                    <span>Five-axis comparison</span>
-                    <span>Internal-approval PDF included</span>
-                </div>
-            </div>
-            <a href="/contact?type=quick" class="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-bold border border-gray-300 text-gray-700 hover:border-gray-500 transition-colors whitespace-nowrap">
-                Request a Quote
+            <a href="https://aixis.jp/services/advisory-audit?ref=platform_pricing_en" class="mt-8 w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md text-sm font-bold border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                Learn More
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
             </a>
         </div>
@@ -119,25 +88,32 @@
 </section>
 
 <!-- Note -->
-<section class="bg-gray-50 border-y border-gray-200 mt-16">
+<section class="bg-gray-50 border-y border-gray-200">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div class="section-line"></div>
         <h2 class="text-xl font-bold font-serif text-gray-900 tracking-tight">A note on independence</h2>
         <hr class="divider-thin">
         <p class="mt-6 text-sm text-gray-600 leading-relaxed">
-            Aixis derives all revenue from subscribers and one-shot consulting engagements with buying organizations — never from AI tool vendors. Subscription fees fund the audit team, infrastructure, and the public scoring database. This structure is what lets us publish unfavorable scores without conflict of interest.
+            Aixis derives all paid revenue from Advisory Audit engagements with buying organizations — never from AI tool vendors. The free audit database is funded by the same audit team. This structure is what lets us publish unfavorable scores without conflict of interest.
         </p>
     </div>
 </section>
 
 <section class="bg-gray-900">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-        <h2 class="text-xl sm:text-2xl font-bold font-serif text-white">Talk to us</h2>
-        <p class="mt-3 text-sm text-gray-400">Tell us about your AI selection challenge — we'll recommend the right plan.</p>
-        <a href="/contact" class="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-bold bg-white text-gray-900 hover:bg-gray-100 transition-colors">
-            Contact Us
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
-        </a>
+        <h2 class="text-xl sm:text-2xl font-bold font-serif text-white">Get started</h2>
+        <p class="mt-3 text-sm text-gray-400">Start with the free audit database, or tell us about your specific evaluation needs.</p>
+        <div class="mt-8 flex flex-wrap justify-center gap-4">
+            {% if not user %}
+            <a href="/register?ref=pricing_en_bottom" class="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-bold bg-white text-gray-900 hover:bg-gray-100 transition-colors">
+                Sign Up Free
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+            </a>
+            {% endif %}
+            <a href="https://aixis.jp/services/advisory-audit?ref=platform_pricing_en_bottom" class="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-bold border border-white/30 text-white hover:bg-white/10 transition-colors">
+                Advisory Audit
+            </a>
+        </div>
     </div>
 </section>
 

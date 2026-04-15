@@ -309,8 +309,29 @@ async def tool_detail_page(request: Request, slug: str, user: _OptionalUser = No
 
 @page_router.get("/compare")
 async def compare_page(request: Request, user: _OptionalUser = None):
-    """Comparison view page."""
-    ctx = _get_template_context(request, user=user, title="AIツール比較 | 5軸スコアで横並び比較", active_page="compare")
+    """Comparison view page.
+
+    After the 2026-04-15 free-registration pivot, anonymous visitors can
+    compare up to 2 tools so the feature remains discoverable. Registered
+    users unlock the full 10-tool cap.
+    """
+    from .services.subscription_service import (
+        max_comparison_tools,
+        ANONYMOUS_COMPARE_LIMIT,
+        REGISTERED_COMPARE_LIMIT,
+    )
+    max_tools = max_comparison_tools(user)
+    is_registered = bool(user and user.is_active)
+    ctx = _get_template_context(
+        request,
+        user=user,
+        title="AIツール比較 | 5軸スコアで横並び比較",
+        active_page="compare",
+        max_compare_tools=max_tools,
+        is_registered_compare=is_registered,
+        anonymous_compare_limit=ANONYMOUS_COMPARE_LIMIT,
+        registered_compare_limit=REGISTERED_COMPARE_LIMIT,
+    )
     return _render("public/compare.html", ctx)
 
 

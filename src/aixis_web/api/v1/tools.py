@@ -25,6 +25,7 @@ from ...schemas.tool import (
     ToolResponse,
     ToolUpdate,
 )
+from ...services.subscription_service import get_subscription_info
 from ..deps import get_current_user, require_admin, require_analyst
 
 router = APIRouter()
@@ -43,6 +44,43 @@ def _auto_favicon_url(url: str | None) -> str | None:
         return f"https://www.google.com/s2/favicons?domain={domain}&sz=128"
     except Exception:
         return None
+
+
+def _trim_response_for_anonymous(resp: ToolResponse) -> ToolResponse:
+    """Strip premium analytical fields from a tool response for anonymous callers.
+
+    After the 2026-04-15 free-registration pivot, unauthenticated API callers
+    still see summary metadata (name, vendor, category, short description,
+    pricing model, features, logo) so the database remains crawlable and
+    broadly useful. Premium analytical output — pros/cons, use cases, risks,
+    executive summary, target-company profile, axis scores, etc. — is hidden
+    behind free registration. See ``services.subscription_service``.
+
+    Web UI does not rely on this endpoint for anonymous visitors: the JS in
+    ``tool-detail-page.js`` skips the fetch when ``isLoggedIn`` is false, so
+    trimming only affects direct API consumers.
+    """
+    resp.use_cases_jp = None
+    resp.use_cases_en = None
+    resp.pricing_detail_jp = None
+    resp.pricing_detail_en = None
+    resp.pricing_tiers = None
+    resp.risks_jp = None
+    resp.risks_en = None
+    resp.target_company_profile_jp = None
+    resp.target_company_profile_en = None
+    resp.target_company_sizes = None
+    resp.target_departments = None
+    resp.pros_jp = None
+    resp.pros_en = None
+    resp.cons_jp = None
+    resp.cons_en = None
+    resp.alternatives_slugs = None
+    resp.executive_summary_jp = None
+    # Drop the 5-axis breakdown. Anonymous users see the overall grade via
+    # the SSR-rendered tool_detail page, not via this API.
+    resp.scores = []
+    return resp
 
 
 @router.get("/categories", response_model=list[CategoryResponse])
@@ -186,6 +224,7 @@ async def list_tools(
     total = total_result.scalar() or 0
 
     offset = (page - 1) * page_size
+    registered = get_subscription_info(user).is_registered
     if sort == "newest":
         query = query.options(selectinload(Tool.scores)).order_by(
             Tool.created_at.desc()
@@ -223,7 +262,13 @@ async def list_tools(
     result = await db.execute(query)
     items = result.scalars().all()
 
-    return ToolListResponse(items=items, total=total, page=page, page_size=page_size)
+    # For anonymous (and deactivated) callers, strip premium analytical
+    # fields before returning — summary metadata remains visible.
+    response_items = [ToolResponse.model_validate(t) for t in items]
+    if not registered:
+        response_items = [_trim_response_for_anonymous(r) for r in response_items]
+
+    return ToolListResponse(items=response_items, total=total, page=page, page_size=page_size)
 
 
 @router.get("/{slug}", response_model=ToolResponse)
@@ -232,7 +277,13 @@ async def get_tool(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User | None, Depends(get_current_user)],
 ):
-    """Get tool detail by slug. Non-auth users only see public+active tools."""
+    """Get tool detail by slug. Non-auth users only see public+active tools.
+
+    Anonymous (unauthenticated) callers receive a trimmed response with
+    premium analytical fields stripped out — see
+    ``_trim_response_for_anonymous``. Registered users (including staff
+    roles) see the full response.
+    """
     query = select(Tool).where(Tool.slug == slug).options(selectinload(Tool.scores))
     # Non-authenticated or non-analyst users can only see public active tools
     if not user or user.role not in ("admin", "analyst", "auditor"):
@@ -250,6 +301,10 @@ async def get_tool(
             select(ToolCategory.name_jp).where(ToolCategory.id == tool.category_id)
         )
         resp.category_name_jp = cat_result.scalar_one_or_none()
+
+    # Strip premium fields for anonymous / deactivated users.
+    if not get_subscription_info(user).is_registered:
+        resp = _trim_response_for_anonymous(resp)
     return resp
 
 

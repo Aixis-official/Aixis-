@@ -19,49 +19,37 @@
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-10">
 
-    <!-- Subscription Status -->
+    <!-- Access Status -->
     <section>
         <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
-            ご利用プラン
+            <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+            アクセス権限
         </h2>
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    {% if subscription and subscription.is_trial %}
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                        無料トライアル
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        登録済みアカウント
                     </span>
-                    {% if subscription.days_remaining is not none %}
-                    <p class="mt-2 text-sm text-gray-600">
-                        残り <strong class="text-gray-900">{{ subscription.days_remaining }}日</strong>
-                        {% if user.trial_end %}
-                        <span class="text-gray-400">（{{ user.trial_end.strftime('%Y年%m月%d日') }} まで）</span>
-                        {% endif %}
+                    <p class="mt-2.5 text-sm text-gray-600">
+                        全ツールの5軸スコア・詳細分析・比較機能にアクセスできます。
                     </p>
-                    {% endif %}
-                    {% elif subscription %}
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {% if subscription.tier == 'standard' %}bg-emerald-100 text-emerald-800 {% elif subscription.tier == 'professional' %}bg-purple-100 text-purple-800 {% elif subscription.tier == 'enterprise' %}bg-amber-100 text-amber-800 {% else %}bg-gray-100 text-gray-800 {% endif %}">
-                        {% if subscription.tier == 'standard' %}Standard プラン
-                        {% elif subscription.tier == 'professional' %}Professional プラン
-                        {% elif subscription.tier == 'enterprise' %}Enterprise プラン
-                        {% else %}{{ subscription.tier }}{% endif %}
-                    </span>
-                    {% endif %}
                     {% if subscription and not subscription.is_active %}
                     <p class="mt-2 text-sm text-red-600">
-                        ご利用期限が切れています。プランの更新をお願いいたします。
+                        アカウントが停止されています。サポートまでお問い合わせください。
                     </p>
                     {% endif %}
                 </div>
                 <div class="flex gap-3">
-                    <a href="/pricing"
+                    <a href="/tools"
                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                        料金プランを見る
+                        監査データベース
                     </a>
-                    <a href="/contact?type=subscription"
+                    <a href="https://aixis.jp/contact?source=platform_mypage"
+                       target="_blank" rel="noopener"
                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors">
-                        プラン変更・お問い合わせ
+                        アドバイザリー監査のご相談
                     </a>
                 </div>
             </div>

@@ -441,10 +441,10 @@
                         マイページ
                     </a>
                     {% else %}
-                    <a href="/contact"
+                    <a href="/register?ref=landing_hero"
                        class="w-full sm:w-auto inline-flex flex-col items-center justify-center px-6 sm:px-8 py-3.5 rounded-none text-sm sm:text-base font-bold text-white border-2 border-white/30 hover:border-white/60 hover:bg-white/5 transition-all duration-200 text-center leading-snug">
-                        14日間無料トライアルを申請する
-                        <span class="block text-[10px] sm:text-[11px] font-normal text-slate-300/80 mt-1 font-serif tracking-wide">お問い合わせ後、1営業日以内にアカウントを発行します</span>
+                        無料登録で全機能を使う
+                        <span class="block text-[10px] sm:text-[11px] font-normal text-slate-300/80 mt-1 font-serif tracking-wide">60秒で登録完了・クレジットカード不要</span>
                     </a>
                     {% endif %}
                 </div>
@@ -1101,7 +1101,10 @@
 </section>
 
 
-<!-- ===== PRICING SECTION ===== -->
+<!-- ===== PRICING SECTION =====
+     Phase 2f: Post-2026-04-15 free-registration pivot — platform is free;
+     Advisory Audit is the sole paid revenue line.
+-->
 <section class="bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div class="text-left mb-12 sm:mb-16">
@@ -1109,25 +1112,25 @@
                 料金プラン
             </h2>
             <p class="mt-4 text-base sm:text-lg text-gray-600 max-w-2xl">
-                業界横断の<strong class="font-semibold text-gray-900">普遍的な監査データ</strong>に常時アクセスするサブスクリプションと、貴社の状況に合わせて<strong class="font-semibold text-gray-900">個別設計する監査</strong>。用途に応じて使い分けられます。
+                業界横断の<strong class="font-semibold text-gray-900">普遍的な監査データベース</strong>は完全無料で公開しています。貴社の状況に合わせた<strong class="font-semibold text-gray-900">個別設計監査</strong>はアドバイザリー監査でご提供します。
             </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <!-- Left Card: プラットフォーム月額プラン -->
+            <!-- Left Card: 無料登録プラン (post-pivot) -->
             <div class="relative bg-white rounded-none p-8 border-2 border-blue-500 flex flex-col shadow-sm card-hover-primary">
-                <!-- 推奨 badge -->
+                <!-- 無料 badge -->
                 <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white shadow-sm">推奨</span>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white shadow-sm">完全無料</span>
                 </div>
 
-                <h3 class="text-lg font-bold text-gray-900">プラットフォーム月額プラン</h3>
-                <p class="mt-1 text-xs text-gray-500 leading-relaxed">業界全体のAIツールを同じ物差しで評価した、<span class="font-semibold text-gray-700">普遍的な監査データ</span>に常時アクセス。</p>
+                <h3 class="text-lg font-bold text-gray-900">監査データベース</h3>
+                <p class="mt-1 text-xs text-gray-500 leading-relaxed">業界全体のAIツールを同じ物差しで評価した、<span class="font-semibold text-gray-700">普遍的な監査データ</span>を無料登録でフル公開。</p>
                 <div class="mt-4 flex items-baseline gap-1">
-                    <span class="text-3xl font-bold text-gray-900">&yen;29,800</span>
-                    <span class="text-sm text-gray-500">/月（税別）</span>
+                    <span class="text-3xl font-bold text-gray-900">&yen;0</span>
+                    <span class="text-sm text-gray-500">/ 無料登録のみ</span>
                 </div>
-                <p class="mt-1 text-xs text-blue-500 font-bold">お問い合わせ後、14日間無料トライアル開始</p>
+                <p class="mt-1 text-xs text-blue-500 font-bold">60秒で登録完了・クレジットカード不要</p>
 
                 <ul class="mt-6 space-y-3 flex-1">
                     <li class="flex items-start gap-2.5 text-sm text-gray-600">
@@ -1136,15 +1139,15 @@
                     </li>
                     <li class="flex items-start gap-2.5 text-sm text-gray-600">
                         <svg class="w-4 h-4 text-aixis-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                        5軸詳細スコア閲覧
+                        5軸詳細スコア・分析レポート
                     </li>
                     <li class="flex items-start gap-2.5 text-sm text-gray-600">
                         <svg class="w-4 h-4 text-aixis-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                        ツール比較機能
+                        ツール比較（最大10ツール）
                     </li>
                     <li class="flex items-start gap-2.5 text-sm text-gray-600">
                         <svg class="w-4 h-4 text-aixis-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                        月次レポート配信
+                        PDFレポート出力
                     </li>
                 </ul>
 
@@ -1154,15 +1157,15 @@
                     監査データベースへ
                 </a>
                 {% else %}
-                <a href="/contact"
+                <a href="/register?ref=landing_pricing"
                    class="btn-blue-hover mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-none text-sm font-bold bg-aixis-500 text-white hover:bg-aixis-600 transition-all duration-200">
-                    14日間無料トライアルを始める
+                    無料登録して全機能を使う
                 </a>
                 {% endif %}
 
                 <div class="mt-5 pt-4 border-t border-gray-100">
                     <p class="text-xs text-gray-400 text-center">
-                        年額プラン &yen;297,600/年（税別・実質2ヶ月分無料）
+                        継続課金なし・退会自由
                     </p>
                 </div>
             </div>
@@ -1204,9 +1207,10 @@
                     </div>
                 </div>
 
-                <a href="/contact"
+                <a href="https://aixis.jp/services/advisory-audit?ref=platform_landing"
+                   target="_blank" rel="noopener"
                    class="btn-blue-hover mt-8 w-full inline-flex items-center justify-center px-6 py-3 rounded-none text-sm font-bold border border-gray-200 text-gray-700 hover:border-aixis-500 hover:text-aixis-500 transition-all duration-200">
-                    ご購入はこちら
+                    アドバイザリー監査のご相談
                 </a>
             </div>
         </div>
@@ -1376,9 +1380,9 @@
                     マイページ
                 </a>
                 {% else %}
-                <a href="/contact"
+                <a href="/register?ref=landing_bottom"
                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3.5 rounded-none text-sm sm:text-base font-bold text-white border-2 border-white/30 hover:border-white/60 hover:bg-white/5 transition-all duration-200 text-center leading-snug">
-                    14日間無料トライアルを申請する
+                    無料登録で全機能を使う
                 </a>
                 {% endif %}
             </div>

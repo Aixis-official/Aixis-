@@ -205,13 +205,18 @@ async def require_viewer(user: Annotated[User, Depends(require_auth)]) -> User:
 async def require_active_subscription(
     user: Annotated[User, Depends(require_auth)],
 ) -> User:
-    """Require an authenticated user with an active subscription (trial or paid)."""
+    """Require an authenticated user with an active registered account.
+
+    Name preserved for legacy/compat after the 2026-04-15 free-registration
+    pivot. The platform no longer has paid subscriptions; any active
+    registered user — plus staff roles — satisfies this dependency.
+    """
     from ..services.subscription_service import get_subscription_info
     info = get_subscription_info(user)
-    if not info.is_active or info.tier == "free":
+    if not info.is_registered or not info.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="有効なサブスクリプションが必要です",
+            detail="この機能をご利用いただくには無料登録が必要です",
         )
     return user
 
