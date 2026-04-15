@@ -144,6 +144,15 @@ class Settings(BaseSettings):
     status_page_url: str = ""
     status_page_badge_url: str = ""
 
+    # Free registration (2026-04-15 pivot)
+    # Cloudflare Turnstile — anti-spam for register/contact forms. Opt-in:
+    # when both keys are set, the register page renders the widget and the
+    # backend verifies the token. Graceful degradation when unset.
+    turnstile_site_key: str = ""     # exposed to the browser
+    turnstile_secret_key: str = ""   # backend verification only
+    # Canonical origin for aixis.jp (cross-site CTA pre-fill)
+    aixis_corp_origin: str = "https://aixis.jp"
+
     model_config = {"env_file": ".env"}
 
 

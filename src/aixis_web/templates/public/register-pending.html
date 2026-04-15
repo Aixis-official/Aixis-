@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block meta_robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block page_title_tag %}<title>確認メールを送信しました - Aixis</title>{% endblock %}
+
+{% block head %}
+<style>
+    .pending-bg {
+        background-color: #fafafa;
+    }
+    .dark .pending-bg {
+        background: linear-gradient(135deg, #060d19 0%, #0f1f36 50%, #162d4d 100%);
+    }
+    .pending-card {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .dark .pending-card {
+        box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pending-bg min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+
+        <!-- Card -->
+        <div class="pending-card bg-white border border-gray-200 p-8 sm:p-10">
+
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <a href="/" class="inline-block">
+                    <img src="/static/img/Aixis-logo-final.png" alt="Aixis（アイクシス） — 独立系AI監査プラットフォーム" class="h-10 mx-auto" width="40" height="40">
+                </a>
+                <p class="mt-3 text-xs text-gray-400 tracking-wider uppercase font-serif">
+                    AI Audit Platform
+                </p>
+            </div>
+
+            <!-- Check-mark hero -->
+            <div class="flex justify-center mb-6">
+                <div class="w-16 h-16 rounded-full bg-green-50 border border-green-200 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75l-10.5 10.5L5.25 12"/>
+                    </svg>
+                </div>
+            </div>
+
+            <h1 class="text-xl font-serif font-semibold text-gray-900 text-center mb-3">
+                確認メールを送信しました
+            </h1>
+            <p class="text-sm text-gray-500 text-center leading-relaxed mb-6">
+                {% if email_hint %}
+                <strong class="text-gray-800 break-all">{{ email_hint }}</strong> 宛に確認メールをお送りしました。
+                {% else %}
+                ご登録のメールアドレス宛に確認メールをお送りしました。
+                {% endif %}
+                メール内のリンクをクリックすると登録が完了し、すぐにプラットフォームをご利用いただけます。
+            </p>
+
+            <!-- Next steps -->
+            <div class="bg-gray-50 border border-gray-100 rounded-md px-5 py-4 mb-6">
+                <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">次のステップ</h2>
+                <ol class="space-y-2 text-xs text-gray-600 leading-relaxed">
+                    <li class="flex gap-2">
+                        <span class="text-gray-400 font-mono">1.</span>
+                        <span>受信トレイで Aixis からのメールをご確認ください</span>
+                    </li>
+                    <li class="flex gap-2">
+                        <span class="text-gray-400 font-mono">2.</span>
+                        <span>メール内の「メールアドレスを確認する」リンクをクリック</span>
+                    </li>
+                    <li class="flex gap-2">
+                        <span class="text-gray-400 font-mono">3.</span>
+                        <span>自動でログインされ、すべての監査データをご覧いただけます</span>
+                    </li>
+                </ol>
+            </div>
+
+            <!-- Resend form -->
+            <div class="border-t border-gray-100 pt-5">
+                <p class="text-xs text-gray-400 leading-relaxed mb-3">
+                    メールが届かない場合は、迷惑メールフォルダもご確認ください。それでも見つからない場合は、以下から再送信できます。
+                </p>
+
+                <div id="resend-message" class="hidden mb-3 rounded border px-3 py-2 text-xs"></div>
+
+                <form id="resend-form" class="flex gap-2">
+                    <input type="email" id="resend-email" name="email" required autocomplete="email"
+                           value="{{ email_hint or '' }}" placeholder="your@email.com"
+                           class="flex-1 px-3 py-2 border border-gray-200 bg-white text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 text-xs">
+                    <button type="submit" id="resend-btn"
+                            class="px-4 py-2 bg-[#0f172a] hover:bg-[#1e293b] text-white font-semibold text-xs transition-colors disabled:opacity-60">
+                        <span id="resend-text">再送信</span>
+                    </button>
+                </form>
+            </div>
+
+            <hr class="my-6 border-gray-100">
+
+            <!-- Links -->
+            <div class="space-y-3 text-center">
+                <a href="/login"
+                   class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+                    ログインページへ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+(function() {
+    var form = document.getElementById('resend-form');
+    var emailInput = document.getElementById('resend-email');
+    var btn = document.getElementById('resend-btn');
+    var btnText = document.getElementById('resend-text');
+    var messageDiv = document.getElementById('resend-message');
+
+    function showMessage(msg, type) {
+        messageDiv.textContent = msg;
+        messageDiv.className = 'mb-3 rounded border px-3 py-2 text-xs';
+        if (type === 'success') {
+            messageDiv.classList.add('bg-green-50', 'border-green-200', 'text-green-700');
+        } else {
+            messageDiv.classList.add('bg-red-50', 'border-red-200', 'text-red-700');
+        }
+        messageDiv.classList.remove('hidden');
+    }
+
+    function setLoading(loading) {
+        btn.disabled = loading;
+        btnText.textContent = loading ? '送信中...' : '再送信';
+    }
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        messageDiv.classList.add('hidden');
+
+        var email = emailInput.value.trim();
+        if (!email) {
+            showMessage('メールアドレスを入力してください。', 'error');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            var resp = await fetch('/api/v1/auth/resend-verification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+            if (!resp.ok) {
+                var data = await resp.json().catch(function() { return {}; });
+                showMessage(data.detail || '再送信中にエラーが発生しました。しばらくしてからお試しください。', 'error');
+            } else {
+                showMessage('確認メールを再送信しました。受信トレイをご確認ください。', 'success');
+            }
+        } catch (err) {
+            showMessage('ネットワークエラーが発生しました。', 'error');
+        }
+        setLoading(false);
+    });
+})();
+</script>
+{% endblock %}

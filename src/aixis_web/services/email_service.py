@@ -479,3 +479,184 @@ def send_admin_new_client_notification(client_name: str, client_email: str, org_
 管理画面: https://platform.aixis.jp/dashboard/clients"""
 
     send_email(settings.smtp_to, subject, body_text)
+
+
+# ---------------------------------------------------------------------------
+# Free-registration: email verification
+# ---------------------------------------------------------------------------
+
+
+def send_email_verification(user_name: str, user_email: str, verify_url: str) -> None:
+    """Send an email verification link to a newly self-registered user."""
+    subject = "[Aixis] メールアドレスのご確認をお願いします"
+
+    body_text = f"""{user_name} 様
+
+Aixis AI監査プラットフォームへのご登録ありがとうございます。
+本メールは登録時にご入力いただいたメールアドレスの確認のため送信しています。
+
+下記のリンクをクリックしてメールアドレスの確認を完了してください:
+
+{verify_url}
+
+※このリンクは24時間で失効します。
+※心当たりのないメールの場合は、このメールを破棄してください。
+
+--
+Aixis | 独立系AI調査・監査機関
+https://platform.aixis.jp"""
+
+    html_content = f"""
+<h2 style="font-size:18px;margin:0 0 16px;color:#0f172a;">メールアドレスのご確認</h2>
+<p style="margin:0 0 16px;">{_sanitize_header(user_name)} 様</p>
+<p style="margin:0 0 16px;">
+Aixis AI監査プラットフォームへのご登録ありがとうございます。<br>
+本メールは登録時にご入力いただいたメールアドレスの確認のため送信しています。
+</p>
+<p style="margin:24px 0;">
+  <a href="{verify_url}" style="display:inline-block;padding:12px 28px;background:#0ea5e9;color:#ffffff;text-decoration:none;font-weight:600;border-radius:2px;">
+    メールアドレスを確認する
+  </a>
+</p>
+<p style="margin:0 0 8px;font-size:12px;color:#64748b;">
+ボタンが機能しない場合は、下記のURLをブラウザに貼り付けてください:<br>
+<span style="word-break:break-all;color:#0ea5e9;">{verify_url}</span>
+</p>
+<p style="margin:16px 0 0;font-size:12px;color:#64748b;">
+※このリンクは24時間で失効します。<br>
+※心当たりのないメールの場合は、このメールを破棄してください。
+</p>
+"""
+
+    send_email(user_email, subject, body_text, _wrap_html(html_content))
+    logger.info("Email verification sent to %s", user_email)
+
+
+def send_registration_welcome(user_name: str, user_email: str) -> None:
+    """Welcome message sent after the user successfully verifies their email."""
+    subject = "[Aixis] ご登録ありがとうございます — ご利用案内"
+
+    body_text = f"""{user_name} 様
+
+Aixis AI監査プラットフォームへのご登録が完了しました。
+
+本日より、以下のコンテンツを無料でご利用いただけます:
+
+■ 全ツールの5軸詳細スコア
+■ スコア推移・カテゴリ内ポジショニング
+■ 強み・弱み・リスク分析
+■ リスクガバナンス詳細
+■ 最大10件のツール比較
+■ 監査レポートPDFダウンロード
+
+----------
+次のステップ: 貴社業務に合うAIツールを見つける
+----------
+
+1. ツール一覧を閲覧
+   https://platform.aixis.jp/tools
+
+2. カテゴリから探す（資料作成AI / 議事録AI / 翻訳AI）
+   https://platform.aixis.jp/categories
+
+3. 複数ツールを比較する
+   https://platform.aixis.jp/compare
+
+----------
+「結局、うちの会社には何を導入すべきか?」にお答えします
+----------
+
+プラットフォームの汎用データは業界横断の参考情報です。
+貴社固有の業務要件・運用制約・既存ツール構成を反映した個別評価をご希望の方は、
+アドバイザリー監査をご検討ください:
+
+  ■ スポット監査 ¥29,800 / 1ツール
+    貴社の業務要件に合わせた単一ツール評価
+
+  ■ ベンチマーク監査 ¥98,000 / 3〜5ツール
+    貴社の選定基準でのツール比較
+
+  ■ ガバナンス監査 ¥198,000〜
+    組織全体のAI導入ガバナンス評価
+
+詳細・お問い合わせ:
+https://aixis.jp/contact?subject=advisory
+
+--
+Aixis | 独立系AI調査・監査機関
+https://platform.aixis.jp
+info@aixis.jp"""
+
+    html_content = f"""
+<h2 style="font-size:18px;margin:0 0 16px;color:#0f172a;">ご登録ありがとうございます</h2>
+<p style="margin:0 0 16px;">{_sanitize_header(user_name)} 様</p>
+<p style="margin:0 0 16px;">
+Aixis AI監査プラットフォームへのご登録が完了しました。<br>
+本日より、以下のコンテンツを無料でご利用いただけます。
+</p>
+<ul style="margin:0 0 20px;padding-left:20px;line-height:1.8;">
+  <li>全ツールの5軸詳細スコア</li>
+  <li>スコア推移・カテゴリ内ポジショニング</li>
+  <li>強み・弱み・リスク分析</li>
+  <li>リスクガバナンス詳細</li>
+  <li>最大10件のツール比較</li>
+  <li>監査レポートPDFダウンロード</li>
+</ul>
+<p style="margin:24px 0 8px;font-weight:600;color:#0f172a;">次のステップ</p>
+<p style="margin:0 0 16px;">
+  <a href="https://platform.aixis.jp/tools" style="display:inline-block;padding:10px 20px;background:#0ea5e9;color:#ffffff;text-decoration:none;font-weight:600;border-radius:2px;">
+    ツール一覧を見る
+  </a>
+</p>
+<hr style="border:0;border-top:1px solid #e5e7eb;margin:32px 0;">
+<p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#0f172a;">
+「結局、うちの会社には何を導入すべきか?」にお答えします
+</p>
+<p style="margin:0 0 12px;font-size:13px;line-height:1.7;color:#475569;">
+プラットフォームの汎用データは業界横断の参考情報です。
+貴社固有の業務要件・運用制約・既存ツール構成を反映した個別評価をご希望の方は、アドバイザリー監査をご検討ください。
+</p>
+<ul style="margin:0 0 16px;padding-left:20px;font-size:13px;line-height:1.7;color:#475569;">
+  <li>スポット監査 ¥29,800 / 1ツール</li>
+  <li>ベンチマーク監査 ¥98,000 / 3〜5ツール</li>
+  <li>ガバナンス監査 ¥198,000〜</li>
+</ul>
+<p style="margin:0;">
+  <a href="https://aixis.jp/contact?subject=advisory" style="color:#0ea5e9;font-size:13px;">アドバイザリー監査のお問い合わせはこちら →</a>
+</p>
+"""
+
+    send_email(user_email, subject, body_text, _wrap_html(html_content))
+    logger.info("Welcome (post-verification) email sent to %s", user_email)
+
+
+def send_admin_new_registration_notification(
+    user_name: str,
+    user_email: str,
+    company_name: str,
+    job_title: str,
+    industry: str,
+    employee_count: str,
+) -> None:
+    """Notify admin (info@aixis.jp) when a new free-registered user appears."""
+    subject = f"[Aixisリード] 新規登録: {user_name} / {company_name}"
+
+    body_text = f"""新しい無料登録ユーザーがいます。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+お名前        {user_name}
+メール        {user_email}
+会社名        {company_name}
+役職          {job_title}
+業種          {industry}
+会社規模      {employee_count}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+リード管理画面:
+https://platform.aixis.jp/dashboard/leads
+
+このユーザーの詳細・閲覧履歴・リードスコアはダッシュボードから確認できます。
+アドバイザリー監査の営業タイミングを確認してください。"""
+
+    send_email(settings.smtp_to, subject, body_text)
+    logger.info("Admin new-registration notification sent for %s", user_email)

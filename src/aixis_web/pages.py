@@ -481,6 +481,70 @@ async def login_page(request: Request, user: _OptionalUser = None):
     return _render("public/login.html", ctx)
 
 
+@page_router.get("/register")
+async def register_page(request: Request, user: _OptionalUser = None):
+    """Free self-registration page (2026-04-15 pivot).
+
+    Redirects authenticated users away since they are already registered.
+    """
+    if user:
+        if user.role in _DASHBOARD_ROLES:
+            return RedirectResponse(url="/dashboard", status_code=302)
+        return RedirectResponse(url="/tools", status_code=302)
+    ctx = _get_template_context(
+        request,
+        title="無料登録",
+        active_page="register",
+        turnstile_site_key=settings.turnstile_site_key,
+    )
+    return _render("public/register.html", ctx)
+
+
+@page_router.get("/register-pending")
+async def register_pending_page(request: Request, user: _OptionalUser = None):
+    """Shown after successful registration — tells the user to check their email."""
+    if user:
+        if user.role in _DASHBOARD_ROLES:
+            return RedirectResponse(url="/dashboard", status_code=302)
+        return RedirectResponse(url="/tools", status_code=302)
+    email_hint = (request.query_params.get("email") or "").strip()[:320]
+    ctx = _get_template_context(
+        request,
+        title="確認メールを送信しました",
+        active_page="register-pending",
+        email_hint=email_hint,
+    )
+    return _render("public/register-pending.html", ctx)
+
+
+@page_router.get("/verify-email-success")
+async def verify_email_success_page(request: Request, user: _OptionalUser = None):
+    """Shown after the email-verification token is consumed successfully.
+
+    At this point the auth cookie has been set by the /api/v1/auth/verify-email
+    handler, so `user` should be populated on this request.
+    """
+    ctx = _get_template_context(
+        request,
+        user=user,
+        title="メール認証完了",
+        active_page="verify-email-success",
+    )
+    return _render("public/verify-email-success.html", ctx)
+
+
+@page_router.get("/verify-email-failed")
+async def verify_email_failed_page(request: Request, user: _OptionalUser = None):
+    """Shown when an email-verification link is invalid, expired, or already used."""
+    ctx = _get_template_context(
+        request,
+        user=user,
+        title="メール認証に失敗しました",
+        active_page="verify-email-failed",
+    )
+    return _render("public/verify-email-failed.html", ctx)
+
+
 @page_router.get("/forgot-password")
 async def forgot_password_page(request: Request, user: _OptionalUser = None):
     """Forgot password page."""
@@ -1059,6 +1123,10 @@ Disallow: /dashboard/
 Disallow: /api/
 Disallow: /api/v1/debug/
 Disallow: /login
+Disallow: /register
+Disallow: /register-pending
+Disallow: /verify-email-success
+Disallow: /verify-email-failed
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /invite/

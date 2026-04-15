@@ -113,6 +113,26 @@ async def login(
             detail="アカウントが無効化されています",
         )
 
+    # Email verification gate (2026-04-15 pivot).
+    # Admin / analyst / auditor accounts are manually provisioned and exempt.
+    # Free-registered users must click the verification link in their email
+    # before they can log in. We return a structured error so the login page
+    # can surface a "確認メールを再送信" CTA instead of a generic failure.
+    _VERIFICATION_EXEMPT_ROLES = {"admin", "analyst", "auditor"}
+    if (
+        (user.role or "").lower() not in _VERIFICATION_EXEMPT_ROLES
+        and getattr(user, "email_verified_at", None) is None
+    ):
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "メール認証が完了していません。ご登録のメールアドレスに送信された"
+                "確認リンクをクリックしてください。メールが見つからない場合は再送信できます。"
+            ),
+            headers={"X-Aixis-Auth-Reason": "email_not_verified"},
+        )
+
     # Remember Me: extend token lifetime from default (60min) to 7 days
     from datetime import timedelta
     if body.remember_me:
@@ -513,3 +533,293 @@ async def clear_rate_limit(
     result = await db.execute(delete(RateLimitEntry))
     await db.commit()
     return {"message": f"レート制限をクリアしました（{result.rowcount}件削除）"}
+
+
+# ---------------------------------------------------------------------------
+# Free self-registration (2026-04-15 pivot)
+# ---------------------------------------------------------------------------
+
+# Register/verify rate limit windows (stricter than login to prevent abuse)
+_REGISTER_MAX_PER_IP = 5          # 5 registrations per IP per hour
+_REGISTER_WINDOW_SECONDS = 3600
+_VERIFY_RESEND_MAX_PER_IP = 3     # 3 resend requests per IP per hour
+_VERIFY_RESEND_WINDOW_SECONDS = 3600
+
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+async def register(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Self-registration for free access to the platform DB.
+
+    Flow:
+      1. Rate-limit by IP
+      2. Optional Cloudflare Turnstile verification
+      3. Validate password, check HIBP, check disposable email, check duplicate
+      4. Create User (subscription_tier="registered", email_verified_at=None)
+      5. Issue EmailVerificationToken, send verification email
+      6. Return 201 with "check your email" message
+    """
+    from ...schemas.auth import RegisterRequest, RegisterResponse
+    from ...services.registration_service import (
+        RegistrationError,
+        register_new_user,
+        verify_turnstile,
+    )
+    from ...services.email_service import (
+        send_admin_new_registration_notification,
+        send_email_verification,
+    )
+
+    # Parse the body manually so we can keep FastAPI's auto-validation but also
+    # defer the schema import to runtime.
+    try:
+        raw_body = await request.json()
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="リクエストボディの形式が不正です",
+        )
+    try:
+        payload = RegisterRequest.model_validate(raw_body)
+    except Exception as exc:
+        # Surface the first readable validation error
+        message = "入力内容に誤りがあります"
+        try:
+            errs = getattr(exc, "errors", None)
+            if callable(errs):
+                first = next(iter(errs() or []), None)
+                if first and isinstance(first, dict):
+                    msg = first.get("msg") or first.get("message")
+                    if msg:
+                        message = str(msg)
+        except Exception:
+            pass
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+    client_ip = get_client_ip(request)
+
+    # 1. Rate limit
+    if client_ip not in _ADMIN_IPS:
+        try:
+            allowed, retry_after = await check_rate_limit(
+                db, f"register:{client_ip}", _REGISTER_MAX_PER_IP, _REGISTER_WINDOW_SECONDS
+            )
+            if not allowed:
+                await db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="登録リクエストが多すぎます。しばらくしてから再度お試しください。",
+                    headers={"Retry-After": str(retry_after)},
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="サービスが一時的に利用できません。しばらくしてから再度お試しください。",
+            )
+
+    # 2. Turnstile (opt-in; bypassed when keys are unset)
+    turnstile_ok = await verify_turnstile(payload.turnstile_token, client_ip)
+    if not turnstile_ok:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ボット対策の確認に失敗しました。もう一度お試しください。",
+        )
+
+    # 3-5. Create user and issue verification token
+    try:
+        user, raw_token = await register_new_user(
+            db,
+            payload,
+            client_ip=client_ip,
+            user_agent=request.headers.get("user-agent", "")[:500],
+        )
+    except RegistrationError as exc:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
+
+    await db.commit()
+
+    # 6. Send verification email + admin notification (best-effort)
+    try:
+        verify_url = f"{settings.site_origin}/api/v1/auth/verify-email?token={raw_token}"
+        send_email_verification(user.name, user.email, verify_url)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning(
+            "Failed to send verification email to %s (user created but no email)",
+            user.email,
+        )
+
+    try:
+        send_admin_new_registration_notification(
+            user_name=user.name,
+            user_email=user.email,
+            company_name=user.company_name or "",
+            job_title=user.job_title or "",
+            industry=user.industry or "",
+            employee_count=user.employee_count or "",
+        )
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning(
+            "Failed to send admin notification for new registration %s",
+            user.email,
+        )
+
+    return RegisterResponse(
+        message="ご登録ありがとうございます。確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。",
+        email=user.email,
+    )
+
+
+@router.get("/verify-email")
+async def verify_email_get(
+    token: str,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Verify an email-verification token and auto-login the user.
+
+    This GET endpoint is designed to be called directly from the email link:
+    on success we set the auth cookie and redirect to /verify-email-success.
+    """
+    from datetime import timedelta as _td
+
+    from fastapi.responses import RedirectResponse
+
+    from ...services.registration_service import consume_verification_token
+    from ...services.email_service import send_registration_welcome
+
+    if not token or len(token) > 512:
+        return RedirectResponse(url="/verify-email-failed", status_code=303)
+
+    user = await consume_verification_token(db, token)
+    if not user:
+        await db.commit()
+        return RedirectResponse(url="/verify-email-failed", status_code=303)
+
+    await db.commit()
+
+    # Fire the welcome email (best-effort)
+    try:
+        send_registration_welcome(user.name, user.email)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("Welcome email failed for %s", user.email)
+
+    # Auto-login after verification: mint an access token + cookie
+    token_expiry = _td(minutes=settings.access_token_expire_minutes)
+    access_token = create_access_token(
+        data={"sub": user.id, "role": user.role},
+        expires_delta=token_expiry,
+    )
+    try:
+        from ...services.session_service import create_session
+        from jose import jwt as jose_jwt
+        payload = jose_jwt.decode(access_token, settings.secret_key, algorithms=["HS256"])
+        jti = payload.get("jti", "")
+        await create_session(
+            db,
+            user_id=user.id,
+            jti=jti,
+            ip_address=get_client_ip(request),
+            user_agent=request.headers.get("user-agent", "")[:500],
+        )
+        await db.commit()
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("Session creation after verify failed")
+
+    is_production = not settings.debug
+    redirect = RedirectResponse(url="/verify-email-success", status_code=303)
+    redirect.set_cookie(
+        key="aixis_token",
+        value=access_token,
+        max_age=int(token_expiry.total_seconds()),
+        path="/",
+        httponly=True,
+        samesite="lax",
+        secure=is_production,
+    )
+    redirect.set_cookie(
+        key="__Host-aixis_csrf" if is_production else "aixis_csrf",
+        value=secrets.token_urlsafe(32),
+        max_age=86400,
+        path="/",
+        httponly=False,
+        samesite="lax",
+        secure=is_production,
+    )
+    return redirect
+
+
+@router.post("/resend-verification", status_code=status.HTTP_200_OK)
+async def resend_verification(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Re-issue an email-verification token for an unverified user.
+
+    Always returns 200 to prevent user enumeration.
+    """
+    from ...schemas.auth import ResendVerificationRequest
+    from ...services.registration_service import resend_verification_email_token
+    from ...services.email_service import send_email_verification
+
+    try:
+        raw_body = await request.json()
+        payload = ResendVerificationRequest.model_validate(raw_body)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="リクエストボディの形式が不正です",
+        )
+
+    client_ip = get_client_ip(request)
+
+    # Rate limit
+    if client_ip not in _ADMIN_IPS:
+        try:
+            allowed, retry_after = await check_rate_limit(
+                db,
+                f"verify_resend:{client_ip}",
+                _VERIFY_RESEND_MAX_PER_IP,
+                _VERIFY_RESEND_WINDOW_SECONDS,
+            )
+            if not allowed:
+                await db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="再送信リクエストが多すぎます。しばらくしてから再度お試しください。",
+                    headers={"Retry-After": str(retry_after)},
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            pass
+
+    result = await resend_verification_email_token(db, payload.email)
+    if result is not None:
+        user, raw = result
+        await db.commit()
+        try:
+            verify_url = f"{settings.site_origin}/api/v1/auth/verify-email?token={raw}"
+            send_email_verification(user.name, user.email, verify_url)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning(
+                "Failed to send verification email to %s", user.email
+            )
+    else:
+        await db.commit()
+
+    return {
+        "message": "確認メールを再送信しました。メール内のリンクをご確認ください。"
+    }

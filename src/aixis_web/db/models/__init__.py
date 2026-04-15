@@ -65,6 +65,12 @@ from .audit_log import AuditLog
 # Password reset tokens
 from .password_reset import PasswordResetToken
 
+# Email verification tokens (free registration)
+from .email_verification import EmailVerificationToken
+
+# Lead activity tracking (behavior-based lead scoring)
+from .lead_activity import LeadActivity
+
 # Persistent app settings (survives Railway redeploys)
 from .app_setting import AppSetting
 
@@ -132,6 +138,10 @@ __all__ = [
     "AuditLog",
     # password reset
     "PasswordResetToken",
+    # email verification
+    "EmailVerificationToken",
+    # lead activity
+    "LeadActivity",
     # app settings
     "AppSetting",
 ]

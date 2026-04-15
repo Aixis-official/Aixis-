@@ -88,6 +88,8 @@ _CSRF_EXEMPT_PREFIXES = (
     "/api/public/",
     "/api/v1/health",
     "/api/v1/auth/login",
+    "/api/v1/auth/register",              # self-registration (no session yet)
+    "/api/v1/auth/resend-verification",   # re-send verification email (no session yet)
     "/api/v1/auth/forgot-password",
     "/api/v1/auth/reset-password",
     "/api/v1/clients/invite/",  # Public invite completion (no session to hijack)
@@ -198,17 +200,26 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             nonce = request.state.csp_nonce
             extra_script = f" {_UMAMI_ORIGIN}" if _UMAMI_ORIGIN else ""
             extra_connect = f" {_UMAMI_ORIGIN}" if _UMAMI_ORIGIN else ""
+            # Cloudflare Turnstile (opt-in via env). Only allow-listed when the
+            # site key is configured — keeps the prod CSP minimal otherwise.
+            turnstile_enabled = bool(
+                getattr(settings, "turnstile_site_key", "")
+                and getattr(settings, "turnstile_secret_key", "")
+            )
+            extra_script_turnstile = " https://challenges.cloudflare.com" if turnstile_enabled else ""
+            extra_frame_turnstile = "frame-src https://challenges.cloudflare.com" if turnstile_enabled else "frame-src 'self'"
             csp_directives = [
                 "default-src 'self'",
                 (
                     f"script-src 'self' 'nonce-{nonce}' 'unsafe-hashes' "
                     f"{_PUBLIC_HANDLER_HASHES} "
-                    f"https://cdn.plot.ly{extra_script}"
+                    f"https://cdn.plot.ly{extra_script}{extra_script_turnstile}"
                 ),
                 "style-src 'self' 'unsafe-inline'",
                 "font-src 'self'",
                 "img-src 'self' data: https:",
                 f"connect-src 'self'{extra_connect}",
+                extra_frame_turnstile,
                 "frame-ancestors 'none'",
                 "base-uri 'self'",
                 "form-action 'self'",
@@ -218,7 +229,16 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
         # --- Referrer-Policy: stricter for sensitive pages ---
         path = request.url.path
-        if path in ("/login", "/reset-password", "/forgot-password", "/invite"):
+        if path in (
+            "/login",
+            "/register",
+            "/reset-password",
+            "/forgot-password",
+            "/invite",
+            "/verify-email-success",
+            "/verify-email-failed",
+            "/register-pending",
+        ):
             response.headers["Referrer-Policy"] = "no-referrer"
         else:
             response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"

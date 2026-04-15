@@ -43,7 +43,13 @@
                     <svg id="login-error-icon" class="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
                     </svg>
-                    <span id="login-error-text"></span>
+                    <div class="flex-1 min-w-0">
+                        <span id="login-error-text"></span>
+                        <button type="button" id="login-resend-btn"
+                                class="hidden mt-2 inline-flex items-center gap-1 text-xs font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity">
+                            <span id="login-resend-text">確認メールを再送信</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -108,12 +114,11 @@
 
             <!-- Links -->
             <div class="space-y-3 text-center">
-                <p class="text-xs text-gray-400">
+                <p class="text-xs text-gray-500">
                     アカウントをお持ちでない方は
-                    <a href="/contact" class="text-gray-600 hover:text-gray-900 underline underline-offset-2 transition-colors">
-                        お問い合わせ
+                    <a href="/register" class="text-gray-800 hover:text-gray-900 font-semibold underline underline-offset-2 transition-colors">
+                        無料登録
                     </a>
-                    ください
                 </p>
                 <a href="/"
                    class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors duration-200">
@@ -147,16 +152,24 @@
 
     var errorText = document.getElementById('login-error-text');
     var errorIcon = document.getElementById('login-error-icon');
+    var resendBtn = document.getElementById('login-resend-btn');
+    var resendText = document.getElementById('login-resend-text');
 
     function showError(msg, type) {
         errorText.textContent = msg;
         errorDiv.classList.remove('hidden');
+        resendBtn.classList.add('hidden');
         // Reset classes
         errorDiv.className = 'mb-6 rounded-lg border px-4 py-3 text-sm leading-relaxed';
         if (type === 'lock') {
             // Rate limit / lockout — amber warning
             errorDiv.classList.add('bg-amber-50', '', 'border-amber-200', '', 'text-amber-800', '');
             errorIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>';
+        } else if (type === 'unverified') {
+            // Email not verified — amber with resend action
+            errorDiv.classList.add('bg-amber-50', '', 'border-amber-200', '', 'text-amber-800', '');
+            errorIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>';
+            resendBtn.classList.remove('hidden');
         } else {
             // Auth error — red
             errorDiv.classList.add('bg-red-50', '', 'border-red-200', '', 'text-red-700', '');
@@ -166,7 +179,36 @@
 
     function hideError() {
         errorDiv.classList.add('hidden');
+        resendBtn.classList.add('hidden');
     }
+
+    // Resend verification email when the "not verified" CTA is clicked.
+    resendBtn.addEventListener('click', async function() {
+        var email = document.getElementById('email').value;
+        if (!email) {
+            resendText.textContent = 'メールアドレスを入力してください';
+            return;
+        }
+        resendBtn.disabled = true;
+        resendText.textContent = '送信中...';
+        try {
+            var resp = await fetch('/api/v1/auth/resend-verification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+            if (resp.ok) {
+                resendText.textContent = '送信しました。メールをご確認ください';
+            } else {
+                var data = await resp.json().catch(function() { return {}; });
+                resendText.textContent = data.detail || '再送信に失敗しました';
+                resendBtn.disabled = false;
+            }
+        } catch (e) {
+            resendText.textContent = 'ネットワークエラーが発生しました';
+            resendBtn.disabled = false;
+        }
+    });
 
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -188,7 +230,16 @@
             if (!resp.ok) {
                 var data = await resp.json().catch(function() { return {}; });
                 var errMsg = data.detail || 'メールアドレスまたはパスワードが正しくありません。';
-                var errType = (resp.status === 429) ? 'lock' : 'auth';
+                var errType = 'auth';
+                if (resp.status === 429) {
+                    errType = 'lock';
+                } else if (
+                    resp.status === 403 &&
+                    (resp.headers.get('X-Aixis-Auth-Reason') === 'email_not_verified' ||
+                     /メール認証/.test(errMsg))
+                ) {
+                    errType = 'unverified';
+                }
                 showError(errMsg, errType);
                 setLoading(false);
                 return;

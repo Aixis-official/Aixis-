@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block meta_robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block page_title_tag %}<title>メール認証完了 - Aixis</title>{% endblock %}
+
+{% block head %}
+<style>
+    .success-bg {
+        background-color: #fafafa;
+    }
+    .dark .success-bg {
+        background: linear-gradient(135deg, #060d19 0%, #0f1f36 50%, #162d4d 100%);
+    }
+    .success-card {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .dark .success-card {
+        box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+    .feature-item {
+        border-left: 2px solid #e5e7eb;
+        padding-left: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="success-bg min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-xl">
+
+        <!-- Card -->
+        <div class="success-card bg-white border border-gray-200 p-8 sm:p-12">
+
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <a href="/" class="inline-block">
+                    <img src="/static/img/Aixis-logo-final.png" alt="Aixis（アイクシス） — 独立系AI監査プラットフォーム" class="h-10 mx-auto" width="40" height="40">
+                </a>
+                <p class="mt-3 text-xs text-gray-400 tracking-wider uppercase font-serif">
+                    AI Audit Platform
+                </p>
+            </div>
+
+            <!-- Check-mark hero -->
+            <div class="flex justify-center mb-6">
+                <div class="w-20 h-20 rounded-full bg-green-50 border border-green-200 flex items-center justify-center">
+                    <svg class="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <h1 class="text-2xl font-serif font-semibold text-gray-900 text-center mb-3">
+                登録が完了しました
+            </h1>
+            <p class="text-sm text-gray-500 text-center leading-relaxed mb-8">
+                {% if user %}<strong class="text-gray-800">{{ user.name }}</strong> さん、{% endif %}メール認証が完了し、Aixis AI監査プラットフォームをすべてご利用いただけます。
+            </p>
+
+            <!-- What you can do now -->
+            <div class="space-y-4 mb-8">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">ご利用いただける機能</h2>
+
+                <div class="feature-item">
+                    <h3 class="text-sm font-semibold text-gray-800">5軸スコアの詳細</h3>
+                    <p class="text-xs text-gray-500 leading-relaxed mt-0.5">
+                        実務適性・費用対効果・ローカライゼーション・安全性・革新性の監査根拠
+                    </p>
+                </div>
+
+                <div class="feature-item">
+                    <h3 class="text-sm font-semibold text-gray-800">リスク・ガバナンス情報</h3>
+                    <p class="text-xs text-gray-500 leading-relaxed mt-0.5">
+                        インシデント履歴、プライバシー懸念、コンプライアンス対応状況
+                    </p>
+                </div>
+
+                <div class="feature-item">
+                    <h3 class="text-sm font-semibold text-gray-800">比較・PDF出力</h3>
+                    <p class="text-xs text-gray-500 leading-relaxed mt-0.5">
+                        複数ツールの並列比較、監査レポートPDFのダウンロード
+                    </p>
+                </div>
+            </div>
+
+            <!-- Primary CTAs -->
+            <div class="space-y-3 mb-6">
+                <a href="/tools"
+                   class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#0f172a] hover:bg-[#1e293b] text-white font-semibold text-sm transition-colors duration-200">
+                    AIツールを探す
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                </a>
+
+                <a href="/categories"
+                   class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 font-semibold text-sm transition-colors duration-200">
+                    カテゴリー別に見る
+                </a>
+            </div>
+
+            <!-- Advisory Audit CTA -->
+            <div class="bg-gray-50 border border-gray-100 rounded-md px-5 py-4">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">もっと踏み込んだご相談は</p>
+                <h3 class="text-sm font-semibold text-gray-900 leading-snug mb-1.5">
+                    「結局うちの会社にはどんなAIを導入すればいいの？」
+                </h3>
+                <p class="text-xs text-gray-600 leading-relaxed mb-3">
+                    Aixisの「アドバイザリー監査」は、貴社の業務・制約・リスク許容度に合わせて最適なAIツールをご提案する独立系コンサルティングサービスです。
+                </p>
+                <a href="https://aixis.jp/contact?source=platform_verify_success"
+                   class="inline-flex items-center gap-1 text-xs text-gray-900 font-semibold underline underline-offset-2 hover:text-gray-700 transition-colors">
+                    アドバイザリー監査の詳細
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

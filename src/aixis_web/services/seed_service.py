@@ -1,6 +1,7 @@
 """Seed master data from YAML config files on first startup."""
 
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -30,12 +31,18 @@ async def _seed_admin_user(db: AsyncSession) -> None:
     """Create or update the admin user on every startup."""
     from ..api.deps import hash_password
 
+    now = datetime.now(timezone.utc)
     result = await db.execute(
         select(User).where(User.email == settings.admin_email)
     )
     existing = result.scalar_one_or_none()
     if existing:
         existing.is_active = True
+        # Grandfather the admin through the email-verification gate added
+        # 2026-04-15. Admin accounts are manually provisioned and are not
+        # required to verify their mailbox.
+        if existing.email_verified_at is None:
+            existing.email_verified_at = now
         logger.info("Admin user already exists, skipping password overwrite: %s", settings.admin_email)
         return
 
@@ -59,6 +66,8 @@ async def _seed_admin_user(db: AsyncSession) -> None:
         role="admin",
         is_active=True,
         organization_id=org.id,
+        # Admin accounts skip email verification — provisioned by humans.
+        email_verified_at=now,
     )
     db.add(admin)
     logger.info("Created admin user: %s", settings.admin_email)
