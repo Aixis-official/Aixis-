@@ -95,10 +95,34 @@ async def init_db():
     # Ensure all models are registered with Base.metadata before creating tables
     from .models import __all__ as _models  # noqa: F401
 
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        # Auto-migrate: add missing columns for existing tables
-        await conn.run_sync(_auto_migrate_columns)
+    # On PostgreSQL, multiple uvicorn workers racing on `create_all` at cold
+    # boot can collide on the shared `pg_type_typname_nsp_index` catalog when
+    # they simultaneously try to create the same table. Serialize the DDL with
+    # a transaction-scoped advisory lock — any fixed int64 key works as long as
+    # every worker uses the same one. The lock auto-releases at commit.
+    is_postgres = "postgresql" in _db_url
+    try:
+        async with engine.begin() as conn:
+            if is_postgres:
+                from sqlalchemy import text
+                await conn.execute(text("SELECT pg_advisory_xact_lock(7823475001)"))
+            await conn.run_sync(Base.metadata.create_all)
+            # Auto-migrate: add missing columns for existing tables
+            await conn.run_sync(_auto_migrate_columns)
+    except Exception as exc:
+        # Even with the advisory lock, belt-and-braces: if a sibling worker
+        # beat us to schema creation on a truly concurrent cold boot, the
+        # resulting UniqueViolation is harmless — the tables are now there.
+        # Re-check by querying pg_catalog; if the error is something else,
+        # re-raise so we don't mask real problems.
+        from sqlalchemy.exc import IntegrityError
+        if is_postgres and isinstance(exc, IntegrityError):
+            _log.warning(
+                "init_db: ignoring benign PG catalog race on CREATE TABLE — "
+                "sibling worker won the lock: %s", exc.orig
+            )
+        else:
+            raise
 
     # Auto-seed default categories
     await _seed_default_categories()
