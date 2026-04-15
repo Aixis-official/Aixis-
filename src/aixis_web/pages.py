@@ -32,6 +32,44 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.globals["now"] = lambda: datetime.now(timezone.utc)
 
 
+def _advisory_contact_url(
+    user: "User | None" = None,
+    source: str = "platform",
+    tool_slug: str | None = None,
+) -> str:
+    """Build a pre-filled aixis.jp/contact URL for advisory-audit CTAs.
+
+    Populates ``subject=advisory`` and, when a user is logged in, their
+    email/name/company so the form on the other side can pre-populate
+    itself. Always stamps ``source=platform_<location>`` for attribution.
+
+    Used by Jinja templates via the ``advisory_contact_url()`` global.
+    """
+    from urllib.parse import urlencode
+
+    params: list[tuple[str, str]] = [
+        ("subject", "advisory"),
+        ("source", f"platform_{source}"),
+    ]
+    if tool_slug:
+        params.append(("tool", tool_slug))
+    if user is not None:
+        if getattr(user, "email", None):
+            params.append(("email", user.email))
+        if getattr(user, "name", None):
+            params.append(("name", user.name))
+        if getattr(user, "company_name", None):
+            params.append(("company", user.company_name))
+        if getattr(user, "job_title", None):
+            params.append(("job_title", user.job_title))
+        if getattr(user, "phone", None):
+            params.append(("phone", user.phone))
+    return "https://aixis.jp/contact?" + urlencode(params)
+
+
+templates.env.globals["advisory_contact_url"] = _advisory_contact_url
+
+
 def _render(name: str, ctx: dict, status_code: int = 200):
     """Render template compatible with both old and new Starlette APIs."""
     request = ctx.pop("request")

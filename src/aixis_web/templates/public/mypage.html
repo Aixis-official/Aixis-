@@ -46,8 +46,9 @@
                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                         監査データベース
                     </a>
-                    <a href="https://aixis.jp/contact?source=platform_mypage"
+                    <a href="{{ advisory_contact_url(user, source='mypage') }}"
                        target="_blank" rel="noopener"
+                       data-track="advisory_cta_click"
                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors">
                         アドバイザリー監査のご相談
                     </a>
