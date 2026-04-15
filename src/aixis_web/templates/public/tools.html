@@ -143,23 +143,24 @@
     </div>
 
     <!-- ================================================================
-         2. Stats Row – refined KPIs
+         2. Stats Row – refined KPIs (SSR — platform-wide, does not change
+         with search/filter; current filter count shows in result-count)
          ================================================================ -->
-    <div id="stats-row" class="hidden grid grid-cols-4 gap-2 sm:gap-6 mb-4 sm:mb-6">
+    <div id="stats-row" class="grid grid-cols-4 gap-2 sm:gap-6 mb-4 sm:mb-6">
         <div class="text-center py-1 sm:py-4">
-            <div id="stat-tools" class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 tabular-nums tracking-tight font-serif">--</div>
+            <div class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 tabular-nums tracking-tight font-serif">{{ stats.audited_tools if stats else '--' }}</div>
             <div class="stat-label-mobile text-xs sm:text-xs uppercase tracking-wide text-gray-400 mt-1 font-serif">評価済みツール</div>
         </div>
         <div class="text-center py-1 sm:py-4">
-            <div id="stat-categories" class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 tabular-nums tracking-tight font-serif">--</div>
+            <div class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 tabular-nums tracking-tight font-serif">{{ stats.categories if stats else '--' }}</div>
             <div class="stat-label-mobile text-xs sm:text-xs uppercase tracking-wide text-gray-400 mt-1 font-serif">カテゴリ</div>
         </div>
         <div class="text-center py-1 sm:py-4">
-            <div id="stat-avg-score" class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 tabular-nums tracking-tight font-serif">--</div>
+            <div class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 tabular-nums tracking-tight font-serif">{% if stats and stats.average_score is not none %}{{ '%.2f'|format(stats.average_score) }}{% else %}--{% endif %}</div>
             <div class="stat-label-mobile text-xs sm:text-xs uppercase tracking-wide text-gray-400 mt-1 font-serif">平均スコア</div>
         </div>
         <div class="text-center py-1 sm:py-4">
-            <div id="stat-audits" class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 tabular-nums tracking-tight font-serif">--</div>
+            <div class="stat-num-mobile text-lg sm:text-4xl font-light text-gray-900 tabular-nums tracking-tight font-serif">{{ stats.total_audits if stats else '--' }}</div>
             <div class="stat-label-mobile text-xs sm:text-xs uppercase tracking-wide text-gray-400 mt-1 font-serif">総監査回数</div>
         </div>
     </div>
@@ -242,7 +243,7 @@
 
 {% block scripts %}
 <script nonce="{{ csp_nonce }}">window.__AIXIS_PAGE = { isLoggedIn: {{ 'true' if user else 'false' }} };</script>
-<script defer src="/static/js/tools-page.min.js?v=20260411a"></script>
+<script defer src="/static/js/tools-page.min.js?v=20260416a"></script>
 <!-- tools-page JS (29KB) extracted to external file for cacheability -->
 <style>
     /* Hide scrollbar for category pills horizontal scroll */

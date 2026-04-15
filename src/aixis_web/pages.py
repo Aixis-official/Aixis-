@@ -133,7 +133,7 @@ async def _get_platform_stats_for_ssr(db: AsyncSession) -> dict:
     Returns a plain dict suitable for Jinja2 context.
     """
     try:
-        from .api.v1.stats import get_platform_stats, _stats_cache, _STATS_TTL
+        from .api.v1.stats import _stats_cache, _STATS_TTL
 
         # Check cache first (same cache as the API endpoint)
         now_ts = time.time()
@@ -144,10 +144,13 @@ async def _get_platform_stats_for_ssr(db: AsyncSession) -> dict:
                 "categories": cached.categories,
                 "last_updated": cached.last_updated or "—",
                 "new_this_month": cached.new_this_month,
+                "total_audits": cached.total_audits,
+                "average_score": cached.average_score,
             }
 
         # Cache miss — run queries directly (lighter than calling the endpoint)
         from .db.models.tool import Tool
+        from .db.models.audit import AuditSession
         from .db.models.score import ToolPublishedScore
 
         tools_with_scores = await db.execute(
@@ -188,11 +191,42 @@ async def _get_platform_stats_for_ssr(db: AsyncSession) -> dict:
         )
         new_this_month = new_month.scalar() or 0
 
+        # Total completed audits (matches API endpoint semantics)
+        audit_count = await db.execute(
+            select(func.count()).select_from(AuditSession).where(
+                AuditSession.status == "completed"
+            )
+        )
+        total_audits = audit_count.scalar() or 0
+
+        # Platform-wide average overall score (latest published per tool)
+        latest_ver_sub = (
+            select(
+                ToolPublishedScore.tool_id,
+                func.max(ToolPublishedScore.version).label("max_ver"),
+            )
+            .group_by(ToolPublishedScore.tool_id)
+            .subquery()
+        )
+        avg_result = await db.execute(
+            select(func.avg(ToolPublishedScore.overall_score))
+            .join(
+                latest_ver_sub,
+                (ToolPublishedScore.tool_id == latest_ver_sub.c.tool_id)
+                & (ToolPublishedScore.version == latest_ver_sub.c.max_ver),
+            )
+            .where(ToolPublishedScore.overall_score.isnot(None))
+        )
+        avg_raw = avg_result.scalar()
+        average_score = round(float(avg_raw), 2) if avg_raw is not None else None
+
         return {
             "audited_tools": audited_tools,
             "categories": categories,
             "last_updated": last_updated,
             "new_this_month": new_this_month,
+            "total_audits": total_audits,
+            "average_score": average_score,
         }
     except Exception:
         _page_logger.debug("SSR stats fetch failed, using defaults", exc_info=True)
@@ -201,6 +235,8 @@ async def _get_platform_stats_for_ssr(db: AsyncSession) -> dict:
             "categories": "--",
             "last_updated": "—",
             "new_this_month": "--",
+            "total_audits": "--",
+            "average_score": None,
         }
 
 
@@ -253,9 +289,20 @@ async def landing(
 
 
 @page_router.get("/tools")
-async def tools_page(request: Request, user: _OptionalUser = None):
+async def tools_page(
+    request: Request,
+    user: _OptionalUser = None,
+    db: AsyncSession = Depends(get_db),
+):
     """Tool catalog page."""
-    ctx = _get_template_context(request, user=user, title="AIツール監査データベース | 独立5軸評価で比較", active_page="tools")
+    stats = await _get_platform_stats_for_ssr(db)
+    ctx = _get_template_context(
+        request,
+        user=user,
+        title="AIツール監査データベース | 独立5軸評価で比較",
+        active_page="tools",
+        stats=stats,
+    )
     return _render("public/tools.html", ctx)
 
 

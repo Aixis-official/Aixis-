@@ -271,12 +271,37 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
             response.headers["Pragma"] = "no-cache"
         elif not path.startswith(("/login", "/logout", "/reset-password", "/forgot-password", "/invite", "/api")):
-            # Public HTML pages — short CDN cache with must-revalidate so Googlebot
-            # always re-validates freshness on re-indexing requests, but human users
-            # still benefit from 1-hour edge caching.
-            response.headers.setdefault(
-                "Cache-Control", "public, max-age=3600, must-revalidate"
-            )
+            # Public HTML pages — the rendered nav varies with login state
+            # (`{% if user %}` in base.html), so we cannot serve a shared
+            # cache entry to everyone. Two cases:
+            #
+            #   1. Authenticated requests (aixis_token cookie or Bearer
+            #      header present) → mark ``private, no-store`` so CDN /
+            #      browser cannot reuse the logged-in HTML for anyone else
+            #      and cannot serve it back to the same user after logout.
+            #
+            #   2. Anonymous requests → still allow a 1-hour CDN edge cache
+            #      so Googlebot and first-time visitors get fast response,
+            #      but force ``Vary: Cookie`` so that once the visitor
+            #      acquires an aixis_token cookie the cache key changes and
+            #      they fetch a fresh, logged-in render.
+            has_auth_cookie = "aixis_token" in request.cookies
+            has_bearer = (request.headers.get("authorization") or "").lower().startswith("bearer ")
+            is_authenticated_hint = has_auth_cookie or has_bearer
+            if is_authenticated_hint:
+                response.headers["Cache-Control"] = "private, no-cache, no-store, must-revalidate"
+                response.headers["Pragma"] = "no-cache"
+            else:
+                response.headers.setdefault(
+                    "Cache-Control", "public, max-age=3600, must-revalidate"
+                )
+            # Always ensure downstream caches key on Cookie so the
+            # anonymous/logged-in variants never cross-contaminate.
+            existing_vary = response.headers.get("Vary", "")
+            if "cookie" not in existing_vary.lower():
+                response.headers["Vary"] = (
+                    f"{existing_vary}, Cookie" if existing_vary else "Cookie"
+                )
 
         # --- CSRF cookie (set on every response if not already present) ---
         if _CSRF_COOKIE not in request.cookies:

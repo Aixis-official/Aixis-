@@ -27,6 +27,10 @@ class PlatformStats(BaseModel):
     total_audits: int = 0
     last_updated: str | None = None
     new_this_month: int = 0
+    # Platform-wide average of the latest published overall score per tool.
+    # ``None`` when no tool has a published score yet. Exposed publicly —
+    # the aggregate does not reveal individual tool scores.
+    average_score: float | None = None
 
 
 @router.get("", response_model=PlatformStats)
@@ -96,12 +100,37 @@ async def get_platform_stats(
         )
         new_this_month = new_month.scalar() or 0
 
+        # Platform-wide average of each tool's latest published overall score.
+        # A tool can have multiple published versions — we only want the newest
+        # version per tool, then average across tools. ``overall_score`` is
+        # nullable so we filter it out before averaging.
+        latest_ver_sub = (
+            select(
+                ToolPublishedScore.tool_id,
+                func.max(ToolPublishedScore.version).label("max_ver"),
+            )
+            .group_by(ToolPublishedScore.tool_id)
+            .subquery()
+        )
+        avg_result = await db.execute(
+            select(func.avg(ToolPublishedScore.overall_score))
+            .join(
+                latest_ver_sub,
+                (ToolPublishedScore.tool_id == latest_ver_sub.c.tool_id)
+                & (ToolPublishedScore.version == latest_ver_sub.c.max_ver),
+            )
+            .where(ToolPublishedScore.overall_score.isnot(None))
+        )
+        avg_raw = avg_result.scalar()
+        average_score = round(float(avg_raw), 2) if avg_raw is not None else None
+
         result = PlatformStats(
             audited_tools=audited_tools,
             categories=categories,
             total_audits=total_audits,
             last_updated=last_updated,
             new_this_month=new_this_month,
+            average_score=average_score,
         )
         _stats_cache["data"] = result
         _stats_cache["ts"] = time.time()
