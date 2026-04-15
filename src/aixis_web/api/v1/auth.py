@@ -320,6 +320,56 @@ async def change_password(
     return {"message": "パスワードを変更しました"}
 
 
+@router.post("/complete-onboarding", status_code=status.HTTP_200_OK)
+async def complete_onboarding(
+    request: Request,
+    user: Annotated[User, Depends(require_auth)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Persist onboarding-wizard answers and mark the flow complete.
+
+    Accepts an optional `interest_areas` list (slugs from a fixed taxonomy)
+    which gets stored as JSON on the user row. The wizard itself is only
+    shown once — subsequent visits to /welcome redirect away.
+    """
+    import json
+    from datetime import datetime, timezone
+    from pydantic import BaseModel, Field
+
+    class CompleteOnboardingRequest(BaseModel):
+        interest_areas: list[str] = Field(default_factory=list, max_length=12)
+        referral_source: str | None = Field(default=None, max_length=100)
+
+    try:
+        body = CompleteOnboardingRequest(**(await request.json()))
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="リクエストボディの形式が不正です",
+        )
+
+    # Whitelist-filter the interest_area slugs against the known taxonomy
+    # so junk values can't be injected. Unknown slugs are silently dropped.
+    _ALLOWED_INTERESTS = {
+        "drafting", "summarization", "translation", "meetings", "coding",
+        "research", "customer_support", "data_analysis", "image_generation",
+        "marketing", "legal_compliance", "governance",
+    }
+    filtered = [s for s in body.interest_areas if s in _ALLOWED_INTERESTS]
+    user.interest_areas = json.dumps(filtered) if filtered else None
+
+    if body.referral_source and not user.referral_source:
+        user.referral_source = body.referral_source.strip()[:100]
+
+    user.onboarding_completed_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    return {
+        "message": "オンボーディングを完了しました",
+        "redirect_url": "/tools",
+    }
+
+
 @router.post("/forgot-password", status_code=status.HTTP_200_OK)
 async def forgot_password(
     request: Request,
@@ -708,7 +758,7 @@ async def verify_email_get(
     This GET endpoint is designed to be called directly from the email link:
     on success we set the auth cookie and redirect to /verify-email-success.
     """
-    from datetime import timedelta as _td
+    from datetime import datetime, timedelta as _td, timezone
 
     from fastapi.responses import RedirectResponse
 
@@ -722,6 +772,13 @@ async def verify_email_get(
     if not user:
         await db.commit()
         return RedirectResponse(url="/verify-email-failed", status_code=303)
+
+    # Enroll in email drip campaign — stage 1 means the welcome (day 0)
+    # email has been sent; the scheduler will then step through stages 2-5
+    # at day 3 / 7 / 14 / 30 based on email_verified_at.
+    if (user.drip_stage or 0) < 1:
+        user.drip_stage = 1
+        user.drip_last_sent_at = datetime.now(timezone.utc)
 
     await db.commit()
 
@@ -755,8 +812,11 @@ async def verify_email_get(
         import logging
         logging.getLogger(__name__).warning("Session creation after verify failed")
 
+    # First-time visitors land on /welcome (onboarding wizard). If they
+    # come back via the verification link again (e.g. resent from a bookmark),
+    # /welcome itself redirects completed users onward.
     is_production = not settings.debug
-    redirect = RedirectResponse(url="/verify-email-success", status_code=303)
+    redirect = RedirectResponse(url="/welcome", status_code=303)
     redirect.set_cookie(
         key="aixis_token",
         value=access_token,

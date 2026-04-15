@@ -660,3 +660,314 @@ https://platform.aixis.jp/dashboard/leads
 
     send_email(settings.smtp_to, subject, body_text)
     logger.info("Admin new-registration notification sent for %s", user_email)
+
+
+# ---------------------------------------------------------------------------
+# Drip campaign emails (Phase 5: day 3 / 7 / 14 / 30 after verification)
+# ---------------------------------------------------------------------------
+#
+# Day 0 is handled by `send_registration_welcome` (fired on verification).
+# The scheduler's _check_due_drip_emails() calls these in order based on
+# how many days have elapsed since user.email_verified_at.
+# Every drip email includes an unsubscribe/preferences line pointing at
+# mypage — when we add an opt-out endpoint in Phase 6 it will link here.
+
+
+def _drip_footer_text() -> str:
+    return (
+        "\n\n--\n"
+        "Aixis | 独立系AI調査・監査機関\n"
+        "配信停止・設定変更: https://platform.aixis.jp/mypage"
+    )
+
+
+def _drip_footer_html() -> str:
+    return (
+        '<p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #e5e7eb;'
+        'font-size:11px;color:#94a3b8;line-height:1.6;">'
+        '配信停止や設定変更は '
+        '<a href="https://platform.aixis.jp/mypage" style="color:#94a3b8;">'
+        'マイページ</a> からお手続きいただけます。</p>'
+    )
+
+
+def send_drip_industry_top5(
+    user_name: str,
+    user_email: str,
+    industry_label_jp: str | None,
+    top_tools: list[dict] | None = None,
+) -> None:
+    """Day 3: industry-specific top-tools digest.
+
+    ``top_tools`` is a list of dicts with keys: name_jp, vendor, slug, overall_grade.
+    If empty, falls back to a generic directory link.
+    """
+    scope = f"{industry_label_jp}業界" if industry_label_jp else "注目"
+    subject = f"[Aixis] {scope}で評価の高いAIツール"
+
+    if top_tools:
+        tools_txt = "\n".join(
+            f"■ {t['name_jp']}（{t.get('vendor', '') or '-'}）— 総合評価 "
+            f"{t.get('overall_grade', '-')}\n"
+            f"  https://platform.aixis.jp/tools/{t['slug']}"
+            for t in top_tools[:5]
+        )
+        tools_html = "".join(
+            f'<tr><td style="padding:10px 0;border-bottom:1px solid #f1f5f9;">'
+            f'<a href="https://platform.aixis.jp/tools/{t["slug"]}" '
+            f'style="color:#0f172a;text-decoration:none;font-weight:600;font-size:14px;">{t["name_jp"]}</a>'
+            f'<span style="color:#94a3b8;font-size:12px;"> — {t.get("vendor", "") or ""}</span>'
+            f'<div style="color:#64748b;font-size:12px;margin-top:2px;">総合評価 '
+            f'{t.get("overall_grade", "-")}</div>'
+            f"</td></tr>"
+            for t in top_tools[:5]
+        )
+    else:
+        tools_txt = "https://platform.aixis.jp/tools"
+        tools_html = (
+            '<tr><td style="padding:10px 0;">'
+            '<a href="https://platform.aixis.jp/tools" '
+            'style="color:#0ea5e9;font-size:14px;">ツール一覧を見る →</a>'
+            "</td></tr>"
+        )
+
+    body_text = f"""{user_name} 様
+
+Aixisへのご登録ありがとうございます。
+ご登録時に選択いただいた{scope}において、Aixisの独立監査で高評価を獲得しているAIツールをご紹介します。
+
+{tools_txt}
+
+──────────
+各ツールの詳細ページでは、実務適性・費用対効果・ローカライゼーション・安全性・革新性の5軸評価と、リスクガバナンス情報をご確認いただけます。
+
+業務要件に合わせた個別評価をご希望の方は、アドバイザリー監査もご検討ください:
+https://aixis.jp/contact?subject=advisory{_drip_footer_text()}"""
+
+    html_content = f"""
+<h2 style="font-size:18px;margin:0 0 16px;color:#0f172a;">{scope}で注目のAIツール</h2>
+<p style="margin:0 0 16px;">{_sanitize_header(user_name)} 様</p>
+<p style="margin:0 0 20px;">
+ご登録時に選択いただいた{scope}において、Aixisの独立監査で高評価を獲得しているツールをご紹介します。
+</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+{tools_html}
+</table>
+<p style="margin:0 0 8px;font-size:13px;color:#64748b;line-height:1.7;">
+各ツールの詳細ページでは、実務適性・費用対効果・ローカライゼーション・安全性・革新性の5軸評価と、
+リスクガバナンス情報をご確認いただけます。
+</p>
+<p style="margin:20px 0 0;font-size:13px;">
+  <a href="https://aixis.jp/contact?subject=advisory" style="color:#0ea5e9;">
+  業務要件に合わせた個別評価はアドバイザリー監査へ →</a>
+</p>
+{_drip_footer_html()}
+"""
+
+    send_email(user_email, subject, body_text, _wrap_html(html_content))
+    logger.info("Drip day-3 (industry top 5) sent to %s", user_email)
+
+
+def send_drip_advisory_intro(user_name: str, user_email: str) -> None:
+    """Day 7: introduce the advisory-audit service in more depth."""
+    subject = "[Aixis] アドバイザリー監査 — 貴社固有の判断のために"
+
+    body_text = f"""{user_name} 様
+
+Aixisをご利用いただきありがとうございます。
+
+プラットフォームに公開している監査データは、独立第三者の立場で作成された業界横断の参考情報です。
+ただし、実際の導入判断には「貴社固有の業務フロー」「取り扱うデータの機微度」「既存システムとの適合」
+といった個別要素が大きく影響します。
+
+Aixisの「アドバイザリー監査」は、これらの個別要素を反映した独立評価サービスです。
+
+■ スポット監査 ¥29,800 / 1ツール
+  貴社の業務要件に合わせた単一ツールの適合性評価
+
+■ ベンチマーク監査 ¥98,000 / 3〜5ツール
+  貴社の選定基準に沿った複数ツールの比較評価
+
+■ ガバナンス監査 ¥198,000〜
+  組織全体のAI導入ガバナンス評価
+
+──────────
+Aixisは特定のAIベンダーと資本・業務提携関係を持たない独立機関です。
+評価結果は中立性を担保したうえでご報告いたします。
+
+お問い合わせ:
+https://aixis.jp/contact?subject=advisory{_drip_footer_text()}"""
+
+    html_content = f"""
+<h2 style="font-size:18px;margin:0 0 16px;color:#0f172a;">貴社固有の判断のために</h2>
+<p style="margin:0 0 16px;">{_sanitize_header(user_name)} 様</p>
+<p style="margin:0 0 16px;">
+プラットフォームに公開している監査データは、独立第三者の立場で作成された業界横断の参考情報です。
+ただし、実際の導入判断には「貴社固有の業務フロー」「取り扱うデータの機微度」「既存システムとの適合」
+といった個別要素が大きく影響します。
+</p>
+<p style="margin:0 0 20px;">
+Aixisの<strong>アドバイザリー監査</strong>は、これらの個別要素を反映した独立評価サービスです。
+</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;background:#f8fafc;padding:16px;">
+<tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;">
+<div style="font-weight:600;color:#0f172a;font-size:14px;">スポット監査 ¥29,800 / 1ツール</div>
+<div style="font-size:12px;color:#64748b;margin-top:2px;">貴社の業務要件に合わせた単一ツールの適合性評価</div>
+</td></tr>
+<tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;">
+<div style="font-weight:600;color:#0f172a;font-size:14px;">ベンチマーク監査 ¥98,000 / 3〜5ツール</div>
+<div style="font-size:12px;color:#64748b;margin-top:2px;">貴社の選定基準に沿った複数ツールの比較評価</div>
+</td></tr>
+<tr><td style="padding:8px 0;">
+<div style="font-weight:600;color:#0f172a;font-size:14px;">ガバナンス監査 ¥198,000〜</div>
+<div style="font-size:12px;color:#64748b;margin-top:2px;">組織全体のAI導入ガバナンス評価</div>
+</td></tr>
+</table>
+<p style="margin:0 0 20px;font-size:12px;color:#94a3b8;line-height:1.6;">
+Aixisは特定のAIベンダーと資本・業務提携関係を持たない独立機関です。
+評価結果は中立性を担保したうえでご報告いたします。
+</p>
+<p style="margin:0;">
+  <a href="https://aixis.jp/contact?subject=advisory" style="display:inline-block;padding:12px 24px;background:#0f172a;color:#ffffff;text-decoration:none;font-weight:600;font-size:13px;">
+    アドバイザリー監査のご相談 →
+  </a>
+</p>
+{_drip_footer_html()}
+"""
+
+    send_email(user_email, subject, body_text, _wrap_html(html_content))
+    logger.info("Drip day-7 (advisory intro) sent to %s", user_email)
+
+
+def send_drip_free_consult(user_name: str, user_email: str) -> None:
+    """Day 14: offer a free 30-minute consultation."""
+    subject = "[Aixis] 30分無料相談 — AI導入の優先順位を整理しませんか"
+
+    body_text = f"""{user_name} 様
+
+Aixisのご登録から2週間が経過しました。AIツールの比較はお進みでしょうか。
+
+「AIを入れたいが、どこから始めるべきかわからない」
+「導入済みのツールが本当に最適なのか判断がつかない」
+「社内でAI活用の優先順位を整理する必要がある」
+
+このようなご状況であれば、Aixisのアナリストが30分の無料相談を承っております。
+
+■ お話しできる内容
+  ・貴社の業務フローに対して優先度の高いAI活用領域の整理
+  ・Aixisの監査データに基づく候補ツールの絞り込み
+  ・アドバイザリー監査の進め方・費用のご案内
+
+営業色のない、あくまで「判断を整理するための会話」としてご利用ください。
+ご希望の日時でご予約いただけます。
+
+お申し込み:
+https://aixis.jp/contact?subject=advisory{_drip_footer_text()}"""
+
+    html_content = f"""
+<h2 style="font-size:18px;margin:0 0 16px;color:#0f172a;">30分無料相談のご案内</h2>
+<p style="margin:0 0 16px;">{_sanitize_header(user_name)} 様</p>
+<p style="margin:0 0 16px;">
+Aixisのご登録から2週間が経過しました。AIツールの比較はお進みでしょうか。
+</p>
+<p style="margin:0 0 16px;padding:16px;background:#f8fafc;border-left:3px solid #0f172a;font-size:13px;color:#475569;line-height:1.8;">
+「AIを入れたいが、どこから始めるべきかわからない」<br>
+「導入済みのツールが本当に最適なのか判断がつかない」<br>
+「社内でAI活用の優先順位を整理する必要がある」
+</p>
+<p style="margin:0 0 16px;">
+このようなご状況であれば、Aixisのアナリストが<strong>30分の無料相談</strong>を承っております。
+</p>
+<h3 style="font-size:13px;margin:20px 0 8px;color:#0f172a;">お話しできる内容</h3>
+<ul style="margin:0 0 20px;padding-left:20px;font-size:13px;line-height:1.8;color:#475569;">
+  <li>貴社の業務フローに対して優先度の高いAI活用領域の整理</li>
+  <li>Aixisの監査データに基づく候補ツールの絞り込み</li>
+  <li>アドバイザリー監査の進め方・費用のご案内</li>
+</ul>
+<p style="margin:0 0 20px;font-size:12px;color:#94a3b8;line-height:1.6;">
+営業色のない、あくまで「判断を整理するための会話」としてご利用ください。
+</p>
+<p style="margin:0;">
+  <a href="https://aixis.jp/contact?subject=advisory" style="display:inline-block;padding:12px 24px;background:#0f172a;color:#ffffff;text-decoration:none;font-weight:600;font-size:13px;">
+    無料相談を予約する →
+  </a>
+</p>
+{_drip_footer_html()}
+"""
+
+    send_email(user_email, subject, body_text, _wrap_html(html_content))
+    logger.info("Drip day-14 (free consult) sent to %s", user_email)
+
+
+def send_drip_benchmark_pitch(user_name: str, user_email: str) -> None:
+    """Day 30: benchmark-audit case-study pitch."""
+    subject = "[Aixis] ベンチマーク監査 — 社内選定の納得感を定量化する"
+
+    body_text = f"""{user_name} 様
+
+Aixisのご登録から1ヶ月が経過しました。
+
+AIツール選定の現場でよく伺うお悩みがあります:
+「部門ごとに好みのツールがあり、全社統一の判断ができない」
+「稟議の際に定量的な比較根拠が求められる」
+「ベンダーの提案資料だけでは中立性に欠ける」
+
+Aixisの「ベンチマーク監査（¥98,000 / 3〜5ツール）」は、これらの場面で活用いただいているサービスです。
+
+■ ベンチマーク監査で納品するもの
+  ・貴社の選定基準に基づく評価マトリクス（独立第三者作成）
+  ・5軸評価 × 3〜5ツールの比較レポート
+  ・リスクガバナンス観点でのチェックリスト
+  ・社内稟議・役員会で利用できる整形済みPDF
+
+■ 実際の利用シーン
+  ・「議事録AIを全社導入するにあたって3ツール比較したい」
+  ・「営業部が使っているAIツールの代替候補を検討したい」
+  ・「ガバナンス部門の稟議のために中立評価が必要」
+
+プラットフォームの汎用データでは拾えない「貴社の判断基準での比較」を、
+2週間程度で納品いたします。
+
+お問い合わせ:
+https://aixis.jp/contact?subject=advisory{_drip_footer_text()}"""
+
+    html_content = f"""
+<h2 style="font-size:18px;margin:0 0 16px;color:#0f172a;">社内選定の納得感を定量化する</h2>
+<p style="margin:0 0 16px;">{_sanitize_header(user_name)} 様</p>
+<p style="margin:0 0 16px;">
+Aixisのご登録から1ヶ月が経過しました。AIツール選定の現場でよく伺うお悩みがあります。
+</p>
+<p style="margin:0 0 16px;padding:16px;background:#f8fafc;border-left:3px solid #0f172a;font-size:13px;color:#475569;line-height:1.8;">
+「部門ごとに好みのツールがあり、全社統一の判断ができない」<br>
+「稟議の際に定量的な比較根拠が求められる」<br>
+「ベンダーの提案資料だけでは中立性に欠ける」
+</p>
+<p style="margin:0 0 20px;">
+Aixisの<strong>ベンチマーク監査（¥98,000 / 3〜5ツール）</strong>は、これらの場面で活用いただいているサービスです。
+</p>
+<h3 style="font-size:13px;margin:20px 0 8px;color:#0f172a;">納品物</h3>
+<ul style="margin:0 0 20px;padding-left:20px;font-size:13px;line-height:1.8;color:#475569;">
+  <li>貴社の選定基準に基づく評価マトリクス（独立第三者作成）</li>
+  <li>5軸評価 × 3〜5ツールの比較レポート</li>
+  <li>リスクガバナンス観点でのチェックリスト</li>
+  <li>社内稟議・役員会で利用できる整形済みPDF</li>
+</ul>
+<h3 style="font-size:13px;margin:20px 0 8px;color:#0f172a;">利用シーン</h3>
+<ul style="margin:0 0 20px;padding-left:20px;font-size:13px;line-height:1.8;color:#475569;">
+  <li>議事録AIの全社導入にあたり3ツール比較したい</li>
+  <li>営業部で使っているAIツールの代替候補を検討したい</li>
+  <li>ガバナンス部門の稟議のために中立評価が必要</li>
+</ul>
+<p style="margin:0 0 20px;font-size:12px;color:#94a3b8;line-height:1.6;">
+プラットフォームの汎用データでは拾えない「貴社の判断基準での比較」を、2週間程度で納品いたします。
+</p>
+<p style="margin:0;">
+  <a href="https://aixis.jp/contact?subject=advisory" style="display:inline-block;padding:12px 24px;background:#0f172a;color:#ffffff;text-decoration:none;font-weight:600;font-size:13px;">
+    ベンチマーク監査のご相談 →
+  </a>
+</p>
+{_drip_footer_html()}
+"""
+
+    send_email(user_email, subject, body_text, _wrap_html(html_content))
+    logger.info("Drip day-30 (benchmark pitch) sent to %s", user_email)

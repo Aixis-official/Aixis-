@@ -697,6 +697,131 @@ async def verify_email_failed_page(request: Request, user: _OptionalUser = None)
     return _render("public/verify-email-failed.html", ctx)
 
 
+# ──────────── Welcome onboarding wizard ────────────
+
+# Interest-area taxonomy shown in the wizard. Slugs are stored on
+# User.interest_areas; labels are ja-only because the wizard is ja-only.
+_INTEREST_AREAS = [
+    ("drafting", "資料・文書作成"),
+    ("summarization", "要約・議事録"),
+    ("translation", "翻訳・多言語対応"),
+    ("meetings", "会議・コミュニケーション"),
+    ("coding", "コーディング・開発支援"),
+    ("research", "リサーチ・情報収集"),
+    ("customer_support", "カスタマーサポート"),
+    ("data_analysis", "データ分析・BI"),
+    ("image_generation", "画像・デザイン生成"),
+    ("marketing", "マーケティング・広告"),
+    ("legal_compliance", "法務・コンプライアンス"),
+    ("governance", "全社ガバナンス・導入管理"),
+]
+
+
+async def _get_welcome_recommendations(db: AsyncSession, industry_slug: str | None) -> list[dict]:
+    """Fetch 3 recommended tools for the onboarding wizard.
+
+    Preference order:
+      1. Tools mapped to the user's industry with fit_level='recommended',
+         ordered by latest published overall_score.
+      2. Fallback: top 3 public tools by published overall_score.
+    """
+    from .db.models.tool import Tool
+    from .db.models.tool_industry import IndustryTag, ToolIndustryMapping
+    from .db.models.score import ToolPublishedScore
+
+    # Latest published score subquery (one row per tool: highest version)
+    latest_score_sq = (
+        select(
+            ToolPublishedScore.tool_id,
+            func.max(ToolPublishedScore.version).label("max_version"),
+        )
+        .group_by(ToolPublishedScore.tool_id)
+        .subquery()
+    )
+
+    async def _fetch_recommendations(industry_filter: bool) -> list[dict]:
+        stmt = (
+            select(
+                Tool.slug,
+                Tool.name_jp,
+                Tool.vendor,
+                ToolPublishedScore.overall_score,
+                ToolPublishedScore.overall_grade,
+                Tool.logo_url,
+                Tool.description_jp,
+            )
+            .join(latest_score_sq, latest_score_sq.c.tool_id == Tool.id)
+            .join(
+                ToolPublishedScore,
+                (ToolPublishedScore.tool_id == latest_score_sq.c.tool_id)
+                & (ToolPublishedScore.version == latest_score_sq.c.max_version),
+            )
+            .where(Tool.is_public.is_(True), Tool.is_active.is_(True))
+        )
+        if industry_filter and industry_slug:
+            stmt = (
+                stmt.join(ToolIndustryMapping, ToolIndustryMapping.tool_id == Tool.id)
+                .join(IndustryTag, IndustryTag.id == ToolIndustryMapping.industry_id)
+                .where(
+                    IndustryTag.slug == industry_slug,
+                    ToolIndustryMapping.fit_level == "recommended",
+                )
+            )
+        stmt = stmt.order_by(ToolPublishedScore.overall_score.desc()).limit(3)
+        rows = (await db.execute(stmt)).all()
+        return [
+            {
+                "slug": row[0],
+                "name_jp": row[1],
+                "vendor": row[2],
+                "overall_score": row[3],
+                "overall_grade": row[4],
+                "logo_url": row[5],
+                "description_jp": (row[6] or "")[:140],
+            }
+            for row in rows
+        ]
+
+    try:
+        if industry_slug:
+            industry_matches = await _fetch_recommendations(industry_filter=True)
+            if industry_matches:
+                return industry_matches
+        return await _fetch_recommendations(industry_filter=False)
+    except Exception:
+        _page_logger.warning("Welcome wizard recommendation query failed", exc_info=True)
+        return []
+
+
+@page_router.get("/welcome")
+async def welcome_page(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: _OptionalUser = None,
+):
+    """Onboarding wizard shown once after first email verification.
+
+    Gated on authentication. If the user has already completed the wizard,
+    redirect straight to /tools so re-clicking a bookmarked verification
+    link doesn't trap them.
+    """
+    if not user:
+        return RedirectResponse(url="/login?next=/welcome", status_code=302)
+    if user.onboarding_completed_at is not None:
+        return RedirectResponse(url="/tools", status_code=302)
+
+    recommendations = await _get_welcome_recommendations(db, user.industry)
+    ctx = _get_template_context(
+        request,
+        user=user,
+        title="ようこそ — 初期設定",
+        active_page="welcome",
+        interest_areas=_INTEREST_AREAS,
+        recommendations=recommendations,
+    )
+    return _render("public/welcome.html", ctx)
+
+
 @page_router.get("/forgot-password")
 async def forgot_password_page(request: Request, user: _OptionalUser = None):
     """Forgot password page."""

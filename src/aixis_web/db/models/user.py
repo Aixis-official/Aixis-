@@ -78,6 +78,10 @@ class User(Base):
     # Onboarding wizard progress
     onboarding_completed_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Email drip campaign stage (0=not enrolled, 1=welcome/day0, 2=day3, 3=day7, 4=day14, 5=day30)
+    drip_stage = Column(Integer, default=0, nullable=False)
+    drip_last_sent_at = Column(DateTime(timezone=True), nullable=True)
+
 
 class AuditReportRecord(Base):
     __tablename__ = "audit_reports"
