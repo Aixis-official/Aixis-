@@ -1080,7 +1080,9 @@
         <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-gray-900 tracking-tight">
             最新の監査済みツール
         </h2>
-        <span class="updated-date">最終更新: 2026年3月</span>
+        {% if stats and stats.last_updated %}
+        <span class="updated-date">最終更新: {{ stats.last_updated }}</span>
+        {% endif %}
     </div>
 
     <div id="featured-tools-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

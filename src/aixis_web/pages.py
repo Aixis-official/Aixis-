@@ -142,7 +142,10 @@ async def _get_platform_stats_for_ssr(db: AsyncSession) -> dict:
             return {
                 "audited_tools": cached.audited_tools,
                 "categories": cached.categories,
-                "last_updated": cached.last_updated or "—",
+                # Keep ``None`` so Jinja ``{% if stats.last_updated %}`` can
+                # cleanly suppress the span on pages that opt out of a
+                # placeholder dash.
+                "last_updated": cached.last_updated,
                 "new_this_month": cached.new_this_month,
                 "total_audits": cached.total_audits,
                 "average_score": cached.average_score,
@@ -180,7 +183,7 @@ async def _get_platform_stats_for_ssr(db: AsyncSession) -> dict:
                 last_updated_dt = last_updated_dt.replace(tzinfo=timezone.utc)
             last_updated = last_updated_dt.astimezone(JST).strftime("%Y.%m.%d")
         else:
-            last_updated = "—"
+            last_updated = None
 
         now = datetime.now(timezone.utc)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -191,13 +194,20 @@ async def _get_platform_stats_for_ssr(db: AsyncSession) -> dict:
         )
         new_this_month = new_month.scalar() or 0
 
-        # Total completed audits (matches API endpoint semantics)
-        audit_count = await db.execute(
+        # Total audits — count published score versions (each publication
+        # is one audit output). Matches API endpoint semantics; see
+        # ``api/v1/stats.py`` for the rationale.
+        publish_count = await db.execute(
+            select(func.count()).select_from(ToolPublishedScore)
+        )
+        total_audits_from_publish = publish_count.scalar() or 0
+        session_count = await db.execute(
             select(func.count()).select_from(AuditSession).where(
                 AuditSession.status == "completed"
             )
         )
-        total_audits = audit_count.scalar() or 0
+        total_audits_from_sessions = session_count.scalar() or 0
+        total_audits = max(total_audits_from_publish, total_audits_from_sessions)
 
         # Platform-wide average overall score (latest published per tool)
         latest_ver_sub = (
@@ -233,7 +243,7 @@ async def _get_platform_stats_for_ssr(db: AsyncSession) -> dict:
         return {
             "audited_tools": "--",
             "categories": "--",
-            "last_updated": "—",
+            "last_updated": None,
             "new_this_month": "--",
             "total_audits": "--",
             "average_score": None,

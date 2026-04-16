@@ -21,6 +21,17 @@ _stats_cache: dict = {"data": None, "ts": 0}
 _STATS_TTL = 300  # 5 minutes
 
 
+def invalidate_stats_cache() -> None:
+    """Clear the in-memory stats cache.
+
+    Called from ``score_service.publish_score`` when a new published score is
+    written so the next ``/api/v1/stats`` request recomputes instead of
+    serving up to 5-minute-stale counts on landing/tools pages.
+    """
+    _stats_cache["data"] = None
+    _stats_cache["ts"] = 0
+
+
 class PlatformStats(BaseModel):
     audited_tools: int = 0
     categories: int = 0
@@ -66,13 +77,27 @@ async def get_platform_stats(
         )
         categories = cat_count.scalar() or 0
 
-        # Total completed audits
+        # Total audits = total published score versions (each publication is
+        # one audit output). Legacy note: earlier revisions counted only
+        # ``AuditSession.status == "completed"`` rows, but published scores can
+        # be inserted without a corresponding AuditSession (e.g., admin
+        # manual publish, historical data), which caused the public widget to
+        # show ``1 評価済みツール / 0 総監査回数`` — internally inconsistent.
+        # Counting ToolPublishedScore rows aligns the metric with what users
+        # actually see on the database.
         audit_count = await db.execute(
+            select(func.count()).select_from(ToolPublishedScore)
+        )
+        total_audits_from_publish = audit_count.scalar() or 0
+        # Fall back to AuditSession count if it happens to be higher (e.g.,
+        # in-flight sessions not yet publishing a score).
+        session_count = await db.execute(
             select(func.count()).select_from(AuditSession).where(
                 AuditSession.status == "completed"
             )
         )
-        total_audits = audit_count.scalar() or 0
+        total_audits_from_sessions = session_count.scalar() or 0
+        total_audits = max(total_audits_from_publish, total_audits_from_sessions)
 
         # Last updated (most recent completed audit or published score)
         # Convert to JST (UTC+9) for Japanese users

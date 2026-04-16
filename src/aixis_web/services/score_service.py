@@ -247,6 +247,16 @@ async def merge_and_publish(db: AsyncSession, session_id: str, tool_id: str, pub
     await db.commit()
     await db.refresh(published)
 
+    # Invalidate platform stats cache so landing/tools widgets pick up the
+    # new published score immediately instead of waiting for the 5-minute
+    # TTL. Kept sibling to the sitemap cache invalidation in
+    # ``_notify_search_engines`` below.
+    try:
+        from ..api.v1.stats import invalidate_stats_cache
+        invalidate_stats_cache()
+    except Exception:
+        logger.warning("Failed to invalidate stats cache after publish")
+
     # Generate public-facing analysis summaries using LLM (best-effort)
     try:
         await generate_public_summaries(db, session_id)
