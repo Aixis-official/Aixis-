@@ -36,15 +36,15 @@
                         全ツールの5軸スコア・詳細分析・比較機能にアクセスできます。
                     </p>
                 </div>
-                <div class="flex gap-3">
+                <div class="flex gap-3 flex-shrink-0">
                     <a href="/tools"
-                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
                         監査データベース
                     </a>
                     <a href="{{ advisory_contact_url(user, source='mypage') }}"
                        target="_blank" rel="noopener"
                        data-track="advisory_cta_click"
-                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors">
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors whitespace-nowrap">
                         アドバイザリー監査のご相談
                     </a>
                 </div>
@@ -75,9 +75,26 @@
                 <span class="text-sm text-gray-500">役職</span>
                 <span class="text-sm font-medium text-gray-900">{{ user.job_title or '--' }}</span>
             </div>
+            {% set industry_labels = {
+                'it_software': 'IT・ソフトウェア',
+                'manufacturing': '製造業',
+                'finance_insurance': '金融・保険',
+                'retail_ecommerce': '小売・EC',
+                'healthcare_pharma': '医療・製薬',
+                'legal_professional': '法務・士業',
+                'consulting': 'コンサルティング',
+                'education': '教育',
+                'media_entertainment': 'メディア・エンタメ',
+                'real_estate_construction': '不動産・建設',
+                'logistics_transport': '物流・運輸',
+                'energy_utility': 'エネルギー・公共インフラ',
+                'government_public': '官公庁・公共',
+                'nonprofit': 'NPO・非営利',
+                'other': 'その他',
+            } %}
             <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                 <span class="text-sm text-gray-500">業種</span>
-                <span class="text-sm font-medium text-gray-900">{{ user.industry or '--' }}</span>
+                <span class="text-sm font-medium text-gray-900">{{ industry_labels.get(user.industry, user.industry) or '--' }}</span>
             </div>
             <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                 <span class="text-sm text-gray-500">電話番号</span>

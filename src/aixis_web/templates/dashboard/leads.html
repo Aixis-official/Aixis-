@@ -135,9 +135,27 @@
         safety_axis_view: '安全性軸の閲覧',
         governance_view: 'ガバナンス情報の閲覧',
         pricing_view: '料金ページ閲覧',
-        advisory_cta_click: 'Advisory Audit への関心',
+        advisory_cta_click: 'アドバイザリー監査への関心',
         pdf_download: 'PDF ダウンロード',
         onboarding_done: 'オンボーディング完了'
+    };
+
+    var industryLabels = {
+        it_software: 'IT・ソフトウェア',
+        manufacturing: '製造業',
+        finance_insurance: '金融・保険',
+        retail_ecommerce: '小売・EC',
+        healthcare_pharma: '医療・製薬',
+        legal_professional: '法務・士業',
+        consulting: 'コンサルティング',
+        education: '教育',
+        media_entertainment: 'メディア・エンタメ',
+        real_estate_construction: '不動産・建設',
+        logistics_transport: '物流・運輸',
+        energy_utility: 'エネルギー・公共インフラ',
+        government_public: '官公庁・公共',
+        nonprofit: 'NPO・非営利',
+        other: 'その他'
     };
 
     function showAlert(msg, type) {
@@ -215,7 +233,7 @@
             html += '</td>';
             html += '<td class="px-4 py-3">';
             html += '<div class="text-gray-700">' + esc(l.company_name || '—') + '</div>';
-            html += '<div class="text-xs text-gray-400 mt-0.5">' + esc(l.industry || '') + (l.employee_count ? ' · ' + esc(l.employee_count) : '') + '</div>';
+            html += '<div class="text-xs text-gray-400 mt-0.5">' + esc(industryLabels[l.industry] || l.industry || '') + (l.employee_count ? ' · ' + esc(l.employee_count) : '') + '</div>';
             html += '</td>';
             html += '<td class="px-4 py-3 text-center whitespace-nowrap">' + scoreBadge(l.lead_score, l.is_hot) + '</td>';
             html += '<td class="px-4 py-3 whitespace-nowrap"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium font-jp ' + st[1] + '">' + st[0] + '</span></td>';
@@ -336,7 +354,7 @@
 
         // Profile grid
         h += '<div class="grid grid-cols-2 gap-3 text-sm">';
-        h += profileCell('業種', l.industry);
+        h += profileCell('業種', industryLabels[l.industry] || l.industry);
         h += profileCell('従業員規模', l.employee_count);
         h += profileCell('電話', l.phone);
         h += profileCell('登録経路', l.registration_source);
